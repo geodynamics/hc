@@ -1,0 +1,134 @@
+head	1.2;
+access;
+symbols;
+locks
+	becker:1.2; strict;
+comment	@ * @;
+
+
+1.2
+date	2004.07.31.00.01.25;	author becker;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.07.30.23.52.04;	author becker;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@*** empty log message ***
+@
+text
+@/* hc_extract_sh_layer.c */
+/* hc_init.c */
+void hc_struc_init(struct hcs **);
+void hc_init(struct hcs *, int, unsigned short, unsigned short, unsigned short, double, unsigned short);
+void hc_init_constants(struct hcs *, double, char *, unsigned short);
+void hc_assign_viscosity(struct hcs *, int, char *, unsigned short);
+void hc_assign_density(struct hcs *, unsigned short, int, char *, unsigned short, unsigned short, unsigned short);
+void hc_init_phase_boundaries(struct hcs *, int, unsigned short);
+void hc_assign_plate_velocities(struct hcs *, int, char *, unsigned short, int, unsigned short, unsigned short);
+void hc_init_l_factors(struct hcs *, int);
+/* hc_input.c */
+void hc_read_sh_solution(struct hcs *, struct lms **, FILE *, unsigned short, unsigned short);
+/* hc_matrix.c */
+void hc_ludcmp_3x3(double [3][3], int *);
+void hc_lubksb_3x3(double [3][3], int *, double *);
+/* hc_misc.c */
+FILE *hc_open(char *, char *, char *);
+void hc_dvecalloc(double **, int, char *);
+void hc_svecalloc(float **, int, char *);
+void hc_vecalloc(double **, int, char *);
+void hc_scmplx_vecalloc(struct scmplx **, int, char *);
+void hc_svecrealloc(float **, int, char *);
+void hc_dvecrealloc(double **, int, char *);
+void hc_vecrealloc(double **, int, char *);
+float hc_svec_rms_diff(float *, float *, int);
+void hc_a_equals_b_svector(float *, float *, int);
+void hc_a_equals_b_vector(double *, double *, int);
+float hc_mean_svec(float *, int);
+double hc_mean_vec(double *, int);
+void hc_zero_dvector(double *, int);
+void hc_zero_lvector(unsigned short *, int);
+void hc_get_flt_frmt_string(char *, int, unsigned short);
+/* hc_output.c */
+void hc_print_sh_solution(struct hcs *, struct lms *, FILE *, int, unsigned short, unsigned short);
+void hc_print_3x3(double [3][3], FILE *);
+void hc_print_sm(double [6][4], FILE *);
+void hc_print_vector(double *, int, FILE *);
+void hc_print_vector_row(double *, int, FILE *);
+/* hc_polsol.c */
+void hc_polsol(struct hcs *, int, double *, int, double *, unsigned short, struct lms *, unsigned short, int, double *, double *, unsigned short, struct lms *, struct lms *, int, struct lms *, unsigned short, unsigned short, unsigned short);
+/* hc_propagator.c */
+void hc_evppot(int, double, double *);
+void hc_evalpa(int, double, double, double, double *);
+/* hc_solve.c */
+void hc_solve(struct hcs *, unsigned short, int, struct lms *, unsigned short, unsigned short, unsigned short, unsigned short);
+void hc_sum(struct hcs *, int, struct lms *, struct lms *, int, unsigned short, struct lms *, unsigned short);
+/* hc_solve_spatial.c */
+void hc_compute_sol_spatial(struct hcs *, struct lms *, double **, unsigned short);
+/* hc_torsol.c */
+void hc_torsol(int, int, int, double *, double **, double **, struct lms *, struct lms *, unsigned short, unsigned short);
+/* main.c */
+/* prem_util.c */
+int prem_find_layer_x(double, double, double *, int, int, double *);
+double prem_compute_pval(double *, double *, int, double);
+double prem_compute_dpval(double *, double *, int, double);
+double prem_vs_voigt(double, double, double, double, double);
+void prem_get_rhodrho(double *, double *, double, struct prem_model *);
+void prem_get_rho(double *, double, struct prem_model *);
+void prem_get_values(double *, double *, double *, double *, double *, double *, double *, double *, double *, double *, double, struct prem_model *);
+void prem_read_model(char *, struct prem_model *, unsigned short);
+int prem_read_para_set(double *, int, int, FILE *);
+/* sh_exp.c */
+void sh_allocate_and_init(struct lms **, int, int, int, int, unsigned short);
+void sh_init_expansion(struct lms *, int, int, int, unsigned short);
+void sh_free_expansion(struct lms *);
+void sh_clear_alm(struct lms *);
+double sh_power(struct lms *);
+void sh_compute_power_per_degree(struct lms *, float *);
+void sh_print_parameters(struct lms *, int, int, int, double, FILE *, unsigned short, unsigned short, unsigned short);
+unsigned short sh_read_parameters(int *, int *, int *, int *, int *, double *, int *, FILE *, unsigned short, unsigned short, unsigned short);
+void sh_print_coefficients(struct lms *, int, FILE *, double *, unsigned short, unsigned short);
+void sh_read_coefficients(struct lms *, int, FILE *, unsigned short, double *, unsigned short);
+void sh_print_spatial_basis(struct lms *, FILE *, unsigned short, float, unsigned short);
+void sh_compute_spectral(float *, int, unsigned short, double **, struct lms *, unsigned short);
+void sh_compute_spatial(struct lms *, int, unsigned short, double **, float *, unsigned short);
+void sh_exp_type_error(char *, struct lms *);
+void sh_print_plm(double *, int, int, int, FILE *);
+void sh_print_spatial_data(struct lms *, int, float *, unsigned short, float, FILE *);
+void sh_compute_plm(struct lms *, int, double **, unsigned short);
+void sh_get_coeff(struct lms *, int, int, int, unsigned short, double *);
+void sh_write_coeff(struct lms *, int, int, int, unsigned short, double *);
+void sh_aexp_equals_bexp_coeff(struct lms *, struct lms *);
+void sh_scale_expansion_l_factor(struct lms *, double *);
+void sh_scale_expansion(struct lms *, double);
+/* sh_model.c */
+void sh_init_model(struct lms_model *, int, int, int, int, int, int, unsigned short);
+void sh_free_model(struct lms_model *);
+void sh_print_model_coefficients(struct lms_model *, FILE *, unsigned short, unsigned short);
+void sh_print_model_spatial_basis(struct lms_model *, FILE *, unsigned short);
+void sh_read_model_spatial_data(struct lms_model *, float **, FILE *, unsigned short);
+void sh_compute_model_spectral(struct lms_model *, float *, unsigned short);
+void sh_compute_model_spatial(struct lms_model *, float **, unsigned short);
+void sh_print_model_spatial_data(struct lms_model *, float *, FILE *, unsigned short);
+/* sh_test.c */
+/* simple_test.c */
+void hc_dvecalloc(double **, int, char *);
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d47 1
+@

@@ -1,0 +1,88 @@
+bin/i686/hc: starting version compiled on Mon Aug  2 20:14:34 2004
+prem_read_model: initialized PREM model from file /home/becker/progs/src/hc/prem.dat
+hc_assign_viscosity: read 19 layers of non-dimensionalized viscosities from visc.dat
+hc_assign_viscosity: rough estimate of mean viscosity 1.20632e+22 Pas
+hc_assign_plate_velocities: expecting [cm/yr] pol/tor from pvel.sh.dat
+hc_assign_plate_velocities: read velocities, lmax 63: |pol|:    0.126705 |tor|:    0.018978
+hc_assign_density: reading density anomalies in [%] from dens.sh.dat, scaling by 0.2
+hc_assign_density: dens   1: r: 0.560631 df: 0.045791 |rho|:   5.5105
+hc_assign_density: dens   2: r: 0.583163 df: 0.038637 |rho|:   3.8036
+hc_assign_density: dens   3: r: 0.605695 df: 0.037200 |rho|:   2.5971
+hc_assign_density: dens   4: r: 0.628226 df: 0.035866 |rho|:   2.1107
+hc_assign_density: dens   5: r: 0.650758 df: 0.034624 |rho|:   1.9413
+hc_assign_density: dens   6: r: 0.673290 df: 0.033465 |rho|:   1.7549
+hc_assign_density: dens   7: r: 0.695822 df: 0.032382 |rho|:   1.5429
+hc_assign_density: dens   8: r: 0.718353 df: 0.031366 |rho|:   1.3564
+hc_assign_density: dens   9: r: 0.740885 df: 0.030412 |rho|:   1.2626
+hc_assign_density: dens  10: r: 0.763417 df: 0.029514 |rho|:   1.2079
+hc_assign_density: dens  11: r: 0.785949 df: 0.028668 |rho|:   1.2635
+hc_assign_density: dens  12: r: 0.808481 df: 0.027869 |rho|:   1.3891
+hc_assign_density: dens  13: r: 0.831012 df: 0.027113 |rho|:   1.4814
+hc_assign_density: dens  14: r: 0.853543 df: 0.026397 |rho|:   1.5221
+hc_assign_density: dens  15: r: 0.876075 df: 0.025719 |rho|:   1.5158
+hc_assign_density: dens  16: r: 0.898607 df: 0.025074 |rho|:   1.5993
+hc_assign_density: dens  17: r: 0.921139 df: 0.024461 |rho|:   1.6308
+hc_assign_density: dens  18: r: 0.943671 df: 0.023877 |rho|:   1.9147
+hc_assign_density: dens  19: r: 0.966202 df: 0.020987 |rho|:   4.1557
+hc_assign_density: dens  20: r: 0.984225 df: 0.011446 |rho|:   6.0031
+hc_assign_density: dens  21: r: 0.988734 df: 0.013674 |rho|:   6.6985
+hc_polsol: alpha: 115.193 beta: -0.000534163
+hc_polsol: initializing for 21 v layers and 21 dens layers
+hc_polsol: ncalled:     0 for lmax: 63 dens lmax: 63, visc or layer  changed
+hc_polsol: assigned nl: 23 nprop: 39 nrad: 21 layers
+hc_polsol: done
+hc_torsol: toroidal velocities lmax 63 and type 1
+hc_torsol: done
+hc_solve: computing solution for velocities
+sh_compute_plm: Rick: computing all Plm for lmax 63
+bin/i686/hc: writing spherical harmonics solution to sol.bin
+hc_print_spectral_solution: z: 2891.000 |r|:   0.000e+00 |pol|:   9.592e-02 |tor|:   3.256e-03 (scale: 1 cm/yr)
+hc_print_spectral_solution: z: 2799.220 |r|:   7.134e-03 |pol|:   6.517e-02 |tor|:   3.347e-03 (scale: 1 cm/yr)
+hc_print_spectral_solution: z: 2655.670 |r|:   1.314e-02 |pol|:   6.418e-02 |tor|:   3.494e-03 (scale: 1 cm/yr)
+hc_print_spectral_solution: z: 2512.120 |r|:   1.823e-02 |pol|:   6.244e-02 |tor|:   3.663e-03 (scale: 1 cm/yr)
+hc_print_spectral_solution: z: 2368.570 |r|:   2.253e-02 |pol|:   6.023e-02 |tor|:   3.852e-03 (scale: 1 cm/yr)
+hc_print_spectral_solution: z: 2225.020 |r|:   2.617e-02 |pol|:   5.772e-02 |tor|:   4.060e-03 (scale: 1 cm/yr)
+hc_print_spectral_solution: z: 2081.470 |r|:   2.922e-02 |pol|:   5.503e-02 |tor|:   4.285e-03 (scale: 1 cm/yr)
+hc_print_spectral_solution: z: 1937.920 |r|:   3.175e-02 |pol|:   5.228e-02 |tor|:   4.527e-03 (scale: 1 cm/yr)
+hc_print_spectral_solution: z: 1794.370 |r|:   3.381e-02 |pol|:   4.951e-02 |tor|:   4.786e-03 (scale: 1 cm/yr)
+hc_print_spectral_solution: z: 1650.820 |r|:   3.543e-02 |pol|:   4.679e-02 |tor|:   5.060e-03 (scale: 1 cm/yr)
+hc_print_spectral_solution: z: 1507.270 |r|:   3.666e-02 |pol|:   4.416e-02 |tor|:   5.351e-03 (scale: 1 cm/yr)
+hc_print_spectral_solution: z: 1363.720 |r|:   3.750e-02 |pol|:   4.165e-02 |tor|:   5.658e-03 (scale: 1 cm/yr)
+hc_print_spectral_solution: z: 1220.170 |r|:   3.799e-02 |pol|:   3.920e-02 |tor|:   5.999e-03 (scale: 1 cm/yr)
+hc_print_spectral_solution: z: 1076.620 |r|:   3.813e-02 |pol|:   3.677e-02 |tor|:   6.390e-03 (scale: 1 cm/yr)
+hc_print_spectral_solution: z:  933.075 |r|:   3.794e-02 |pol|:   3.420e-02 |tor|:   6.902e-03 (scale: 1 cm/yr)
+hc_print_spectral_solution: z:  789.525 |r|:   3.739e-02 |pol|:   3.167e-02 |tor|:   7.629e-03 (scale: 1 cm/yr)
+hc_print_spectral_solution: z:  645.975 |r|:   3.640e-02 |pol|:   3.046e-02 |tor|:   9.522e-03 (scale: 1 cm/yr)
+hc_print_spectral_solution: z:  502.425 |r|:   3.380e-02 |pol|:   6.535e-02 |tor|:   1.688e-02 (scale: 1 cm/yr)
+hc_print_spectral_solution: z:  358.875 |r|:   2.927e-02 |pol|:   1.121e-01 |tor|:   2.713e-02 (scale: 1 cm/yr)
+hc_print_spectral_solution: z:  215.325 |r|:   2.090e-02 |pol|:   1.743e-01 |tor|:   4.454e-02 (scale: 1 cm/yr)
+hc_print_spectral_solution: z:  100.500 |r|:   1.074e-02 |pol|:   2.160e-01 |tor|:   5.834e-02 (scale: 1 cm/yr)
+hc_print_spectral_solution: z:   71.775 |r|:   7.705e-03 |pol|:   2.180e-01 |tor|:   5.888e-02 (scale: 1 cm/yr)
+hc_print_spectral_solution: z:    0.000 |r|:   6.054e-11 |pol|:   2.225e-01 |tor|:   6.022e-02 (scale: 1 cm/yr)
+hc_print_spectral_solution: wrote solution at 23 levels
+bin/i686/hc: writing spatial solution to vsol.bin
+hc_print_spatial_solution: layer   1: RMS: r:  0.00000e+00 t:  1.00144e-01 p:  1.00252e-01
+hc_print_spatial_solution: layer   2: RMS: r:  1.23427e-02 t:  6.44332e-02 p:  6.48630e-02
+hc_print_spatial_solution: layer   3: RMS: r:  2.13350e-02 t:  6.29028e-02 p:  6.36708e-02
+hc_print_spatial_solution: layer   4: RMS: r:  2.87036e-02 t:  6.08734e-02 p:  6.20190e-02
+hc_print_spatial_solution: layer   5: RMS: r:  3.47856e-02 t:  5.84927e-02 p:  6.01600e-02
+hc_print_spatial_solution: layer   6: RMS: r:  3.98158e-02 t:  5.58731e-02 p:  5.82475e-02
+hc_print_spatial_solution: layer   7: RMS: r:  4.39674e-02 t:  5.31082e-02 p:  5.63874e-02
+hc_print_spatial_solution: layer   8: RMS: r:  4.73758e-02 t:  5.02810e-02 p:  5.46473e-02
+hc_print_spatial_solution: layer   9: RMS: r:  5.01439e-02 t:  4.74603e-02 p:  5.30564e-02
+hc_print_spatial_solution: layer  10: RMS: r:  5.23448e-02 t:  4.46925e-02 p:  5.16188e-02
+hc_print_spatial_solution: layer  11: RMS: r:  5.40204e-02 t:  4.20149e-02 p:  5.03292e-02
+hc_print_spatial_solution: layer  12: RMS: r:  5.51817e-02 t:  3.94724e-02 p:  4.91863e-02
+hc_print_spatial_solution: layer  13: RMS: r:  5.58211e-02 t:  3.71187e-02 p:  4.81537e-02
+hc_print_spatial_solution: layer  14: RMS: r:  5.60053e-02 t:  3.49889e-02 p:  4.71659e-02
+hc_print_spatial_solution: layer  15: RMS: r:  5.57583e-02 t:  3.32469e-02 p:  4.60665e-02
+hc_print_spatial_solution: layer  16: RMS: r:  5.50836e-02 t:  3.23771e-02 p:  4.47629e-02
+hc_print_spatial_solution: layer  17: RMS: r:  5.39958e-02 t:  3.65486e-02 p:  4.28057e-02
+hc_print_spatial_solution: layer  18: RMS: r:  5.28702e-02 t:  7.89616e-02 p:  5.98108e-02
+hc_print_spatial_solution: layer  19: RMS: r:  5.00570e-02 t:  1.29916e-01 p:  9.71072e-02
+hc_print_spatial_solution: layer  20: RMS: r:  3.73720e-02 t:  1.98046e-01 p:  1.68101e-01
+hc_print_spatial_solution: layer  21: RMS: r:  1.95547e-02 t:  2.42594e-01 p:  2.14538e-01
+hc_print_spatial_solution: layer  22: RMS: r:  1.41881e-02 t:  2.45002e-01 p:  2.16557e-01
+hc_print_spatial_solution: layer  23: RMS: r:  2.83617e-10 t:  2.51334e-01 p:  2.21366e-01
+hc_print_spatial_solution: wrote solution at 23 levels
+bin/i686/hc: done

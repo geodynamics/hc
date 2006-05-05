@@ -1,0 +1,930 @@
+head	1.12;
+access;
+symbols;
+locks
+	becker:1.12; strict;
+comment	@ * @;
+
+
+1.12
+date	2006.05.01.17.46.18;	author becker;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2006.01.22.01.11.34;	author becker;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2005.12.15.00.30.10;	author becker;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2004.12.20.05.18.20;	author becker;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2004.12.20.05.09.57;	author becker;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.08.06.00.38.43;	author becker;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.07.31.00.01.25;	author becker;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.07.30.23.52.04;	author becker;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.07.02.00.15.02;	author becker;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.07.01.01.26.00;	author becker;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.06.24.01.02.36;	author becker;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.06.16.22.55.52;	author becker;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.12
+log
+@*** empty log message ***
+@
+text
+@/* 
+   
+   header file for Hager & O'Connell experimental code
+
+   Thorsten (twb@@usc.edu)
+
+   $Id: hc.h,v 1.11 2006/01/22 01:11:34 becker Exp twb $
+
+*/
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <limits.h>
+
+#include "hc_filenames.h"
+/* 
+
+general variable type defines 
+
+*/
+#ifndef hc_boolean
+#define hc_boolean unsigned short
+#endif
+#ifndef HC_PREC			/* 
+					   precision for most C functions
+					*/
+#define HC_PREC double
+#define HC_FLT_FORMAT "%lf"
+#define HC_TWO_FLT_FORMAT "%lf %lf"
+#define HC_EPS_PREC 5e-15
+#endif
+
+#ifndef HC_CPREC
+#define HC_CPREC HC_PREC
+#endif
+
+#define HC_CHAR_LENGTH 300		/* length of char arrays */
+
+#define HC_BIN_PREC float	/* precision for binary I/O */
+
+#ifndef DEFINED_MY_COMPLEX
+/* complex variables */
+struct scmplx{			/* single precision */
+  float dr,di;
+};
+struct dcmplx{			/* double precision */
+  double dr,di;
+};
+#define DEFINED_MY_COMPLEX
+#endif
+
+
+
+/* 
+
+PREM
+
+*/
+#include "prem.h"
+/* 
+   dealing with velocity grids 
+
+*/
+#include "ggrd.h"
+#include "ggrd_grdtrack_util.h"
+/*
+
+spherical haronics 
+   
+*/
+#include "sh.h"
+/* 
+   
+should we operate in the Dahlen & Tromp, physical sciences
+normalization internationally (TRUE) or only on I/O (FALSE)
+*/
+#define HC_SH_CONV_DT TRUE
+
+
+
+/* 
+
+for H & C solutions
+
+*/
+struct hc_sm{
+  HC_PREC u[6][4];
+};
+
+struct hc_parameters{
+  hc_boolean compressible;	/* compressibility following Panasyuk
+				   & Steinberger */
+  hc_boolean free_slip;		/* surface mechanical boundary condition */
+  hc_boolean vel_bc_zero;		/* 
+				   if false, plate velocities, else no
+				   slip if free_slip is false as well
+				*/
+  HC_PREC dens_anom_scale;	/* default density anomaly scaling to
+				   go from PREM percent traveltime
+				   anomalies to density anomalies */
+  hc_boolean verbose;		/* debugging output? (0,1,2,3,4...) */
+  hc_boolean sol_binary_out;	/* binary or ASCII output of SH expansion */
+  int solution_mode;	/* velocity, stress, or geoid */
+  hc_boolean print_pt_sol;	/* output of p[6] and t[2] vectors */
+  char visc_filename[HC_CHAR_LENGTH];	/* name of viscosity profile file */
+  char pvel_filename[HC_CHAR_LENGTH];	/* name of plate velocities file */
+  char dens_filename[HC_CHAR_LENGTH];	/* name of density model file */
+};
+
+/* 
+
+
+general HAGER & O'CONNELL flow code structure
+
+
+*/
+struct hcs{
+
+  struct hc_parameters p[1];
+
+  int lmax;			/* max order of fields */
+  int sh_type;			/* type of spherical harmonics to use, e.g.
+				   HEALPIX or RICK
+
+				*/
+  int nrad;			/* number of output radial layers */
+  HC_PREC *r;			/* non-dim radii */
+  /* 
+     viscosity structure
+  */
+  int nvis;		/* number of viscosity
+			   layers */
+  HC_PREC *visc;	/* values of normalized viscosities */
+  HC_PREC *rvisc; 	/* radii of normalized viscosities */
+
+  /* 
+     density contribution
+  */
+  int inho;		/* number of density layers */
+  HC_PREC *dfact; 	/* density factors, derived from layer thickness */
+  HC_PREC *rden; 	/* radii of density layers [normalized] */
+  
+  struct sh_lms *dens_anom; /* 
+			    expansions of density
+			    anomalies has to be [inho] (if
+			    those change, that's OK, no
+			    need to call with
+			    dens_fac_changed == TRUE)
+			 */
+  HC_PREC dens_scale[1];		/* scale for density file */
+
+ 
+
+  hc_boolean compressible; /* 
+			      if TRUE, will use PREM
+			      densities, else, average
+			      mantle density
+			   */
+  int npb;			/* number of phase boundaries */
+  HC_PREC *rpb;	/* radius and F factor for phase
+		   boundaries */
+  HC_PREC *fpb;
+  my_boolean free_slip;  /* 
+			    include plate velocities?
+			    possible, if free_slip is
+			    FALSE
+			 */
+
+  struct sh_lms pvel[2]; /* 
+			 
+		      poloidal and toroidal part of plate motions
+		      (only one expansion)
+		      
+		      */
+
+
+  hc_boolean save_solution; /* memory intensive speedup in poloidal
+				solution by saving propagator matrices 
+				this will also keep the toroidal solution 
+				for speedup in case the velocities have not 
+				changed between calls to hc_solve
+			     */
+
+  /* 
+     SOLUTION RELATED 
+  */
+  /* poloidal solution */
+  struct sh_lms *pol_sol,*geoid;
+  double *rho,*rho_zero;	/* 
+				   density factors 
+				*/
+  double *rprops,*pvisc,*props,*ppots, /* propagator related */
+    *den;
+  /* 
+     propagator related factors as well 
+  */
+  int nprops,nradp2,nvisp1,inho2;
+  hc_boolean *qwrite;
+  struct sh_lms *tor_sol; /* 
+			  toroidal solution
+		       */
+  hc_boolean initialized;	/* logic flag */
+  /* sqrt(l(l+1)) and 1/lfac factors */
+  HC_PREC *lfac,*ilfac;
+  int lfac_init;
+  /* PREM related */
+  struct prem_model prem[1];	/* PREM model constants */
+  hc_boolean prem_init; 
+  /* 
+     constants
+  */
+  HC_PREC timesc;			/* timescale in [yr] */
+  HC_PREC visnor;			/* visocsity for nomalization [Pas] */
+  HC_PREC g;			/* gravitational constant */
+  HC_PREC gacc;			/* gravitational acceleration  [m/s^2]*/
+  HC_PREC re;			/* radius of Earth [m] */
+  HC_PREC avg_den_core, avg_den_mantle; /* average densities of 
+					 core and mantle */
+  HC_PREC secyr;		/* seconds per year */
+  HC_PREC vel_scale;		/* 
+				   velocity scale to change from input
+				   [cm/yr] to internal
+				*/
+  /* Legendre functions */
+  double *plm;
+
+  /* more logic flags */
+  my_boolean spectral_solution_computed, spatial_solution_computed;
+};
+
+#define HC_PARA model->p
+
+/* 
+
+solution modes
+
+*/
+#define HC_GEOID 1		/* compute geoid */
+#define HC_VEL 0		/* compute velocities 
+				   v_r v_t v_p
+				*/
+#define HC_STRESS -1		/* compute tractions 
+				   trr trt trp  */
+/* 
+
+init and assignment modes
+
+*/
+#define HC_INIT_FROM_FILE 0
+
+
+/* 
+   
+declarations
+
+*/
+#ifndef GENERATE_PROTO
+/* local declarations */
+#include "hc_auto_proto.h"
+#endif
+/* 
+   
+macro defintions
+
+*/
+/* ordering for spherical coordinates */
+#define HC_R 0
+#define HC_THETA 1
+#define HC_PHI 2
+#define HC_TPPROD 3
+#define HC_NRNTNP 4
+
+/* 
+   boolean 
+*/
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+
+/* in-line functions */
+#define HC_MEMERROR(x) {fprintf(stderr,"%s: memory allocation error, exiting\n",x);exit(-1);}
+#define HC_ERROR(x,y) {fprintf(stderr,"%s: error: %s, exiting\n",x,y);exit(-1);}
+
+#define HC_MIN(x,y) (( (x) < (y)) ? (x) : (y))
+
+#define HC_DIFFERENT(x,y) ((fabs((x)-(y)) > 1e-7)?(1):(0))
+
+/* 
+   trigonometry stuff 
+*/
+#ifndef SQRT_TWO 
+#define SQRT_TWO 1.41421356237309504880168872420970 
+#endif
+#ifndef M_PI
+#define M_PI 3.1415926535897932384626433832795
+#endif
+#ifndef PIOVERONEEIGHTY
+#define PIOVERONEEIGHTY  0.017453292519943295769236907684886 
+#endif
+#ifndef ONEEIGHTYOVERPI
+#define ONEEIGHTYOVERPI  57.295779513082320876798154814105
+#endif
+#ifndef DEG2RAD
+#define DEG2RAD(x) ((x) * PIOVERONEEIGHTY)
+#endif
+#ifndef RAD2DEG
+#define RAD2DEG(x) ((x) * ONEEIGHTYOVERPI)
+#endif
+
+#ifndef FLT_MAX 
+#define FLT_MAX 1e20
+#endif
+#ifndef FLT_MIN
+#define FLT_MIN -1e20
+#endif 
+
+#define THETA2LAT(x) ( (90.0 - (x)*ONEEIGHTYOVERPI) )
+#define LAT2THETA(x) ( (90.0 - (x))*PIOVERONEEIGHTY )
+#define PHI2LON(x) ( RAD2DEG(x) )
+#define LON2PHI(x) ( DEG2RAD(x) )
+/* 
+
+other constants
+
+*/
+#define HC_RE_KM 6371.0		/* radius(Earth) in [km] */
+#define HC_RCMB_ND 0.546225082404646 /* non-dim raidius, ~10km above
+					CMB  */
+#define HC_TIMESCALE_YR 1e6	/* timescale [yr] */
+/* 
+   convert depth (>0) in km to non-dimensionalizd radius
+*/
+#define HC_ND_RADIUS(x) (1.0-((x)/HC_RE_KM))
+/* 
+   the other way around
+*/
+#define HC_Z_DEPTH(x) ((HC_RE_KM * (1.0-(x))))
+
+@
+
+
+1.11
+log
+@*** empty log message ***
+@
+text
+@d7 1
+a7 1
+   $Id: hc.h,v 1.10 2005/12/15 00:30:10 becker Exp becker $
+d91 20
+d119 3
+d136 1
+a136 1
+  char visc_filename[HC_CHAR_LENGTH];	/* name of viscosity profile file */
+d152 1
+a152 1
+  char dens_filename[HC_CHAR_LENGTH];	/* name of density model file */
+d176 1
+a176 1
+  char pvel_filename[HC_CHAR_LENGTH];	/* name of plate velocities file */
+d184 1
+a184 1
+  hc_boolean print_pt_sol;	/* output of p[6] and t[2] vectors */
+d232 2
+d297 1
+a297 1
+#define SQRT_TWO 1.414213562373
+d303 1
+a303 1
+#define PIOVERONEEIGHTY 0.0174532925199433
+d306 1
+a306 1
+#define ONEEIGHTYOVERPI  57.2957795130823
+@
+
+
+1.10
+log
+@*** empty log message ***
+@
+text
+@d7 1
+a7 1
+   $Id: hc.h,v 1.9 2004/12/20 05:18:20 becker Exp twb $
+a40 1
+/* 
+d42 11
+a52 4
+spherical haronics 
+   
+*/
+#include "sh.h"
+a53 6
+/* 
+   
+should we operate in the Dahlen & Tromp, physical sciences
+normalization internationally (TRUE) or only on I/O (FALSE)
+*/
+#define HC_SH_CONV_DT TRUE
+d67 14
+d233 1
+d236 1
+a236 1
+
+@
+
+
+1.9
+log
+@*** empty log message ***
+@
+text
+@d7 1
+a7 1
+   $Id: hc.h,v 1.8 2004/12/20 05:09:57 becker Exp becker $
+d34 4
+@
+
+
+1.8
+log
+@*** empty log message ***
+@
+text
+@d7 1
+a7 1
+   $Id: hc.h,v 1.7 2004/08/06 00:38:43 becker Exp becker $
+d25 1
+a25 1
+#ifndef HC_CPREC			/* 
+d28 1
+a28 1
+#define HC_CPREC double
+d70 1
+a70 1
+  HC_CPREC u[6][4];
+d87 1
+a87 1
+  HC_CPREC *r;			/* non-dim radii */
+d93 2
+a94 2
+  HC_CPREC *visc;	/* values of normalized viscosities */
+  HC_CPREC *rvisc; 	/* radii of normalized viscosities */
+d100 2
+a101 2
+  HC_CPREC *dfact; 	/* density factors, derived from layer thickness */
+  HC_CPREC *rden; 	/* radii of density layers [normalized] */
+d110 1
+a110 1
+  HC_CPREC dens_scale[1];		/* scale for density file */
+d120 1
+a120 1
+  HC_CPREC *rpb;	/* radius and F factor for phase
+d122 1
+a122 1
+  HC_CPREC *fpb;
+d164 1
+a164 1
+  HC_CPREC *lfac,*ilfac;
+d172 6
+a177 6
+  HC_CPREC timesc;			/* timescale in [yr] */
+  HC_CPREC visnor;			/* visocsity for nomalization [Pas] */
+  HC_CPREC g;			/* gravitational constant */
+  HC_CPREC gacc;			/* gravitational acceleration  [m/s^2]*/
+  HC_CPREC re;			/* radius of Earth [m] */
+  HC_CPREC avg_den_core, avg_den_mantle; /* average densities of 
+d179 2
+a180 2
+  HC_CPREC secyr;		/* seconds per year */
+  HC_CPREC vel_scale;		/* 
+@
+
+
+1.7
+log
+@*** empty log message ***
+@
+text
+@d7 1
+a7 1
+   $Id: hc.h,v 1.6 2004/07/31 00:01:25 becker Exp becker $
+d25 7
+a31 4
+#ifndef CPREC			/* 
+				   precision for most C functions
+				*/
+#define CPREC double
+d34 1
+a34 1
+#define STRLEN 200		/* length of char arrays */
+d43 8
+d57 6
+d70 1
+a70 1
+  CPREC u[6][4];
+d87 1
+a87 1
+  CPREC *r;			/* non-dim radii */
+d93 3
+a95 2
+  CPREC *visc;	/* values of normalized viscosities */
+  CPREC *rvisc; 	/* radii of normalized viscosities */
+d100 2
+a101 2
+  CPREC *dfact; 	/* density factors, derived from layer thickness */
+  CPREC *rden; 	/* radii of density layers [normalized] */
+d103 1
+a103 1
+  struct lms *dens_anom; /* 
+d110 4
+a113 1
+  CPREC dens_scale[1];		/* scale for density file */
+d120 1
+a120 1
+  CPREC *rpb;	/* radius and F factor for phase
+d122 1
+a122 1
+  CPREC *fpb;
+d129 1
+a129 1
+  struct lms pvel[2]; /* 
+d135 2
+d143 1
+d148 1
+a148 1
+  struct lms *pol_sol,*geoid;
+d159 1
+a159 1
+  struct lms *tor_sol; /* 
+d164 1
+a164 1
+  CPREC *lfac,*ilfac;
+d172 6
+a177 6
+  CPREC timesc;			/* timescale in [yr] */
+  CPREC visnor;			/* visocsity for nomalization [Pas] */
+  CPREC g;			/* gravitational constant */
+  CPREC gacc;			/* gravitational acceleration  [m/s^2]*/
+  CPREC re;			/* radius of Earth [m] */
+  CPREC avg_den_core, avg_den_mantle; /* average densities of 
+d179 2
+a180 2
+  CPREC secyr;		/* seconds per year */
+  CPREC vel_scale;		/* 
+d216 1
+a216 1
+#include "auto_proto.h"
+d224 5
+a228 3
+#define R 0
+#define THETA 1
+#define PHI 2
+d233 1
+d235 2
+d238 1
+d242 1
+a242 1
+#define MEMERROR(x) {fprintf(stderr,"%s: memory allocation error, exiting\n",x);exit(-1);}
+d245 1
+d247 1
+d255 2
+a256 2
+#ifndef PI
+#define PI 3.1415926535897932384626433832795
+d264 14
+d280 2
+a281 2
+#define PHI2LON(x) ( (x) * ONEEIGHTYOVERPI )
+#define LON2PHI(x) ( (x) * PIOVERONEEIGHTY )
+d290 1
+@
+
+
+1.6
+log
+@*** empty log message ***
+@
+text
+@d7 1
+a7 1
+   $Id: hc.h,v 1.5 2004/07/30 23:52:04 becker Exp becker $
+d107 1
+d160 5
+@
+
+
+1.5
+log
+@*** empty log message ***
+@
+text
+@d7 1
+a7 1
+   $Id: hc.h,v 1.4 2004/07/02 00:15:02 becker Exp becker $
+a68 2
+  double *plm;			/* holds the factors for Legendre 
+				   functions */
+@
+
+
+1.4
+log
+@*** empty log message ***
+@
+text
+@d7 1
+a7 1
+   $Id: hc.h,v 1.3 2004/07/01 01:26:00 becker Exp becker $
+d69 2
+a70 1
+
+@
+
+
+1.3
+log
+@*** empty log message ***
+@
+text
+@d7 1
+a7 1
+   $Id: hc.h,v 1.2 2004/06/24 01:02:36 becker Exp becker $
+d22 2
+a23 2
+#ifndef my_boolean
+#define my_boolean unsigned short
+d78 1
+a78 1
+  CPREC *rv; 	/* radii of normalized viscosities */
+d84 1
+a84 2
+  CPREC *rden; 	/* radii of density layers
+		   [normalized] */
+d94 1
+a94 1
+  my_boolean compressible; /* 
+d114 25
+a138 7
+  struct lms *geoid; 	/* geoid solution, 
+			   if iformat <= 0 
+			   [nrad*6]
+			*/
+  my_boolean save_prop; /* memory intensive speedup in poloidal
+			   solution by saving propagator matrices */
+  my_boolean initialized;	/* logic flag */
+d144 1
+a144 1
+  my_boolean prem_init; 
+d156 3
+a158 2
+  CPREC vel_scale;		/* velocity scale to change from input [cm/yr]
+				   to internal
+d208 1
+a208 1
+#define MY_ERROR(x,y) {fprintf(stderr,"%s: error: %s, exiting\n",x,y);exit(-1);}
+@
+
+
+1.2
+log
+@*** empty log message ***
+@
+text
+@d7 1
+a7 1
+   $Id: hc.h,v 1.1 2004/06/16 22:55:52 becker Exp becker $
+a63 1
+
+d94 1
+a94 1
+  CPREC dens_scale;		/* scale for density file */
+d122 3
+a124 1
+  
+d139 3
+a220 1
+
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d7 1
+a7 1
+   $Id: hcexp.h,v 1.1 2004/06/06 21:02:52 becker Exp becker $
+d16 1
+a16 12
+/* 
+   load definitions for complex variable structures, Healpix structure
+   and declarations of Healpix related functions
+*/
+#include "myhealpix.h"
+/* 
+   
+same for Rick's spherical harmonic routines
+
+*/
+#include "rick_sh.h"
+
+d31 1
+a31 6
+#define STRLEN 120		/* length of char arrays */
+
+/* 
+
+ my spherical harmonics structures
+
+d33 1
+a33 2
+ 
+*/
+d36 1
+a36 1
+   individual expansion
+d39 1
+a39 44
+struct lms{			
+  int type;			/* this is the type of expansion 
+
+				HEALPIX: ab will be in imaginary convention
+
+				*/
+  /* have the spatial or the spherical versions been initialized? */
+  my_boolean spectral_init;
+  /* l_max  */
+  int lmax;
+  /*  bounds from above + 1 */
+  int lmaxp1;
+  /*  
+      two ways of storing the (l,m) arrays 
+  */
+  int lmbig; 			/* (lmax+1)**2 */
+  int lmsmall2; 		/* (exp->lmax+1)*(exp->lmax+2)for A and B */
+  /* 
+     total number of entries for a spherical harmonics expansion set
+     (depends on ivec)
+  */
+  int nplm,tnplm;
+  /* 
+     number of points in each layer the spatial domain 
+  */
+  int npoints;
+  /*
+
+    holds the coefficients:
+    
+  */
+  /* 
+     for Healpix 
+  */
+  struct scmplx *alm_c;		/* single prec complex */
+  /* 
+     for Rick type 
+  */
+  RICK_PREC *alm;
+  /* 
+     for HEALPIX
+  */
+  struct healpix_parameters heal;
+};
+d42 1
+a42 2
+spherical harmonics model structure, this holds several spherical
+harmonic expansions
+d45 1
+a45 29
+struct lms_model{
+  /* 
+     number of sets 
+  */
+  int nset;
+  /* 
+     Legendre polynomial flags
+  */
+  my_boolean save_plm;
+  /* layer indicators if nset != 1 */
+  float *z;
+  /* scalar only? ivec=0 or velocities? ivec=1 */
+  int ivec;
+  /* number of expansions per set */
+  int shps;
+  /* expansions  */
+  struct lms *exp;
+  int nexp;			/* number of expansions */
+  double *plm;			/* precomputed Legendre 
+					   functions */
+
+  /* 
+     spatial data points
+  */
+  int tnpoints;			/* number of the total datapoints */
+  /* data structure */
+  float *data;
+  my_boolean spatial_init, initialized; 
+};
+d66 2
+a67 2
+  
+  struct lms expansion;
+a68 3
+  CPREC *tvec,*pvec;		/* 
+				   toroidal and poloidal sosolution 
+				   vectors
+d71 59
+d131 7
+a137 3
+  CPREC visnor;			/* visocsity for nomalization */
+  CPREC gacc;			/* gravitational acceleration  */
+  CPREC drho;			/* reference density */
+d140 1
+d142 1
+d144 13
+a175 6
+/* 
+   spherical harmonics types 
+*/
+#define HEALPIX 0
+#define RICK 1
+
+d185 2
+a186 1
+#define MEMERROR(x) {fprintf(stderr,"memory allocation error: %s, exiting\n",x);exit(-1);}
+a190 18
+
+ compute the (l,m) index of a tighly packed array of lmsize2
+ size. arrays are C style (0...lmsize2-1).  
+
+ lmsize2 = (lmax+1)*(lmax+2), which holds all A and B coefficients
+ of an expansion of maximum order lmax
+ 
+ this assumes that A and B coefficients are stored next to each
+ other. pass a_or_b as 0 or 1 for A or B coefficients, respectively
+ 
+ 0 <= l <= lmax, 0 <= m <= l, 0 <= a_or_b <= 1
+ 
+
+*/
+#define LM_INDEX(l,m,a_or_b) ((((l)+1)*(l)/2+(m))*2+(a_or_b))
+
+
+/* 
+d209 17
+@

@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# convert HC output in binary format to GMT grd files
+#
+dfile=vdepth.dat		# depth level file
+sfile=vsol			# prefix of solution files
+
+reg=-R0/358/-89/89
+inc=-I2
+
+n=`lc $dfile`
+i=1
+while [ $i -le $n ];do
+    echo $0: working on level $i
+    j=3
+    for t in vr vt vp;do	# convert
+	gmtconvert -bis5 $sfile.$i.bin | gawk '{print($1,$2,$j)}' j=$j | \
+	    surface $reg $inc -G$t.$i.grd
+	((j=j+1))
+    done
+    ((i=i+1))
+done
+

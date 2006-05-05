@@ -1,0 +1,4 @@
+#!/bin/bash
+cd ..
+tar --create --gzip --verbose --file $HOME/tmp/hc.tgz hc/*.c hc/*.F hc/*.h hc/Makefile hc/bench/ hc/prem/ hc/RCS/
+cd -

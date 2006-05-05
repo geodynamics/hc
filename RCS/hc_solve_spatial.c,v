@@ -1,0 +1,66 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@ * @;
+
+
+1.1
+date	2004.07.31.00.01.25;	author becker;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@#include "hc.h"
+
+/* 
+
+given a spherical harmonic solution, compute the spatial 
+corresponding solution
+
+sol[nradp2 * 3 ]
+
+data has to be initialized, eg. as NULL
+*/
+void hc_compute_sol_spatial(struct hcs *hc, struct lms *sol_w,
+			    CPREC **sol_x, my_boolean verbose)
+{
+  int i,j,nradp2,np,np2,np3,os;
+  float *data = NULL;
+  nradp2 = hc->nrad + 2;
+  np = sol_w[0].npoints;
+  np2 = np * 2;
+  np3 = np2 + np;	/* 
+			   number of points per spatial 
+			   expansions for r, pol, tor
+			*/
+  /* allocate space for spatial soltuion*/
+  hc_vecrealloc(sol_x,np3*nradp2,"sol_x");
+  /* 
+     compute the plm factors 
+  */
+  sh_compute_plm(sol_w,1,&hc->fac_plm,verbose);
+  for(i=0;i < nradp2;i++){
+    /* radial component */
+    sh_compute_spatial((sol_w+i*3),0,TRUE,&hc->fac_plm,
+		       data,verbose);
+    for(os = i * np3, j=0;j < np;j++)
+      *(*sol_x+os+j) = data[j];
+    /* poloidal/toroidal component */
+    sh_compute_spatial((sol_w+i*3+1),1,TRUE,&hc->fac_plm,
+		       data,verbose);
+    for(os = i * np3 + np, j=0;j < np2;j++)
+      *(*sol_x+os+j) = data[j];
+  }
+  free(data);
+}
+@

@@ -1,0 +1,2473 @@
+head	1.12;
+access;
+symbols;
+locks
+	becker:1.12; strict;
+comment	@ * @;
+
+
+1.12
+date	2006.03.20.05.32.48;	author becker;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2006.01.22.01.11.34;	author becker;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2004.12.20.05.18.12;	author becker;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2004.12.20.05.09.42;	author becker;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2004.12.01.01.25.35;	author becker;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.07.02.00.14.44;	author becker;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.07.01.01.09.33;	author becker;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.06.24.01.02.13;	author becker;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.06.23.01.06.56;	author becker;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.06.21.01.16.31;	author becker;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.06.16.22.56.41;	author becker;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.06.16.22.54.06;	author becker;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.12
+log
+@*** empty log message ***
+@
+text
+@#include "hc.h"
+/* 
+
+compute the solution for the poloidal part of a Hager & O'Connell flow 
+computation. 
+
+the poloidal part has two contributions: density driven flow and plate motions
+
+this routine computes the y_i i=1,...,6 solutions for each layer and
+incorporates the poloidal part of the plate motions, which are passed
+as pvel_pol
+
+it is pretty much similar to the densub subroutine in the original flow code
+only that the potential solution (y_5 and y_6) are smaller than in the original
+by a factor of 1000 because we assume that densities are in kg/m^3
+
+
+*/
+void hc_polsol(struct hcs *hc, 	/* 
+				   general Hager & O'Connell solution
+				   structure, holds constants and such
+				*/
+	       /* general output radii  */
+	       int nrad, 		/* number of output radii */
+	       HC_PREC *rad,		/* output radii, normalized by
+					   R */
+	       /* 
+		  density contribution
+	       */
+	       int inho,		/* number of density layers */
+	       HC_PREC *dfact, 	/* density factors from layer thickness */
+	       hc_boolean viscosity_or_layer_changed, /* if TRUE, will
+						       (re)compute the arrays 
+						       that depend on the spacing
+						       of the density anomalies 
+						       or the viscosity structure
+						      */
+	       struct sh_lms *dens_anom, /* 
+					expansions of density
+					anomalies has to be [inho] 
+
+				     */
+	       hc_boolean compressible, /* 
+					   if TRUE, will use PREM
+					   densities, else, average
+					   mantle density
+					*/
+	       int npb,		/* number of phase boundaries */
+	       HC_PREC *rpb,	/* radius and F factor for phase
+				   boundaries */
+	       HC_PREC *fpb,
+	       hc_boolean free_slip,  /* 
+					 include plate velocities?
+					 possible, if free_slip is
+					 FALSE
+				      */
+	       struct sh_lms *pvel_pol, /* 
+					
+				     poloidal part of plate motions
+				     (only one expansion), only gets accessed
+				     if free_slip is false
+				     
+				     */
+	       struct sh_lms *pol_sol,	  /* 
+					     poloidal solution
+					     expansions 
+					     [nout * 6]
+					     nout <= nrad
+					     
+					     SHOULD BE PASSED INITIALIZED AS ZEROES
+
+					  */
+	       int iformat,	/* <= 0: geoid kernel computation, if
+				   < 0, will use n6 = -iformat if ==0,
+				   will use n6 = 4 >0 flow */
+	       struct sh_lms *geoid, 	/* geoid solution, 
+					   if iformat <= 0 
+					   [nrad*6]
+					*/
+	       hc_boolean save_prop_mats, /* 
+					     memory intensive speedup
+					     by saving all propagator
+					     matrices. this makes
+					     sense if the density
+					     anomalies changes between
+					     call, but nothing else
+				     */
+	       hc_boolean verbose)
+{
+  //
+  //    PROGRAM POLNOV
+  //
+  //    ****************************************************************
+  //    * THIS PROGRAM IS TO USED CALCULATE AND OUTPUT THE POLOIDAL    *
+  //    * COMPONENTS OF THE FLOW WITH PLATE MOTIONS                    *
+  //    * AND DENSITY CONTRASTS.  THIS PROGRAM REQUIRES THREE          *
+  //    * INPUT FILES CONTAINING:  (1) THE MODEL, (2) THE EXPANDED     *
+  //    * DENSITY CONTRASTS, AND (3) DENSITY FACTORS (*DR) AND THEIR   *
+  //    * RADII.  GENERALLY TO BE USED AFTER PROGRAM NODENC, BUT CAN BE*
+  //    * USED BEFORE IT.                                              *
+  //    * USES U(A) = P(A,C)*U(C)+SUM OVER I OF (P(A,R(I))*B(I)*DR(I)) *
+  //    * PROBLEM IS SEPARATED INTO TWO PARTS:  U(1) THROUGH U(4), THE *
+  //    * VELOCITIES AND STRESSES, HAVE BEEN SEPARATED FROM THE        *
+  //    * POTENTIAL AND DERIVATIVE USING U(3)NEW = U(3)OLD + RHO * U(5)*
+  //    * WHERE RHO IS THE AVERAGE DENSITY OF THE MANTLE.  THE U(3)    *
+  //    * IN OUTPUT IS U(3)NEW.  RHO * U(5) MUST BE SUBTRACTED.        *
+  //    ****************************************************************
+  //    This substraction is not being done in this program. This is,
+  //    because vertical stresses are used to calculate stresses 
+  //    in the lithosphere, but in this case, not the actual elevation
+  //    but the elevation above the equipotential surface, therefore
+  //    u(3)new and not u(3)old matters. For the surface jump in gravity
+  //    however, u(3)old matters, this is incorporated below.
+  //    See e.g. Panasyuk and Hager (1996)
+  //
+  //
+  // this routine has been modified from the orginial version, for which 
+  // you find the comments above. not all comments reflect these 
+  // changes, so beware. original code by B Hager, then modified by 
+  // RJO and Bernhard Steinberger
+  //
+  /* 
+
+  densities are in kg/m^3 now, beta factors are therefore
+  smaller than the original by a factor of 1000
+
+
+  */
+  // Thorsten Becker twb@@usc.edu
+  //
+  //
+  // $Id: hc_polsol.c,v 1.11 2006/01/22 01:11:34 becker Exp becker $
+  //
+  //
+  //       ARRAYS:
+  //       B: SPH. HARM. EXPANSION OF DENSITY CONTRASTS FOR EACH
+  //          INHOMOGENEOUS LAYER AND READ IN AT EACH NEW IND1 AND IND2,
+  //       pvel_pol: POLOIDAL PART OF PLATE VELOCITIES,        
+  //       D: FROM SUBROUTINE GETDEN FOR USE IN U(A) = P(A,C)*U(C)+D,
+  //       DEN: THE FACTOR FACT*RDEN*RDEN*ALPHA WHICH IS MULTIPLIED
+  //          BY B, THE PRODUCT BEING ADDED TO U(3) AT EACH RADIUS DURING
+  //          PROPAGATION WITHIN THE M LOOP, (AT RADII WITH NO DENSITY
+  //          CONTRASTS, DEN IS SET TO ZERO), U3(R+)=U3(R-)+DEN*B,
+  //       DPOT: FROM GETDEN FOR POTEN(A) = PPOT(A,C)*POTEN(C)+DPOT
+  //          WHERE POTEN(A) = [GA,-(L+1)*GA]T, POTEN//= [GC,L*GC]T,
+  //       FACT: DENSITY FACTORS (ALLOW VAR. DENS. CONTRAST WITH DEPTH),
+  //          THESE ALSO INCLUDE DR, THE RATIO OF RADII MIDPOINTS
+  //          BETWEEN RDEN RADII,
+  //       PROP: PROPAGATOR,
+  //       POTDEN: PRODUCED BY PROPIH FOR USE IN GETDEN (POTENTIALS),
+  //       POTEN,POTNEW: THE POTENTIAL AND ITS DERIVATIVE,
+  //       PPOT: A POTENTIALS PROPAGATOR (FROM EVPPOT),
+  //       PPOTS: THE ARRAY OF ALL POTENTIALS PROPAGATORS TO OBTAIN
+  //          POTEN AT EACH DESIRED RADIUS FOR ALL M AT A GIVEN L,
+  //       PROPS: THE ARRAY OF ALL PROPAGATORS NECESSARY TO OBTAIN THE
+  //          U VECTOR AT EACH DESIRED RADIUS FOR ALL M AT A GIVEN L,
+  //       PRPDEN: FACTORS FROM SUBROUTINE PROPIH FOR SUBROUTINE GETDEN,
+  //       PVISC: THE VISCOSITY FOR EACH LAYER USED IN EVALUATING PROPS,
+  //       QWRITE: A LOGICAL ARRAY USED TO DECIDE WHETHER A GIVEN U
+  //          VECTOR IS ONE REQUIRED FOR OUTPUT, (AT AN OUTPUT RADIUS),
+  //       RAD: DESIRED OUTPUT RADII,
+  //       RDEN: RADII OF INHOMOGENEOUS DENSITY CONTRASTS,
+  //       RVISC: RADII OF VISCOSITIES,
+  //       U,UNEW: POLOIDAL COMPONENTS OF FLOW,
+  //       VISC_LOCAL: VISCOSITIES.
+  //    OTHER VAR:
+  //       DOUBLE PRECISION:
+  //          ALPHA: RE*GACC*180*SECYR*TIMESC*1/(VISNOR*PI)
+  //             CONVERSION FACTORS AS USED IN PROPIH,
+  //          BETA: -4*PI*G*RE/GACC, CONV. FACTORS AS USED IN PROPIH,
+  //          EL: DEGREE (L),
+  //          ELIM: PARAMETER USED IN SIMPLE ELIMINATION,
+  //          G: UNIVERSAL GRAVITY CONSTANT (SI),
+  //          GC: NON-EQUILIBRIUM GRAV. POTENTIAL AT CORE,
+  //          GACC: GRAVITATIONAL ACCELERATION AT SURFACE (SI),
+  //          RE: RADIUS OF THE EARTH = R_DEF*1e3 (SI),
+  //          RNEXT: NEXT RADIUS IN PROPAGATION,
+  //          SC: STRESS AT CORE,
+  //          SECYR: SECONDS PER YEAR,
+  //          TIMESC: TIMESCALE OF MOTION USUALLY 1 M.Y.,
+  //          VC: VELOCITY AT CORE,
+  //          VISNOR: NORMALIZING VISCOSITY,
+  //       INTEGER: 
+  //          INDEX: DETERMINES THE ARRAY INDICES FOR DEN,PVISC,QWRITE
+  //             AND RPROPS DURING ORDERING AND INITIALIZATION,
+  //
+  //          INHO: NUMBER OF INHOMOGENEOUS RADII,
+  //
+  //          IVIS: PRESENT VISCOSITY OR DENSITY LAYER,
+  //          L: DEGREE
+  //          M: ORDER
+  //          NEWPRP: DETERMINES INDEX OF PROPEQ IN STORING PROPAGATORS,
+  //          NIH: PRESENT INHOMOGENEOUS LAYER IN EVALUATING DEN,
+  //          NINHO: PRESENT INHOMOGENEOUS LAYER IN EVALUATING U,
+  //          NPROPS: THE TOTAL NUMBER OF PROPAGATORS TO GET U,
+  //          NRADP2: NUMBER OF OUTPUT RADII,
+  //          NVIS: NUMBER OF VISCOSITIES,
+  //       LOGICAL:  
+  //          QINHO: DETERMINES IF NEXT RADIUS IS A DENSITY CONTRAST,
+  //          QVIS:  DETERMINES IF NEXT RADIUS IS A VISCOSITY CHANGE,
+  //       integer:
+  //          a_or_b: ALLOWS CALCULATION OF S(LM) AFTER CALCULATION OF
+  //             C(LM) EXCEPT AT M=0.(a_or_b == 0: A, a_or_b == 1: B)
+  //
+  //    SUBROUTINES AND FUNCTIONS:
+  //       SUBROUTINE EVPPOT (L,RATIO,PPOT):  OBTAINS PROPAGATOR FOR
+  //          NON-EQUILIBRIUM POTENTIAL AND DERIVATIVE (RATIO IS R(I)/
+  //          R(I+1), FOR PROPAGATION FROM R(I) TO R(I+1) AT L),
+  int i,i2,i3,i6,j,l,m,nih,nxtv,ivis,os,pos1,pos2,nradp2,
+    prop_s1,prop_s2,nvisp1,nzero,n6,ninho,nl=0,ip1;
+  int newprp,newpot,mmax,jpb,inho2,ibv,indx[3],a_or_b,ilayer,lmax,
+    nprops_max;
+  HC_PREC *xprem;
+  double *b,du1,du2,el,rnext,gf,drho,dadd;
+  double amat[3][3],bvec[3],u[4],poten[2],unew[4],potnew[2],clm[2];
+  static int ncalled = 0;
+  /* scaling factors will only be computed once */
+  static double rho_scale = 1.0;
+  static double alpha, beta;
+  /* 
+     structures which hold u[6][4] type arrays 
+  */
+  struct hc_sm cmb, *u3;
+  /* init flags */
+  static hc_boolean rho_init = FALSE, 
+    prop_params_init = FALSE, 	/* parameters for propagator computation */
+    ab_init = FALSE,		/* alpha, beta factors */
+    prop_mats_init = FALSE;	/* will be true only if save_prop_mats is 
+				   requested  */
+  hc_boolean qvis,qinho,hit;
+  /*  
+      define a few offset and size pointers
+  */
+  nradp2 = nrad + 2;
+  inho2 = inho + 2;
+  nvisp1 = hc->nvis+1;
+  lmax = pol_sol[0].lmax ;
+  /* 
+     max number of propagator levels, choose this generously
+  */
+  nprops_max = nradp2 * 3;
+  /* 
+     for prop and ppot: one set of propagators for all layers, there
+     lmax of those
+  */
+  prop_s1 = nprops_max * 16;
+  prop_s2 = nprops_max * 4;
+
+  /* 
+     check if still same general number of layers 
+  */
+  if((prop_params_init)&&((nradp2 != hc->nradp2)||
+			  (inho2 != hc->inho2)||
+			  (nvisp1 != hc->nvisp1))){
+    HC_ERROR("hc_polsol","layer structure changed from last call");
+  }
+  /*
+    
+  allocate space for local arrays
+  
+  */ 				 
+  /* inho + 2 */
+  u3 = (struct hc_sm *)calloc(inho2,sizeof(struct hc_sm));
+  if(!u3)
+    HC_MEMERROR("hc_polsol: u3");
+  hc_vecalloc(&b,inho2,"hc_polsol");
+  if(save_prop_mats){
+    /* 
+       propagators saved
+    */
+    if(!prop_mats_init){
+      /* 
+	 
+      we will be saving all propagator matrices. this makes sense if the 
+      density structure is the only thing that changes
+      
+      this needs quite a bit more room (array goes from l=1 (not l=0)
+      .... lmax)
+      
+      
+      */
+      hc_dvecalloc(&hc->props,prop_s1 * lmax,"hc_polsol");
+      hc_dvecalloc(&hc->ppots,prop_s2 * lmax,"hc_polsol");
+    }
+  }else{
+    /* 
+       propagator recomputed and reallocated each time
+    */
+    hc_dvecalloc(&hc->props,prop_s1,"hc_polsol");
+    hc_dvecalloc(&hc->ppots,prop_s2,"hc_polsol");
+  }
+  if(!ab_init){
+    //
+    //    SET alpha, beta factors
+    //
+    alpha  =  rho_scale * hc->re * hc->gacc / hc->visnor;	/*  */
+    alpha *= ONEEIGHTYOVERPI * hc->secyr * hc->timesc; /*  */
+    //
+    beta = -  4.0 * M_PI * hc->g * hc->re / hc->gacc;
+    /* 
+       
+    alpha and beta used to be larger by a factor of thousand because 
+    of densities
+    
+    */
+    if(verbose)
+      fprintf(stderr,"hc_polsol: alpha: %.7e beta: %.7e\n",
+	      alpha,beta);
+    ab_init = TRUE;
+  }
+  if((!prop_params_init) || (viscosity_or_layer_changed)){
+    /* 
+       
+       intialize arrays that depend on viscosity and density layer spacing 
+       
+    */
+    //    
+    //    CREATE DEN,PVISC,QWRITE,RPROPS AS FOLLOWS:
+    //    1)  INITIALIZE PVISC=VISC(IVIS), DEN=ZERO, QWRITE=FALSE
+    //    2)  FIND WHICH RADIUS (RAD,RDEN,RVISC) IS NEXT IN SEQUENCE
+    //    TO SURFACE, NOTING THAT ANY TWO OR ALL THREE MAY BE EQUAL
+    //    3)  INCREMENT INDEX AND STORE RNEXT IN RPROPS
+    //    4)  IF AT RVISC(IVIS) INCREMENT IVIS
+    //    5)  IF AT RDEN(NIH) EVALUATE DEN, INCREMENT NIH
+    //    6)  IF AT RAD(I) QWRITE = TRUE, INCREMENT I
+    //    
+    if(!prop_params_init){
+      if(verbose)
+	fprintf(stderr,"hc_polsol: initializing for %i v layers and %i dens layers\n",
+		nrad,inho);
+      /* 
+	 this is really the first call, allocate arrays
+
+	 arrays that go with nprops
+	 
+      */
+      hc_dvecalloc(&hc->rprops,nprops_max,"hc_polsol: rprop");
+      hc_dvecalloc(&hc->pvisc,nprops_max,"hc_polsol");
+      hc_dvecalloc(&hc->den,nprops_max,"hc_polsol");
+      /* initialize qwrite with zeroes! */
+      hc->qwrite = (hc_boolean *)calloc(nprops_max,sizeof(hc_boolean));
+      if(!hc->qwrite)
+	HC_MEMERROR("hc_polsol: qwrite");
+      /* those that go with (inho=nrad)+2 */
+      hc_dvecrealloc(&hc->rden,inho2,"hc_polsol");
+      /* and those for nvis+1 */
+      hc_dvecrealloc(&hc->rvisc,nvisp1,"hc_polsol");
+      hc_dvecrealloc(&hc->visc,nvisp1,"hc_polsol");
+      /* 
+	 save in case we want to check if parameters changed later
+      */
+      hc->inho2 = inho2;hc->nvisp1=nvisp1;hc->nradp2=nradp2;
+    }
+    //
+    //    SET RDEN(INHO+1) = 1.1 TO PREVENT TESTING OF THAT VALUE
+    //    
+    hc->rden[inho] = 1.1;
+    //
+    //    APPEND A FINAL RVISC_LOCAL = 1.0 TO PREVENT OUT OF BOUNDS
+    //    
+    hc->rvisc[hc->nvis] = 1.0;
+    //    
+    //    INITIALIZE INDEX,IVIS,NIH
+    //
+    hc->nprops = ivis = nih = 0;
+    hc->rprops[0] = rad[0];
+    hit = FALSE;
+    for(i=1;(i < nradp2)&&(!hit);i++){
+      //    
+      //    INITIALIZE
+      //
+      do{
+	qinho = TRUE;		/* is next radius a density contrast? */
+	qvis = TRUE;
+	//    new check, when two radii happen to be the same, exit the
+	//    loop
+	if((hc->nprops > 0) && 
+	   (fabs(hc->rprops[hc->nprops] - hc->rprops[hc->nprops-1])
+	    <HC_EPS_PREC)){
+	  hit = TRUE;		/* bailout here */
+	}else{
+	  /* normal operation */
+	  hc->pvisc[hc->nprops]  = hc->visc[ivis];
+	  hc->den[hc->nprops]    = 0.0;
+	  hc->qwrite[hc->nprops] = FALSE;	
+	  //    
+	  //    FIND NEXT RADIUS
+	  //
+	  nxtv = ivis + 1;
+	  if((hc->rden[nih] <= rad[i])&&
+	     (hc->rden[nih] <= hc->rvisc[nxtv]))
+	    qinho = FALSE;
+	  if ((hc->rvisc[nxtv] <= hc->rden[nih])&&
+	      (hc->rvisc[nxtv] <= rad[i]) && 
+	      (ivis < hc->nvis))
+	    qvis = FALSE;
+	  rnext = hc->rden[nih];
+	  if (!qvis)
+	    rnext = hc->rvisc[nxtv];
+	  if(qinho && qvis) 
+	    rnext = rad[i];
+	  //    
+	  //    INCREMENT NPROPS, STORE RPROPS
+	  //
+	  hc->nprops++;
+	  if(hc->nprops > nprops_max){ /* check, if we have enough room */
+	    fprintf(stderr,"hc_polsol: error: nprops: %i nprops_max: %i\n",
+		    hc->nprops,nprops_max);
+	    exit(-1);
+	  }
+	  hc->rprops[hc->nprops] = rnext;
+	  //    
+	  //    IF RVISC, INCREMENT IVIS
+	  //
+	  if (!qvis) 
+	    ivis = nxtv;
+	  if (!qinho) {
+	    //
+	    //    IF RDEN, EVALUATE DEN, INCREMENT NIH
+	    //    
+	    hc->den[hc->nprops-1] = dfact[nih] * hc->rden[nih] *
+	      hc->rden[nih] * alpha;
+	    nih++;
+	  }
+	}
+	//    
+	//    IF NOT RAD, DO NOT INCREMENT I
+	//    
+      }while((!hit) && (fabs(rnext-rad[i])>HC_EPS_PREC));
+      if(!hit){
+	//    
+	//    IF RAD, QWRITE = TRUE
+	//
+	hc->qwrite[hc->nprops-1] = TRUE;	
+      }
+    } /* end of nrad loop */
+    hc->den[hc->nprops] = 0.0;
+    /* 
+
+       number of propagators is now nprops+1
+
+    */
+    if(verbose >= 3){
+      if(prop_params_init)
+	fprintf(stderr,"hc_polsol: using old parameters: %i v layers and %i dens layers\n",
+		nrad,inho);
+      for(i=i2=0;i < hc->nprops+1;i++){
+	if(fabs(hc->den[i]) > HC_EPS_PREC)
+	  i2++;
+	fprintf(stderr,"hc_polsol: prop: i: %3i(%3i) r: %8.5f v: %8.3f den: %11.3e ninho: %3i/%3i\n",
+		i+1,hc->nprops,hc->rprops[i],
+		hc->pvisc[i],hc->den[i],i2,inho);
+      }
+    }
+    if(!rho_init){
+      /* 
+	 initialize the density factors, for incompressible, those
+	 are all constant, else from PREM
+      */
+      hc_vecalloc(&hc->rho,nprops_max+2,"hc_polsol: rho");
+      hc->rho_zero = (hc->rho+1);
+      if(compressible){
+	/* 
+	   
+	for compressible computation, assign densities from PREM, but
+	only use the first 10 layers (below crust and ocean, I think)
+
+	densities are in kg/m^3
+
+	*/
+	if(!hc->prem_init)
+	  prem_read_model(PREM_MODEL_FILE,hc->prem,verbose);
+	hc_vecalloc(&xprem,hc->prem->np,"hc_polsol: rho");
+	for(i=0;i < hc->nprops+1;i++){
+	  ilayer = prem_find_layer_x(hc->rprops[i],1.0,
+				     hc->prem->r,10,hc->prem->np, 
+				     xprem);
+	  hc->rho_zero[i] = prem_compute_pval(xprem,
+					      (hc->prem->crho+ilayer*hc->prem->np),
+					      hc->prem->np,1.0e3);
+	}
+	free(xprem);
+      }else{
+	/* 
+
+	for the incompressible computation, use average values of density for the
+	mantle
+	
+	densities in kg/m^3
+
+	*/
+	hc->rho_zero[-1] = hc->avg_den_core;
+	for(i=0;i < hc->nprops+1;i++)
+	  hc->rho_zero[i] = hc->avg_den_mantle;
+      }
+      hc->rho_zero[hc->nprops+1] = 0.0;
+      rho_init = TRUE;  
+    } /* end rho init */
+    prop_params_init = TRUE;
+    /* 
+       
+    end of the propagator factor section, this will only get executed
+    once unless the density factors or viscosities change
+    
+    */
+  }
+  hc->rprops[hc->nprops+1] = 1.0;
+  if(verbose >= 3)
+    for(i=0;i < hc->nprops+2;i++)
+      fprintf(stderr,"i: %3i nprops: %3i r(i): %11g rho: %11g\n",
+	      i,hc->nprops,hc->rprops[i],hc->rho_zero[i]);
+  
+  //
+  //    begin l loop
+  //
+  if(verbose)
+    fprintf(stderr,"hc_polsol: ncalled: %5i for lmax: %i dens lmax: %i, visc or layer %s changed\n",
+	    ncalled,pol_sol[0].lmax,dens_anom->lmax,
+	    ((viscosity_or_layer_changed)?(""):("not")));
+  if(free_slip)			/* select which components of pol solvec to 
+				   use */
+    nzero = 3;
+  else
+    nzero = 1;
+  pos1 = pos2 = 0;		/*
+				  offset pointers for propagators, non-zero
+				  only if the propagators are stored
+				*/
+  for(l = 1;l <= pol_sol[0].lmax;l++){
+    /* 
+       
+    MAIN L LOOP, start at l = 1 (only anomalies)
+    
+    */
+    el = (HC_PREC)l;
+    if((!save_prop_mats) || (!prop_mats_init)){
+      //    
+      // get all propagators now, as they only depend on l
+      //    
+      for(newprp = pos1, newpot = pos2, 
+	    i = 0;i < hc->nprops;i++, 
+	    newprp += 16, newpot += 4){
+	/*  
+	    obtain and save propagators 
+	*/
+	hc_evalpa(l,hc->rprops[i],hc->rprops[i+1],
+		  hc->pvisc[i],(hc->props+newprp));
+	hc_evppot(l,(hc->rprops[i]/hc->rprops[i+1]),
+		  (hc->ppots+newpot));
+      }
+    }
+    /* 
+
+    begin m loop
+
+    */
+    //    m=0
+    //    iformat < 0 is for kernel calculation; only needs to be done 
+    //    for m=0, as kernels are supposed to be equal for all m
+    //
+    if (iformat < 0)
+      mmax = 0;
+    else
+      mmax = l;
+    for(m=0;m <= mmax;m++){
+      /* 
+
+
+      START M LOOP 
+
+
+      */
+      //    
+      //    CALCULATE C(LM) FOR ALL M, S(LM) FOR M>0
+      //
+      a_or_b = 0;		/* start with A coefficient */
+      do{			/* do loop for A/B evaluation */
+	if(l <= dens_anom[0].lmax){
+	  /*
+	    
+	    obtain the coefficients from the density field expansions
+
+	  */    
+	  for(i=0;i < inho;i++) /* A or B coeff */
+	    sh_get_coeff((dens_anom+i),l,m,a_or_b,
+			 HC_SH_CONV_DT,(b+i));
+	}else{
+	  /* 
+	     density is not expanded to that high an l
+	  */
+	  for(i=0;i < inho;i++) 
+	    b[i] = 0.0;
+	}
+	b[inho] = 0.0;
+	//    
+	//    U(C) = [0,VC,SC,0], U(A) = [0,0,SA,SX]
+	//    POT(A) = [U5(A),-(L+1)*U5(A)]T, POT(C) = [U5(C),L*U5(C)]T
+	//    Find three linear independent solutions of homogeneous eqns and 
+	//    one solution of inhomogeneous eqn., all satisfying boundary
+	//    conditions at core by integrating from core up to the surface.
+	//    Find linear combination that satisfies surface boundary conditions.
+	//
+	for(i6=0;i6 < 6;i6++)	/* initialize cmb with zeroes */
+	  for(ibv=0;ibv < 4;ibv++)
+	    cmb.u[i6][ibv] = 0.0;
+
+	cmb.u[1][1] = 1.0;
+	cmb.u[2][2] = 1.0;
+	cmb.u[4][3] = 1.0;
+	cmb.u[5][3] = el;
+
+	for(ibv=0;ibv < 4;ibv++){
+	  /* 
+
+	  IBV LOOP
+
+	  */
+	  for(i=0;i < 4;i++)
+	    u[i] = cmb.u[i][ibv];
+	  poten[0] = cmb.u[4][ibv];
+	  poten[1] = cmb.u[5][ibv];
+	  //
+	  //    Propagate gravity across CMB. Inside the core, surfaces of
+	  //    constant pressure coincide with surfaces of constant potential.
+	  //
+	  poten[1] += beta * hc->rprops[0] *
+	    (u[2] - (hc->rho_zero[0] - hc->rho_zero[-1]) * poten[0]);
+	  ilayer = 0;
+	  
+	  u3[ilayer].u[0][ibv] = u[0]; /* flow/stress */
+	  u3[ilayer].u[1][ibv] = u[1];
+	  u3[ilayer].u[2][ibv] = u[2];
+	  u3[ilayer].u[3][ibv] = u[3];
+	  u3[ilayer].u[4][ibv] = poten[0]; /* potential solution */
+	  u3[ilayer].u[5][ibv] = poten[1];
+
+	  ninho = jpb = 0;
+	  for(i=0,ip1=1;i < hc->nprops;i++,ip1++){
+	    /* 
+
+	    I NPROPS LOOP
+
+	    */
+
+	    //    
+	    //
+	    //    PROPAGATE U TO NEXT RADIUS IN RPROPS
+	    //    
+	    for(os=pos1 + i*16,i2=0;i2 < 4;i2++,os += 4){
+	      unew[i2] = 0.0;
+	      for(i3=0;i3 < 4;i3++)
+		unew[i2] += hc->props[os + i3] * u[i3];
+	    }
+	    hc_a_equals_b_vector(u,unew,4);
+	    //    
+	    //    PROPAGATE POTEN TO NEXT RADIUS
+	    //    
+	    os = pos2 + i * 4;
+	    potnew[0] = poten[0] * hc->ppots[os+0] + 
+	      poten[1] * hc->ppots[os+1];
+	    poten[1]  = poten[0] * hc->ppots[os+2] + 
+	      poten[1] * hc->ppots[os+3];
+	    poten[0] = potnew[0];
+	    if(ibv == 0){
+	      //    
+	      //    ADD DEN * B, WHERE DEN = 0 FOR NO DENSITY CONTRAST
+	      //    
+	      dadd = hc->den[i] * b[ninho];
+	      u[2] += dadd;
+	      //    
+	      //    ADD DEN * BETA * B * RDEN
+	      //    
+	      poten[1] += beta * dadd * hc->rden[ninho];
+	      //fprintf(stderr,"%3i %3i %11g %11g %11g\n",
+	      //i,ninho,hc->den[i],b[ninho],beta);
+	    }
+	    //    
+	    //    Changes due to radial density variations
+	    //
+	    drho = hc->rho_zero[i] - hc->rho_zero[ip1];
+	    if(fabs(drho) > 1e-8){
+	      du1 = u[0] * drho/hc->rho_zero[ip1];
+	      du2 = du1 * (hc->pvisc[i]+hc->pvisc[ip1]);
+	      u[0] +=  du1;
+	      u[2] -=  2.0 * du2 + drho * poten[0];
+	      u[3] +=        du2;
+	    }
+	    //    
+	    //    effects of phase boundary deflections
+	    //    
+	    if ((jpb < npb)&&(hc->rprops[ip1] > rpb[jpb] - 0.0001)){
+	      if (ibv == 0) {
+		u[2] -= fpb[jpb] * b[ninho];
+		poten[1] -= beta * rpb[jpb] * fpb[jpb] * b[ninho] * rho_scale;
+	      }
+	      jpb++;
+	    }
+	    //    
+	    //    IF AT A DENSITY CONTRAST, INCREMENT NINHO FOR NEXT ONE
+	    //    
+	    if(fabs(hc->den[i]) > HC_EPS_PREC)
+	      ninho++;
+	    //    
+	    //    IF AT OUTPUT RADIUS, assign u, poten
+	    //
+	    if(hc->qwrite[i]){
+	      ilayer++;
+	      u3[ilayer].u[0][ibv] = u[0];
+	      u3[ilayer].u[1][ibv] = u[1];
+	      u3[ilayer].u[2][ibv] = u[2];
+	      u3[ilayer].u[3][ibv] = u[3];
+	      u3[ilayer].u[4][ibv] = poten[0];
+	      u3[ilayer].u[5][ibv] = poten[1];
+	    }
+	  } /* 
+	       end i,ip1 < nrprops loop  
+	    */
+	  
+	  //    Propagate gravity across surface. Above surface, normal stress
+	  //    is zero, which determines the surface elevation. Jump in gravity
+	  //    is proportional to total surface elevation (not minus equipotential
+	  //    surface)
+	  //
+	  poten[1] -= beta * hc->rprops[hc->nprops] *
+	    (u[2] - hc->rho_zero[hc->nprops] * poten[0]);
+	  nl = ilayer;
+	  u3[nl].u[5][ibv] = poten[1];
+
+	  //fprintf(stderr,"%3i u %12.4e %12.4e %12.4e %12.4e p %12.4e %12.4e\n",
+	  //ilayer, u[0],u[1],u[2],u[3],poten[0],poten[1]);
+
+	  //    end ibv loop
+	}
+	nl = ilayer+1;
+	//    
+	//    Here plate motions are incorporated 
+	//    Distinguish between free-slip (nzero=4) and no-slip with
+	//    optional plate motions (nzero=2)
+	//
+	//    
+	//    AP_l,m = cpol(l+1,m+1), AT_l,m = ctor(l+1,m+1)
+	//    and
+	//    BP_l,m = cpol(m,l+1),   BT_l,m = ctor(m,l+1)
+	//
+	//    u_2 = y_2 solution part
+	//
+	/* 
+	   get one coefficient from the poloidal plate motion part
+	*/
+	if(!free_slip)
+	  sh_get_coeff(pvel_pol,l,m,a_or_b,HC_SH_CONV_DT,clm);
+	else
+	  clm[0] = 0.0;
+	/* 
+	   B vector 
+	*/
+	bvec[0]=         u3[ilayer].u[    0][0];
+	bvec[1]=         u3[ilayer].u[nzero][0] - clm[0];
+	bvec[2]=(el+1.0)*u3[ilayer].u[    4][0] + u3[ilayer].u[5][0];
+	/* 
+	   A matrix
+	*/
+	for(i=0,i2=1;i < 3;i++,i2++){
+	  amat[0][i] = u3[ilayer].u[    0][i2];
+	  amat[1][i] = u3[ilayer].u[nzero][i2];
+	  amat[2][i] = (el + 1.0) * u3[ilayer].u[4][i2] + u3[ilayer].u[5][i2];
+	}
+	/* 
+	   solve A x = b, where b will be modified  
+	*/
+	hc_ludcmp_3x3(amat,indx);
+	hc_lubksb_3x3(amat,indx,bvec);
+	/* 
+	   assign solution 
+	*/
+	for(os=ilayer=0;ilayer < nl;ilayer++,os+=6){
+	  for(i6=0;i6 < 6;i6++){
+	    /* sum up contributions from vector solution */
+	    for(i2=1,j=0;j < 3;j++,i2++)
+	      u3[ilayer].u[i6][0] -= bvec[j]*u3[ilayer].u[i6][i2];
+	    /* 
+	       adding vector components to spherical harmonic solution 
+	    */
+	    /* A or B coefficients */
+	    sh_write_coeff((pol_sol+os+i6),l,m,
+			   a_or_b,HC_SH_CONV_DT,
+			   &u3[ilayer].u[i6][0]);
+	  }
+ 	} /* end layer loop */
+	if((!a_or_b) && (m != 0))
+	  //    IF S(LM) IS REQUIRED, GO BACK AND CALCULATE IT
+	  a_or_b = 1;
+	else
+	  a_or_b = 0;
+     }while(a_or_b);
+    } /* end m loop */
+    if(save_prop_mats){
+      /* 
+	 we want save the propagator matrices 
+      */
+      pos1 += prop_s1;
+      pos2 += prop_s2;
+    }
+  } /* end l loop */
+  if(save_prop_mats)
+    /* only now can we set the propagator matrix storage scheme to TRUE */
+    prop_mats_init = TRUE;
+  if(verbose)
+    fprintf(stderr,"hc_polsol: assigned nl: %i nprop: %i nrad: %i layers\n",
+	    nl,hc->nprops,nrad);
+  if(nl != nrad+2)
+    HC_ERROR("hc_polsol","nl not equal to nrad+2");
+  if (iformat <= 0){
+    //
+    //    Calculating geoid coefficients. The factor gf comes from
+    //    * u(5) is in units of r0 * pi/180 / Ma (about 111 km/Ma) 
+    //    * normalizing density is presumably 1 g/cm**3 = 1000 kg / m**3
+    //    * geoid is in units of meters
+    //    
+    HC_ERROR("hc_polsol","geoid not tested yet");
+    if(verbose)
+      fprintf(stderr,"hc_polsol: evaluating geoid\n");
+    /* 
+       geoid scaling factor
+    */
+    gf = M_PI * hc->visnor/180./hc->secyr/hc->gacc/1.e8;
+    if (iformat == 0) 		/* which component to select? */
+      n6 = 4;
+    else  
+      n6 = -iformat-1;
+    /* first coefficients are zero  */
+    clm[0] = clm[1] = 0.0;
+    sh_write_coeff(geoid,0,0,0,HC_SH_CONV_DT,clm); /* 0,0 */
+    sh_write_coeff(geoid,1,0,0,HC_SH_CONV_DT,clm); /* 1,0 */
+    sh_write_coeff(geoid,1,1,2,HC_SH_CONV_DT,clm); /* 1,1 */
+
+    os = nl * 6 + n6;	/* select component */
+    for(l=2;l <= pol_sol[0].lmax;l++){
+      for(m=0;m <= l;m++){
+	if (m != 0){
+	  sh_get_coeff((pol_sol+os),l,m,2,HC_SH_CONV_DT,clm);
+	  clm[0] *= gf;clm[1] *= gf;
+	  sh_write_coeff(geoid,l,m,2,HC_SH_CONV_DT,clm);
+	}else{			/* m == 0 */
+	  sh_get_coeff((pol_sol+os),l,m,0,HC_SH_CONV_DT,clm);
+	  clm[0] *= gf;
+	  sh_write_coeff(geoid,l,m,0,HC_SH_CONV_DT,clm);
+	}
+      }
+    }
+  }
+  /* 
+     free the local arrays 
+  */
+  free(b);free(u3);
+  if(!save_prop_mats){		
+    /* 
+       destroy individual propagator matrices, if we don't want to
+       keep them
+    */
+    free(hc->props);free(hc->ppots);
+  }
+  /* all others should be saved */
+  ncalled++;
+  if(verbose)
+    fprintf(stderr,"hc_polsol: done\n");
+}
+
+@
+
+
+1.11
+log
+@*** empty log message ***
+@
+text
+@d132 1
+a132 1
+  // $Id: hc_polsol.c,v 1.10 2004/12/20 05:18:12 becker Exp becker $
+d211 1
+a211 1
+  int newprp,newpot,mmax,jpb,inho2,ibv,indx[3],a_or_b,ilayer,lmax,lmaxp1,
+a237 1
+  lmaxp1 = lmax + 1;
+d674 2
+a675 2
+	      //	      fprintf(stderr,"%3i %3i %11g %11g %11g\n",
+	      //      i,ninho,den[i],b[ninho],beta);
+d730 1
+a730 1
+	  //		  ilayer, u[0],u[1],u[2],u[3],poten[0],poten[1]);
+@
+
+
+1.10
+log
+@*** empty log message ***
+@
+text
+@d132 1
+a132 1
+  // $Id: hc_polsol.c,v 1.9 2004/12/20 05:09:42 becker Exp becker $
+d209 2
+a210 3
+  int i,i2,i3,i6,j,l,m,index,nih,nxtv,ivis,os,pos1,pos2,nradp2,
+    prop_s1,prop_s2,nvisp1,nzero,n6,ninho,nl,ip1,im1,ii;
+  long int os1,os2;
+d215 1
+a215 2
+  double amat[3][3],bvec[3],u[4],poten[2],unew[4],potnew[2],clm[2],value[1];
+  FILE *out;
+d379 2
+a380 1
+	   (hc->rprops[hc->nprops] == hc->rprops[hc->nprops-1])){
+d430 1
+a430 1
+      }while((!hit) && (rnext != rad[i]));
+d449 1
+a449 1
+	if(hc->den[i]!=0)
+d702 1
+a702 1
+	    if(hc->den[i] != 0.0)
+@
+
+
+1.9
+log
+@*** empty log message ***
+@
+text
+@d25 1
+a25 1
+	       HC_CPREC *rad,		/* output radii, normalized by
+d31 1
+a31 1
+	       HC_CPREC *dfact, 	/* density factors from layer thickness */
+d49 1
+a49 1
+	       HC_CPREC *rpb,	/* radius and F factor for phase
+d51 1
+a51 1
+	       HC_CPREC *fpb,
+d132 1
+a132 1
+  // $Id: hc_polsol.c,v 1.8 2004/12/01 01:25:35 becker Exp becker $
+d214 1
+a214 1
+  HC_CPREC *xprem;
+d537 1
+a537 1
+    el = (HC_CPREC)l;
+@
+
+
+1.8
+log
+@*** empty log message ***
+@
+text
+@d38 1
+a38 1
+	       struct lms *dens_anom, /* 
+d57 1
+a57 1
+	       struct lms *pvel_pol, /* 
+d64 1
+a64 1
+	       struct lms *pol_sol,	  /* 
+d76 1
+a76 1
+	       struct lms *geoid, 	/* geoid solution, 
+d132 1
+a132 1
+  // $Id: hc_polsol.c,v 1.7 2004/07/02 00:14:44 becker Exp becker $
+d302 1
+a302 1
+    beta = -  4.0 * PI * hc->g * hc->re / hc->gacc;
+d828 1
+a828 1
+    gf = PI * hc->visnor/180./hc->secyr/hc->gacc/1.e8;
+@
+
+
+1.7
+log
+@*** empty log message ***
+@
+text
+@d25 1
+a25 1
+	       CPREC *rad,		/* output radii, normalized by
+d31 1
+a31 1
+	       CPREC *dfact, 	/* density factors from layer thickness */
+d49 1
+a49 1
+	       CPREC *rpb,	/* radius and F factor for phase
+d51 1
+a51 1
+	       CPREC *fpb,
+a87 2
+	       hc_boolean print_psol, /* print the poloidal solution
+					 component to file */
+d132 1
+a132 1
+  // $Id: hc_polsol.c,v 1.6 2004/07/01 01:09:33 becker Exp becker $
+a178 1
+  //          SUM: TEMPORARY VAR. IN MATRIX MULTIPLICATION,
+d210 1
+a210 1
+    prop_s1,prop_s2,nvisp1,nzero,n6,ninho,nl,ip1,im1;
+d214 2
+a215 2
+  CPREC *xprem;
+  double *b,du1,sum,el,rnext,gf,drho,dadd;
+d244 1
+a244 1
+  nprops_max = nradp2 * 2;
+d268 1
+a268 1
+    MEMERROR("hc_polsol: u3");
+d310 1
+a310 1
+      fprintf(stderr,"hc_polsol: alpha: %g beta: %g\n",
+d346 1
+a346 1
+	MEMERROR("hc_polsol: qwrite");
+d445 1
+a445 1
+    if(verbose >= 2){
+d509 2
+a510 1
+  if(verbose >= 2)
+d537 1
+a537 1
+    el = (CPREC)l;
+d582 3
+a584 2
+	    obtain the coefficients from the density 
+	    field expansions
+d587 2
+a588 1
+	    sh_get_coeff((dens_anom+i),l,m,a_or_b,FALSE,(b+i));
+d652 1
+a652 1
+	      sum = 0.0;
+d654 1
+a654 2
+		sum += hc->props[os + i3] * u[i3];
+	      unew[i2] = sum;
+d682 2
+a683 1
+	    if((drho = hc->rho_zero[i] - hc->rho_zero[ip1]) != 0.0){
+d685 1
+d687 2
+a688 3
+	      u[2] -=  2.0 * du1 * (hc->pvisc[i] + hc->pvisc[ip1]);
+	      u[2] -=  drho * poten[0];
+	      u[3] +=        du1 * (hc->pvisc[i] + hc->pvisc[ip1]);
+d753 1
+a753 1
+	  sh_get_coeff(pvel_pol,l,m,a_or_b,FALSE,clm);
+d759 3
+a761 3
+	bvec[0] =              u3[ilayer].u[    0][0];
+	bvec[1] =              u3[ilayer].u[nzero][0] - clm[0];
+	bvec[2] = (el + 1.0) * u3[ilayer].u[    4][0] + u3[ilayer].u[5][0];
+a774 1
+
+d782 1
+a782 1
+	      u3[ilayer].u[i6][0] -= bvec[j] * u3[ilayer].u[i6][i2];
+d788 2
+a789 1
+			   a_or_b,FALSE,&u3[ilayer].u[i6][0]);
+d813 2
+a814 24
+  if(print_psol){
+    /* 
+       output of poloidal solution  vectors
+    */
+    if(verbose)
+      fprintf(stderr,"hc_polsol: printing poloidal colution vector to %s\n",
+	      HC_POLSOL_FILE);
+    out = hc_open(HC_POLSOL_FILE,"w","hc_polsol");
+    for(l=1;l<=31;l++){
+      for(m=0;m<=l;m++){
+	for(a_or_b=0;a_or_b < ((m==0)?(1):(2));a_or_b++){
+	  for(i=os=0;i < nl;i++,os+=6){
+	    fprintf(out,"%3i %3i %1i %3i %8.5f ",l,m,a_or_b,i+1,hc->r[i]);
+	    for(j=0;j<6;j++){
+	      sh_get_coeff((pol_sol+os+j),l,m,a_or_b,FALSE,value);
+	      fprintf(out,"%11.4e ",value[0]);
+	    } /* end u_1 .. u_4 nu_1 nu_2 loop */
+	    fprintf(out,"\n");
+	  } /* end layer loop */
+	} /* and A/B coefficient loop */
+      }	/* end m loop */
+    } /* end l loop */
+    fclose(out);
+  }
+d825 3
+d829 1
+a829 1
+    if (iformat == 0) 
+d833 1
+d835 3
+a837 3
+    sh_write_coeff(geoid,0,0,0,FALSE,clm); /* 0,0 */
+    sh_write_coeff(geoid,1,0,0,FALSE,clm); /* 1,0 */
+    sh_write_coeff(geoid,1,1,2,FALSE,clm); /* 1,1 */
+d843 1
+a843 1
+	  sh_get_coeff((pol_sol+os),l,m,2,FALSE,clm);
+d845 1
+a845 1
+	  sh_write_coeff(geoid,l,m,2,FALSE,clm);
+d847 1
+a847 1
+	  sh_get_coeff((pol_sol+os),l,m,0,FALSE,clm);
+d849 1
+a849 1
+	  sh_write_coeff(geoid,l,m,0,FALSE,clm);
+@
+
+
+1.6
+log
+@*** empty log message ***
+@
+text
+@a27 7
+		  viscosity structure
+	       */
+	       int nvis,		/* number of viscosity
+					   layers */
+	       CPREC *visc,	/* values of normalized viscosities */
+	       CPREC *rvisc, 	/* radii of normalized viscosities */
+	       /* 
+d32 6
+a37 8
+	       my_boolean dens_fac_changed, /* 
+					       if TRUE, will recompute
+					       the arrays that depend
+					       on viscosity and dfact[]
+					    */
+	       CPREC *rden, 	/* radii of density layers
+				   [normalized] */
+	       
+d40 2
+a41 4
+					anomalies has to be [inho] (if
+					those change, that's OK, no
+					need to call with
+					dens_fac_changed == TRUE)
+d43 1
+a43 1
+	       my_boolean compressible, /* 
+d52 1
+a52 1
+	       my_boolean free_slip,  /* 
+d80 7
+a86 4
+	       my_boolean save_prop, /* memory intensive speedup by saving all
+					propagators. this makes sense if the density
+					anomalies  changes between call, but 
+					nothing else
+d88 3
+a90 3
+	       my_boolean print_psol, /* print the poloidal solution component to file */
+	       my_boolean verbose
+	       )
+d134 1
+a134 1
+  // $Id: hc_polsol.c,v 1.5 2004/06/24 01:02:13 becker Exp becker $
+d164 2
+a165 2
+  //       RDEN_LOCAL: RADII OF INHOMOGENEOUS DENSITY CONTRASTS,
+  //       RVISC_LOCAL: RADII OF VISCOSITIES,
+d215 2
+a216 1
+  int newprp,newpot,mmax,jpb,inho2,ibv,indx[3],a_or_b,ilayer,lmax,lmaxp1;
+d218 1
+a218 1
+  double prop[16],ppot[4],*b,du1,sum,el,rnext,gf,drho,dadd;
+d221 1
+a221 10
+  static double *rho,*rho_zero;	/* 
+				   density factors should be saved
+				*/
+  /* 
+     propagator related factors as well 
+  */
+  static int nprops,nradp2_old,nvisp1_old,inho2_old,nprops_max;
+  static double *rprops,*pvisc,*dfact_local,*props,*ppots,
+    *rden_local,*rvisc_local,*den,*visc_local;
+  static my_boolean *qwrite;
+d230 6
+a235 4
+  static my_boolean rho_init = FALSE, 
+    prop_par_init = FALSE, ab_init = FALSE,
+    prop_init = FALSE;
+  my_boolean qvis,qinho,hit;
+d241 1
+a241 1
+  nvisp1 = nvis+1;
+d245 1
+a245 1
+     max number of propagator levels 
+d248 4
+a251 1
+  /* for prop and ppot */
+d255 7
+a261 6
+#ifdef DEBUG
+  /* check if still same number of layers */
+  if((prop_par_init)&&((nradp2 != nradp2_old)||
+		       (inho2 != inho2_old)||
+		       (nvisp1 != nvisp1_old))){
+    MY_ERROR("hc_polsol","viscosity or layer structure changed from last call");
+a262 1
+#endif
+d272 2
+a273 2
+  my_vecalloc(&b,inho2,"hc_polsol");
+  if((save_prop) && (!prop_init)){
+d275 1
+a275 1
+       this needs quite a bit more room (array goes from l=1 (not l=0) .... lmax)
+d277 14
+a290 2
+    my_dvecalloc(&props,prop_s1 * lmax,"hc_polsol");
+    my_dvecalloc(&ppots,prop_s2 * lmax,"hc_polsol");
+d292 5
+a296 3
+    /* propagator recomputed each time */
+    my_dvecalloc(&props,prop_s1,"hc_polsol");
+    my_dvecalloc(&ppots,prop_s2,"hc_polsol");
+d317 1
+a317 1
+  if((!prop_par_init)||(dens_fac_changed)){
+d320 1
+a320 1
+       intialize arrays that depend on viscosity and density factors
+d326 1
+a326 1
+    //    2)  FIND WHICH RADIUS (RAD,RDEN,RVISC_LOCAL) IS NEXT IN SEQUENCE
+d329 2
+a330 2
+    //    4)  IF AT RVISC_LOCAL(IVIS) INCREMENT IVIS
+    //    5)  IF AT RDEN_LOCAL(NIH) EVALUATE DEN, INCREMENT NIH
+d333 1
+a333 1
+    if(!prop_par_init){
+d338 1
+a338 3
+	 allocate only once 
+      */
+      /* 
+d340 2
+a341 2
+      arrays that go with nprops
+      
+d343 3
+a345 3
+      my_dvecalloc(&rprops,nprops_max,"hc_polsol: rprop");
+      my_dvecalloc(&pvisc,nprops_max,"hc_polsol");
+      my_dvecalloc(&den,nprops_max,"hc_polsol");
+d347 2
+a348 2
+      qwrite = (my_boolean *)calloc(nprops_max,sizeof(my_boolean));
+      if(!qwrite)
+d351 1
+a351 2
+      my_dvecalloc(&rden_local,inho2,"hc_polsol");
+      my_dvecalloc(&dfact_local,inho2,"hc_polsol");
+d353 2
+a354 2
+      my_dvecalloc(&rvisc_local,nvisp1,"hc_polsol");
+      my_dvecalloc(&visc_local,nvisp1,"hc_polsol");
+d358 1
+a358 1
+      inho2_old = inho2;nvisp1_old=nvisp1;nradp2_old=nradp2;
+a359 6
+    /* make local copies */
+    a_equals_b_vector(rden_local, rden, inho);
+    a_equals_b_vector(dfact_local,dfact,inho);
+    a_equals_b_vector(rvisc_local,rvisc,nvis);
+    a_equals_b_vector(visc_local, visc, nvis);
+
+d361 1
+a361 1
+    //    SET RDEN_LOCAL(INHO+1) = 1.1 TO PREVENT TESTING OF THAT VALUE
+d363 1
+a363 1
+    rden_local[inho] = 1.1;
+d367 1
+a367 1
+    rvisc_local[nvis] = 1.0;
+d371 2
+a372 2
+    nprops = ivis = nih = 0;
+    rprops[0] = rad[0];
+d379 1
+a379 1
+	qinho = TRUE;
+d383 2
+a384 2
+	if((nprops > 0) && 
+	   (rprops[nprops] == rprops[nprops-1])){
+d388 3
+a390 3
+	  pvisc[nprops]  = visc_local[ivis];
+	  den[nprops]    = 0.0;
+	  qwrite[nprops] = FALSE;	
+d395 2
+a396 2
+	  if((rden_local[nih] <= rad[i])&&
+	     (rden_local[nih] <= rvisc_local[nxtv]))
+d398 3
+a400 3
+	  if ((rvisc_local[nxtv] <= rden_local[nih])&&
+	      (rvisc_local[nxtv] <= rad[i]) && 
+	      (ivis < nvis))
+d402 1
+a402 1
+	  rnext = rden_local[nih];
+d404 1
+a404 1
+	    rnext = rvisc_local[nxtv];
+d410 2
+a411 2
+	  nprops++;
+	  if(nprops > nprops_max){ /* check, if we have enough room */
+d413 1
+a413 1
+		    nprops,nprops_max);
+d416 1
+a416 1
+	  rprops[nprops] = rnext;
+d418 1
+a418 1
+	  //    IF RVISC_LOCAL, INCREMENT IVIS
+d424 1
+a424 1
+	    //    IF RDEN_LOCAL, EVALUATE DEN, INCREMENT NIH
+d426 2
+a427 2
+	    den[nprops-1] = dfact_local[nih] * rden_local[nih] *
+	      rden_local[nih] * alpha;
+d439 1
+a439 1
+	qwrite[nprops-1] = TRUE;	
+d442 1
+a442 1
+    den[nprops] = 0.0;
+d448 6
+a453 3
+    if(verbose){
+      for(i=i2=0;i < nprops+1;i++){
+	if(den[i]!=0)
+d456 2
+a457 1
+		i+1,nprops,rprops[i],pvisc[i],den[i],i2,inho);
+a459 1
+
+d465 2
+a466 2
+      my_vecalloc(&rho,nprops_max+2,"hc_polsol: rho");
+      rho_zero = (rho+1);
+d478 4
+a481 3
+	my_vecalloc(&xprem,hc->prem->np,"hc_polsol: rho");
+	for(i=0;i < nprops+1;i++){
+	  ilayer = prem_find_layer_x(rprops[i],1.0,hc->prem->r,10,hc->prem->np, 
+d483 3
+a485 2
+	  rho_zero[i] = prem_compute_pval(xprem,(hc->prem->crho+ilayer*hc->prem->np),
+					  hc->prem->np,1.0e3);
+d497 3
+a499 3
+	rho_zero[-1] = hc->avg_den_core;
+	for(i=0;i < nprops+1;i++)
+	  rho_zero[i] = hc->avg_den_mantle;
+d501 1
+a501 1
+      rho_zero[nprops+1] = 0.0;
+d504 1
+a504 6
+    prop_par_init = TRUE;
+    if(verbose >= 2)
+      for(i=0;i<nprops+2;i++)
+	fprintf(stderr,"i: %3i nprops: %3i r(i): %11g rho: %11g\n",
+		i,nprops,rprops[i],rho_zero[i]);
+
+d507 2
+a508 1
+    end of the propagator factor section
+d512 5
+d521 3
+a523 2
+    fprintf(stderr,"hc_polsol: solving for lmax: %i dens lmax: %i\n",
+	    pol_sol[0].lmax,dens_anom->lmax);
+d529 5
+a533 1
+ for(l = 1;l <= pol_sol[0].lmax;l++){
+d540 1
+a540 11
+    if(save_prop){
+      /* 
+	 offsets if we want to save the propagator matrices 
+      */
+      pos1 = (l-1) * prop_s1;
+      pos2 = (l-1) * prop_s2;
+    }else{
+      /* only for this pass, change for next l */
+      pos1 = pos2 = 0;
+    }
+    if((!save_prop)||(!prop_init)){
+d542 1
+a542 2
+      // get all propagators before 
+      // the propagators only depend on l, rprops
+d544 3
+a546 3
+      for(newprp = pos1, newpot = pos2, i = 0;
+	  i < nprops;
+	  i++, newprp += 16, newpot += 4){
+d548 1
+a548 1
+	    obtain propagators 
+d550 4
+a553 5
+	hc_evalpa(l,(double)rprops[i],(double)rprops[i+1],
+		  (double)pvisc[i],prop);
+	hc_evppot(l,((double)rprops[i]/(double)rprops[i+1]),ppot);
+	a_equals_b_vector((props+newprp),prop,16);
+	a_equals_b_vector((ppots+newpot),ppot,4);
+d628 2
+a629 2
+	  poten[1] += beta * rprops[0] *
+	    (u[2] - (rho_zero[0] - rho_zero[-1]) * poten[0]);
+d640 1
+a640 1
+	  for(i=0,ip1=1;i < nprops;i++,ip1++){
+d654 1
+a654 1
+		sum += props[os + i3] * u[i3];
+d657 1
+a657 1
+	    a_equals_b_vector(u,unew,4);
+d662 4
+a665 2
+	    potnew[0] = poten[0] * ppots[os+0] + poten[1] * ppots[os+1];
+	    poten[1]  = poten[0] * ppots[os+2] + poten[1] * ppots[os+3];
+d671 1
+a671 1
+	      dadd = den[i] * b[ninho];
+d674 1
+a674 1
+	      //    ADD DEN * BETA * B * RDEN_LOCAL
+d676 1
+a676 1
+	      poten[1] += beta*dadd*rden_local[ninho];
+d683 2
+a684 2
+	    if((drho = rho_zero[i]-rho_zero[ip1]) != 0.0){
+	      du1 = u[0] * drho/rho_zero[ip1];
+d686 1
+a686 1
+	      u[2] -=  2.0 * du1 * (pvisc[i] + pvisc[ip1]);
+d688 1
+a688 1
+	      u[3] +=        du1 * (pvisc[i] + pvisc[ip1]);
+d693 1
+a693 1
+	    if ((jpb < npb)&&(rprops[ip1] > rpb[jpb] - 0.0001)){
+d703 1
+a703 1
+	    if(den[i] != 0.0)
+d708 1
+a708 1
+	    if(qwrite[i]){
+d726 2
+a727 2
+	  poten[1] -= beta * rprops[nprops] *
+	    (u[2] - rho_zero[nprops] * poten[0]);
+d731 1
+a731 1
+	  //	  fprintf(stderr,"%3i u %12.4e %12.4e %12.4e %12.4e p %12.4e %12.4e\n",
+d799 7
+d807 3
+a809 2
+  if(save_prop)
+    prop_init = TRUE;
+d812 5
+a816 2
+	    nl,nprops,nrad);
+  if(print_psol){	/* output of poloidal solution  */
+d820 1
+a820 1
+    out = myopen(HC_POLSOL_FILE,"w","hc_polsol");
+d844 1
+a844 1
+    MY_ERROR("hc_polsol","geoid not tested yet");
+d876 6
+a881 2
+  if(!save_prop){		/* destroy arrays */
+    free(props);free(ppots);
+a882 1
+    
+d884 3
+a886 161
+}
+
+
+void hc_evppot(int l,double ratio, double *ppot)
+{
+  //    ********************************************
+  //    * THIS SUBROUTINE OBTAINS THE POTENTIALS   *
+  //    * PROPAGATOR FROM R1 TO R2 AT L, WHERE     *
+  //    * RATIO = R1/R2.                           *
+  //    ********************************************
+  //
+  double  c,expf1,expf2,x,xp1;
+  
+  //    PASSED PARAMETERS:  L: DEGREE,
+  //       RATIO: R1 / R2 (R2>R1),
+  //       PPOT: THE POTENTIALS PROPAGATOR [4]
+  //
+  //    DOUBLE PRECISION:  C: COEFFICIENT MULTIPLYING PROPAGATOR,
+  //       EXPF1: RATIO**L, EXPONENTIAL FACTOR IN PPOT,
+  //       EXPF2: (1/RATIO)**(L+1), EXP. FACTOR IN PPOT,
+  //       X: DEGREE (L),
+  //       XP1: X+1.
+  
+  x = (double)l;
+  c = 1.0 / (2.0 * x + 1.0);
+  xp1 = x + 1.0;
+  expf1 = pow(ratio,x);
+  expf2 = 1.0 / (expf1*ratio);
+  ppot[0] = c * (x * expf1 + xp1 * expf2);
+  ppot[1] = c * (expf2 - expf1);
+  ppot[2] = x * xp1 * ppot[1];
+  ppot[3] = ppot[0] - ppot[1];
+}
+
+void hc_evalpa(int l,double r1,double r2,double visc, double *p)
+{
+  //
+  //    ****************************************************************
+  //    * THIS SUBROUTINE CALCULATES THE 4X4 PROPAGATOR MATRIX THROUGH *
+  //    * USE OF AN ALGEBRAI//FORM (IE: ALL MATRIX MULTIPLICATIONS     *
+  //    * PERFORMED ALGEBRAICLY, THE RESULT BEING CODED HEREIN).  THIS *
+  //    * CODE IS A REVISION OF M. RICHARDS' SUBROUTINE, DESIGNED TO   *
+  //    * INTERFACE WITH THE EXISTING PROGRAMS.                        *
+  //    ****************************************************************
+  //
+  double den1,den2,f[4],r,rlm1,rlp1,rmlm2,rml,v2,rs;
+  int np[4][4][4];
+  int lp1,lp2,lp3,lm1,lm2,lpp,lmm,l2p3,l2p1,l2m1,llp1,llp2;
+  int i,j,k,os1,os2;
+  //
+  //    PASSED PARAMETERS:  L: DEGREE,
+  //    R1,R2: PROPAGATE FROM R1 TO R2 (RADII),
+  //    VISC: VISCOSITY
+  //    P: THE PROPAGATOR [4*4]
+  //
+  //    OTHER VARIABLES:
+  //       NP: INTEGER FACTORS (FUNCTIONS OF L) IN THE EXPRESSIONS
+  //          FOR THE ELEMENTS OF P,
+  //       F: DOUBLE PRECISION FACTORS (FUNCTIONS OF R AND L) FOR P,
+  //       R IS THE RADIUS RATIO R/R0 (DOUBLE PRECISION).
+  //
+  r = r2 / r1;
+
+  lp1 = l + 1;
+  lp2 = l + 2;
+  lp3 = l + 3;
+  lm1 = l - 1;
+  lm2 = l - 2;
+
+  lpp = l * lp3 - 1;		
+  lmm = l * l - lp3;
+  
+  llp1 = l * lp1;
+  llp2 = l * lp2;
+
+  l2p3 = lp3 + l;
+  l2p1 = lp1 + l;
+  l2m1 = lm1 + l;
+
+  v2 = visc * 2.0;
+  rs = r * r;
+
+  rlm1 = pow(r,(double)lm1);
+  rlp1 = rlm1 * rs;
+  rmlm2 = pow(r,(double)(-lp2));
+  rml = rmlm2 * rs;
+
+  den1 = (double)(l2p1 * l2p3);
+  den2 = (double)(l2p1 * l2m1);
+
+  f[0] = rlp1 / den1;
+  f[1] = rlm1 / den2;
+  f[2] = rml  / den2;
+  f[3] = rmlm2/ den1;
+
+  // DO INTEGER MULTIPLIES
+
+  // FIRST, SET UP 16 'REFERENCE' ELEMENTS
+  
+  np[0][2][0] = -llp1;
+  np[0][2][1] = -np[0][2][0];
+  np[0][2][2] =  np[0][2][0];
+  np[0][2][3] =  np[0][2][1];
+
+  np[1][2][0] = -lp3;
+  np[1][2][1] =  lp1;
+  np[1][2][2] =  lm2;
+  np[1][2][3] = -l;
+
+  np[2][2][0] = - lp1 * lmm;
+  np[2][2][1] =  llp1 * lm1;
+  np[2][2][2] =     l * lpp;
+  np[2][2][3] = -llp1 * lp2;
+
+  np[3][2][0] = -llp2;
+  np[3][2][1] =  lm1 * lp1;
+  np[3][2][2] = -np[3][2][1];
+  np[3][2][3] = -np[3][2][0];
+ 
+  //generate other elements
+
+  for(i=0;i < 4;i++){
+    np[i][0][0] =  np[i][2][0] * lp2;
+    np[i][1][0] = -np[i][0][0] * l;
+    np[i][3][0] = -np[i][2][0] * l;
+    
+    np[i][0][1] = (np[i][2][1] * lpp) / lp1;
+    np[i][1][1] = -np[i][2][1] * lp1 * lm1;
+    np[i][3][1] = -np[i][2][1] * lm2;
+    
+    np[i][0][2] = -np[i][2][2] * lm1;
+    np[i][1][2] =  np[i][0][2] * lp1;
+    np[i][3][2] =  np[i][2][2] * lp1;
+
+    np[i][0][3] =(-np[i][2][3] * lmm) / l;
+    np[i][1][3] = -np[i][2][3] * llp2;
+    np[i][3][3] =  np[i][2][3] * lp3;
+    
+  }
+  //put IN COMMON FACTORS
+  
+  for(os1=i=0;i < 4;i++,os1+=4){
+    for(j=0;j<4;j++){
+      os2 = os1 + j;
+      p[os2] = 0.0;
+      for(k=0;k < 4;k++)
+	p[os2] += ((double)(np[i][j][k])) * f[k];
+    }
+  }
+  
+  // PUT IN VISCOSITIES
+
+  p[0*4+2] /= v2;
+  p[0*4+3] /= v2;
+  p[1*4+2] /= v2;
+  p[1*4+3] /= v2;
+
+  p[2*4+0] *= v2;
+  p[2*4+1] *= v2;
+  p[3*4+0] *= v2;
+  p[3*4+1] *= v2;
+@
+
+
+1.5
+log
+@*** empty log message ***
+@
+text
+@d9 1
+a9 1
+this routine computes the y_i i=0,...,5 solutions for each layer and
+d13 4
+d71 2
+a72 1
+				     (only one expansion)
+d91 6
+a96 1
+	       my_boolean save_prop, /* memory intensive speedup */
+d134 1
+a134 1
+  densities are in kg/m^3 now, alpha and beta factors are therefore
+d142 1
+a142 1
+  // $Id: hc_polsol.c,v 1.4 2004/06/23 01:06:56 becker Exp becker $
+d221 1
+a221 1
+    prop_s1,prop_s2,nvisp1,nzero,n6,ninho,nl,ip1;
+d223 1
+a223 1
+  int newprp,newpot,mmax,iout,jpb,inho2,ibv,indx[3],a_or_b,ilayer,lmax,lmaxp1;
+d225 4
+a228 4
+  double prop[16],ppot[4],*b,du1,sum,el,rnext,gf;
+  double amat[3][3],bvec[3],u[4],poten[2],unew[4],potnew[2],
+    clm[2];
+  static double *rho_zero;	/* 
+d239 1
+d246 1
+a246 1
+  static my_boolean rho_zero_init = FALSE, 
+d299 1
+a299 1
+    alpha  = hc->re * hc->gacc / hc->visnor;	/*  */
+d302 1
+a302 1
+    beta = - 4.0 * PI * hc->g * hc->re / hc->gacc;
+d309 3
+d448 1
+d455 6
+a460 3
+      for(i=0;i < nprops+1;i++)
+	fprintf(stderr,"hc_polsol: prop: i: %3i(%3i) r: %8.5f v: %8.5f den: %8.5f\n",
+		i+1,nprops,rprops[i],pvisc[i],den[i]);
+d463 1
+a463 1
+    if(!rho_zero_init){
+d468 2
+a469 1
+      my_vecalloc(&rho_zero,nprops_max+1,"hc_polsol: rho_zero");
+d476 2
+d481 1
+a481 1
+	my_vecalloc(&xprem,hc->prem->np,"hc_polsol: rho_zero");
+d495 2
+d498 2
+a499 2
+	rho_zero[0] = hc->avg_den_core;
+	for(i=1;i < nprops+1;i++)
+d503 2
+a504 2
+      rho_zero_init = TRUE;  
+    } /* end rho_zero init */
+d506 4
+a509 3
+    //for(i=0;i<nprops+2;i++)
+    //fprintf(stderr,"i: %3i nprops: %3i r(i): %11g rho: %11g\n",
+    //      i,nprops,rprops[i],rho_zero[i]);
+d523 6
+a528 1
+  for(l = 1;l <= pol_sol[0].lmax;l++){
+d603 1
+d636 2
+a637 3
+	    (u[2] - (rho_zero[1] - rho_zero[0])*poten[0]);
+
+	  iout = 0;
+d639 6
+a644 6
+	  u3[iout].u[0][ibv] = u[0];
+	  u3[iout].u[1][ibv] = u[1];
+	  u3[iout].u[2][ibv] = u[2];
+	  u3[iout].u[3][ibv] = u[3];
+	  u3[iout].u[4][ibv] = poten[0];
+	  u3[iout].u[5][ibv] = poten[1];
+d653 1
+d676 2
+a677 1
+	      u[2] += den[i] * b[ninho];
+d681 3
+a683 1
+	      poten[1] += beta*den[i]*b[ninho]*rden_local[ninho];
+d688 7
+a694 5
+	    du1 = u[0] *(rho_zero[i]-rho_zero[ip1])/rho_zero[ip1];
+	    u[0] += du1;
+	    u[2] += -2.0*(pvisc[i] + pvisc[ip1])* du1 +
+	      (rho_zero[ip1] - rho_zero[i]) * poten[0];
+	    u[3] += (pvisc[i] + pvisc[ip1])*du1;
+d701 1
+a701 1
+		poten[1] -= beta *rpb[jpb]*fpb[jpb]*b[ninho];
+d714 7
+a720 7
+	      iout++;
+	      u3[iout].u[0][ibv] = u[0];
+	      u3[iout].u[1][ibv] = u[1];
+	      u3[iout].u[2][ibv] = u[2];
+	      u3[iout].u[3][ibv] = u[3];
+	      u3[iout].u[4][ibv] = poten[0];
+	      u3[iout].u[5][ibv] = poten[1];
+d731 3
+a733 3
+	  poten[1] -= beta * rprops[nprops+1] *
+	    (u[2] - rho_zero[nprops+1] * poten[0]);
+	  nl = iout;
+d735 4
+a738 1
+	  
+d741 1
+a741 1
+	nl = iout+1;
+a746 4
+	if(free_slip)
+	  nzero = 3;
+	else
+	  nzero = 1;
+d757 4
+a760 1
+	sh_get_coeff(pvel_pol,l,m,a_or_b,FALSE,clm);
+d764 3
+a766 3
+	bvec[0] =              u3[iout].u[    0][0];
+	bvec[1] =              u3[iout].u[nzero][0] - clm[0];
+	bvec[2] = (el + 1.0) * u3[iout].u[    4][0] + u3[iout].u[5][0];
+d771 3
+a773 3
+	  amat[0][i] = u3[iout].u[    0][i2];
+	  amat[1][i] = u3[iout].u[nzero][i2];
+	  amat[2][i] = (el + 1.0) * u3[iout].u[4][i2] + u3[iout].u[5][i2];
+d780 1
+d784 1
+a784 1
+	for(os=iout=0;iout < nl;iout++,os+=6){
+d786 3
+a788 2
+	    for(i2=1,j=0;j < 3;j++,i2++)	/* sum up contributions */
+	      u3[iout].u[i6][0] -= bvec[j] * u3[iout].u[i6][i2];
+d790 1
+a790 1
+	       adding to solution 
+d794 1
+a794 1
+			   a_or_b,FALSE,&u3[iout].u[i6][0]);
+d796 1
+a796 1
+	}
+d802 1
+a802 1
+      }while(a_or_b);
+d808 1
+a808 1
+    fprintf(stderr,"hc_polsol: assigned iout: %i nprop: %i nrad: %i layers\n",
+d810 21
+a830 1
+
+d838 1
+@
+
+
+1.4
+log
+@*** empty log message ***
+@
+text
+@d132 1
+a132 1
+  // $Id: hc_polsol.c,v 1.3 2004/06/21 01:16:31 becker Exp becker $
+d703 1
+a703 1
+	nl = iout;
+d721 1
+a721 1
+	   get one coefficient 
+d727 3
+a729 3
+	bvec[0] = u3[nl].u[    0][0];
+	bvec[1] = u3[nl].u[nzero][0] - clm[0];
+	bvec[2] = (el + 1.0) * u3[nl].u[4][0] + u3[nl].u[5][0];
+d734 3
+a736 3
+	  amat[0][i] = u3[nl].u[    0][i2];
+	  amat[1][i] = u3[nl].u[nzero][i2];
+	  amat[2][i] = (el + 1.0) * u3[nl].u[4][i2] + u3[nl].u[5][i2];
+@
+
+
+1.3
+log
+@*** empty log message ***
+@
+text
+@a58 2
+	       int *nout,	/* the actual number of output
+				   layers  */
+d132 1
+a132 1
+  // $Id: hc_polsol.c,v 1.2 2004/06/16 22:56:41 becker Exp becker $
+d210 2
+a211 2
+  int i,i3,i6,j,l,m,index,nih,nxtv,ivis,os,pos1,pos2,nradp2,
+    prop_s1,prop_s2,nvisp1,nzero,n6,ninho;
+d213 1
+a213 1
+  int newprp,newpot,mmax,iout,jpb,inho2,ibv,indx[3],a_or_b,ilayer;
+d224 1
+a224 1
+  static int nprops,nradp2_old,nvisp1_old,inho2_old;
+a233 3
+  /* for spherical harmonic coefficient storage */
+  static my_boolean phys_norm = FALSE; /* don't change from internal
+					  normaliztion of SHEs */
+a243 2
+  prop_s1 = inho2*16;		/* for prop and ppot */
+  prop_s2 = inho2*4;
+d245 10
+a272 1
+
+d274 5
+a278 3
+    /* this needs quite a bit more room */
+    my_dvecalloc(&props,prop_s1 * pol_sol[0].lmax,"hc_polsol");
+    my_dvecalloc(&ppots,prop_s2 * pol_sol[0].lmax,"hc_polsol");
+d302 3
+a304 2
+       intialize arrays that depend on viscosity and density 
+       factors only 
+d320 11
+a330 2
+      /* allocate only once */
+      my_vecalloc(&rprops,nradp2,"hc_polsol: rprop");
+d332 1
+a332 1
+      qwrite = (my_boolean *)calloc(nradp2,sizeof(my_boolean));
+d335 1
+d338 1
+a339 1
+      my_dvecalloc(&pvisc,nvisp1,"hc_polsol");
+a340 1
+      my_dvecalloc(&den,nvisp1,"hc_polsol");
+d346 3
+d350 2
+a351 3
+    a_equals_b_vector(visc_local,visc,nvis);
+    a_equals_b_vector(rden_local,rden,inho);
+    a_equals_b_vector(dfact_local,dfact,inho);
+d380 2
+a381 2
+	  pvisc[nprops] = visc_local[ivis];
+	  den[nprops] = 0.0;
+d403 5
+d428 3
+a430 3
+      //    
+      //    IF RAD, QWRITE = TRUE
+      //
+d439 4
+a442 4
+    if(nprops+1 > nradp2){
+      fprintf(stderr,"hc_polsol: error: nprops+1: %i nrad: %i\n",
+	      nprops+1,nrad);
+      exit(-1);
+d444 1
+d450 1
+a450 1
+      my_vecalloc(&rho_zero,nradp2,"hc_polsol: rho_zero");
+d454 2
+a455 1
+	for compressible computation, use the first 10 layers of PREM
+d461 1
+a461 1
+	for(i=0;i<nprops;i++){
+d469 6
+d476 1
+a476 1
+	for(i=1;i < nprops;i++)
+d479 2
+a480 6
+      rho_zero[nprops] = 0.0;
+      if(verbose)
+	for(i=0;i<nprops+1;i++)
+	  fprintf(stderr,"hc_polsol: prop: r: %11g v: %11g rho: %11g\n",
+		  rprops[i],pvisc[i],rho_zero[i]);
+      rho_zero_init = TRUE;    
+d483 4
+a491 3
+    for(i=0;i<nprops+1;i++)
+      fprintf(stderr,"hc_polsol: r: %11g v: %11g d: %11g\n",
+	      rprops[i],pvisc[i],rho_zero[i]);
+d502 1
+a502 1
+    main L loop, start at l = 1 (only anomalies)
+d507 3
+a509 1
+      /* offsets if we want to save the propagator matrices */
+d513 2
+a514 1
+      os1 = os2 = 0;
+d548 7
+d560 1
+a560 1
+	if(l <= dens_anom->lmax){
+d566 1
+a566 1
+	    sh_get_coeff((dens_anom+i),l,m,a_or_b,phys_norm,(b+i));
+d586 4
+a589 4
+	cmb.u[1][0] = 1.0;
+	cmb.u[2][1] = 1.0;
+	cmb.u[4][2] = 1.0;
+	cmb.u[5][2] = el;
+d592 5
+a616 1
+	  //    nprops loop               
+d618 6
+a623 1
+	  for(i=0;i < nprops;i++){
+d625 1
+d628 1
+a628 1
+	    for(os=pos1 + i*16,ibv=0;ibv < 4;ibv++,os += 4){
+d632 1
+a632 1
+	      unew[ibv] = sum;
+a635 5
+	    //    ADD DEN * B, WHERE DEN = 0 FOR NO DENSITY CONTRAST
+	    //    
+	    if(ibv == 0) 
+	      u[2] += den[i] * b[ninho];
+	    //    
+d638 3
+a640 4
+	    potnew[0] = poten[0] * ppots[pos2+i] +
+	      poten[1] * ppots[pos2+4+i];
+	    poten[1]  = poten[0] * ppots[pos2+8+i] +
+	      poten[1] * ppots[pos2+12+i];
+d642 10
+a651 5
+	    //    
+	    //    ADD DEN * BETA * B * RDEN_LOCAL
+	    //    
+	    if(ibv == 0) 
+	      poten[1]+= beta*den[i]*b[ninho]*rden_local[ninho];
+d655 1
+a655 1
+	    du1 = u[0] *(rho_zero[i]-rho_zero[i+1])/rho_zero[i+1];
+d657 3
+a659 3
+	    u[2] += -2.0*(pvisc[i] + pvisc[i+1])*du1 +
+	      (rho_zero[i+1] - rho_zero[i]) * poten[0];
+	    u[3] += (pvisc[i] + pvisc[i+1])*du1;
+d663 1
+a663 1
+	    if ((rprops[i+1] > rpb[jpb] - 0.0001)&&(jpb <= npb)){
+d676 1
+a676 1
+	    //    IF AT OUTPUT RADIUS, WRITE OUT U,POTEN
+d687 3
+a689 3
+	    
+	    //    end nprops loop
+	  }
+d698 2
+a699 2
+	  *nout = iout;
+	  u3[*nout].u[5][ibv] = poten[1];
+a701 1
+	  
+d703 1
+a703 1
+	*nout = iout;
+d720 17
+a736 11
+	/* get one coefficient */
+	sh_get_coeff(pvel_pol,l,m,a_or_b,phys_norm,clm);
+	/* B vector */
+	bvec[0] = u3[(*nout)].u[0][0];
+	bvec[1] = u3[(*nout)].u[nzero][0] - clm[0];
+	bvec[2] = (el + 1.0) * u3[(*nout)].u[4][0]+u3[(*nout)].u[5][0];
+	for(i=0;i < 3;i++){
+	  amat[0][i] = u3[(*nout)].u[0][i];
+	  amat[1][i] = u3[(*nout)].u[nzero][i];
+	  amat[2][i] = (el+1.0) * u3[(*nout)].u[4][i] + 
+	    u3[(*nout)].u[5][i];
+d743 4
+a746 2
+	/* assign solution */
+	for(os=iout=0;iout < (*nout);iout++,os+=6){
+d748 2
+a749 2
+	    for(j=0;j < 3;j++)	/* sum up contributions */
+	      u3[iout].u[i6][0] -= bvec[j] * u3[iout].u[i6][j];
+d755 1
+a755 1
+			   a_or_b,phys_norm,&u3[iout].u[i6][0]);
+d770 2
+a771 1
+	    (*nout),nprops,nrad);
+d787 3
+a789 3
+    sh_write_coeff(geoid,0,0,0,phys_norm,clm); /* 0,0 */
+    sh_write_coeff(geoid,1,0,0,phys_norm,clm); /* 1,0 */
+    sh_write_coeff(geoid,1,1,2,phys_norm,clm); /* 1,1 */
+d791 1
+a791 1
+    os = (*nout) * 6 + n6;	/* select component */
+d795 1
+a795 1
+	  sh_get_coeff((pol_sol+os),l,m,2,phys_norm,clm);
+d797 1
+a797 1
+	  sh_write_coeff(geoid,l,m,2,phys_norm,clm);
+d799 1
+a799 1
+	  sh_get_coeff((pol_sol+os),l,m,0,phys_norm,clm);
+d801 1
+a801 1
+	  sh_write_coeff(geoid,l,m,0,phys_norm,clm);
+@
+
+
+1.2
+log
+@*** empty log message ***
+@
+text
+@d2 1
+d4 11
+d34 1
+a34 1
+	       CPREC *fact, 	/* density factors [kg/m^3] */
+d38 1
+a38 1
+					       on viscosity and fact[]
+d43 1
+a43 1
+	       struct lms *dens_exp, /* 
+d55 6
+d72 1
+a72 1
+	       struct lms *psol,	  /* 
+d74 3
+a76 1
+					     expansions [nrad * 6]
+d78 3
+a80 1
+				  */
+d88 1
+d134 1
+a134 1
+  // $Id: hc_polsol.c,v 1.1 2004/06/16 22:54:06 becker Exp becker $
+d212 6
+a217 3
+  int i,i3,i6,j,l,index,ivis,nih,nxtv,ivis;
+  int newprp,newpot,mmax,iout,jpb,ninho,ibv,indx[3],a_or_b;
+  double prop[16],ppot[4],*props,*ppots,*b,du1,sum,el,rnext;
+d225 4
+a228 4
+*/
+  static int nprops,nradp2_old,nvisp1_old,inho2_old;	
+  static double *rprops,*pvisc,*fact_local,
+    *rden_local,*rvisc_local,*den;
+a231 1
+
+d241 3
+a243 2
+    prop_par_init = FALSE, ab_init = FALSE;
+  my_boolean qvis,qinho;
+d249 2
+d257 1
+a257 2
+    fprintf(stderr,"hc_polsol: error: viscosity or layer structure changed from last call\n");
+    exit(-1);
+a268 2
+  my_dvecalloc(&props,inho2*16*3,"hc_polsol");
+  my_dvecalloc(&ppots,inho2*4*3,"hc_polsol");
+d270 10
+d321 6
+a326 6
+      my_vecalloc(&rden_local,inho2,"hc_polsol");
+      my_vecalloc(&fact_local,inho2,"hc_polsol");
+      my_vecalloc(&rvisc_local,nvisp1,"hc_polsol");
+      my_vecalloc(&pvisc,nvisp1,"hc_polsol");
+      my_vecalloc(&visc_local,nvisp1,"hc_polsol");
+      my_vecalloc(&den,nvisp1,"hc_polsol");
+d335 1
+a335 1
+    a_equals_b_vector(fact_local,fact,inho);
+d397 1
+a397 1
+	    den[nprops-1] = fact_local[nih] * rden_local[nih] *
+d414 3
+a416 1
+       number of propagators is now nprops
+d418 3
+a420 3
+    if(nprops+2 > nradp2){
+      fprintf(stderr,"hc_polsol: error: nprops: %i nrad: %i\n",
+	      nprops,nrad);
+d430 15
+a444 2
+	fprintf(stderr,"hc_polsol: compressible not implemted yet\n");
+	exit(-1);
+d446 2
+a447 2
+	rhozero[0] = hc->avg_den_core;
+	for(i=1;i <= nprops;i++)
+a448 1
+	rho_zero[nprops+1] = 0.0;
+d450 5
+d463 3
+d472 2
+a473 2
+	    psol[0].lmax,dens_exp->lmax);
+  for(l = 1;l <= psol[0].lmax;l++){
+d480 24
+a503 17
+    //    
+    // get all propagators before entering m-loop,
+    // the propagators only depend on l
+    //    
+    for(newprp = newpot = i = 0;
+	i < nprops;
+	i++, newprp += 16, newpot += 4){
+      /*  
+	  obtain propagators 
+      */
+      fprintf(stderr,"hc_polsol: prop: %3i out of %3i between %11g and %11g, visc: %11g\n",
+	      i+1,nprops,rprops[i],rprops[i+1],pvisc[i]);
+      evalpa(l,(double)rprops[i],(double)rprops[i+1],
+	     (double)pvisc[i],prop);
+      evppot(l,((double)rprops[i]/(double)rprops[i+1]),ppot);
+      a_equals_b_vector((props+newprp),prop,16);
+      a_equals_b_vector((ppots+newpot),ppot,4);
+d524 1
+a524 1
+	if(l <= dens_exp->lmax){
+d530 1
+a530 1
+	    get_sh_coeff((dens_exp+i),l,m,a_or_b,phys_norm,(b+i));
+d533 1
+a533 1
+	     density is not expanded that high 
+d556 1
+a556 1
+	  for(i=0;i<4;i++)
+d565 1
+a565 1
+	    (u[2] - (rhozero[1] - rhozero[0])*poten[0]);
+d575 3
+a577 5
+               
+	  ninho = 0;
+	  jpb = 0;
+	  
+	  //    nprops loop
+d582 1
+a582 1
+	    for(os=i*16,ibv=0;ibv < 4;ibv++,os+=4){
+d592 1
+a592 1
+	    if (ibv == 0) 
+d597 4
+a600 4
+	    potnew[0] = poten[0] * ppots[i*4+0] +
+	      poten[1] * ppots[i*4+1];
+	    poten[1]  = poten[0] * ppots[i*4+2] +
+	      poten[1] * ppots[i*4+3];
+d605 2
+a606 2
+	    if (ibv == 0) 
+	      poten[1] +=  beta*den[i]*b[ninho]*rden_local[ninho];
+d610 1
+a610 1
+	    du1 = u[0] * (rhozero[i] - rhozero[i+1])/rhozero[i+1];
+d612 2
+a613 2
+	    u[2] -= -2.0*(pvisc[i] + pvisc[i+1])*du1 +
+	      (rhozero[i+1] - rhozero[i]) * poten[0];
+d616 1
+a616 1
+	    //    Effects of phase boundary deflections
+d619 1
+a619 1
+	      if (ibv == 0) 
+a620 1
+	      if (ibv == 0) 
+d622 1
+d652 3
+a654 3
+	    (u[2] - rhozero[nprops+1] * poten[0]);
+	  nout = iout;
+	  u3[nout].u[5][ibv] = poten[1];
+d659 1
+a659 3
+	nout = iout;
+	/* first part of B vector */
+	bvec[0] = u3[nout].u[0][0];
+d664 1
+d668 1
+a668 1
+	  nzero = 2;
+d676 6
+a681 4
+	get_coeff(vel_pol,l,m,a_or_b,phys_norm,clm);
+	bvec[1] =  u3[nout].u[nzero][0] - clm[0];
+	bvec[2] = (el + 1.0) * u3[nout].u[3][0] + 
+	  u3[nout].u[5][0];
+d683 4
+a686 4
+	  amat[0][i] = u3[nout].u[0][i];
+	  amat[1][i] = u3[nout].u[nzero][i];
+	  amat[2][i] = (el+1.0d0) * u3[nout].u[4][i] + 
+	    u3[nout].u[5][i];
+d694 1
+a694 1
+	for(os=iout=0;iout < nout;iout++,os+=6){
+d696 1
+a696 1
+	    for(j=0;j<3;j++)	/* sum up contributions */
+d699 1
+a699 1
+	       assing to solution 
+d702 2
+a703 2
+	    write_sh_coeff(&u3[iout].u[i6][0],(psol+os+i6),l,m,
+			a_or_b,phys_norm);
+d714 5
+a718 7
+  
+  //    Calculating geoid coefficients. The factor gf comes from
+  //    * u(5) is in units of r0 * pi/180 / Ma (about 111 km/Ma) 
+  //    * normalizing density is presumably 1 g/cm**3 = 1000 kg / m**3
+  //    * geoid is in units of meters
+  //    
+
+d720 6
+d732 1
+a732 1
+      n6 = -iformat;
+d734 6
+a739 5
+    write_sh_coeff(geoid,0,0,0,phys_norm,clm); /* 0,0 */
+    write_sh_coeff(geoid,1,0,0,phys_norm,clm); /* 1,0 */
+    write_sh_coeff(geoid,1,1,2,phys_norm,clm); /* 1,1 */
+    os = nout * 6 + n6;
+    for(l=2;l <= pol[0].lmax;l++){
+d742 1
+a742 1
+	  get_coeff((psol+os),clm,l,m,2,phys_norm);
+d744 1
+a744 1
+	  write_sh_coeff(geoid,l,m,2,phys_norm,clm);
+d746 1
+a746 1
+	  get_coeff((psol+os),clm,l,m,0,phys_norm);
+d748 1
+a748 1
+	  write_sh_coeff(geoid,l,m,0,phys_norm,clm);
+d753 8
+a760 2
+  /* free the local arrays */
+  free(ppots);free(props);free(b);free(u3);
+d765 1
+a765 1
+void evppot(int l,double ratio, double *ppot)
+d773 1
+a773 1
+  double  c,expf1,expf2,ppot,ratio,x,xp1;
+d796 1
+a796 1
+void evalpa(int l,double r1,double r2,double visc, double *p)
+d807 1
+a807 1
+  double den1,den2,f[4],r,rlm1,rlp1,rmlm2,rml,r1,r2,visc,v2,rs;
+d914 9
+a922 9
+  p[0][2] /= v2;
+  p[0][3] /= v2;
+  p[1][2] /= v2;
+  p[1][3] /= v2;
+
+  p[2][0] *= v2;
+  p[2][1] *= v2;
+  p[3][0] *= v2;
+  p[3][1] *= v2;
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d1 1
+a1 1
+#include "hcexp.h"
+d111 1
+a111 1
+  // $Id: polsol.c,v 1.1 2004/06/16 22:53:55 becker Exp becker $
+@

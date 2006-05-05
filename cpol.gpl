@@ -1,0 +1,17 @@
+plot "< awk '{if($1==31&&$2==5&&$3==1)print($0)}' psol.dat" using 4 : ($6/sqrt(2)) w lp,\
+	"< awk '{if($1==31&&$2==5&&$3==1)print($0)}' /home/becker/data/flow_field/finite_strain/pmAsmean_nt_free/polsol.d" using 4 : 6 title 'polsol' w lp 
+pause -1
+plot	"< awk '{if($1==31&&$2==5&&$3==1)print($0)}' psol.dat" using 4 : ($7/sqrt(2)) w lp,\
+	"< awk '{if($1==31&&$2==5&&$3==1)print($0)}' /home/becker/data/flow_field/finite_strain/pmAsmean_nt_free/polsol.d" using 4 : 7 title 'polsol' w lp
+pause -1
+plot	"< awk '{if($1==31&&$2==5&&$3==1)print($0)}' psol.dat" using 4 : ($8/sqrt(2)) w lp,\
+	"< awk '{if($1==31&&$2==5&&$3==1)print($0)}' /home/becker/data/flow_field/finite_strain/pmAsmean_nt_free/polsol.d" using 4 : 8 title 'polsol' w lp
+pause -1
+plot	"< awk '{if($1==31&&$2==5&&$3==1)print($0)}' psol.dat" using 4 : ($9/sqrt(2)) w lp,\
+	"< awk '{if($1==31&&$2==5&&$3==1)print($0)}' /home/becker/data/flow_field/finite_strain/pmAsmean_nt_free/polsol.d" using 4 : 9 title 'polsol' w lp
+pause -1
+plot "< awk '{if($1==31&&$2==5&&$3==1)print($0)}' psol.dat" using 4 : ($10/sqrt(2)*1000.) w lp,\
+     "< awk '{if($1==31&&$2==5&&$3==1)print($0)}' /home/becker/data/flow_field/finite_strain/pmAsmean_nt_free/polsol.d" using 4 : 10 title 'polsol' w lp
+pause -1
+plot "< awk '{if($1==31&&$2==5&&$3==1)print($0)}' psol.dat" using 4 : ($11/sqrt(2)*1000.) w lp,\
+     "< awk '{if($1==31&&$2==5&&$3==1)print($0)}' /home/becker/data/flow_field/finite_strain/pmAsmean_nt_free/polsol.d" using 4 : 11 title 'polsol' w lp

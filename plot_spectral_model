@@ -1,0 +1,45 @@
+#!/bin/bash
+#
+# plot an HC model run based on the spectral data in 
+# binary format sol.bin
+#
+layer=${1-22}
+ifile=${2-sol.bin}
+runcode=${3-0}
+
+pmode=2
+
+
+
+rm vec_?.ps vec_?.grd spectral.v?.grd 2> /dev/null
+
+if [ $runcode -eq 1 ];then	# run the code anew?
+    rm $ifile
+    hc
+fi
+
+if [ ! -s $ifile  ];then
+    echo $0: error, $ifile does not exist
+    exit
+fi
+# radial
+hc_extract_sh_layer $ifile $layer 1 | \
+    gawk '{if(NR==1)print($1);else print($0)}'| \
+    shsyn 1 0 spectral.vr 
+# pol/tor
+hc_extract_sh_layer $ifile $layer 0 | \
+    gawk '{if(NR==1)print($1);else print($0)}'| shsyn 1 1 3 
+mv vec_p.grd spectral.vp.grd
+mv vec_t.grd spectral.vt.grd
+
+
+# plot 
+for f in vr vt vp ;do
+    grd2map2 spectral.$f xx $f 2> /dev/null
+done
+    
+
+epsmerge -par --print --postscript --orientation Portrait -x 1 -y 3 \
+	spectral.vr.ps spectral.vp.ps spectral.vt.ps \
+    > spectral.vec.ps
+

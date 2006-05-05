@@ -1,0 +1,110 @@
+#!/bin/bash
+#
+# test spherical harmonic routines for scalar fields
+#
+makegrid=${1-0}
+vec=0			       # 0: scalar test 1: velocity field test
+lmax=31
+type=1			       # 0: Healpix 1: Rick 
+
+
+
+reg=-R0/360/-90/90;inc=1       # grid dimensions
+
+# make test grid
+if [ $makegrid -eq 1 ];then
+    if [ $vec -eq 0 ];then
+	echo 3 1 0 -1 0 1 -1 1 0 -1 1 -1 1 -1 0 1 -1 1 -1 1 -1 | shsyn 0.5 0 test
+    else
+	echo 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 | \
+	    shsyn 0.5 0 3
+	mv vec_p.grd test.vp.grd
+	mv vec_t.grd test.vt.grd
+    fi
+elif [ ! -s test.grd ];then
+    echo $0: generate test.grd first
+    exit
+fi
+
+#
+# ANALYSIS
+#
+# test sh_ana
+#
+# generate lon/lat required locations 
+#
+sh_ana -$lmax $vec $type > test.lonlat
+if [ $vec -eq 0 ];then
+# test sh_ana analysis
+    grdtrack -L -Gtest.grd test.lonlat | sh_ana $lmax $vec $type > ab.sh_ana
+else
+    grdtrack -L -Gtest.vt.grd test.lonlat > tmp.1
+    grdtrack -L -Gtest.vp.grd -Z test.lonlat > tmp.2
+    paste tmp.1 tmp.2 | sh_ana $lmax $vec $type > ab.sh_ana
+    rm tmp.1 tmp.2
+fi
+if [ $vec -eq 0 ];then
+# test shana analysis 
+    shana $lmax test > ab.shana 2> /dev/null
+else
+    # vectors
+    cp test.vt.grd vec_t.grd
+    cp test.vp.grd vec_p.grd
+    shana $lmax vec_p > ab.shana 2> /dev/null
+    rm vec_p.grd vec_t.grd
+fi
+paste ab.sh_ana ab.shana | head
+
+#
+# POWER
+#
+# output sh_ana power
+cat ab.sh_ana | sh_power > pow.sh_ana
+if [ $vec -eq 0 ];then
+# output shana power
+    cat ab.shana | abconvert 2 > pow.shana 2> /dev/null
+else
+    cat ab.shana | abconvert 2 0 1 4 > pow.shana 2> /dev/null
+fi
+paste pow.sh_ana pow.shana | head
+
+#
+# SYNTHESIS
+# 
+if [ $vec -eq 0 ];then
+    cat ab.sh_ana | sh_syn   | surface $reg -I$inc -Gsyn.sh_syn.sh_ana.grd
+    cat ab.shana  | sh_syn 1 | surface $reg -I$inc -Gsyn.sh_syn.shana.grd
+    cat ab.shana | shsyn $inc 0 syn.shsyn.shana 2> /dev/null
+    for f in syn.sh_syn.sh_ana syn.sh_syn.shana syn.shsyn.shana;do
+	grd2map2 $f 2> /dev/null > /dev/null
+    done
+    epsmerge -par --print --postscript -x 1 -y 3 \
+	syn.sh_syn.sh_ana.ps \
+	syn.sh_syn.shana.ps \
+	syn.shsyn.shana.ps > syn.compare.ps 2> /dev/null
+else
+    cat ab.sh_ana | sh_syn   > tmp.dat 
+    gawk '{print($1,$2,$3)}' tmp.dat | surface $reg -I$inc -Gsyn.sh_syn.sh_ana.vt.grd
+    gawk '{print($1,$2,$4)}' tmp.dat | surface $reg -I$inc -Gsyn.sh_syn.sh_ana.vp.grd
+
+    cat ab.shana | sh_syn 1 1  > tmp.dat 
+    gawk '{print($1,$2,$3)}' tmp.dat | surface $reg -I$inc -Gsyn.sh_syn.shana.vt.grd
+    gawk '{print($1,$2,$4)}' tmp.dat | surface $reg -I$inc -Gsyn.sh_syn.shana.vp.grd
+    rm tmp.dat
+
+    cat ab.shana | shsyn $inc 0 3 2> /dev/null
+    mv vec_p.grd syn.shsyn.shana.vp.grd
+    mv vec_t.grd syn.shsyn.shana.vt.grd
+    for f in syn.sh_syn.sh_ana syn.sh_syn.shana syn.shsyn.shana;do
+	for g in vp vt;do
+	    grd2map2 $f.$g
+	done
+    done
+    epsmerge -par --print --postscript -x 2 -y 3 \
+	syn.sh_syn.sh_ana.vt.ps  syn.sh_syn.sh_ana.vp.ps \
+	syn.sh_syn.shana.vt.ps   syn.sh_syn.shana.vp.ps \
+	syn.shsyn.shana.vt.ps    syn.shsyn.shana.vp.ps > syn.compare.vec.ps 2> /dev/null
+fi
+
+
+

@@ -1,0 +1,148 @@
+rick_sh_c.c:  if (lmax != rick->nlat-1) {
+rick_sh_c.c:    fprintf(stderr,"rick_compute_allplm: error: lmax mismatch: nlat/lmax %i %i \n",rick->nlat,lmax);
+rick_sh_c.c:  for (i=0;i<rick->nlat;i++) { /*changed from 1->nlat to 0->nlat-1 - need change in plmbar1 also */
+rick_sh_c.c:    rick_plmbar1((plm+os),(dplm+os),ivec,lmax,rick->gauss_z[i],rick); /*note change in gauss_z[i] */
+rick_sh_c.c:    os += rick->lmsize;
+rick_sh_c.c:  if(!rick->initialized){
+rick_sh_c.c:  while(j > rick->nlonm1) { /* */
+rick_sh_c.c:    j -= rick->nlon;
+rick_sh_c.c:  *theta = rick->gauss_theta[i];
+rick_sh_c.c:  *phi = rick->dphi * (SH_RICK_PREC)(j);
+rick_sh_c.c:  if(!rick->initialized){
+rick_sh_c.c:  if(lmax != rick->nlat-1){
+rick_sh_c.c:	    rick->nlat,lmax);
+rick_sh_c.c:  hc_dvecalloc(&plm,rick->nlat*rick->lmsize,"rick_shc2d: mem 1");
+rick_sh_c.c:    hc_dvecalloc(&dplm,rick->nlat*rick->lmsize,"rick_shc2d: mem 2");
+rick_sh_c.c:  if(!rick->initialized){
+rick_sh_c.c:  if((rick->nlat != lmaxp1)||(rick->nlon != lmaxp1t2)){
+rick_sh_c.c:	    lmax,rick->nlon,rick->nlat);
+rick_sh_c.c:    if(!rick->vector_sh_fac_init){
+rick_sh_c.c:  nlon2 = rick->nlon + 2;
+rick_sh_c.c:  for (i=0;i < rick->nlat; i++) {	
+rick_sh_c.c:    oplm = i * rick->lmsize;        /*  offset for Plm array. (changed indices TWB) */
+rick_sh_c.c:    ios1 = i * rick->nlon;        /* offset for data array */
+rick_sh_c.c:      for (j=j2=0; j < rick->lmsize; j++,j2+=2) { /* loop through l,m */
+rick_sh_c.c:      rick_cs2ab(valuex,rick->nlon);
+rick_sh_c.c:      rick_realft_nr((valuex-1),rick->nlat,negunity);	
+rick_sh_c.c:      rick_f90_cs2ab(valuex,&rick->nlon);	
+rick_sh_c.c:      rick_f90_realft(valuex,&rick->nlat,&negunity);	
+rick_sh_c.c:      for (j=0; j < rick->nlon; j++) { /* can't vectorize */
+rick_sh_c.c:	rdatax[ios1 + j] = valuex[j]/(SH_RICK_PREC)(rick->nlat);
+rick_sh_c.c:      for (j=1,j2=2; j < rick->lmsize; j++,j2+=2) { 
+rick_sh_c.c:	dpdt = dplm[oplm+j] * (double)rick->ell_factor[lm1]; /* d_theta(P_lm) factor */
+rick_sh_c.c:	dpdp  = ((double)m) * plm[oplm+j]/ (double)rick->sin_theta[i];
+rick_sh_c.c:	dpdp *= (double)rick->ell_factor[lm1]; /* d_phi (P_lm) factor */
+rick_sh_c.c:      rick_cs2ab(valuex,rick->nlon);
+rick_sh_c.c:      rick_cs2ab(valuey,rick->nlon);
+rick_sh_c.c:      rick_realft_nr((valuex-1),rick->nlat,negunity);
+rick_sh_c.c:      rick_realft_nr((valuey-1),rick->nlat,negunity);
+rick_sh_c.c:      rick_f90_cs2ab(valuex,&rick->nlon);
+rick_sh_c.c:      rick_f90_cs2ab(valuey,&rick->nlon);
+rick_sh_c.c:      rick_f90_realft(valuex,&rick->nlat,&negunity);
+rick_sh_c.c:      rick_f90_realft(valuey,&rick->nlat,&negunity);
+rick_sh_c.c:      for (j=0; j < rick->nlon; j++) {   
+rick_sh_c.c:	rdatax[ios1 + j] = valuex[j]/(SH_RICK_PREC)(rick->nlat);
+rick_sh_c.c:	rdatay[ios1 + j] = valuey[j]/(SH_RICK_PREC)(rick->nlat);
+rick_sh_c.c:  hc_dvecalloc(&plm,rick->nlat*rick->lmsize,"rick_shd2c: mem 1");
+rick_sh_c.c:  hc_dvecalloc(&dplm,rick->nlat*rick->lmsize,"rick_shd2c: mem 2");
+rick_sh_c.c:  if(!rick->initialized){
+rick_sh_c.c:  if(lmax != rick->nlat-1){
+rick_sh_c.c:	    rick->nlat,lmax);
+rick_sh_c.c:  if(!rick->initialized){
+rick_sh_c.c:  nlon2 = rick->nlon + 2;
+rick_sh_c.c:  if((lmaxp1 != rick->nlat)||(rick->nlon != lmaxp1t2)||
+rick_sh_c.c:     ((lmax+1)*(lmax+2)/2 != rick->lmsize)){
+rick_sh_c.c:    fprintf(stderr,"rick_shd2c_pre: nlon %i nlat %i\n",rick->nlon,rick->nlat);
+rick_sh_c.c:    fprintf(stderr,"rick_shd2c_pre: lmsize %i\n",rick->lmsize);
+rick_sh_c.c:  for(i=0;i < rick->lmsize2;i++)
+rick_sh_c.c:    if(! rick->vector_sh_fac_init){
+rick_sh_c.c:    for(i=0;i < rick->lmsize2;i++)
+rick_sh_c.c:  for(i=0;i < rick->nlat;i++){
+rick_sh_c.c:    ios1 = i * rick->nlon;          // offset for data array
+rick_sh_c.c:    oplm = i * rick->lmsize;        // offset for Plm array
+rick_sh_c.c:      for(j=0;j < rick->nlon;j++){      
+rick_sh_c.c:      rick_realft_nr((valuex-1),rick->nlat,unity);
+rick_sh_c.c:      rick_ab2cs(valuex,rick->nlon);
+rick_sh_c.c:      rick_f90_realft(valuex,&rick->nlat,&unity);
+rick_sh_c.c:      rick_f90_ab2cs(valuex,&rick->nlon);
+rick_sh_c.c:      for(j=j2=0;j < rick->lmsize;j++,j2+=2){
+rick_sh_c.c:	  dfact = ((double)rick->gauss_w[i] * plm[oplm+j])/2.0;
+rick_sh_c.c:	  dfact = ((double)rick->gauss_w[i] * plm[oplm+j])/4.0;
+rick_sh_c.c:      for(j=0;j < rick->nlon;j++){    
+rick_sh_c.c:      rick_realft_nr((valuex-1),rick->nlat,unity);
+rick_sh_c.c:      rick_realft_nr((valuey-1),rick->nlat,unity);
+rick_sh_c.c:      rick_ab2cs(valuex,rick->nlon);
+rick_sh_c.c:      rick_ab2cs(valuey,rick->nlon);
+rick_sh_c.c:      rick_f90_realft(valuex,&rick->nlat,&unity);
+rick_sh_c.c:      rick_f90_realft(valuey,&rick->nlat,&unity);
+rick_sh_c.c:      rick_f90_ab2cs(valuex,&rick->nlon);
+rick_sh_c.c:      rick_f90_ab2cs(valuey,&rick->nlon);
+rick_sh_c.c:      for(j = 1,j2 = 2;j < rick->lmsize;j++,j2+=2){
+rick_sh_c.c:	  dfact = rick->gauss_w[i] * rick->ell_factor[lm1]/2.0;
+rick_sh_c.c:	  dfact = rick->gauss_w[i] * rick->ell_factor[lm1]/4.0;
+rick_sh_c.c:	dpdp = ((double)m) * plm[oplm+j]/(double)rick->sin_theta[i];
+rick_sh_c.c:  if(!rick->was_called){
+rick_sh_c.c:    rick->nlat = lmax + 1;
+rick_sh_c.c:    rick->nlon = 2 * rick->nlat;
+rick_sh_c.c:    *npoints = rick->nlat * rick->nlon; 
+rick_sh_c.c:    rick->dphi = TWOPI / (SH_RICK_PREC)(rick->nlon);
+rick_sh_c.c:    rick->nlonm1 = rick->nlon - 1;
+rick_sh_c.c:    rick->lmsize  = (lmax+1)*(lmax+2)/2;
+rick_sh_c.c:    rick->lmsize2 = rick->lmsize * 2;          //for A and B
+rick_sh_c.c:    *nplm = rick->lmsize * rick->nlat;
+rick_sh_c.c:    rick_vecalloc(&rick->gauss_z,rick->nlat,"rick_init 1");
+rick_sh_c.c:    rick_vecalloc(&rick->gauss_w,rick->nlat,"rick_init 2");
+rick_sh_c.c:    rick_vecalloc(&rick->gauss_theta,rick->nlat,"rick_init 3");
+rick_sh_c.c:    rick_gauleg(-1.0,1.0,rick->gauss_z,rick->gauss_w,rick->nlat);
+rick_sh_c.c:    for(i=0;i < rick->nlat;i++)
+rick_sh_c.c:      rick->gauss_theta[i] = acos(rick->gauss_z[i]);
+rick_sh_c.c:    hc_dvecalloc(&rick->plm_f1,rick->lmsize,"rick_init 4");
+rick_sh_c.c:    hc_dvecalloc(&rick->plm_f2,rick->lmsize,"rick_init 5");
+rick_sh_c.c:    hc_dvecalloc(&rick->plm_fac1,rick->lmsize,"rick_init 6");
+rick_sh_c.c:    hc_dvecalloc(&rick->plm_fac2,rick->lmsize,"rick_init 7");
+rick_sh_c.c:    hc_dvecalloc(&rick->plm_srt,rick->nlon,"rick_init 8");
+rick_sh_c.c:      rick_vecalloc(&rick->ell_factor,rick->nlat,"rick init 9");
+rick_sh_c.c:      rick_vecalloc(&rick->sin_theta,rick->nlat,"rick init 9");
+rick_sh_c.c:      for(i=0,l=1;i < rick->nlat;i++,l++){
+rick_sh_c.c:	rick->ell_factor[i] = 1.0/sqrt((SH_RICK_PREC)(l*(l+1)));
+rick_sh_c.c:	rick->sin_theta[i] = sqrt((1.0 - rick->gauss_z[i])*
+rick_sh_c.c:				  (1.0+rick->gauss_z[i]));
+rick_sh_c.c:	rick->vector_sh_fac_init = TRUE;
+rick_sh_c.c:      rick->vector_sh_fac_init = FALSE;
+rick_sh_c.c:    rick->computed_legendre = FALSE;
+rick_sh_c.c:    rick->initialized = TRUE;
+rick_sh_c.c:    rick->was_called = TRUE;
+rick_sh_c.c:  free(rick->gauss_z);
+rick_sh_c.c:  free(rick->gauss_w);
+rick_sh_c.c:  free(rick->gauss_theta);
+rick_sh_c.c:  if(rick->computed_legendre){
+rick_sh_c.c:    free(rick->plm_f1);free(rick->plm_f2);
+rick_sh_c.c:    free(rick->plm_fac1);free(rick->plm_fac2);
+rick_sh_c.c:    free(rick->plm_srt);
+rick_sh_c.c:    free(rick->ell_factor);free(rick->sin_theta);
+rick_sh_c.c:  if(!rick->initialized){
+rick_sh_c.c:  if(!rick->computed_legendre) {
+rick_sh_c.c:    if(rick->nlon != (lmax+1)*2){
+rick_sh_c.c:	      lmax,rick->nlon);
+rick_sh_c.c:    for(k=0,i=1;k < rick->nlon;k++,i++){
+rick_sh_c.c:      rick->plm_srt[k] = sqrt((double)(i));
+rick_sh_c.c:    for(i=0;i < rick->lmsize;i++){
+rick_sh_c.c:      rick->plm_f1[i] = rick->plm_fac1[i] = 0.0;
+rick_sh_c.c:      rick->plm_f2[i] = rick->plm_fac2[i] = 0.0;
+rick_sh_c.c:	    rick->plm_f1[k] = rick->plm_srt[l2] * rick->plm_srt[l2-2]/
+rick_sh_c.c:	      (rick->plm_srt[l+m-1] * rick->plm_srt[l-m-1]);
+rick_sh_c.c:	    rick->plm_f2[k]=(rick->plm_srt[l2] * rick->plm_srt[l-m-2]*rick->plm_srt[l+m-2])/
+rick_sh_c.c:	      (rick->plm_srt[l2-4] * rick->plm_srt[l+m-1] * rick->plm_srt[l-m-1]);
+rick_sh_c.c:	  rick->plm_fac1[k] = rick->plm_srt[l-m-1] * rick->plm_srt[l+m];
+rick_sh_c.c:	  rick->plm_fac2[k] = rick->plm_srt[l+m-1] * rick->plm_srt[l-m];
+rick_sh_c.c:	    rick->plm_fac2[k] = rick->plm_fac2[k] * rick->plm_srt[1];
+rick_sh_c.c:    rick->computed_legendre = TRUE;
+rick_sh_c.c:  p[1] = rick->plm_srt[2] * pm1;             // (1,0)
+rick_sh_c.c:    p[k] = rick->plm_srt[l2] * plm;
+rick_sh_c.c:      pm1 = z * rick->plm_srt[2*m+2]*pm2;
+rick_sh_c.c:	  plm = z * rick->plm_f1[k] * pm1 - 
+rick_sh_c.c:	    rick->plm_f2[k] * pm2;
+rick_sh_c.c:      dp[k] =  -rick->plm_srt[l-1] * rick->plm_srt[l] / rick->plm_srt[1] * p[k+1];
+rick_sh_c.c:      dp[k+l] = rick->plm_srt[l-1] / rick->plm_srt[1] * p[k+l-1];
+rick_sh_c.c:	dp[k] = rick->plm_fac2[k] * p[k-1] - 
+rick_sh_c.c:	  rick->plm_fac1[k] * p[k+1];

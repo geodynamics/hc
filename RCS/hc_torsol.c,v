@@ -1,0 +1,693 @@
+head	1.8;
+access;
+symbols;
+locks
+	becker:1.8; strict;
+comment	@ * @;
+
+
+1.8
+date	2006.01.22.01.11.34;	author becker;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.12.20.05.18.12;	author becker;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.12.20.05.09.42;	author becker;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.12.01.01.25.35;	author becker;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.07.02.00.14.44;	author becker;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.06.23.01.06.56;	author becker;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.06.21.01.16.31;	author becker;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.06.16.22.54.25;	author becker;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.8
+log
+@*** empty log message ***
+@
+text
+@#include "hc.h"
+// 
+//
+// these subroutines deal with the toroidal part of the 
+// kinematic solution of a Hager &
+// O'Connell flow code. they are based on Brad's original code, and later
+// Bernhard Steinberger's modifications
+//
+// will incorporate the poloidal part of the plate velocities
+//
+//
+// Thorsten Becker, twb@@usc.edu
+//
+// $Id: hc_torsol.c,v 1.7 2004/12/20 05:18:12 becker Exp becker $
+//
+//     ****************************************************************
+//     * THIS IS THE MAIN PROGRAM FOR THE COMPONENT OF FLOW WITHOUT   *
+//     * DENSITY CONTRASTS.  IT USES SEVERAL INPUT/OUTPUT SUBROUTINES *
+//     * AND FUNCTIONS TO OBTAIN, CORRECT AND VERIFY A MODEL FROM THE *
+//     * USER.  THE FINAL VERSION OF EACH MODEL IS STORED IN A FILE   *
+//     * BEFORE THE PROGRAM EXECUTES POLSOL AND TORSOL TO OBTAIN THE  *
+//     * POLOIDAL AND TOROIDAL COMPONENTS, RESPECTIVELY, OF THE       *
+//     * EQUATIONS OF MOTION.                                         *
+//     ****************************************************************
+//     Modified such that only toroidal component is calculated
+//     Poloidal component is included in densub.f
+//
+//     input:  r: radii on which output is defined (nrad+2)
+//
+//        visc,rvisc: normalized viscosities and their radii (nvis)
+//
+//     lmax: MAXIMUM DEGREES,
+//     nrad: NUMBER OF OUTPUT RADII 
+//           (without top and bottom layers)
+//     nvis: NUMBER OF VISCOSITIES.
+//
+//     pvel_tor: toroidal part of the plate velocities
+//     pkernel: print the two solution vectors to file    
+//
+//    input/output:
+//
+//    tvec[nradp2 * lmaxp1 * 2 ]: solution kernel
+//
+//    output: 
+//
+//    tor_sol[nradp2 * 2] SHOULD BE PASSED INITIALIZED AS ZEROES
+// 
+//
+//
+//
+void hc_torsol(int nrad,int nvis,int lmax,HC_PREC *r,
+	       HC_PREC **rv,HC_PREC **visc, struct sh_lms *pvel_tor,
+	       struct sh_lms *tor_sol,double *tvec,
+	       hc_boolean verbose)
+{
+  //    
+  //     ****************************************************************
+  //     * evaluates AND PROPAGATES THE TWO TOROIDAL COMPONENTS IN THE  *
+  //     * EQUATIONS OF MOTION, AND NORMALIZES THESE SUCH THAT THE      *
+  //     * FIRST ELEMENT AT THE SURFACE IS 1.0.                         *
+  //     ****************************************************************
+  //
+  double coef,*vecnor,hold,rlast,rnext,tloc[2],*tvec1,*tvec2;
+  double exp_fac[2],p[2][2],diflog,el,elp2,elm1,efdiff;
+  int l,jvisp1,jvis,i,j,nvisp1,nradp2,lmaxp1,os;
+  hc_boolean qvis;
+  //
+  //     PASSED PARAMETERS:  NRADP2: NUMBER OF OUTPUT RADII,
+  //        NVIS: NUMBER OF VISCOSITIES, nvisp1 = nvis+1
+  //        LMAX: MAXIMUM DEGREES.
+  //     ARRAYS:  R: OUTPUT RADII,
+  //        RV: VISCOSITY RADII,
+  //        TVEC: TOROIDAL VECTORS,
+  //        VISC: normalized VISCOSITIES.
+  //     OTHER VAR:  EXP_FAC[0],EXP_FAC[1]: EXPONENTIAL FACTORS IN PROPAGATOR,
+  //        COEF,ELP2,ELM1: PARAMETERS IN PROPAGATOR,
+  //        DIFLOG: DIFFERENCE IN LOGS OF RADII,
+  //        EL,L: DEGREE,
+  //        VECNOR: NORMALIZES TVEC_LOC TO TVEC(N,1),
+  //        HOLD: TEMPORARY VAR.,
+  //        P[0][0],P[0][1],P[1][0],P[1][1]: ELEMENTS OF THE PROPAGATOR MATRIX CORRES-
+  //        PONDING TO P(1,1),P(1,2),P(2,1),P(2,2) RESPECTIVELY,
+  //        RLAST,RNEXT: RADII FOR PROPAGATOR,
+  //        TVEC_LOC1,TVEC_LOC2: VECTOR COMPONENTS.
+  //
+  /* 
+     set up some pointers (without those the TVECSOL macro won't
+     work!)
+  */
+  nvisp1 = nvis + 1;		/* length of rv and visc */
+  nradp2 = nrad + 2;		/* radius array */
+  lmaxp1 = lmax+1;		/* length of 0:lmax array */
+
+  /* 
+     add one item at end of rv and visc arrays 
+  */
+  hc_dvecrealloc(rv,nvisp1,"hc_torsol: rv");
+  hc_dvecrealloc(visc,nvisp1,"hc_torsol: visc");
+  /* local reference to viscosity and radii of viscosity */
+#define HC_TVISC(i) (*(*visc+(i)))
+#define HC_TVR(i) (*(*rv+(i)))
+
+  HC_TVR(nvis) = 1.1;              /* last entry in radius array, why is
+				     this 1.1? probably because it has to 
+				     be > 1 
+				  */
+  HC_TVISC(nvis) = HC_TVISC(nvis-1);	/* last entry in viscosity array */
+#ifdef DEBUG
+  /* 
+     test size of expansions 
+  */
+  j = nradp2 * 2;
+  for(i=0;i < j;i++){
+    if(tor_sol[i].lmax < pvel_tor->lmax){
+      fprintf(stderr,"hc_torsol: error: toroidal expansion %i has lmax %i, plates have %i\n",
+	      i+1,tor_sol[i].lmax, pvel_tor->lmax);
+      exit(-1);
+    }
+    if(tor_sol[i].type != pvel_tor->type)
+      HC_ERROR("hc_torsol","torsol type error");
+  }
+#endif
+  fprintf(stderr,"hc_torsol: toroidal velocities lmax %i and type %i\n",
+	  pvel_tor->lmax,pvel_tor->type);
+  /* 
+
+  make room for toroidal scaling vectors f(l) and initialize as zeroes
+
+  */
+  /* solution factors as f(l,r) */
+  /* set local pointes */
+  tvec1 = tvec;
+  tvec2 = (tvec + nradp2 * lmaxp1);
+  //
+  //     (PREVENTS THE REQUESTING OF NON-EXISTANT VALUES)
+  //     
+  //     FOR EACH DEGREE (L) CALCULATE, NORMALIZE AND OUTPUT SOLUTION
+  //
+  for(l=1;l < lmaxp1;l++){      
+    /* 
+       loop through all l > 0 
+    */
+    el = (HC_PREC)l;
+    //     
+    //     SET THE PARAMETERS
+    //     
+    elp2 = el + 2.0;
+    elm1 = el - 1.0;
+    coef = 1.0 / (2.0 * el + 1.0);
+    //
+    //     INITIALIZE THE PROPAGATION AT THE CORE
+    //
+    jvisp1 = 1;			/* viscosity layer counters  */
+    jvis = 0;
+
+    rlast = r[0];		/* radius of core */
+    /* 
+       initialize 
+    */
+
+    tloc[0] = 1.0; /* there seems to be no best ordering for 
+		      addressing this array, later we need l to 
+		      be the fastest increasing index */
+    tloc[1] = 0.0;
+    //
+    //     FIND THE TWO TOROIDAL COMPONENTS AT EACH RADIUS
+    //     start radius loop
+    //
+    /* 
+       lowest level 
+    */
+    os = l;
+    tvec1[os] = tloc[0];
+    tvec2[os] = tloc[1];
+
+    for(i=1;i < nradp2;i++){	/* loop through radii */
+      os += lmaxp1;
+      //
+      //     TEST FOR CHANGE IN VISCOSITY IN NEXT LAYER
+      //
+      qvis = FALSE;
+      do{
+	if(HC_TVR(jvisp1) > r[i])
+	  qvis = TRUE;
+	rnext = HC_TVR(jvisp1);	/*  */
+	//
+	//     IF NO VISC. CHANGE BEFORE NEXT OUTPUT RADIUS, PROPAGATE DIRECTLY
+	//
+	if(qvis) 
+	  rnext = r[i];
+	diflog = log(rnext / rlast);
+	exp_fac[0] = exp(         el * diflog);
+	exp_fac[1] = exp(-(el + 1.0) * diflog);
+	//
+	//     PROPAGATOR SET UP LINEARLY TO AVOID EXCESS MULTIPLICATIONS
+	//
+	efdiff = exp_fac[0] - exp_fac[1];
+	p[0][0] = elp2 * exp_fac[0] + elm1 * exp_fac[1];
+	p[0][1] = efdiff / HC_TVISC(jvis);
+	p[1][0] = elp2 * elm1 * HC_TVISC(jvis) * efdiff;
+	p[1][1] = elm1 * exp_fac[0] + elp2 * exp_fac[1];
+	//
+	//     PROPAGATE LAST VECTOR TO GET NEW VECTOR
+	//
+	rlast = rnext;
+	hold = 	tloc[0];
+ 	tloc[0] = (p[0][0] * hold + p[0][1] * tloc[1]);
+	tloc[1] = (p[1][0] * hold + p[1][1] * tloc[1]);
+	tloc[0] *= coef;
+	tloc[1] *= coef;
+	if(!qvis){
+	  jvis = jvisp1;
+	  jvisp1++;
+	}
+      }while(!qvis);
+      tvec1[os] = tloc[0];
+      tvec2[os] = tloc[1];
+    } /* end layer loop */
+  } /* end l loop */
+  
+  // 
+  //     set tvec(l,nradp2-1,0) = 1.0 and normalize all vectors to
+  //     this
+  //
+  hc_dvecalloc(&vecnor,lmaxp1,"hc_torsol: vecnor");
+  os = (nradp2-1) * lmaxp1;
+  vecnor[0] = 1.0;
+  for(l=1;l < lmaxp1;l++)
+    vecnor[l] = 1.0 / tvec1[os+l];
+  /* normalize */
+  for(i=os=0;i < nradp2;i++,os+=lmaxp1)
+    for(l=0;l < lmaxp1;l++){
+      tvec1[os+l] *= vecnor[l];
+      tvec2[os+l] *= vecnor[l];
+    }
+  free(vecnor);
+  /* 
+     
+  the toroidal solution corresponds to the toroidal part of the plate
+  motions scaled by the toroidal solution vectors which are functions
+  of l and depth
+
+  */
+  for(os=i=j=0;i < nradp2;i++,os+=lmaxp1,j+=2){
+    /* 
+       assign toroidal plate motion fields to solution expansion
+    */
+    sh_aexp_equals_bexp_coeff((tor_sol+j+0),pvel_tor);
+    sh_aexp_equals_bexp_coeff((tor_sol+j+1),pvel_tor);
+    /* 
+       scale with the toroidal solution at this depth 
+    */
+    sh_scale_expansion_l_factor((tor_sol+j+0),(tvec1+os));
+    sh_scale_expansion_l_factor((tor_sol+j+1),(tvec2+os));
+  }
+  if(verbose)
+    fprintf(stderr,"hc_torsol: done\n");
+}
+#undef HC_TVISC
+#undef HC_TVR
+
+
+
+@
+
+
+1.7
+log
+@*** empty log message ***
+@
+text
+@d14 1
+a14 1
+// $Id: hc_torsol.c,v 1.6 2004/12/20 05:09:42 becker Exp becker $
+d65 1
+a65 1
+  int l,jvisp1,jvis,i,j,k,nvisp1,nradp2,lmaxp1,os;
+a66 1
+  FILE *out;
+@
+
+
+1.6
+log
+@*** empty log message ***
+@
+text
+@d14 1
+a14 1
+// $Id: hc_torsol.c,v 1.5 2004/12/01 01:25:35 becker Exp becker $
+d51 2
+a52 2
+void hc_torsol(int nrad,int nvis,int lmax,HC_CPREC *r,
+	       HC_CPREC **rv,HC_CPREC **visc, struct sh_lms *pvel_tor,
+d144 1
+a144 1
+    el = (HC_CPREC)l;
+@
+
+
+1.5
+log
+@*** empty log message ***
+@
+text
+@d14 1
+a14 1
+// $Id: hc_torsol.c,v 1.4 2004/07/02 00:14:44 becker Exp becker $
+d52 2
+a53 2
+	       HC_CPREC **rv,HC_CPREC **visc, struct lms *pvel_tor,
+	       struct lms *tor_sol,double *tvec,
+@
+
+
+1.4
+log
+@*** empty log message ***
+@
+text
+@d14 1
+a14 1
+// $Id: hc_torsol.c,v 1.3 2004/06/23 01:06:56 becker Exp becker $
+d40 4
+d47 1
+d51 3
+a53 4
+//
+void hc_torsol(int nrad,int nvis,int lmax,CPREC *r,
+	       CPREC **rv,CPREC **visc, struct lms *pvel_tor,
+	       struct lms *tor_sol,hc_boolean pkernel,
+d63 1
+a63 1
+  double coef,*vecnor,hold,rlast,rnext,*tvec1,*tvec2,tloc[2];
+d131 4
+a134 5
+  os = nradp2 * lmaxp1;		/* solution factors as f(l,r) */
+  tvec1 = (double *)calloc(os,sizeof(double));
+  tvec2 = (double *)calloc(os,sizeof(double));
+  if(!tvec1 || !tvec2)
+    MEMERROR("hc_torsol: tvec1/2");
+d144 1
+a144 1
+    el = (CPREC)l;
+d170 3
+a172 1
+    /* lowest level */
+a237 15
+  if(pkernel){
+    /* 
+       kernel output
+    */
+    if(verbose)
+      fprintf(stderr,"hc_torsol: writing toroidal solutions 1 and 2 as f(l,r) to %s\n",
+	      HC_TORSOL_FILE);
+    out = hc_open(HC_TORSOL_FILE,"w","hc_torsol");
+    for(l=1;l<lmaxp1;l++){
+      for(os=i=0;i<nradp2;i++,os+=lmaxp1)
+	fprintf(out,"%3i %11g %11g %11g\n",l,r[i],tvec1[os+l],tvec2[os+l]);
+      fprintf(out,"\n");
+    }
+    fclose(out);
+  }
+d240 3
+a242 2
+  the toroidal solution corresponds to the toroidal part of the plate motions
+  scaled by the toroidal solution vectors which are functions of l and depth
+a258 1
+  free(tvec1);free(tvec2);
+@
+
+
+1.3
+log
+@*** empty log message ***
+@
+text
+@d14 1
+a14 1
+// $Id: hc_torsol.c,v 1.2 2004/06/21 01:16:31 becker Exp becker $
+d37 2
+a38 1
+//     pvel_tor: toroidal part of the plate velocities    
+d49 2
+a50 1
+	       struct lms *tor_sol,my_boolean verbose)
+d62 1
+a62 1
+  my_boolean qvis;
+d94 2
+a95 2
+  my_dvecrealloc(rv,nvisp1,"hc_torsol: rv");
+  my_dvecrealloc(visc,nvisp1,"hc_torsol: visc");
+d117 1
+a117 1
+      MY_ERROR("hc_torsol","torsol type error");
+d221 1
+a221 1
+  my_dvecalloc(&vecnor,lmaxp1,"hc_torsol: vecnor");
+d233 14
+a246 12
+#ifdef DEBUG
+  /* 
+     kernel output
+  */
+  if(verbose)
+    fprintf(stderr,"hc_torsol: writing toroidal solutions 1 and 2 as f(l,r) to %s\n",
+	    HC_TORSOL_FILE);
+  out = myopen(HC_TORSOL_FILE,"w","hc_torsol");
+  for(l=1;l<lmaxp1;l++){
+    for(os=i=0;i<nradp2;i++,os+=lmaxp1)
+      fprintf(out,"%3i %11g %11g %11g\n",l,r[i],tvec1[os+l],tvec2[os+l]);
+    fprintf(out,"\n");
+a247 2
+  fclose(out);
+#endif
+@
+
+
+1.2
+log
+@*** empty log message ***
+@
+text
+@d14 1
+a14 1
+// $Id: hc_torsol.c,v 1.1 2004/06/16 22:54:25 becker Exp becker $
+d48 1
+a48 1
+	       struct lms *tor_sol)
+d57 2
+a58 2
+  double coef,*vecnor,hold,rlast,rnext,tvec_loc1,tvec_loc2,*tvec1,*tvec2;
+  double exp_fac[2],p[2][2],diflog,el,elp2,elm1;
+d61 1
+d89 3
+a91 1
+  /* add one item at end of rv and visc arrays */
+d94 9
+a102 5
+  *(*rv+nvis) = 1.1;              /* last entry in radius array, why is
+				  this 1.1? probably because it has to 
+				  be > 1 
+			       */
+  *(*visc+nvis) = *(*visc+nvis-1);	/* last entry in viscosity array */
+d108 1
+a108 1
+  for(i=0;i < j;i++)
+d114 3
+d118 2
+d125 3
+a127 2
+  tvec1 = (double *)calloc(nradp2*lmaxp1,sizeof(double));
+  tvec2 = (double *)calloc(nradp2*lmaxp1,sizeof(double));
+d129 1
+a129 1
+    MEMERROR("hc_torsol: tvec2");
+a152 2
+    tvec_loc1 = 1.0;		/* toroidal solution */
+    tvec_loc2 = 0.0;
+d156 5
+a160 5
+    os = l;			/* offset pointer */
+    tvec1[os] = tvec_loc1; /* there seems to be no best ordering for 
+			      addressing this array, later we need l to 
+			      be the fastest increasing index */
+    tvec2[os] = tvec_loc2;
+d165 7
+a171 1
+    for(i=1;i < nradp2;i++,os+=lmaxp1){	/* loop through radii */
+d177 1
+a177 1
+	if(*(*rv+jvisp1) > r[i])
+d179 1
+a179 1
+	rnext = *(*rv+jvisp1);	/*  */
+a185 1
+	rlast = rnext;
+d191 1
+d193 2
+a194 3
+	p[0][1] = (exp_fac[0] - exp_fac[1])   / (*(*visc+jvis));
+	p[1][0] = elp2 * elm1 * (*(*visc+jvis)) * 
+	  (exp_fac[0] - exp_fac[1]);
+d199 6
+a204 3
+	hold = tvec_loc1;
+	tvec_loc1 = coef * (p[0][0] * hold + p[0][1] * tvec_loc2);
+	tvec_loc2 = coef * (p[1][0] * hold + p[1][1] * tvec_loc2);
+d210 2
+a211 5
+      //
+      //     IF AT REQUIRED OUTPUT RADIUS, STORE VECTOR AND CONTINUE
+      //
+      tvec1[os] = tvec_loc1;
+      tvec2[os] = tvec_loc2;
+d219 4
+a222 3
+  my_dvecalloc(&vecnor,lmaxp1,"hc_torsol:vecnor");
+  for(os=(nradp2-1) * lmaxp1,
+	l=0;l < lmaxp1;l++)
+d231 15
+d252 11
+a262 7
+  for(os=i=0;i<nradp2;i++,os+=lmaxp1){
+    /* assign */
+    sh_aexp_equals_bexp_coeff((tor_sol+i*2+0),pvel_tor);
+    sh_aexp_equals_bexp_coeff((tor_sol+i*2+1),pvel_tor);
+    /* scale with the toroidal solution at this depth */
+    sh_scale_expansion_l_factor((tor_sol+i*2+0),(tvec1+os));
+    sh_scale_expansion_l_factor((tor_sol+i*2+1),(tvec2+os));
+d264 2
+d268 2
+a269 1
+
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d1 1
+a1 1
+#include "hcexp.h"
+d4 2
+a5 1
+// these subroutines deal with the kinematic solution of a Hager &
+d9 2
+a10 1
+// not all the comments reflect all the changes, please beware
+d14 1
+a14 1
+// $Id: torsol.c,v 1.1 2004/06/16 22:52:40 becker Exp becker $
+d30 1
+a30 1
+//        visc,rvisc: normalized viscosities and their radii (nvis+1)
+d33 2
+a34 1
+//     nrad: NUMBER OF OUTPUT RADII (without top and bottom layers)
+d37 2
+d41 1
+a41 4
+//    tvecsol[lmaxp1 * nradp2 * 2]
+//
+//    the solution vector (l,j,k) for spherical harmonics degree
+//    0 <= l <= lmax, at layer 0 <= j <= nrad+1, and type 0<=k<2
+a43 2
+// macro for accessing tvec(0:lmax,0:nrad+1,0:1)
+#define TVECSOL(i,j,k) (tvecsol[(i)*nradp2t2+(j)*2+(k)])
+d47 2
+a48 1
+	       CPREC *rv,CPREC *visc, CPREC *tvecsol)
+d57 3
+a59 4
+  CPREC coef,vecnor,hold,rlast,rnext,tvec[2];
+  double exp_fac[2],tvec[2],p[2][2],diflog,el,elp2,elm1;
+  int l,jvisp1,jvis,j,k,nvisp1,nradp2,nradp2t2,lmaxp1;
+  long int i,ilim;
+d73 1
+a73 1
+  //        VECNOR: NORMALIZES TVEC TO TVEC(N,1),
+d78 1
+a78 1
+  //        TVEC[0],TVEC[1]: VECTOR COMPONENTS.
+a85 1
+  nradp2t2 = nradp2 * 2;	/* needed for torvec */
+a86 1
+  /* now it's OK to use TVECSOL */
+d88 23
+a110 5
+  rv[nvis] = 1.1;              /* last entry in radius array, why is
+				this 1.1? probably because it has to 
+				be > 1 
+			     */
+  visc[nvis] = visc[nvis-1];	/* last entry in viscosity array */
+d112 5
+a121 7
+  /* 
+     initialize tvec 
+  */
+  ilim = (long) (lmaxp1 * nradp2 * 2);
+  for(i=0;i < ilim;i++)
+    tvecsol[i] = 0.0;
+
+d139 3
+a141 3
+    rlast = r[0];		/* radius  */
+    tvec[0] = 1.0;		/* toroidal solution */
+    tvec[1] = 0.0;
+d145 5
+a149 2
+    TVECSOL(l,0,0) = tvec[0];
+    TVECSOL(l,0,1) = tvec[1];
+d154 1
+a154 1
+    for(i=1;i < nradp2;i++){	/* loop through radii */
+d160 1
+a160 1
+	if(rv[jvisp1] > r[i])
+d162 1
+a162 1
+	rnext = rv[jvisp1];	/*  */
+d176 2
+a177 2
+	p[0][1] = (exp_fac[0] - exp_fac[1])   / visc[jvis];
+	p[1][0] = elp2 * elm1 * visc[jvis] * 
+d183 3
+a185 3
+	hold = tvec[0];
+	tvec[0] = coef * (p[0][0] * hold + p[0][1] * tvec[1]);
+	tvec[1] = coef * (p[1][0] * hold + p[1][1] * tvec[1]);
+d194 18
+a211 12
+      TVECSOL(l,i,0) = tvec[0];
+      TVECSOL(l,i,1) = tvec[1];
+    } /* end radius loop */
+    // 
+    //     SET TVEC(l,NRADP2-1,0) = 1.0 AND NORMALIZE ALL VECTORS TO
+    //     THIS
+    //
+    vecnor = 1.0 / TVECSOL(l,nradp2-1,0);
+    for(j=0;j < nradp2;j++){
+      for(k=0;k < 2;k++){
+	TVECSOL(l,j,k) *= vecnor;
+      }
+d213 14
+a226 1
+     //     end of l loop         
+d228 1
+d232 2
+a233 1
+#undefine TVECSOL
+@

@@ -1,0 +1,209 @@
+head	1.1;
+access;
+symbols;
+locks
+	becker:1.1; strict;
+comment	@ * @;
+
+
+1.1
+date	2006.01.21.19.20.32;	author becker;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@/* These to copy back to rick_sh.c which has appropriate includes.
+This is just a working file */
+
+
+/* //
+// compute Legendre function (l,m) evaluated on nlat points 
+// in latitude and their derviatives with respect to theta, if 
+// ivec is set to 1.0
+// */
+
+void rick_compute_allplm(int lmax,int ivec,double *plm,double *dplm, struct rick_module *rick) {
+	int i,os;
+
+	if (lmax != rick->nlat-1) {
+		fprintf(stderr,"rick_compute_allplm: error: lmax mismatch: nlat/lmax %i %i \n",rick->nlat,lmax);
+		/*     print *,nlat,lmax */
+     		exit(-1);
+  	}
+  	os=1;
+	for (i=0;i<rick->nlat;i++) { /*changed from 1->nlat to 0->nlat-1 - need change in plmbar1 also */
+		rick_plmbar1(*plm[os],*dplm[os],ivec,lmax,rick->gauss_z[i]); /*note change in gauss_z[i] */
+     		os = os + rick->lmsize;
+	}
+}
+
+/* //
+// detemine the colatidude and longitude of PIxel index
+// where index goes from 0 ... nlon * nlat-1
+// */
+void rick_PIx2ang(int index, int lmax, double *theta, double *phi, struct rick_module *rick) {
+  int  i,j
+  if(!rick_initialized){
+     fprintf(stderr,"rick_PIx2ang: error: not initialized\n");
+     exit(-1);
+  }
+
+  j = index;
+  i=1;
+  while(j>rick->nlonm1) { /* */
+     j = j - nlon;
+     i=i+1;
+  }
+  *theta = rick->gauss_theta[i];
+  *phi = rick->dphi * (double)(j);
+}
+
+/* //
+// compute sigma^2(l), the power per degree per unit area
+// */
+void rick_compute_power(double *alm[],int lmax,float *power[],struct rick_module *rick) {
+ /*  RICK_PREC, intent(in),  dimension (lmsize2)  alm -> careful with this precision */
+ /*Thorsten - not sure if we need another structure (elm) for alm[] here 
+ Is this routine ever used??*/
+  int  l,j,m,j2
+  l = 0;
+  m = -1;
+  do j=1, lmsize
+     m = m + 1
+     if( m > l ) {
+        l=l+1;m=0
+     }
+     power(l) = 0.0
+     j2 = j * 2
+     // A coefficient
+     power(l) = power(l) + *alm(j2-1)**2
+     if(m!=0){
+        power(l) = power(l) + *alm(j2)**2   // B coefficient
+     }
+     power(l) = power(l)/(2.0*l +1.0)
+  }  
+}
+
+/* //
+// the actual routine to go from spectral to spatial: added structure rick
+// */
+void rick_shc2d_pre(double cslm,double dslm,int lmax,double *plm, double *dplm,int ivec,
+     float *rdatax[],float *rdatay[], struct rick_module *rick)
+     {
+  /* //
+// Legendre functions are precomputed
+// */
+  double  valuex[];
+  double valuey[];
+  double  dpdt,dpdp;
+  int  i,j,m,m2,j2,ios1,l,lmaxp1,lmaxp1t2,oplm
+  if(! rick_initialized){
+     fprintf(stderr,"rick_shc2d_pre: error: initialize modules first\n");
+     exit(-1);
+  }
+  // check bounds 
+  lmaxp1 = lmax + 1;                // this is nlat
+  lmaxp1t2 = 2 * lmaxp1;               // this is nlon
+  if((rick->nlat!=lmaxp1)||(rick->nlon!=lmaxp1t2)){
+     fprintf(stderr,"rick_shc2d_pre: dimension mismatch: %i %i %i\n",lmax,nlon,nlat);
+     exit(-1);
+  }
+  if(ivec==1){
+     if(!rick_vector_sh_fac_init){
+        fprintf(stderr,"rick_shc2d_pre: error: vector harmonics factors not initialized\n");
+        exit(-1);
+     }
+  }
+  for (i=1;i<=nlat; i++) {	/*  loop through latitudes - leavin indices as is here. Don't wanna stuff sh format */
+     oplm = (i-1)*lmsize        /*  offset for Plm array. CO'N: leavin these as is*/
+     ios1 = (i-1) * nlon        /* offset for data array */
+     if(ivec==0){          
+        /* 
+         scalar
+         */
+        valuex = 0.0;               /* init with 0.0es */
+        l=0; 
+	m=-1;
+	for (j=1; j<=rick->lmsize; j++) { /* loop through l,m */
+           m++;
+           if (m > l) {
+              m=0;
+	      l++;
+           }
+           m2 = 2*m;
+	   j2 = 2*j;
+         	/*  add up contributions from all l,m  */
+           valuex[m2+1] = valuex[m2+1] +  /* cos term */
+                plm[oplm+j] * cslm[j2-1] /* A coeff dereferenced ?*/
+           valuex[m2+2] = valuex[m2+2] +  /* sin term */
+                plm[oplm+j] * cslm[j2]   /* B coeff */
+        }
+        /* compute inverse FFT  */
+        rick_cs2ab(valuex+1,nlon);	/* Note: cs2ab index changed, need valuex+1 */
+        /* inverse FFT */
+        rick_realft(valuex+1,nlat,-1)	/* Note: realft index changed, pass as +1 */
+        for (j=1; j<=rick->nlon; j++) { /* can't vectorize */
+           rdatax[ios1 + j] = valuex[j]/(double)(rick->nlat);
+        }
+     }
+     else {
+        /* 
+         vector harmonics
+        */
+        valuex = 0.0;
+        valuey = 0.0;
+        l=1; 
+	m=-1;               /* start at l = 1 */
+        for (j=2, j<=rick->lmsize; j++) { /* loop through l,m */
+           m++;
+           if (m > l) {
+              m=0;
+	      l++;
+           }
+           m2  = 2*m;
+	   j2 = 2*j;
+           /* derivative factors */
+           dpdt = dplm[oplm+j] * ell_factor[l]; /* d_theta(P_lm) factor */
+           dpdp = (double)(m) * plm[oplm+j]/sin_theta[i] * ell_factor[l]; /* d_phi (P_lm) factor */
+           /* add up contributions from all l,m 
+           // make life a little easier
+           //
+           // u_theta
+           / */
+           valuex[m2+1] = valuex[m2+1] +  /* cos term */
+                  cslm[j2]   * dpdp - dslm[j2-1] * dpdt;
+           valuex[m2+2] = valuex[m2+2] -  /* sin term */
+                 cslm[j2-1] * dpdp - dslm[j2]   * dpdt;
+           /* 
+            u_phi
+            */
+           valuey[m2+1] = valuey[m2+1] +  // cos term
+                cslm[j2-1] * dpdt  + dslm[j2]   * dpdp;
+           valuey[m2+2] = valuey[m2+2] +  // sin term
+                cslm(j2)   * dpdt  - dslm[j2-1] * dpdp;
+        }
+        /* do inverse FFTs */
+      	 rick_cs2ab(valuex+1,nlon);	/* Changed indices in cs2ab and realft */ 	 	
+	 rick_cs2ab(valuey+1,nlon); 	/* to c-standard (ie. 0->n), so need value+1 here */
+       	rick_realft(valuex+1,nlat,-1);
+       	rick_realft(valuey+1,nlat,-1);
+        /* assign to output array */
+	
+        for (j=1; j<=nlon; j++) {            /*  can't vectorize, since there's an offset of 2 */
+           rdatax[ios1 + j] = valuex[j]/(double)(nlat);
+           rdatay[ios1 + j] = valuey[j]/(double)(nlat);
+        }
+     }
+  }
+  return (0);
+}
+@

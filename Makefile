@@ -1,0 +1,226 @@
+#
+#
+# makefile for experimental Hager & O'Connell routines
+#
+#
+#
+# object file directory
+ODIR = objects/$(ARCH)/
+#
+#
+# binary directory
+BDIR = ./bin/$(ARCH)/
+
+
+
+# include files
+OINCS = hc.h hc_filenames.h sh.h 
+#
+# Healpix stuff, comment out all if not wanted
+#
+# include flags
+HEAL_INC_DIR = $(HOME)/progs/src/Healpix_1.20/include/
+HEAL_INC_FLAGS = -I$(HEAL_INC_DIR)
+HEAL_LIBS = $(HOME)/progs/lib/$(ARCH)/libchealpix.a \
+		$(HOME)/progs/lib/$(ARCH)/libhealpix.a
+HEAL_LIB_FLAGS = -L/usr/local/src/cfitsio/lib/ -L/opt/cfitsio/lib/
+HEAL_LIBS_LINKLINE = -lchealpix -lhealpix -lcfitsio 
+HEAL_INCS = $(HEAL_INC_DIR)/myhealpix.h $(HEAL_INC_DIR)/chealpix.h 
+HEAL_DEFINES = -DHC_USE_HEALPIX
+#
+# Rick spherical harmonics stuff
+#
+#RICK_SRCS = rick_sh.f90 rick_fft.f90 rick_sh_c.c rick_fft_c.c
+# new C version
+RICK_SRCS = rick_sh_c.c rick_fft_c.c
+#RICK_OBJS = $(ODIR)/rick_sh.o $(ODIR)/rick_sh_c.o  $(ODIR)/rick_fft.o $(ODIR)/rick_fft_c.o
+# if this is defined, will use double precision internally
+#RICK_DEFINES = -DSH_RICK_DOUBLE_PRECISION 
+# if those are defined, will only use C routines
+RICK_DEFINES =  -DNO_RICK_FORTRAN
+RICK_OBJS = $(ODIR)/rick_sh_c.o $(ODIR)/rick_fft_c.o
+RICK_INC_FLAGS = -I. 
+RICK_INCS =  sh_rick_ftrn.h  sh_rick.h
+RICK_LIB = $(ODIR)/librick.a
+
+#
+# PREM STUFF
+#
+PREM_SRCS = prem_util.c
+PREM_OBJS = $(ODIR)/prem_util.o
+# default PREM model file
+PREM_DEFINES = -DPREM_MODEL_FILE=\"$(PWD)/prem/prem.dat\"
+PREM_INCS = prem.h
+#
+# GMT grd handling, need to define USE_GMT4 for version 4.0
+#
+GGRD_SRCS = ggrd_velinterpol.c ggrd_readgrds.c ggrd_grdtrack_util.c
+GGRD_OBJS = $(ODIR)/ggrd_velinterpol.o $(ODIR)/ggrd_readgrds.o $(ODIR)/ggrd_grdtrack_util.o
+GGRD_OBJS_DBG = $(ODIR)/ggrd_velinterpol.dbg.o $(ODIR)/ggrd_readgrds.dbg.o $(ODIR)/ggrd_grdtrack_util.dbg.o
+GGRD_DEFINES = -I$(GMTHOME)/include -I$(NETCDFHOME)/include 
+GGRD_LIB_FLAGS = -L$(GMTHOME)/lib -L$(NETCDFHOME)/lib 
+GGRD_LIBS = $(ODIR)/libggrd.a $(ODIR)/libggrd.dfast.a $(ODIR)/libggrd.dbg.a
+# for GMT3.4.5
+GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include 
+GGRD_LIBS_LINKLINE = -lggrd -lgmt -lnetcdf 
+# for GMT 4.0
+#GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include -DUSE_GMT4
+#GGRD_LIBS_LINKLINE = -lggrd -lgmt -lpsl -lnetcdf 
+#
+#
+#
+# Hager & O'Connell code
+#
+#
+# C sources of subroutines (not main)
+#
+HC_SOURCES = sh_exp.c sh_model.c hc_init.c hc_solve.c hc_propagator.c \
+	hc_polsol.c hc_matrix.c hc_torsol.c hc_output.c hc_input.c \
+	hc_misc.c hc_extract_sh_layer.c 
+
+# all C sources
+C_SOURCES = $(HC_SOURCES) $(RICK_SRCS) $(PREM_SRCS) $(GGRD_SRCS)
+#
+#
+# objects for HC library
+#
+HC_OBJS = $(ODIR)/sh_exp.o $(ODIR)/sh_model.o $(ODIR)/hc_input.o \
+	$(ODIR)/hc_polsol.o $(ODIR)/hc_matrix.o $(ODIR)/hc_torsol.o \
+	$(ODIR)/hc_misc.o $(ODIR)/hc_init.o $(ODIR)/hc_propagator.o \
+	$(ODIR)/hc_output.o $(ODIR)/hc_solve.o \
+	$(PREM_OBJS)  
+
+HC_OBJS_DBG = $(ODIR)/sh_exp.dbg.o $(ODIR)/sh_model.dbg.o $(ODIR)/hc_input.dbg.o \
+	$(ODIR)/hc_polsol.dbg.o $(ODIR)/hc_matrix.dbg.o $(ODIR)/hc_torsol.dbg.o \
+	$(ODIR)/hc_misc.dbg.o $(ODIR)/hc_init.dbg.o $(ODIR)/hc_propagator.dbg.o \
+	$(ODIR)/hc_output.dbg.o $(ODIR)/hc_solve.dbg.o \
+	$(PREM_OBJS)  
+
+# HC library
+HC_LIBS = $(ODIR)/libhc.a $(ODIR)/libhc.dbg.a
+
+LIB_FLAGS = -L$(HOME)/progs/lib/$(ARCH)/ \
+	$(HEAL_LIB_FLAGS) $(RICK_LIB_FLAGS) \
+	$(GGRD_LIB_FLAGS) \
+	-L$(ODIR)/
+
+#
+INC_FLAGS = -I$(HOME)/progs/include/  $(HEAL_INC_FLAGS) \
+	$(RICK_INC_FLAGS) $(GGRD_INC_FLAGS) 
+#
+# includes 
+INCS = hc_auto_proto.h $(HEAL_INCS) $(RICK_INCS) $(PREM_INCS) \
+	$(GGRD_INCS) $(OINCS)
+#
+# defines
+DEFINES = $(RICK_DEFINES) $(HEAL_DEFINES) $(PREM_DEFINES) \
+	$(GGRD_DEFINES)
+#
+# libraries
+LIBS = $(HC_LIBS) $(GGRD_LIBS) $(HEAL_LIBS) $(RICK_LIB)
+
+
+all: dirs libs hc hc_extract_sh_layer \
+	sh_syn sh_ana sh_power \
+	ggrd_test 
+
+libs: dirs hc_lib  $(HEAL_LIBS) $(RICK_LIB)
+
+hc_lib: $(HC_LIBS) $(GGRD_LIBS)   $(ODIR)/libhc.dbg.a
+
+really_all: dirs proto all 
+
+proto: hc_auto_proto.h
+
+sh_test: $(LIBS) $(INCS) $(ODIR)/sh_test.o
+	$(F90) $(LIB_FLAGS) $(ODIR)/sh_test.o \
+		-o $(BDIR)/sh_test -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(F90LDFLAGS)
+
+sh_syn: $(LIBS) $(INCS) $(ODIR)/sh_syn.o
+	$(F90) $(LIB_FLAGS) $(ODIR)/sh_syn.o \
+		-o $(BDIR)/sh_syn -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(F90LDFLAGS)
+
+sh_power: $(LIBS) $(INCS) $(ODIR)/sh_power.o
+	$(F90) $(LIB_FLAGS) $(ODIR)/sh_power.o \
+		-o $(BDIR)/sh_power -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(F90LDFLAGS)
+
+sh_ana: $(LIBS) $(INCS) $(ODIR)/sh_ana.o
+	$(F90) $(LIB_FLAGS) $(ODIR)/sh_ana.o \
+		-o $(BDIR)/sh_ana -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(F90LDFLAGS)
+
+
+hc: $(LIBS) $(INCS) $(ODIR)/main.o
+	$(F90) $(LIB_FLAGS) $(ODIR)/main.o -o $(BDIR)/hc \
+		-lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(F90LDFLAGS) 
+test_fft: $(LIBS) $(INCS) $(ODIR)/test_fft.o
+	$(F90) $(LIB_FLAGS) $(ODIR)/test_fft.o -o $(BDIR)/test_fft \
+		-lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(F90LDFLAGS) 
+
+ggrd_test: $(LIBS) $(INCS) $(ODIR)/ggrd_test.o
+	$(F90) $(LIB_FLAGS) $(ODIR)/ggrd_test.o -o $(BDIR)/ggrd_test \
+		$(GGRD_LIBS_LINKLINE) -lhc -lrick -lm $(F90LDFLAGS) 
+
+hc_extract_sh_layer: $(LIBS) $(INCS) $(ODIR)/hc_extract_sh_layer.o
+	$(F90) $(LIB_FLAGS) $(ODIR)/hc_extract_sh_layer.o \
+		-o $(BDIR)/hc_extract_sh_layer \
+		-lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(F90LDFLAGS) 
+
+
+# C function prototyper
+hc_auto_proto.h: 
+	rm hc_auto_proto.h;\
+	cproto  $(INC_FLAGS)-DGENERATE_PROTO  -f 2 -p *.c  | \
+		grep -v "void main("  | grep -v "int main(" > hc_auto_proto.h
+
+dirs:
+	if [ ! -s ./objects/ ]; then\
+		mkdir objects;\
+	fi;
+	if [ ! -s ./objects/$(ARCH)/ ]; then\
+		mkdir objects/$(ARCH);\
+	fi;
+	if [ ! -s ./bin/ ];then\
+		mkdir bin;\
+	fi;\
+	if [ ! -s ./bin/$(ARCH) ];then\
+		mkdir bin/$(ARCH);\
+	fi
+
+clean:
+	rm $(ODIR)/*.o hc_auto_proto.h
+#
+# library
+#
+
+$(ODIR)/libhc.a: $(HC_OBJS)
+	$(AR) rv $(ODIR)/libhc.a $(HC_OBJS)
+
+$(ODIR)/libhc.dbg.a: $(HC_OBJS_DBG)
+	$(AR) rv $(ODIR)/libhc.dbg.a $(HC_OBJS_DBG)
+
+$(ODIR)/librick.a: $(RICK_OBJS)
+	$(AR) rv $(ODIR)/librick.a $(RICK_OBJS)
+
+$(ODIR)/libggrd.a: $(GGRD_OBJS)
+	$(AR) rv $(ODIR)/libggrd.a $(GGRD_OBJS)
+
+$(ODIR)/libggrd.dfast.a: $(GGRD_OBJS)
+	$(AR) rv $(ODIR)/libggrd.dfast.a $(GGRD_OBJS)
+
+$(ODIR)/libggrd.dbg.a: $(GGRD_OBJS_DBG)
+	$(AR) rv $(ODIR)/libggrd.dbg.a $(GGRD_OBJS_DBG)
+
+#
+# object rules
+#
+$(ODIR)/%.o: %.c  $(INCS)
+	$(CC) $(CFLAGS) $(INC_FLAGS) $(DEFINES) -c $< -o $(ODIR)/$*.o
+
+$(ODIR)/%.o: %.f90 $(INCS)
+	$(F90) $(F90FLAGS) $(DEFINES) -c $< -o $(ODIR)/$*.o
+
+$(ODIR)/%.dbg.o: %.c  $(INCS)
+	$(CC) $(CFLAGS_DEBUG) $(INC_FLAGS) $(DEFINES) -c $< -o $(ODIR)/$*.dbg.o
+
+$(ODIR)/%.dbg.o: %.f90 $(INCS)
+	$(F90) $(F90FLAGS_DEBUG) $(DEFINES) -c $< -o $(ODIR)/$*.dbg.o

@@ -1,0 +1,36 @@
+#!/bin/bash
+layer=${1-22}			# which layer? 0...nrad+1
+file=${2-vsol}			# suffix, layer.bin will be added
+
+n=`lc vdepth.dat`
+
+if [ $layer -ge $n ];then
+    echo $0: layer $layer too large versus $n
+    exit
+fi
+((lp1=layer+1))
+
+oneline $lp1 vdepth.dat > tmp.$$
+read z < tmp.$$; rm tmp.$$
+
+
+echo $0: extracting layer $layer at depth $z 
+gmtconvert -bis5 vsol.$layer.bin > tmp.$$.vel
+
+echo $0: gridding
+i=1
+for t in vr vt vp;do
+    gawk '{print($1,$2,$(2+i))}' i=$i tmp.$$.vel | \
+	surface -R0/360/-90/90 -I2 -Gspatial.$t.grd
+    echo $0: written to $t.grd
+    grd2map2 spatial.$t xx $t
+
+    ((i=i+1))
+done
+epsmerge -par --print --postscript --orientation Portrait -x 1 -y 3 \
+	spatial.vr.ps spatial.vp.ps spatial.vt.ps \
+    > spatial.vec.ps
+
+
+echo $0: done
+rm tmp.$$.* 2> /dev/null

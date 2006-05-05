@@ -1,0 +1,15 @@
+#!/bin/bash
+# compute RMS of GMT grd velocities
+models=${1-"med1_fs"}
+
+nl=`lc vdepth.dat`
+i=1
+rm rms.dat 2> /dev/null
+while [ $i -le $nl ];do
+    grdmath vt.$i.grd vp.$i.grd R2 SQRT = tmp.h.grd
+    echo `oneline $i vdepth.dat | gawk -f togformat.awk` \
+                `grd2wvarrms vr.$i.grd` `grd2wvarrms tmp.h.grd`  >> rms.dat
+    rm tmp.h.grd
+    tail -1 rms.dat
+    ((i=i+1))
+done

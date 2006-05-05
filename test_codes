@@ -1,0 +1,91 @@
+#!/bin/bash
+
+binary=bin/$ARCH/hctest
+
+scalar=1
+vector=1
+
+if [ $scalar -eq 1 ];then
+    lmax=31
+    
+# make an input grd file
+    cat test.ab | shsyn 1 0 test
+# analyze using shana
+    shana $lmax test > shana.ab
+    for type in 0 1;do				# 0: Healpix 1: Rick
+	rm hc.$type.dat 2> /dev/null
+# get the coordinates for interpolation
+	$binary $type 0 $lmax
+	if [ ! -s hc.$type.dat ];then
+	    echo $0: error
+	    exit
+	fi
+# get data for hctest
+	grdtrack hc.$type.dat -Gtest.grd > test.$type.data
+# analyze using healpix
+	if [ $type -eq 0 ];then
+	    $binary $type 1 $lmax > healpix.ab
+	else
+	    $binary $type 1 $lmax > rick.ab
+	fi
+    done
+fi
+
+if [ $vector -eq 1 ];then
+    lmax=31
+    
+# make an input grd file
+    cat test.ab   | shsyn 1 0 vec_r # radial components
+    cat test.v.ab | shsyn 1 1 3 
+    for t in vec_p vec_t vec_r;do
+	cp $t.grd orig.$t.grd
+    done
+    
+# analyze using shana
+    shana $lmax vec_r > tmp.1
+    shana $lmax vec_p > tmp.2
+    paste tmp.1 tmp.2 > shana.v.ab
+    
+    gawk '{if(NR==1)print($1);else print($1,$2)}'  shana.v.ab | shsyn 1 1 vec_r
+    gawk '{if(NR==1)print($1);else print($3,$4,$5,$6)}'  shana.v.ab | shsyn 1 1 3
+    for t in vec_p vec_t vec_r;do
+	cp $t.grd shana.$t.grd
+    done
+
+
+    for type in 1;do				# 0: Healpix 1: Rick
+	rm hc.$type.dat 2> /dev/null
+# get the coordinates for interpolation
+	$binary $type 0 $lmax
+	if [ ! -s hc.$type.dat ];then
+	    echo $0: error
+	    exit
+	fi
+# get data for hctest
+	grdtrack hc.$type.dat -Gvec_r.grd > tmp.1
+	grdtrack hc.$type.dat -Z -Gvec_p.grd > tmp.3
+	grdtrack hc.$type.dat -Z -Gvec_t.grd > tmp.2
+
+	paste tmp.1 tmp.2 tmp.3 > test.$type.data
+	rm tmp.?
+
+# analyze using healpix
+	if [ $type -eq 0 ];then
+	    $binary $type 1 $lmax 1 > healpix.v.ab
+	else
+	    $binary $type 1 $lmax 1 > rick.v.ab
+	fi
+    done
+
+    gawk '{if(NR==1)print($1);else print($1,$2)}'  rick.v.ab | shsyn 1 1 vec_r
+    gawk '{if(NR==1)print($1);else print($3,$4,$5,$6)}'  rick.v.ab | shsyn 1 1 3
+    for t in vec_p vec_t vec_r;do
+	cp $t.grd rick.$t.grd
+    done
+
+    for t in orig rick shana;do
+	plotvelocities_pt $t.vec_p.grd $t.vec_t.grd $t.vec_r.grd
+    done
+fi
+
+

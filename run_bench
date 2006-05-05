@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# run simple benchmarks
+#
+tc=1
+for t in pmd pm f;do
+    if [ $tc -eq 1 ];then
+	scale=0.2;free=""
+    elif [ $tc -eq 2 ];then
+	scale=0.0;free=""
+    else
+	scale=0.2;free="-fs"
+    fi
+    cd bench/$t/new/
+    hc	-ds $scale $free	# run code
+    ../../../hc2gmt		# convert to GMT grd
+    ../../../calc_rms		# compute the RMS of radial and horizontal flow
+
+
+    cd -
+    ((tc=tc+1))
+done
+

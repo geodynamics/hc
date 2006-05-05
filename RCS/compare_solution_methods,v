@@ -1,0 +1,170 @@
+head	1.2;
+access;
+symbols;
+locks
+	becker:1.2; strict;
+comment	@# @;
+
+
+1.2
+date	2004.11.26.20.05.59;	author becker;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.08.09.06.58.13;	author becker;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@*** empty log message ***
+@
+text
+@#!/bin/bash
+# 
+# test different ways of extracting the solutions
+#
+layer=${1-10}
+runcode=${2-0}
+
+# plate motion only
+#old_model=$datadir/flow_field/finite_strain/pmAd/;dens_scale=0.0;free_slip="";visc=A
+# free slip density driven
+old_model=$datadir/flow_field/finite_strain/pmAsmean_nt_free/;dens_scale=0.2;free_slip="-fs";visc=A
+
+
+#old_model=$datadir/flow_field/finite_strain/pmFd/;dens_scale=0.0;free_slip="";visc=F
+#old_model=$datadir/flow_field/finite_strain/pmFsmean_nt_free/;dens_scale=0.2;free_slip="-fs";visc=F
+#old_model=$datadir/flow_field/finite_strain/pmFsmean_nt/;dens_scale=0.2;free_slip="";visc=F
+
+
+if [ $runcode -eq 1 ];then
+#
+# prepare input files
+#
+    # convert plate velocities
+    cat $HOME/plates/rick_expansions/my_nuvel_pv.63.1.0.cs | abconvert 7 0 1 6 | \
+	gawk '{if(NR==1)print($1,0,0,1,2,0);else print($0)}' > pvel.sh.dat
+    # convert density models (this would be OK, but 31...63 issue)
+    convert_she_model $datadir/tomography/smean_nt/d.31.m.ab  > dens.sh.dat
+    # run code
+    hc -ds $dens_scale $free_slip -vf visc.$visc
+
+fi
+
+#
+# extract the solution as spherical harmonics directly from file
+#
+# pol/tor
+hc_extract_sh_layer sol.bin $layer > sh.orig.pt 2> /dev/null
+# radial
+hc_extract_sh_layer sol.bin $layer 1 > sh.orig.r 2> /dev/null
+#
+#
+# convert to spatial using HC type routines
+#
+cat sh.orig.pt | sh_syn > rspectral.vtvp 2> /dev/null
+cat sh.orig.r  | sh_syn > rspectral.vr 2> /dev/null
+# grid
+reg=-R0/360/-90/90
+surface $reg -I2 rspectral.vr -Grspectral.vr.grd
+gawk '{print($1,$2,$3)}' rspectral.vtvp | \
+    surface $reg -I2 -Grspectral.vt.grd
+gawk '{print($1,$2,$4)}' rspectral.vtvp | \
+    surface $reg -I2 -Grspectral.vp.grd
+#
+# reexpand using HC routines
+cat rspectral.vr   | sh_ana 63 0 >  sh.reexpanded.r 2> /dev/null
+cat rspectral.vtvp | sh_ana 63 1 >  sh.reexpanded.pt 2> /dev/null
+
+
+rm rspectral.vtvp rspectral.vr 
+
+#
+# reexpand using my old routines
+#
+shana 63 rspectral.vr > sh.mreexpanded.r 2> /dev/null
+cp rspectral.vt.grd vec_t.grd
+cp rspectral.vp.grd vec_p.grd
+shana 63 vec_p > sh.mreexpanded.pt 2> /dev/null
+rm vec_p.grd vec_t.grd
+
+
+# extract using my old routines
+gawk '{if(NR==1)print($1);else print($0)}' sh.orig.r | \
+    shsyn 2 0 mspectral.vr 2> /dev/null
+gawk '{if(NR==1)print($1);else print($0)}'  sh.orig.pt  | \
+    shsyn 2 0 3 2> /dev/null
+mv vec_p.grd mspectral.vp.grd
+mv vec_t.grd mspectral.vt.grd
+
+
+# use velocities from spatial solution output
+
+i=1
+for f in lon lat vr vt vp;do
+    cat vsol.$layer.bin | extract_bin 5 $i 0 1 > tmp.$f 2> /dev/null
+    ((i=i+1))
+done
+for f in vr vt vp;do
+    paste tmp.lon tmp.lat tmp.$f | surface $reg -I2 -Gospatial.$f.grd
+    rm tmp.$f
+done
+rm tmp.lon tmp.lat
+
+# plot 
+for m in rspectral mspectral ospatial ;do
+    for t in vr vt vp;do
+	grd2map2 $m.$t vel $t > /dev/null 2> /dev/null
+    done
+done
+rm rspectral.v?.grd mspectral.v?.grd
+#
+# quantitative comparison
+#
+for t in vr vt vp;do
+    grd2map2 $old_model/$t.$layer vel $t > /dev/null 2> /dev/null
+    mv $old_model/$t.$layer.ps old.$t.ps
+    echo $0: solution compare: $t: `calc_grd_correlation $old_model/$t.$layer.grd ospatial.$t.grd -1 1`
+done
+
+#
+# comparison of different ways of extracting the solution
+#
+epsmerge -par --print --postscript --orientation Landscape -x 3 -y 3 \
+    ospatial.vr.ps ospatial.vp.ps ospatial.vt.ps \
+    rspectral.vr.ps rspectral.vp.ps rspectral.vt.ps \
+    mspectral.vr.ps mspectral.vp.ps mspectral.vt.ps \
+    > sol.vec.ps 2> /dev/null
+#
+# comparison between old and new HC code
+#
+epsmerge -par --print --postscript --orientation Landscape -x 3 -y 2 \
+    old.vr.ps old.vp.ps old.vt.ps \
+    ospatial.vr.ps ospatial.vp.ps ospatial.vt.ps \
+    > sol.compare.ps 2> /dev/null
+
+rm     old.vr.ps old.vp.ps old.vt.ps \
+    ospatial.vr.ps ospatial.vp.ps ospatial.vt.ps \
+    rspectral.vr.ps rspectral.vp.ps rspectral.vt.ps \
+    mspectral.vr.ps mspectral.vp.ps mspectral.vt.ps 
+#
+# quantitative comparison
+#
+
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d5 128
+@

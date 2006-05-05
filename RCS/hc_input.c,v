@@ -1,0 +1,242 @@
+head	1.8;
+access;
+symbols;
+locks; strict;
+comment	@ * @;
+
+
+1.8
+date	2004.12.20.05.18.12;	author becker;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.12.20.05.09.42;	author becker;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.12.01.01.25.35;	author becker;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.11.24.02.09.00;	author becker;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.08.06.00.38.36;	author becker;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.07.02.00.14.44;	author becker;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.07.01.01.25.28;	author becker;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.06.24.00.53.24;	author becker;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.8
+log
+@*** empty log message ***
+@
+text
+@#include "hc.h"
+
+/* 
+
+routines dealing with input, pass sol initialized as NULL
+
+
+$Id: hc_input.c,v 1.7 2004/12/20 05:09:42 becker Exp becker $
+
+*/
+void hc_read_sh_solution(struct hcs *hc, struct sh_lms **sol, FILE *in, 
+			 hc_boolean binary, hc_boolean verbose)
+{
+  int nset,ilayer,shps,lmax,type,ivec,nsol,i,os,n;
+  HC_PREC zlabel,unity[3]={1.,1.,1.};
+   /* 
+     read all layes as spherical harmonics assuming real Dahlen & Tromp 
+     (physical) normalization
+     
+  */
+  n = os = 0;
+  while(sh_read_parameters(&type,&lmax,&shps,&ilayer,&nset,
+			   &zlabel,&ivec,in,FALSE,binary,
+			   verbose)){
+    hc->sh_type = type;
+    if((shps != 3)||(ilayer != n)){
+      fprintf(stderr,"hc_read_sh_solution: error: shps %i ilayer %i n %i\n",
+	      shps,ilayer,n);
+      exit(-1);
+    }
+    if(n == 0){			/* initialize */
+      /* solution expansions */
+      nsol = shps * nset;
+      *sol = (struct sh_lms *)realloc(*sol,nsol * sizeof(struct sh_lms));
+      if(!(*sol))
+	HC_MEMERROR("hc_read_sh_solution: sol");
+      hc->sh_type = type;
+      for(i=0;i < nsol;i++)	/* init expansions */
+	sh_init_expansion((*sol+i),lmax,hc->sh_type,1,verbose);
+      hc->nrad = nset - 2;
+      hc_vecrealloc(&hc->r,nset,"hc_read_sh_solution");
+    }
+    /* assign depth */
+    hc->r[ilayer] = HC_ND_RADIUS(zlabel);
+    /* 
+       read coefficients
+    */
+    sh_read_coefficients((*sol+os),shps,-1,in,
+			 binary,unity,verbose);
+    if(verbose)
+      fprintf(stderr,"hc_read_sh_solution: z: %8.3f |r|: %12.5e |pol|: %12.5e |tor|: %12.5e\n",
+	      HC_Z_DEPTH(hc->r[ilayer]),
+	      sqrt(sh_total_power((*sol+os))),sqrt(sh_total_power((*sol+os+1))),
+	      sqrt(sh_total_power((*sol+os+2))));
+
+    n++;
+    os += shps;
+  }
+  if(n != nset)
+    HC_ERROR("hc_read_sh_solution","read error");
+  if(verbose)
+    fprintf(stderr,"hc_read_sh_solution: read %i solution layer\n",nset);
+}
+@
+
+
+1.7
+log
+@*** empty log message ***
+@
+text
+@d8 1
+a8 1
+$Id: hc_input.c,v 1.6 2004/12/01 01:25:35 becker Exp becker $
+d15 1
+a15 1
+  HC_CPREC zlabel,unity[3]={1.,1.,1.};
+@
+
+
+1.6
+log
+@*** empty log message ***
+@
+text
+@d8 1
+a8 1
+$Id: hc_input.c,v 1.5 2004/11/24 02:09:00 becker Exp becker $
+d11 1
+a11 1
+void hc_read_sh_solution(struct hcs *hc, struct lms **sol, FILE *in, 
+d34 1
+a34 1
+      *sol = (struct lms *)realloc(*sol,nsol * sizeof(struct lms));
+@
+
+
+1.5
+log
+@*** empty log message ***
+@
+text
+@d8 1
+a8 1
+$Id: hc_input.c,v 1.4 2004/08/06 00:38:36 becker Exp becker $
+d15 1
+a15 1
+  CPREC zlabel,unity[3]={1.,1.,1.};
+d36 1
+a36 1
+	MEMERROR("hc_read_sh_solution: sol");
+d48 2
+a49 1
+    sh_read_coefficients((*sol+os),shps,in,binary,unity,verbose);
+@
+
+
+1.4
+log
+@*** empty log message ***
+@
+text
+@d8 1
+a8 1
+$Id: hc_input.c,v 1.3 2004/07/02 00:14:44 becker Exp becker $
+d52 2
+a53 2
+	      sqrt(sh_power((*sol+os))),sqrt(sh_power((*sol+os+1))),
+	      sqrt(sh_power((*sol+os+2))));
+@
+
+
+1.3
+log
+@*** empty log message ***
+@
+text
+@d8 1
+a8 1
+$Id: hc_input.c,v 1.2 2004/07/01 01:25:28 becker Exp becker $
+d25 1
+d38 1
+a38 1
+      for(i=0;i<nsol;i++)	/* init expansions */
+d55 2
+a56 1
+    n++;os+=shps;
+@
+
+
+1.2
+log
+@*** empty log message ***
+@
+text
+@d8 1
+a8 1
+$Id: hc_input.c,v 1.1 2004/06/24 00:53:24 becker Exp becker $
+d12 1
+a12 1
+			 my_boolean binary, my_boolean verbose)
+d40 1
+a40 1
+      my_vecrealloc(&hc->r,nset,"hc_read_sh_solution");
+d57 1
+a57 1
+    MY_ERROR("hc_read_sh_solution","read error");
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d8 1
+a8 1
+$Id$
+d15 1
+a15 1
+  CPREC zlabel;
+d47 1
+a47 1
+    sh_read_coefficients((*sol+os),shps,in,binary,1.0,verbose);
+@

@@ -1,0 +1,3 @@
+icc -c simple_test.c
+ifort simple_test.o ~/plates/rick_plates/harm/objects/i686/librick_harm.a -nofor_main -o simple_test
+

@@ -1,0 +1,588 @@
+head	1.13;
+access;
+symbols;
+locks
+	becker:1.13; strict;
+comment	@ * @;
+
+
+1.13
+date	2006.01.22.01.11.34;	author becker;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2004.12.20.05.18.12;	author becker;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2004.12.20.05.09.42;	author becker;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2004.12.01.01.25.35;	author becker;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2004.11.24.02.09.00;	author becker;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2004.08.06.00.38.36;	author becker;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.07.30.23.52.04;	author becker;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.07.02.00.14.44;	author becker;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.07.01.01.25.28;	author becker;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.06.24.01.02.13;	author becker;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.06.23.01.06.56;	author becker;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.06.21.01.16.31;	author becker;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.06.20.23.34.36;	author becker;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.13
+log
+@*** empty log message ***
+@
+text
+@#include "hc.h"
+/* 
+
+
+implementation of Hager & O'Connell (1981) method of solving mantle
+circulation given internal density anomalies, only radially varying
+viscosity, and either free-slip or plate velocity boundary condition
+at surface
+
+based on Hager & O'Connell (1981), Hager & Clayton (1989), and
+Steinberger (2000)
+
+the original code is due to Brad Hager, Rick O'Connell, and was
+largely modified by Bernhard Steinberger
+
+this version by Thorsten Becker (twb@@usc.edu)
+
+$Id: main.c,v 1.12 2004/12/20 05:18:12 becker Exp becker $
+
+
+*/
+
+int main(int argc, char **argv)
+{
+  hc_boolean compressible, free_slip, vel_bc_zero, verbose, 
+    sol_binary_out;
+  struct hcs *model;		/* main structure, make sure to initialize with 
+				   zeroes */
+  struct sh_lms *sol_spectral=NULL;		/* solution expansions */
+  int nsol,lmax,solution_mode;
+  FILE *out;
+  char filename[HC_CHAR_LENGTH];
+  HC_PREC dens_anom_scale;
+  float *sol_spatial = NULL;	/* spatial solution,
+				   e.g. velocities */
+  /* 
+     
+  operational modes and parameters
+
+  */
+  compressible = FALSE;		/* compressibility following Panasyuk
+				   & Steinberger */
+  free_slip = FALSE;		/* surface mechanical boundary condition */
+  vel_bc_zero = FALSE;		/* 
+				   if false, plate velocities, else no
+				   slip if free_slip is false as well
+				*/
+  dens_anom_scale = 0.2;	/* default density anomaly scaling to
+				   go from PREM percent traveltime
+				   anomalies to density anomalies */
+  verbose = 0;		/* debugging output? (0,1,2,3,4...) */
+  sol_binary_out = TRUE;	/* binary or ASCII output of SH expansion */
+  solution_mode = HC_VEL;	/* velocity, stress, or geoid */
+  /* 
+     
+     initialize the model structure, this is needed to initialize some
+     of the default values before callign the parameter handling routine
+     
+  */
+  hc_struc_init(&model);
+  /* 
+     handle command line arguments
+  */
+  hc_handle_command_line(argc, argv,&dens_anom_scale,
+			 &free_slip,model->visc_filename,
+			 &model->print_pt_sol,&verbose);
+  /* 
+
+  begin main program part
+
+  */
+#ifdef __TIMESTAMP__
+  if(verbose)
+    fprintf(stderr,"%s: starting version compiled on %s\n",argv[0],__TIMESTAMP__);
+#else
+  if(verbose)
+    fprintf(stderr,"%s: starting\n",argv[0]);
+#endif
+  /* 
+
+  initialize all variables
+  
+  - choose the internal spherical harmonics convention
+  - assign constants
+  - assign phase boundaries, if any
+  - read in viscosity structure
+  - assign density anomalies
+  - read in plate velocities
+
+  */
+  hc_init(model,SH_RICK,compressible,free_slip,vel_bc_zero,
+	  dens_anom_scale,verbose);
+  nsol = (model->nrad+2) * 3;	/* number of solution (r,pol,tor)*(nlayer+2) */
+  if(free_slip)
+    lmax = model->dens_anom[0].lmax;
+  else
+    lmax = model->pvel[0].lmax;	/*  shouldn't be larger than that*/
+  /* 
+
+  SOLUTION PART
+
+
+  */
+  /* 
+     make room for the spectral solution
+  */
+  sh_allocate_and_init(&sol_spectral,nsol,lmax,model->sh_type,1,verbose);
+  /* 
+     solve poloidal and toroidal part and sum
+  */
+  hc_solve(model,free_slip,solution_mode,sol_spectral,TRUE,TRUE,TRUE,verbose);
+  /* 
+     expand velocities to spatial base, compute spatial representation
+  */
+  hc_compute_sol_spatial(model,sol_spectral,&sol_spatial,verbose);
+  /* 
+
+  OUTPUT PART
+  
+  */
+  /* 
+     output of spherical harmonics solution
+  */
+  if(sol_binary_out)
+    sprintf(filename,"%s",HC_SOLOUT_FILE_BINARY);
+  else
+    sprintf(filename,"%s",HC_SOLOUT_FILE_ASCII);
+  if(verbose)
+    fprintf(stderr,"%s: writing spherical harmonics solution to %s\n",
+	    argv[0],filename);
+  out = hc_open(filename,"w","main");
+  hc_print_spectral_solution(model,sol_spectral,out,
+			     solution_mode,
+			     sol_binary_out,verbose);
+  fclose(out);
+  /* 
+     output of spatial solution
+  */
+  /* 
+     free solution expansions
+  */
+  /* print lon lat z v_r v_theta v_phi */
+  hc_print_spatial_solution(model,sol_spectral,sol_spatial,
+			    HC_SPATIAL_SOLOUT_FILE,
+			    HC_LAYER_OUT_FILE,
+			    solution_mode,sol_binary_out,
+			    verbose);
+  /* 
+     
+  free memory
+
+  */
+  sh_free_expansion(sol_spectral,nsol);
+  free(sol_spatial);
+  if(verbose)
+    fprintf(stderr,"%s: done\n",argv[0]);
+  
+  return 0;
+}
+
+@
+
+
+1.12
+log
+@*** empty log message ***
+@
+text
+@d18 1
+a18 1
+$Id: main.c,v 1.11 2004/12/20 05:09:42 becker Exp becker $
+d154 1
+a154 1
+  free(model);free(sol_spatial);
+d157 1
+a157 1
+
+@
+
+
+1.11
+log
+@*** empty log message ***
+@
+text
+@d18 1
+a18 1
+$Id: main.c,v 1.10 2004/12/01 01:25:35 becker Exp becker $
+d33 1
+a33 1
+  HC_CPREC dens_anom_scale;
+@
+
+
+1.10
+log
+@*** empty log message ***
+@
+text
+@d18 1
+a18 1
+$Id: main.c,v 1.9 2004/11/24 02:09:00 becker Exp becker $
+d29 1
+a29 1
+  struct lms *sol_spectral=NULL;		/* solution expansions */
+d72 1
+d75 4
+@
+
+
+1.9
+log
+@*** empty log message ***
+@
+text
+@d18 1
+a18 1
+$Id: main.c,v 1.8 2004/08/06 00:38:36 becker Exp becker $
+d30 1
+a30 1
+  int i,nsol,lmax,solution_mode;
+d32 2
+a33 2
+  char filename[STRLEN];
+  CPREC dens_anom_scale;
+d48 4
+a51 2
+  dens_anom_scale = 0.2;
+  verbose = TRUE;		/* debugging output? */
+d56 2
+a57 1
+     initialize the model structure
+d62 6
+d128 2
+a129 1
+			     solution_mode,sol_binary_out,verbose);
+d141 2
+a142 1
+			    solution_mode,sol_binary_out,verbose);
+d148 2
+a149 4
+  for(i=0;i<nsol;i++)
+    sh_free_expansion((sol_spectral+i));
+  free(model);
+  free(sol_spatial);
+d155 1
+@
+
+
+1.8
+log
+@*** empty log message ***
+@
+text
+@d6 3
+a8 2
+circulation given internal density anomalies, onyl radially varying viscosity,
+and either free-slip or plate velocity boundary condition at surface
+d10 2
+a11 1
+based on H&O (1981), Hager & Clayton (1989) and Steinberger (2000)
+d13 2
+a14 1
+the original code is due to Brad Hager, Rick O'Connell, and Bernhard Steinberger
+d18 1
+a18 1
+$Id: main.c,v 1.7 2004/07/30 23:52:04 becker Exp becker $
+d25 2
+a26 1
+  hc_boolean compressible, free_slip, vel_bc_zero, verbose, sol_binary_out;
+d44 3
+a46 2
+  vel_bc_zero = FALSE;		/* if false, plate velocities, else no slip if
+				   free_slip is false as well
+a47 1
+
+a107 6
+     output of depth layers 
+  */
+  out = hc_open(HC_LAYER_OUT_FILE,"w","main");
+  hc_print_depth_layers(model,out,verbose);
+  fclose(out);
+  /* 
+a126 8
+  if(sol_binary_out)
+    sprintf(filename,"%s",HC_SPATIAL_SOLOUT_FILE_BINARY);
+  else
+    sprintf(filename,"%s",HC_SPATIAL_SOLOUT_FILE_ASCII);
+  if(verbose)
+    fprintf(stderr,"%s: writing spatial solution to %s\n",
+	    argv[0],filename);
+  out = hc_open(filename,"w","hc_print_spatial_solution");
+d128 3
+a130 1
+  hc_print_spatial_solution(model,sol_spectral,sol_spatial,out,
+a131 1
+  fclose(out);
+@
+
+
+1.7
+log
+@*** empty log message ***
+@
+text
+@d15 1
+a15 1
+$Id: main.c,v 1.6 2004/07/02 00:14:44 becker Exp becker $
+d30 1
+a30 1
+  CPREC *sol_spatial = NULL;	/* spatial solution,
+d73 1
+a73 1
+  hc_init(model,RICK,compressible,free_slip,vel_bc_zero,
+d81 7
+a87 1
+     make room for the solution
+a90 1
+     
+a91 1
+
+d95 4
+d100 10
+a110 1
+
+d117 1
+a117 1
+    fprintf(stderr,"%s: writing complete solution to %s\n",
+d119 3
+a121 2
+  out = hc_open(filename,"w","hc_print_sh_solution");
+  hc_print_sh_solution(model,sol_spectral,out,solution_mode,sol_binary_out,verbose);
+d124 1
+a124 1
+     expand velocities to spatial base
+a125 1
+  hc_compute_sol_spatial(model,sol_spectral,&sol_spatial,verbose);
+d129 17
+@
+
+
+1.6
+log
+@*** empty log message ***
+@
+text
+@d15 1
+a15 1
+$Id: main.c,v 1.5 2004/07/01 01:25:28 becker Exp becker $
+d25 1
+a25 1
+  struct lms *sol=NULL;		/* solution expansions */
+d30 2
+d83 1
+a83 1
+  sh_allocate_and_init(&sol,nsol,lmax,model->sh_type,1,verbose);
+d89 1
+a89 3
+  hc_solve(model,free_slip,solution_mode,sol,TRUE,TRUE,TRUE,verbose);
+  hc_solve(model,free_slip,solution_mode,sol,TRUE,TRUE,TRUE,verbose);
+  hc_solve(model,free_slip,solution_mode,sol,TRUE,FALSE,FALSE,verbose);
+d103 1
+a103 1
+  hc_print_sh_solution(model,sol,out,solution_mode,sol_binary_out,verbose);
+d106 4
+d113 1
+a113 1
+    sh_free_expansion((sol+i));
+d115 1
+@
+
+
+1.5
+log
+@*** empty log message ***
+@
+text
+@d15 1
+a15 1
+$Id: main.c,v 1.4 2004/06/24 01:02:13 becker Exp becker $
+d22 1
+a22 1
+  my_boolean compressible, free_slip, vel_bc_zero, verbose, sol_binary_out;
+d37 1
+a37 1
+  free_slip = TRUE;		/* surface mechanical boundary condition */
+d87 3
+a89 1
+  hc_solve(model,free_slip,solution_mode,sol,verbose);
+d102 1
+a102 1
+  out = myopen(filename,"w","hc_print_sh_solution");
+@
+
+
+1.4
+log
+@*** empty log message ***
+@
+text
+@d15 1
+a15 1
+$Id: main.c,v 1.3 2004/06/23 01:06:56 becker Exp becker $
+d26 1
+a26 1
+  int i,nsol,lmax;
+d29 1
+d32 1
+a32 1
+  operational modes 
+d37 1
+a37 1
+  free_slip = FALSE;		/* surface mechanical boundary condition */
+d41 2
+d45 1
+d71 2
+a72 1
+  hc_init(model,RICK,compressible,free_slip,vel_bc_zero,verbose);
+d74 4
+a77 1
+  lmax = model->pvel[0].lmax;	/*  shouldn't be larger than that*/
+d83 3
+a85 1
+     solve, solve mode HC_VEL
+d87 1
+a87 1
+  hc_solve(model,free_slip,HC_VEL,sol,verbose);
+d89 1
+d91 1
+d98 2
+a99 1
+    fprintf(stderr,"%s: writing solution to %s\n",argv[0],filename);
+d101 1
+a101 1
+  hc_print_sh_solution(model,sol,out,sol_binary_out,verbose);
+d109 2
+@
+
+
+1.3
+log
+@*** empty log message ***
+@
+text
+@d15 1
+a15 1
+$Id: main.c,v 1.2 2004/06/21 01:16:31 becker Exp becker $
+d22 1
+a22 1
+  my_boolean compressible, free_slip, vel_bc_zero, verbose;
+d27 5
+a31 3
+  /* initialize */
+  model=(struct hcs *)calloc(1,sizeof(struct hcs *));
+  if(!model)MEMERROR("main: model");
+d33 1
+d41 7
+d57 1
+a57 1
+  initialize the whole shabang 
+d81 12
+a92 2
+  hc_print_sh_solution(model,sol,HC_SOLOUT_FILE,verbose);
+
+d96 2
+@
+
+
+1.2
+log
+@*** empty log message ***
+@
+text
+@d15 1
+a15 1
+$Id: main.c,v 1.1 2004/06/20 23:34:36 becker Exp becker $
+d58 1
+a58 1
+  nsol = (model->nrad+2)*3;	/* number of solution (r,pol,tor)*(nlayer+2) */
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d9 1
+a9 1
+based on H&C (1981), Hager & Clayton (1989) and Steinberger (2000)
+d11 1
+a11 1
+the original code is due to Brad Hager, Rick O'Connell, and Bernhard Steingerger
+d15 1
+a15 1
+$Id$
+d20 1
+a20 1
+int main(int argc, char **)
+d38 3
+d42 3
+d63 1
+a63 1
+  sh_allocate_and_init(&sol,nsol,lmax,model->type,1,verbose);
+@
