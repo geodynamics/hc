@@ -19,14 +19,14 @@ OINCS = hc.h hc_filenames.h sh.h
 # Healpix stuff, comment out all if not wanted
 #
 # include flags
-HEAL_INC_DIR = $(HOME)/progs/src/Healpix_1.20/include/
-HEAL_INC_FLAGS = -I$(HEAL_INC_DIR)
-HEAL_LIBS = $(HOME)/progs/lib/$(ARCH)/libchealpix.a \
-		$(HOME)/progs/lib/$(ARCH)/libhealpix.a
-HEAL_LIB_FLAGS = -L/usr/local/src/cfitsio/lib/ -L/opt/cfitsio/lib/
-HEAL_LIBS_LINKLINE = -lchealpix -lhealpix -lcfitsio 
-HEAL_INCS = $(HEAL_INC_DIR)/myhealpix.h $(HEAL_INC_DIR)/chealpix.h 
-HEAL_DEFINES = -DHC_USE_HEALPIX
+#HEAL_INC_DIR = $(HOME)/progs/src/Healpix_1.20/include/
+#HEAL_INC_FLAGS = -I$(HEAL_INC_DIR)
+#HEAL_LIBS = $(HOME)/progs/lib/$(ARCH)/libchealpix.a \
+#		$(HOME)/progs/lib/$(ARCH)/libhealpix.a
+#HEAL_LIB_FLAGS = -L/usr/local/src/cfitsio/lib/ -L/opt/cfitsio/lib/
+#HEAL_LIBS_LINKLINE = -lchealpix -lhealpix -lcfitsio 
+#HEAL_INCS = $(HEAL_INC_DIR)/myhealpix.h $(HEAL_INC_DIR)/chealpix.h 
+#HEAL_DEFINES = -DHC_USE_HEALPIX
 #
 # Rick spherical harmonics stuff
 #
@@ -133,37 +133,38 @@ really_all: dirs proto all
 proto: hc_auto_proto.h
 
 sh_test: $(LIBS) $(INCS) $(ODIR)/sh_test.o
-	$(F90) $(LIB_FLAGS) $(ODIR)/sh_test.o \
-		-o $(BDIR)/sh_test -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(F90LDFLAGS)
+	$(LD) $(LIB_FLAGS) $(ODIR)/sh_test.o \
+		-o $(BDIR)/sh_test -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS)
 
 sh_syn: $(LIBS) $(INCS) $(ODIR)/sh_syn.o
-	$(F90) $(LIB_FLAGS) $(ODIR)/sh_syn.o \
-		-o $(BDIR)/sh_syn -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(F90LDFLAGS)
+	$(LD) $(LIB_FLAGS) $(ODIR)/sh_syn.o \
+		-o $(BDIR)/sh_syn -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS)
 
 sh_power: $(LIBS) $(INCS) $(ODIR)/sh_power.o
-	$(F90) $(LIB_FLAGS) $(ODIR)/sh_power.o \
-		-o $(BDIR)/sh_power -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(F90LDFLAGS)
+	$(LD) $(LIB_FLAGS) $(ODIR)/sh_power.o \
+		-o $(BDIR)/sh_power -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS)
 
 sh_ana: $(LIBS) $(INCS) $(ODIR)/sh_ana.o
-	$(F90) $(LIB_FLAGS) $(ODIR)/sh_ana.o \
-		-o $(BDIR)/sh_ana -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(F90LDFLAGS)
+	$(LD) $(LIB_FLAGS) $(ODIR)/sh_ana.o \
+		-o $(BDIR)/sh_ana -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS)
 
 
-hc: $(LIBS) $(INCS) $(ODIR)/main.o
-	$(F90) $(LIB_FLAGS) $(ODIR)/main.o -o $(BDIR)/hc \
-		-lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(F90LDFLAGS) 
+hc: $(LIBS) $(INCS) $(ODIR)/main.o 
+	$(LD) $(LIB_FLAGS) $(ODIR)/main.o -o $(BDIR)/hc \
+		-lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS) 
+
 test_fft: $(LIBS) $(INCS) $(ODIR)/test_fft.o
-	$(F90) $(LIB_FLAGS) $(ODIR)/test_fft.o -o $(BDIR)/test_fft \
-		-lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(F90LDFLAGS) 
+	$(LD) $(LIB_FLAGS) $(ODIR)/test_fft.o -o $(BDIR)/test_fft \
+		-lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS) 
 
 ggrd_test: $(LIBS) $(INCS) $(ODIR)/ggrd_test.o
-	$(F90) $(LIB_FLAGS) $(ODIR)/ggrd_test.o -o $(BDIR)/ggrd_test \
-		$(GGRD_LIBS_LINKLINE) -lhc -lrick -lm $(F90LDFLAGS) 
+	$(LD) $(LIB_FLAGS) $(ODIR)/ggrd_test.o -o $(BDIR)/ggrd_test \
+		$(GGRD_LIBS_LINKLINE) -lhc -lrick -lm $(LDFLAGS) 
 
 hc_extract_sh_layer: $(LIBS) $(INCS) $(ODIR)/hc_extract_sh_layer.o
-	$(F90) $(LIB_FLAGS) $(ODIR)/hc_extract_sh_layer.o \
+	$(LD) $(LIB_FLAGS) $(ODIR)/hc_extract_sh_layer.o \
 		-o $(BDIR)/hc_extract_sh_layer \
-		-lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(F90LDFLAGS) 
+		-lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS) 
 
 
 # C function prototyper
