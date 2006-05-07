@@ -5,11 +5,11 @@
 #
 #
 # object file directory
-ODIR = objects/$(ARCH)/
+ODIR = ../hc/objects/$(ARCH)/
 #
 #
 # binary directory
-BDIR = ./bin/$(ARCH)/
+BDIR = ../hc/bin/$(ARCH)/
 
 
 
@@ -174,17 +174,20 @@ hc_auto_proto.h:
 		grep -v "void main("  | grep -v "int main(" > hc_auto_proto.h
 
 dirs:
-	if [ ! -s ./objects/ ]; then\
-		mkdir objects;\
+	if [ ! -s ../hc/ ]; then\
+		mkdir ../hc/;\
 	fi;
-	if [ ! -s ./objects/$(ARCH)/ ]; then\
-		mkdir objects/$(ARCH);\
+	if [ ! -s ../hc/objects/ ]; then\
+		mkdir ../hc/objects;\
 	fi;
-	if [ ! -s ./bin/ ];then\
-		mkdir bin;\
+	if [ ! -s ../hc/objects/$(ARCH)/ ]; then\
+		mkdir ../hc/objects/$(ARCH);\
+	fi;
+	if [ ! -s ../hc/bin/ ];then\
+		mkdir ../hc/bin;\
 	fi;\
-	if [ ! -s ./bin/$(ARCH) ];then\
-		mkdir bin/$(ARCH);\
+	if [ ! -s ../hc/bin/$(ARCH) ];then\
+		mkdir ../hc/bin/$(ARCH);\
 	fi
 
 clean:
