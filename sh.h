@@ -16,8 +16,9 @@ same for Rick's spherical harmonic routines
 /* 
    spherical harmonics types 
 */
-#define SH_HEALPIX 0
-#define SH_RICK 1
+#define SH_RICK 0
+#define SH_HEALPIX 1
+
 
 
 /* 

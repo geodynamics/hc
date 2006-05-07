@@ -108,11 +108,6 @@ int main(int argc, char **argv)
   hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
 	   TRUE,TRUE,TRUE,p->print_pt_sol,p->verbose);
   /* 
-     expand velocities to spatial base, compute spatial representation
-  */
-  hc_compute_sol_spatial(model,sol_spectral,&sol_spatial,
-			 p->verbose);
-  /* 
 
   OUTPUT PART
   
@@ -132,7 +127,16 @@ int main(int argc, char **argv)
 			     p->solution_mode,
 			     p->sol_binary_out,p->verbose);
   fclose(out);
-  if(0)
+  if(p->print_spatial){
+    /* 
+       we wish to use the spatial solution
+
+       expand velocities to spatial base, compute spatial
+       representation
+
+    */
+    hc_compute_sol_spatial(model,sol_spectral,&sol_spatial,
+			   p->verbose);
     /* 
        output of spatial solution
     */
@@ -142,6 +146,7 @@ int main(int argc, char **argv)
 			      HC_LAYER_OUT_FILE,
 			      p->solution_mode,p->sol_binary_out,
 			      p->verbose);
+  }
   /* 
      
   free memory

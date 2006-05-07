@@ -382,7 +382,6 @@ hc_boolean sh_read_parameters(int *type, int *lmax, int *shps,
   switch(*type){
   case SH_RICK:
     break;
-
 #ifdef HC_USE_HEALPIX
   case SH_HEALPIX:
     break;

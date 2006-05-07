@@ -33,6 +33,7 @@ void hc_init_parameters(struct hc_parameters *p)
   p->solution_mode = HC_VEL;	/* velocity, stress, or geoid */
 
   p->print_pt_sol = FALSE;
+  p->print_spatial = FALSE;	/* by default, only print the spectral solution */
   /* 
 
   filenames
@@ -218,6 +219,8 @@ void hc_handle_command_line(int argc, char **argv,
       fprintf(stderr,"-pptsol\t\tprint pol[6] and tor[2] solution vectors\n");
       fprintf(stderr,"-pvel\tname\tset surface velocity file to name (%s)\n",
 	      p->pvel_filename);
+      fprintf(stderr,"-px\t\tprint the spatial solution to file (%s)\n",
+	      hc_name_boolean(p->print_spatial));
       fprintf(stderr,"-vf\tname\tset viscosity structure filename to name (%s)\n",
 	      p->visc_filename);
       fprintf(stderr,"-v\t-vv\t-vvv: verbosity levels (%i)\n",
@@ -233,6 +236,8 @@ void hc_handle_command_line(int argc, char **argv,
       hc_toggle_boolean(&p->free_slip);
     }else if(strcmp(argv[i],"-ns")==0){	/* no slip flag */
       hc_toggle_boolean(&p->vel_bc_zero);
+    }else if(strcmp(argv[i],"-px")==0){	/* print spatial solution? */
+      hc_toggle_boolean(&p->print_spatial);
     }else if(strcmp(argv[i],"-pptsol")==0){	/* print
 						   poloidal/toroidal
 						   solution

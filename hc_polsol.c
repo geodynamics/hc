@@ -1,8 +1,8 @@
 #include "hc.h"
 /* 
 
-compute the solution for the poloidal part of a Hager & O'Connell flow 
-computation. 
+compute the solution for the poloidal part of a Hager & O'Connell flow
+computation.
 
 the poloidal part has two contributions: density driven flow and plate motions
 
@@ -10,9 +10,10 @@ this routine computes the y_i i=1,...,6 solutions for each layer and
 incorporates the poloidal part of the plate motions, which are passed
 as pvel_pol
 
-it is pretty much similar to the densub subroutine in the original flow code
-only that the potential solution (y_5 and y_6) are smaller than in the original
-by a factor of 1000 because we assume that densities are in kg/m^3
+it is pretty much similar to the densub subroutine in the original
+flow code only that the potential solution (y_5 and y_6) are smaller
+than in the original by a factor of 1000 because we assume that
+densities are in kg/m^3
 
 
 */
@@ -458,6 +459,7 @@ void hc_polsol(struct hcs *hc, 	/*
 	 are all constant, else from PREM
       */
       hc_vecalloc(&hc->rho,nprops_max+2,"hc_polsol: rho");
+      /* this way, rho_zero can go from -1...nnprops_max */
       hc->rho_zero = (hc->rho+1);
       if(compressible){
 	/* 
@@ -770,6 +772,11 @@ void hc_polsol(struct hcs *hc, 	/*
 	*/
 	hc_ludcmp_3x3(amat,indx);
 	hc_lubksb_3x3(amat,indx,bvec);
+
+	/* debugging output */
+	//fprintf(stderr,"%i %i\n",l,m);
+	//hc_print_3x3(amat,stderr);
+	//hc_print_vector(bvec,3,stderr);
 	/* 
 	   assign solution 
 	*/
