@@ -6,36 +6,6 @@ $Id: hc_propagator.c,v 1.1 2004/07/01 23:52:23 becker Exp $
 
 */
 #include "hc.h"
-void hc_evppot(int l,double ratio, double *ppot)
-{
-  //    ********************************************
-  //    * THIS SUBROUTINE OBTAINS THE POTENTIALS   *
-  //    * PROPAGATOR FROM R1 TO R2 AT L, WHERE     *
-  //    * RATIO = R1/R2.                           *
-  //    ********************************************
-  //
-  double  c,expf1,expf2,x,xp1;
-  
-  //    PASSED PARAMETERS:  L: DEGREE,
-  //       RATIO: R1 / R2 (R2>R1),
-  //       PPOT: THE POTENTIALS PROPAGATOR [4]
-  //
-  //    DOUBLE PRECISION:  C: COEFFICIENT MULTIPLYING PROPAGATOR,
-  //       EXPF1: RATIO**L, EXPONENTIAL FACTOR IN PPOT,
-  //       EXPF2: (1/RATIO)**(L+1), EXP. FACTOR IN PPOT,
-  //       X: DEGREE (L),
-  //       XP1: X+1.
-  
-  x = (double)l;
-  c = 1.0 / (2.0 * x + 1.0);
-  xp1 = x + 1.0;
-  expf1 = pow(ratio,x);
-  expf2 = 1.0 / (expf1*ratio);
-  ppot[0] = c * (x * expf1 + xp1 * expf2);
-  ppot[1] = c * (expf2 - expf1);
-  ppot[2] = x * xp1 * ppot[1];
-  ppot[3] = ppot[0] - ppot[1];
-}
 
 void hc_evalpa(int l,double r1,double r2,double visc, double *p)
 {
@@ -52,6 +22,7 @@ void hc_evalpa(int l,double r1,double r2,double visc, double *p)
   long int np[4][4][4];
   int lp1,lp2,lp3,lm1,lm2,lpp,lmm,l2p3,l2p1,l2m1,lltp1,lltp2;
   int i,j,k,os1,os2;
+  //fprintf(stderr,"hc_evalpa: %i %g %g %g\n",l,r1,r2,visc);
   //
   //    PASSED PARAMETERS:  L: DEGREE,
   //    R1,R2: PROPAGATE FROM R1 TO R2 (RADII),
@@ -166,3 +137,33 @@ void hc_evalpa(int l,double r1,double r2,double visc, double *p)
   p[3*4+1] *= v2;
 }
 
+void hc_evppot(int l,double ratio, double *ppot)
+{
+  //    ********************************************
+  //    * THIS SUBROUTINE OBTAINS THE POTENTIALS   *
+  //    * PROPAGATOR FROM R1 TO R2 AT L, WHERE     *
+  //    * RATIO = R1/R2.                           *
+  //    ********************************************
+  //
+  double  c,expf1,expf2,x,xp1;
+  
+  //    PASSED PARAMETERS:  L: DEGREE,
+  //       RATIO: R1 / R2 (R2>R1),
+  //       PPOT: THE POTENTIALS PROPAGATOR [4]
+  //
+  //    DOUBLE PRECISION:  C: COEFFICIENT MULTIPLYING PROPAGATOR,
+  //       EXPF1: RATIO**L, EXPONENTIAL FACTOR IN PPOT,
+  //       EXPF2: (1/RATIO)**(L+1), EXP. FACTOR IN PPOT,
+  //       X: DEGREE (L),
+  //       XP1: X+1.
+  
+  x = (double)l;
+  c = 1.0 / (2.0 * x + 1.0);
+  xp1 = x + 1.0;
+  expf1 = pow(ratio,x);
+  expf2 = 1.0 / (expf1*ratio);
+  ppot[0] = c * (x * expf1 + xp1 * expf2);
+  ppot[1] = c * (expf2 - expf1);
+  ppot[2] = x * xp1 * ppot[1];
+  ppot[3] = ppot[0] - ppot[1];
+}

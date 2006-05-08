@@ -52,7 +52,7 @@ void ggrd_init_vstruc(struct ggrd_vel *v)
   v->vr = v->vt = v->vp = NULL;
   v->thist.init = FALSE;
   v->velscale =  1.0; 
-  v->rcmb = HC_RCMB_ND;
+  v->rcmb = GGRD_RCMB_ND;
 }
 
 /* 
@@ -502,7 +502,7 @@ void ggrd_read_depth_levels(struct ggrd_vel *v,
     /* radius of levels */
     v->rlevels[v->n[HC_R]] = HC_ND_RADIUS(v->rlevels[v->n[HC_R]]);
     if((v->rlevels[v->n[HC_R]] > 1)||
-       (v->rlevels[v->n[HC_R]] < HC_RCMB_ND)){
+       (v->rlevels[v->n[HC_R]] < GGRD_RCMB_ND)){
       // check for above surface or below CMB
       fprintf(stderr,"ggrd_read_depth_levels: radius %g out of range\n",v->rlevels[v->n[HC_R]]);
       exit(-1);

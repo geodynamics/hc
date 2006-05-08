@@ -112,7 +112,7 @@ int ggrd_grdtrack_rescale(struct ggrd_gt *g,
 			  unsigned char rescale, /* rescale? */
 			  double scale	/* factor for rescaling */)
 {
-  int i,j,k,n;
+  int i,j,k;
   if(!g->init){
     fprintf(stderr,"ggrd_grdtrack_rescale: error: ggrd not initialized\n");
     return 1;

@@ -206,6 +206,26 @@ void hc_print_vector(HC_PREC *a, int n,FILE *out)
     fprintf(out,"%11.4e ",a[i]);
   fprintf(out,"\n");
 }
+void hc_print_vector_label(HC_PREC *a, int n,FILE *out,
+			   char *label)
+{
+  int i;
+  fprintf(out,"%s: ",label);
+  for(i=0;i<n;i++)
+    fprintf(out,"%11.4e ",a[i]);
+  fprintf(out,"\n");
+}
+void hc_print_matrix_label(HC_PREC *a, int m,
+			   int n,FILE *out,char *label)
+{
+  int i,j;
+  for(j=0;j<m;j++){
+    fprintf(out,"%s: ",label);
+    for(i=0;i<n;i++)
+      fprintf(out,"%11.4e ",a[j*n+i]);
+    fprintf(out,"\n");
+  }
+}
 
 
 void hc_print_vector_row(HC_PREC *a, int n,FILE *out)
@@ -247,7 +267,7 @@ void hc_print_poloidal_solution(struct sh_lms *pol_sol,
 				int l_max, char *filename,
 				hc_boolean verbose)
 {
-  int l,m,i,j,a_or_b,ll,nl,os;
+  int l,m,i,j,a_or_b,ll,nl,os,alim;
   FILE *out;
   HC_PREC value[2];
   /* 
@@ -264,7 +284,8 @@ void hc_print_poloidal_solution(struct sh_lms *pol_sol,
   out = hc_open(filename,"w","hc_print_poloidal_solution");
   for(l=1;l <= ll;l++){
     for(m=0;m <= l;m++){
-      for(a_or_b=0;a_or_b < ((m==0)?(1):(2));a_or_b++){
+      alim = (m==0)?(1):(2);
+      for(a_or_b=0;a_or_b < alim;a_or_b++){
 	for(i=os=0;i < nl;i++,os+=6){
 	  fprintf(out,"%3i %3i %1i %3i %8.5f ",l,m,a_or_b,i+1,
 		  hc->r[i]);

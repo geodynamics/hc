@@ -11,8 +11,6 @@ ODIR = ../hc/objects/$(ARCH)/
 # binary directory
 BDIR = ../hc/bin/$(ARCH)/
 
-
-
 # include files
 OINCS = hc.h hc_filenames.h sh.h 
 #
@@ -39,9 +37,10 @@ RICK_SRCS = rick_sh_c.c rick_fft_c.c
 # if those are defined, will only use C routines
 RICK_DEFINES =  -DNO_RICK_FORTRAN
 RICK_OBJS = $(ODIR)/rick_sh_c.o $(ODIR)/rick_fft_c.o
+RICK_OBJS_DBG = $(ODIR)/rick_sh_c.dbg.o $(ODIR)/rick_fft_c.dbg.o
 RICK_INC_FLAGS = -I. 
 RICK_INCS =  sh_rick_ftrn.h  sh_rick.h
-RICK_LIB = $(ODIR)/librick.a
+RICK_LIB = $(ODIR)/librick.a $(ODIR)/librick.dbg.a
 
 #
 # PREM STUFF
@@ -120,13 +119,13 @@ DEFINES = $(RICK_DEFINES) $(HEAL_DEFINES) $(PREM_DEFINES) \
 LIBS = $(HC_LIBS) $(GGRD_LIBS) $(HEAL_LIBS) $(RICK_LIB)
 
 
-all: dirs libs hc hc_extract_sh_layer \
+all: dirs libs hc hc.dbg hc_extract_sh_layer \
 	sh_syn sh_ana sh_power \
 	ggrd_test 
 
 libs: dirs hc_lib  $(HEAL_LIBS) $(RICK_LIB)
 
-hc_lib: $(HC_LIBS) $(GGRD_LIBS)   $(ODIR)/libhc.dbg.a
+hc_lib: $(HC_LIBS) $(GGRD_LIBS)  
 
 really_all: dirs proto all 
 
@@ -152,6 +151,11 @@ sh_ana: $(LIBS) $(INCS) $(ODIR)/sh_ana.o
 hc: $(LIBS) $(INCS) $(ODIR)/main.o 
 	$(LD) $(LIB_FLAGS) $(ODIR)/main.o -o $(BDIR)/hc \
 		-lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS) 
+
+hc.dbg: $(LIBS) $(INCS) $(ODIR)/main.dbg.o 
+	$(LD) $(LIB_FLAGS) $(ODIR)/main.dbg.o -o $(BDIR)/hc.dbg \
+		-lhc.dbg -lrick.dbg \
+	$(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS) 
 
 test_fft: $(LIBS) $(INCS) $(ODIR)/test_fft.o
 	$(LD) $(LIB_FLAGS) $(ODIR)/test_fft.o -o $(BDIR)/test_fft \
@@ -205,6 +209,9 @@ $(ODIR)/libhc.dbg.a: $(HC_OBJS_DBG)
 $(ODIR)/librick.a: $(RICK_OBJS)
 	$(AR) rv $(ODIR)/librick.a $(RICK_OBJS)
 
+$(ODIR)/librick.dbg.a: $(RICK_OBJS_DBG)
+	$(AR) rv $(ODIR)/librick.dbg.a $(RICK_OBJS_DBG)
+
 $(ODIR)/libggrd.a: $(GGRD_OBJS)
 	$(AR) rv $(ODIR)/libggrd.a $(GGRD_OBJS)
 
@@ -223,6 +230,7 @@ $(ODIR)/%.o: %.c  $(INCS)
 $(ODIR)/%.o: %.f90 $(INCS)
 	$(F90) $(F90FLAGS) $(DEFINES) -c $< -o $(ODIR)/$*.o
 
+# debugging objects
 $(ODIR)/%.dbg.o: %.c  $(INCS)
 	$(CC) $(CFLAGS_DEBUG) $(INC_FLAGS) $(DEFINES) -c $< -o $(ODIR)/$*.dbg.o
 

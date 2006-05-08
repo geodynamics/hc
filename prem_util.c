@@ -57,7 +57,8 @@ fac * (par[0]*y[0] + par[1]*y[1] + par[2]*y[2] + .. par[np-1]*y[np-1])
 fac * (par[0]*1+ par[1]*r  + par[2]*r^2  + .. par[np-1]*r^(np-1)) 
 
 */
-double prem_compute_pval(double *y, double *par, int np, double fac)
+double prem_compute_pval(double *y, double *par, int np, 
+			 double fac)
 {
   int i;
   double val;

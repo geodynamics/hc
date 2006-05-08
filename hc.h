@@ -74,7 +74,15 @@ spherical haronics
    
 should we operate in the Dahlen & Tromp, physical sciences
 normalization internationally (TRUE) or only on I/O (FALSE)
+
+you would want to set this to FALSE, if you wish to compare internal
+spherical harmonics solutions with Bernhard's old code
+
+set it to TRUE to operate in the physical convention internally
+(preferred)
+
 */
+//#define HC_SH_CONV_DT FALSE
 #define HC_SH_CONV_DT TRUE
 
 
@@ -328,9 +336,12 @@ macro defintions
 other constants
 
 */
+// now taken from earth model
 #define HC_RE_KM 6371.0		/* radius(Earth) in [km] */
-#define HC_RCMB_ND 0.546225    /* non-dim radius, ~10km above
-				  CMB  */
+
+//#define HC_RCMB_ND 0.546225    /* non-dim radius, ~10km above
+//				  CMB  */
+
 #define HC_TIMESCALE_YR 1e6	/* timescale [yr] */
 /* 
    convert depth (>0) in km to non-dimensionalizd radius

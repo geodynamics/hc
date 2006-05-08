@@ -174,13 +174,28 @@ void hc_init_constants(struct hcs *hc, HC_PREC dens_anom_scale,
   */
   hc->timesc = HC_TIMESCALE_YR;		/* timescale [yr]*/
   hc->visnor = 1e21;		/* normalizing viscosity [Pas]*/
-  hc->gacc = 10.0; 		/* gravitational acceleration [m/s2]*/
+  hc->gacc = 10.0e2; 		/* gravitational acceleration [cm/s2]*/
   hc->g = 6.6742e-11;		/* gravitational constant [Nm2/kg2]*/
-  hc->re = HC_RE_KM*1e3;	/* radius of Earth  [m]*/
+  /*  
+      radius of Earth in [m]
+  */
+  hc->re = hc->prem->r0;
+  if(fabs(hc->re - (HC_RE_KM * 1e3)) > 1e-7)
+    HC_ERROR("hc_init_constants","Earth radius mismatch")
   hc->secyr = 3.1556926e7;	/* seconds/year  */
-  hc->avg_den_mantle = 4.4488e3;/* average density in mantle [kg/m^3] */
-  hc->avg_den_core = 11.60101e3;	/* same for core */
-  hc->r_cmb =  HC_RCMB_ND;		/* radius of CMB */
+  /* 
+     those are in g/cm^3
+  */
+  hc->avg_den_mantle = 4.4488;
+  hc->avg_den_core = 11.60101;
+
+
+  /* 
+     take the CMB radius from the Earth model 
+  */
+  hc->r_cmb = hc->prem->r[1];
+  if(fabs(hc->r_cmb - 0.55) > 0.02)
+    HC_ERROR("hc_init_constants","Earth model CMB radius appears off");
   /* velocity scale if input is in [cm/yr], 
      works out to be ~0.11 */
   hc->vel_scale = hc->re*PIOVERONEEIGHTY/hc->timesc;
@@ -216,7 +231,8 @@ void hc_handle_command_line(int argc, char **argv,
 	      hc_name_boolean(p->vel_bc_zero));
       fprintf(stderr,"-prem\tname\tset Earth model to name (%s)\n",
 	      p->prem_model_filename);
-      fprintf(stderr,"-pptsol\t\tprint pol[6] and tor[2] solution vectors\n");
+      fprintf(stderr,"-pptsol\t\tprint pol[6] and tor[2] solution vectors (%s)\n",
+	      hc_name_boolean(p->print_pt_sol));
       fprintf(stderr,"-pvel\tname\tset surface velocity file to name (%s)\n",
 	      p->pvel_filename);
       fprintf(stderr,"-px\t\tprint the spatial solution to file (%s)\n",
@@ -322,7 +338,7 @@ void hc_assign_viscosity(struct hcs *hc,int mode,char filename[HC_CHAR_LENGTH],
     while(fscanf(in,"%lf %lf",
 		 (hc->rvisc+hc->nvis),(hc->visc+hc->nvis))==2){
       if(hc->nvis == 0)
-	if( hc->rvisc[hc->nvis] < hc->r_cmb){
+	if( hc->rvisc[hc->nvis] < hc->r_cmb-0.01){
 	  fprintf(stderr,"hc_assign_viscosity: error: first radius %g is below CMB, %g\n",
 		  hc->rvisc[hc->nvis], hc->r_cmb);
 	  exit(-1);
@@ -409,10 +425,13 @@ void hc_assign_density(struct hcs *hc,
   int type,lmax,shps,ilayer,nset,ivec,i,j;
   HC_PREC *dtop,*dbot,zlabel,dens_scale[1],rho0;
   hc_boolean reported = FALSE;
-  static HC_PREC local_dens_fac = .01;	/* this factor will be multiplied with 
-					   the hc->dens_fac factor to arrive at
-					   fractional anomalies from input. set to 
-					   0.01 for percent input, for instance
+  static HC_PREC local_dens_fac = .01;	/* this factor will be
+					   multiplied with the
+					   hc->dens_fac factor to
+					   arrive at fractional
+					   anomalies from input. set
+					   to 0.01 for percent input,
+					   for instance
 					*/
   static hc_boolean init=FALSE;
   hc->compressible = compressible;
@@ -487,7 +506,7 @@ void hc_assign_density(struct hcs *hc,
       /* 
 	 general density (add additional depth dependence here)
       */
-      dens_scale[0] = hc->dens_scale[0] * local_dens_fac * rho0;
+      dens_scale[0] = hc->dens_scale[0] * local_dens_fac * rho0/1000.;
       if(verbose >= 2)
 	fprintf(stderr,"hc_assign_density: r: %11g anom scales: %11g x %11g x %11g = %11g\n",
 		hc->rden[hc->inho],hc->dens_scale[0],
@@ -542,7 +561,7 @@ void hc_assign_density(struct hcs *hc,
     */
     hc->nrad = hc->inho;
     hc_vecrealloc(&hc->r,(2+hc->nrad),"hc_assign_density");
-    hc->r[0] = HC_RCMB_ND;	/* CMB  */
+    hc->r[0] = hc->r_cmb;	/* CMB  */
     if(hc->rden[0] <= hc->r[0])
       HC_ERROR("hc_assign_density","first density layer has to be above internal CMD limit");
     for(i=0;i<hc->nrad;i++)	/* density layers */
@@ -567,7 +586,7 @@ void hc_assign_density(struct hcs *hc,
       dtop[i] = 1.0 - (hc->rden[i+1] + hc->rden[i])/2.0;
     dtop[j] = 0.0; // top boundary
     //    bottom boundaries
-    dbot[0] = 1.0 - HC_RCMB_ND;  // bottom boundary, ie. CMB 
+    dbot[0] = 1.0 - hc->r_cmb;  // bottom boundary, ie. CMB 
     for(i=1;i < hc->nrad;i++)
       dbot[i] = dtop[i-1];
     /* 

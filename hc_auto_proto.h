@@ -73,6 +73,8 @@ void hc_print_depth_layers(struct hcs *, FILE *, unsigned short);
 void hc_print_3x3(double [3][3], FILE *);
 void hc_print_sm(double [6][4], FILE *);
 void hc_print_vector(double *, int, FILE *);
+void hc_print_vector_label(double *, int, FILE *, char *);
+void hc_print_matrix_label(double *, int, int, FILE *, char *);
 void hc_print_vector_row(double *, int, FILE *);
 void hc_compute_solution_scaling_factors(struct hcs *, int, double *);
 void hc_print_poloidal_solution(struct sh_lms *, struct hcs *, int, char *, unsigned short);

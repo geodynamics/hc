@@ -23,7 +23,8 @@
 /* errors */
 #define GGRD_PE(x) {fprintf(stderr,"ggrd: %s\n",x);}
 
-
+/* radius of CMB */
+#define GGRD_RCMB_ND 0.546225
 
 /* 
    

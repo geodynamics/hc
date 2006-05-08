@@ -10,10 +10,6 @@ this routine computes the y_i i=1,...,6 solutions for each layer and
 incorporates the poloidal part of the plate motions, which are passed
 as pvel_pol
 
-it is pretty much similar to the densub subroutine in the original
-flow code only that the potential solution (y_5 and y_6) are smaller
-than in the original by a factor of 1000 because we assume that
-densities are in kg/m^3
 
 
 */
@@ -120,13 +116,7 @@ void hc_polsol(struct hcs *hc, 	/*
   // changes, so beware. original code by B Hager, then modified by 
   // RJO and Bernhard Steinberger
   //
-  /* 
-
-  densities are in kg/m^3 now, beta factors are therefore
-  smaller than the original by a factor of 1000
-
-
-  */
+  //
   // Thorsten Becker twb@usc.edu
   //
   //
@@ -272,8 +262,8 @@ void hc_polsol(struct hcs *hc, 	/*
     if(!prop_mats_init){
       /* 
 	 
-      we will be saving all propagator matrices. this makes sense if the 
-      density structure is the only thing that changes
+      we will be saving all propagator matrices. this makes sense if
+      the density structure is the only thing that changes
       
       this needs quite a bit more room (array goes from l=1 (not l=0)
       .... lmax)
@@ -294,18 +284,12 @@ void hc_polsol(struct hcs *hc, 	/*
     //
     //    SET alpha, beta factors
     //
-    alpha  =  rho_scale * hc->re * hc->gacc / hc->visnor;	/*  */
+    alpha  =  rho_scale * (hc->re*1e2) * hc->gacc / hc->visnor;	/*  */
     alpha *= ONEEIGHTYOVERPI * hc->secyr * hc->timesc; /*  */
     //
-    beta = -  4.0 * M_PI * hc->g * hc->re / hc->gacc;
-    /* 
-       
-    alpha and beta used to be larger by a factor of thousand because 
-    of densities
-    
-    */
+    beta   = -4.0 * M_PI * (hc->g*1e3) * (hc->re*1e2) / hc->gacc;
     if(verbose)
-      fprintf(stderr,"hc_polsol: alpha: %.7e beta: %.7e\n",
+      fprintf(stderr,"hc_polsol: alpha: %g beta: %g\n",
 	      alpha,beta);
     ab_init = TRUE;
   }
@@ -419,7 +403,8 @@ void hc_polsol(struct hcs *hc, 	/*
 	    //
 	    //    IF RDEN, EVALUATE DEN, INCREMENT NIH
 	    //    
-	    hc->den[hc->nprops-1] = dfact[nih] * hc->rden[nih] *
+	    hc->den[hc->nprops-1] = 
+	      dfact[nih] * hc->rden[nih] *
 	      hc->rden[nih] * alpha;
 	    nih++;
 	  }
@@ -479,14 +464,14 @@ void hc_polsol(struct hcs *hc, 	/*
 				     xprem);
 	  hc->rho_zero[i] = prem_compute_pval(xprem,
 					      (hc->prem->crho+ilayer*hc->prem->np),
-					      hc->prem->np,1.0e3);
+					      hc->prem->np,1.0);
 	}
 	free(xprem);
       }else{
 	/* 
 
-	for the incompressible computation, use average values of density for the
-	mantle
+	for the incompressible computation, use average values of
+	density for the mantle
 	
 	densities in kg/m^3
 
@@ -525,8 +510,9 @@ void hc_polsol(struct hcs *hc, 	/*
   else
     nzero = 1;
   pos1 = pos2 = 0;		/*
-				  offset pointers for propagators, non-zero
-				  only if the propagators are stored
+				  offset pointers for propagators,
+				  non-zero only if the propagators are
+				  stored
 				*/
   for(l = 1;l <= pol_sol[0].lmax;l++){
     /* 
@@ -549,7 +535,8 @@ void hc_polsol(struct hcs *hc, 	/*
 		  hc->pvisc[i],(hc->props+newprp));
 	hc_evppot(l,(hc->rprops[i]/hc->rprops[i+1]),
 		  (hc->ppots+newpot));
-      }
+      }	/* i checked the propagator matrices again, those are as in
+	   Bernhard's code TWB */
     }
     /* 
 
@@ -583,9 +570,10 @@ void hc_polsol(struct hcs *hc, 	/*
 	    obtain the coefficients from the density field expansions
 
 	  */    
-	  for(i=0;i < inho;i++) /* A or B coeff */
+	  for(i=0;i < inho;i++)/* A or B coeff */
 	    sh_get_coeff((dens_anom+i),l,m,a_or_b,
 			 HC_SH_CONV_DT,(b+i));
+	  //hc_print_vector(b,inho,stderr);
 	}else{
 	  /* 
 	     density is not expanded to that high an l
@@ -606,7 +594,8 @@ void hc_polsol(struct hcs *hc, 	/*
 	  for(ibv=0;ibv < 4;ibv++)
 	    cmb.u[i6][ibv] = 0.0;
 
-	cmb.u[1][1] = 1.0;
+	cmb.u[1][1] = 1.0;	/* set this to zero for no-slip,
+				   in general CMB is free slip */
 	cmb.u[2][2] = 1.0;
 	cmb.u[4][3] = 1.0;
 	cmb.u[5][3] = el;
@@ -625,8 +614,14 @@ void hc_polsol(struct hcs *hc, 	/*
 	  //    Propagate gravity across CMB. Inside the core, surfaces of
 	  //    constant pressure coincide with surfaces of constant potential.
 	  //
+	  /* 
+	     if we were allowing for compressibility, would multi with
+	     hc->grav[i]/hc->grav here (beta incorporates 1/grav0)
+	  */
 	  poten[1] += beta * hc->rprops[0] *
-	    (u[2] - (hc->rho_zero[0] - hc->rho_zero[-1]) * poten[0]);
+	    (u[2] - (hc->rho_zero[0] - hc->rho_zero[-1]) * 
+	     poten[0]);
+
 	  ilayer = 0;
 	  
 	  u3[ilayer].u[0][ibv] = u[0]; /* flow/stress */
@@ -650,8 +645,9 @@ void hc_polsol(struct hcs *hc, 	/*
 	    //    
 	    for(os=pos1 + i*16,i2=0;i2 < 4;i2++,os += 4){
 	      unew[i2] = 0.0;
-	      for(i3=0;i3 < 4;i3++)
+	      for(i3=0;i3 < 4;i3++){
 		unew[i2] += hc->props[os + i3] * u[i3];
+	      }
 	    }
 	    hc_a_equals_b_vector(u,unew,4);
 	    //    
@@ -668,25 +664,27 @@ void hc_polsol(struct hcs *hc, 	/*
 	      //    ADD DEN * B, WHERE DEN = 0 FOR NO DENSITY CONTRAST
 	      //    
 	      dadd = hc->den[i] * b[ninho];
-	      u[2] += dadd;
+	      //fprintf(stderr,"%g %g \n",hc->den[i],b[ninho]);
+	      u[2] += dadd;	/* this would have a factor 
+				   grav(i)/hc->grav
+				*/
 	      //    
 	      //    ADD DEN * BETA * B * RDEN
 	      //    
 	      poten[1] += beta * dadd * hc->rden[ninho];
-	      //fprintf(stderr,"%3i %3i %11g %11g %11g\n",
-	      //i,ninho,hc->den[i],b[ninho],beta);
 	    }
 	    //    
 	    //    Changes due to radial density variations
 	    //
 	    drho = hc->rho_zero[i] - hc->rho_zero[ip1];
-	    if(fabs(drho) > 1e-8){
-	      du1 = u[0] * drho/hc->rho_zero[ip1];
-	      du2 = du1 * (hc->pvisc[i]+hc->pvisc[ip1]);
-	      u[0] +=  du1;
-	      u[2] -=  2.0 * du2 + drho * poten[0];
-	      u[3] +=        du2;
-	    }
+	    
+	    du1 = u[0] * drho/hc->rho_zero[ip1];
+	    du2 = du1 * (hc->pvisc[i]+hc->pvisc[ip1]);
+	    u[0] +=  du1;
+	    u[2] -=  2.0 * du2 + drho * poten[0];
+	    u[3] +=        du2;
+	    //hc_print_vector(poten,2,stderr);
+	    //hc_print_vector(u,4,stderr);
 	    //    
 	    //    effects of phase boundary deflections
 	    //    
@@ -707,6 +705,8 @@ void hc_polsol(struct hcs *hc, 	/*
 	    //
 	    if(hc->qwrite[i]){
 	      ilayer++;
+	      //	      fprintf(stderr,"%4i %4i %13.6e %13.6e %13.6e %13.6e %13.6e %13.6e\n",
+	      //l,m,u[0],u[1],u[2],u[3],poten[0],poten[1]);
 	      u3[ilayer].u[0][ibv] = u[0];
 	      u3[ilayer].u[1][ibv] = u[1];
 	      u3[ilayer].u[2][ibv] = u[2];
@@ -773,10 +773,6 @@ void hc_polsol(struct hcs *hc, 	/*
 	hc_ludcmp_3x3(amat,indx);
 	hc_lubksb_3x3(amat,indx,bvec);
 
-	/* debugging output */
-	//fprintf(stderr,"%i %i\n",l,m);
-	//hc_print_3x3(amat,stderr);
-	//hc_print_vector(bvec,3,stderr);
 	/* 
 	   assign solution 
 	*/
