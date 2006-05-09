@@ -470,12 +470,13 @@ void hc_assign_density(struct hcs *hc,
     /* get one density expansion */
     hc_get_blank_expansions(&hc->dens_anom,1,0,"hc_assign_density");
     /* 
-       read all layes as spherical harmonics assuming real Dahlen & Tromp 
-       (physical) normalization
+       read all layers as spherical harmonics assuming real Dahlen &
+       Tromp (physical) normalization, short format
 
     */
     while(sh_read_parameters_from_file(&type,&lmax,&shps,&ilayer, &nset,
-				       &zlabel,&ivec,in,FALSE,density_in_binary,
+				       &zlabel,&ivec,in,FALSE,
+				       density_in_binary,
 				       verbose)){
       if((verbose)&&(!reported)){
 	if(nominal_lmax > lmax)
@@ -674,8 +675,8 @@ void hc_assign_plate_velocities(struct hcs *hc,int mode,
     switch(mode){
     case HC_INIT_FROM_FILE:
       /* 
-	 read velocities in pol/tor expansion format from file 
-	 in units of HC_VELOCITY_FILE_FACTOR per year
+	 read velocities in pol/tor expansion format from file in
+	 units of HC_VELOCITY_FILE_FACTOR per year, short format
       */
       if(verbose)
 	fprintf(stderr,"hc_assign_plate_velocities: expecting [cm/yr] pol/tor from %s\n",

@@ -74,6 +74,16 @@ spherical haronics
 
 /* 
 
+use short format for spherical harmonic models
+
+*/
+#define HC_DEFAULT_INTERNAL_FORMAT SH_RICK /* by default, use Rick's
+					      spherical harmonic
+					      routines internally  */
+
+
+/* 
+
 for H & C solutions
 
 */

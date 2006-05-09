@@ -370,8 +370,11 @@ hc_boolean sh_read_parameters_from_file(int *type, int *lmax, int *shps,
   }
   if(short_format){
     /* default settings for short format */
-    *zlabel = 0.0; *ilayer = 0; *nset=1;
-    *shps = 1;     *type=SH_RICK;
+    *zlabel = 0.0; 
+    *ilayer = 0; 
+    *nset=1;
+    *shps = 1;     
+    *type = HC_DEFAULT_INTERNAL_FORMAT;
   }
   if(*shps == 1)
     *ivec = 0;
