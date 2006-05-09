@@ -70,22 +70,6 @@ spherical haronics
    
 */
 #include "sh.h"
-/* 
-   
-should we operate in the Dahlen & Tromp, physical sciences
-normalization internationally (TRUE) or only on I/O (FALSE)
-
-you would want to set this to FALSE, if you wish to compare internal
-spherical harmonics solutions with Bernhard's old code
-
-set it to TRUE to operate in the physical convention internally
-(preferred)
-
-*/
-//#define HC_SH_CONV_DT FALSE
-#define HC_SH_CONV_DT TRUE
-
-
 
 /* 
 

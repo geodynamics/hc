@@ -94,27 +94,27 @@ int main(int argc, char **argv)
     */
     if(short_format && loop)
       fprintf(stdout,"%g\n",HC_Z_DEPTH(model->r[ilayer]));
-    sh_print_parameters((sol+ilayer*3),shps,
-			ilayer,nset,(HC_PREC)(HC_Z_DEPTH(model->r[ilayer])),
-			stdout,short_format,FALSE,verbose);
+    sh_print_parameters_to_file((sol+ilayer*3),shps,
+				ilayer,nset,(HC_PREC)(HC_Z_DEPTH(model->r[ilayer])),
+				stdout,short_format,FALSE,verbose);
     if(mode == 1){
       /*  */
       if(verbose)
 	fprintf(stderr,"%s: printing u_r SHE at layer %i (depth: %g)\n",
 		argv[0],ilayer,HC_Z_DEPTH(model->r[ilayer]));
-      sh_print_coefficients((sol+ilayer*3),shps,stdout,fac,FALSE,verbose);
+      sh_print_coefficients_to_file((sol+ilayer*3),shps,stdout,fac,FALSE,verbose);
     }else if(mode == 2){
       /*  */
       if(verbose)
 	fprintf(stderr,"%s: printing u_pol u_tor SHE at layer %i (depth: %g)\n",
 		argv[0],ilayer,HC_Z_DEPTH(model->r[ilayer]));
-      sh_print_coefficients((sol+ilayer*3+1),shps,stdout,fac,FALSE,verbose);
+      sh_print_coefficients_to_file((sol+ilayer*3+1),shps,stdout,fac,FALSE,verbose);
     }else{
       /* mode == 3 */
       if(verbose)
 	fprintf(stderr,"%s: printing u_r u_pol u_tor SHE at layer %i (depth: %g)\n",
 		argv[0],ilayer,HC_Z_DEPTH(model->r[ilayer]));
-      sh_print_coefficients((sol+ilayer*3),shps,stdout,fac,FALSE,verbose);
+      sh_print_coefficients_to_file((sol+ilayer*3),shps,stdout,fac,FALSE,verbose);
     }
   }
   /* clear and exit */

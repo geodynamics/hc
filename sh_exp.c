@@ -246,10 +246,10 @@ if short_format is selected, will only print
 lmax
 
 */
-void sh_print_parameters(struct sh_lms *exp, int shps,
-			 int ilayer, int nset,HC_CPREC zlabel,
-			 FILE *out, hc_boolean short_format,
-			 hc_boolean binary,hc_boolean verbose)
+void sh_print_parameters_to_file(struct sh_lms *exp, int shps,
+				 int ilayer, int nset,HC_CPREC zlabel,
+				 FILE *out, hc_boolean short_format,
+				 hc_boolean binary,hc_boolean verbose)
 {
   HC_BIN_PREC fz;
   /* 
@@ -322,11 +322,11 @@ void sh_print_parameters(struct sh_lms *exp, int shps,
    
    
 */
-hc_boolean sh_read_parameters(int *type, int *lmax, int *shps,
-			      int *ilayer, int *nset,
-			      HC_CPREC *zlabel,int *ivec,
-			      FILE *in, hc_boolean short_format,
-			      hc_boolean binary,hc_boolean verbose)
+hc_boolean sh_read_parameters_from_file(int *type, int *lmax, int *shps,
+					int *ilayer, int *nset,
+					HC_CPREC *zlabel,int *ivec,
+					FILE *in, hc_boolean short_format,
+					hc_boolean binary,hc_boolean verbose)
 {
   int input1[2],input2[3];
   HC_BIN_PREC fz;
@@ -434,9 +434,9 @@ hc_boolean sh_read_parameters(int *type, int *lmax, int *shps,
    fac[3] scales the coefficients
 
 */
-void sh_print_coefficients(struct sh_lms *exp, int shps, FILE *out, 
-			   HC_CPREC *fac,hc_boolean binary, 
-			   hc_boolean verbose)
+void sh_print_coefficients_to_file(struct sh_lms *exp, int shps, FILE *out, 
+				   HC_CPREC *fac,hc_boolean binary, 
+				   hc_boolean verbose)
 {
   int j,l,m;
   HC_CPREC value[2];
@@ -460,7 +460,10 @@ void sh_print_coefficients(struct sh_lms *exp, int shps, FILE *out,
     for(l=0;l <= exp[0].lmax;l++)
       for(m=0;m <= l;m++)
 	for(j=0;j < shps;j++){
-	  /* output is in physical convention */
+	  /* 
+	     output is in physical convention, convert from whatever
+	     we are using internally
+	  */
 	  sh_get_coeff((exp+j),l,m,2,TRUE,value);
 	  fvalue[0] = (HC_BIN_PREC)value[0]*fac[j];
 	  fvalue[1] = (HC_BIN_PREC)value[1]*fac[j];
@@ -470,7 +473,8 @@ void sh_print_coefficients(struct sh_lms *exp, int shps, FILE *out,
     for(l=0;l <= exp[0].lmax;l++){
       for(m=0;m <= l;m++){
 	for(j=0;j < shps;j++){
-	  /* output in physical convention */
+	  /* output in physical convention, convert from internal
+	     convention */
 	  sh_get_coeff((exp+j),l,m,2,TRUE,value);
 	  fprintf(out,"%15.7e %15.7e\t",value[0]*fac[j],value[1]*fac[j]);
 	}
@@ -495,9 +499,9 @@ lmax: -1: use lmax from expansion
 
 
 */
-void sh_read_coefficients(struct sh_lms *exp, int shps, int lmax,
-			  FILE *in, hc_boolean binary, HC_CPREC *fac,
-			  hc_boolean verbose)
+void sh_read_coefficients_from_file(struct sh_lms *exp, int shps, int lmax,
+				    FILE *in, hc_boolean binary, HC_CPREC *fac,
+				    hc_boolean verbose)
 {
   int j,k,l,m,lmax_loc;
   HC_CPREC value[2]={0,0};
@@ -511,12 +515,12 @@ void sh_read_coefficients(struct sh_lms *exp, int shps, int lmax,
   */
   for(j=1;j < shps;j++){ /* check the lmax */
     if(exp[j].lmax != exp[0].lmax){
-      fprintf(stderr,"sh_read_coefficients: error: lmax(%i):%i != lmax(0):%i\n",
+      fprintf(stderr,"sh_read_coefficients_from_file: error: lmax(%i):%i != lmax(0):%i\n",
 	      j+1,exp[j].lmax,exp[0].lmax);
       exit(-1);
     }
     if(exp[j].type != exp[0].type ){
-      fprintf(stderr,"sh_read_coefficients: error: type(%i):%i != type(0):%i\n",
+      fprintf(stderr,"sh_read_coefficients_from_file: error: type(%i):%i != type(0):%i\n",
 	      j+1,exp[j].type,exp[0].type);
       exit(-1);
     }
@@ -526,14 +530,14 @@ void sh_read_coefficients(struct sh_lms *exp, int shps, int lmax,
       for(m=0;m <= l;m++)
 	for(j=0;j < shps;j++){
 	  if(fread(fvalue, sizeof(HC_BIN_PREC),2,in)!=2){
-	    fprintf(stderr,"sh_read_coefficients: read error: set %i l %i m %i\n",
+	    fprintf(stderr,"sh_read_coefficients_from_file: read error: set %i l %i m %i\n",
 		    j+1,l,m);
 	    exit(-1);
 	  }
 	  for(k=0;k<2;k++)
 	    value[k] = (HC_CPREC)fvalue[k];
-	  /* read in real, Dahlen & Tromp normalized coefficients and convert
-	     to whatever format we are using internally */
+	  /* read in real, Dahlen & Tromp normalized coefficients and
+	     convert to whatever format we are using internally */
 	  sh_write_coeff((exp+j),l,m,(m==0)?(0):(2),TRUE,value);
 	}
   }else{
@@ -541,12 +545,12 @@ void sh_read_coefficients(struct sh_lms *exp, int shps, int lmax,
       for(m=0;m <= l;m++)
 	for(j=0;j < shps;j++){
 	  if(fscanf(in,"%lf %lf",value,(value+1))!=2){
-	    fprintf(stderr,"sh_read_coefficients: read error: set %i l %i m %i, last val: %g %g\n",
+	    fprintf(stderr,"sh_read_coefficients_from_file: read error: set %i l %i m %i, last val: %g %g\n",
 		    j+1,l,m,value[0],value[1]);
 	    exit(-1);
 	  }
-	  /* read in real, Dahlen & Tromp normalized coefficients and convert
-	     to whatever format we are using internally */
+	  /* read in real, Dahlen & Tromp normalized coefficients and
+	     convert to whatever format we are using internally */
 	  sh_write_coeff((exp+j),l,m,(m==0)?(0):(2),TRUE,value);
 	}
   }
@@ -583,9 +587,9 @@ lon lat z data
 instead
 
 */
-void sh_read_spatial_data(struct sh_lms *exp, FILE *in, 
-			  my_boolean use_3d, 
-			  int shps, float *data, float *z)
+void sh_read_spatial_data_from_file(struct sh_lms *exp, FILE *in, 
+				    my_boolean use_3d, 
+				    int shps, float *data, float *z)
 {
   double lon,lat,xp[3];
   int j,k;
@@ -1029,9 +1033,9 @@ else  : coordinates = lon lat
 shps is the number of scalars that are passed in the data[shps * npoints] array
 
 */
-void sh_print_spatial_data(struct sh_lms *exp, int shps, 
-			   float *data, hc_boolean use_3d,
-			   float z, FILE *out)
+void sh_print_spatial_data_to_file(struct sh_lms *exp, int shps, 
+				   float *data, hc_boolean use_3d,
+				   float z, FILE *out)
 {
   int j,k;
   double xp[3],lon,lat;
@@ -1269,7 +1273,7 @@ void sh_get_coeff(struct sh_lms *exp,int l, int m, int use_b,
     }
     break;
   default:
-    sh_exp_type_error("sh_read_coefficients",exp);
+    sh_exp_type_error("sh_read_coefficients_from_file",exp);
     break;
   }
 }

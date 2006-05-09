@@ -298,7 +298,7 @@ int prem_read_model(char *filename,struct prem_model *prem,
   */
   for(i=0;i< prem->n;i++){// Q_mu
     rcnt += fscanf(in,PREM_F_STRING,&prem->cqmu[i]);
-    if(prem->cqmu[i] == 1e10){
+    if(fabs(prem->cqmu[i] - 1e10) < 1e-3){ /* == 1e10 */
 #ifdef DBL_MAX
       prem->cqmu[i] = DBL_MAX;
 #else

@@ -88,19 +88,19 @@ int main(int argc, char **argv)
        perform spherical harmonic analysis
     */
     /* read in data from stdin */
-    sh_read_spatial_data(exp,stdin,use_3d,shps,data,&zlabel);
+    sh_read_spatial_data_from_file(exp,stdin,use_3d,shps,data,&zlabel);
     /* 
        perform spherical harmonic expansion 
     */
     sh_compute_spectral(data,ivec,FALSE,&dbl_dummy,
 			exp,verbose);
     /* print parameters of expansion */
-    sh_print_parameters(exp,shps,ilayer,nset,zlabel,
-			stdout,short_format,binary,
-			verbose);
+    sh_print_parameters_to_file(exp,shps,ilayer,nset,zlabel,
+				stdout,short_format,binary,
+				verbose);
     /* print coefficients */
-    sh_print_coefficients(exp,shps,stdout,fac,binary, 
-			  verbose);
+    sh_print_coefficients_to_file(exp,shps,stdout,fac,binary, 
+				  verbose);
   }
   fprintf(stderr,"%s: printing to stdout, done\n",argv[0]);
   free(exp);free(data);

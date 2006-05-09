@@ -43,9 +43,9 @@ int main(int argc, char **argv)
   }
   fprintf(stderr,"%s: waiting to read spherical harmonic coefficients from stdin\n",
 	  argv[0]);
-  while(sh_read_parameters(&type,&lmax,&shps,&ilayer,&nset,
-			   &zlabel,&ivec,stdin,short_format,
-			   binary,verbose)){
+  while(sh_read_parameters_from_file(&type,&lmax,&shps,&ilayer,&nset,
+				     &zlabel,&ivec,stdin,short_format,
+				     binary,verbose)){
     if(short_format_ivec){
       ivec = 1;
       shps = 2;
@@ -55,12 +55,12 @@ int main(int argc, char **argv)
 
     /* input and init */
     sh_allocate_and_init(&exp,shps,lmax,type,ivec,verbose);
-    sh_read_coefficients(exp,shps,-1,stdin,binary,fac,verbose);
+    sh_read_coefficients_from_file(exp,shps,-1,stdin,binary,fac,verbose);
     /* expansion */
     hc_svecalloc(&data,exp[0].npoints * shps,"sh_shsyn");
     sh_compute_spatial(exp,ivec,FALSE,&dbl_dummy,data,verbose);
     /* output */
-    sh_print_spatial_data(exp,shps,data,(nset>1)?(TRUE):(FALSE),zlabel,stdout);
+    sh_print_spatial_data_to_file(exp,shps,data,(nset>1)?(TRUE):(FALSE),zlabel,stdout);
     free(exp);free(data);
   }
 

@@ -38,8 +38,7 @@ Description of input file formats, subroutines given in parentheses.
 
 r_i e_i
 
-Unformatted list of radii (radius of layer/Earth radius) and normalize
-viscosity (in terms of scaling viscosty, typically: 1e21 Pas) values,
-reads until end of file. Values determine each layer viscosity upward
-until the next entry.
+Unformatted list of radii (radius of layer/Earth radius) and viscosity
+(in Pas) values, reads until end of file. Values determine each layer
+viscosity upward until the next entry.
 

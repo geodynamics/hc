@@ -166,12 +166,12 @@ void sh_print_model_coefficients(struct sh_lms_model *model,
       HC_ERROR("sh_print_model_coefficients","coefficients not initialized expansion");
   for(i = 0; i < model->nset;i++){	/* loop through sets */
     /* output of parameters */
-    sh_print_parameters((model->exp+i*model->shps),
-			model->shps,i,model->nset,
-			model->z[i],out,FALSE,binary,verbose);
+    sh_print_parameters_to_file((model->exp+i*model->shps),
+				model->shps,i,model->nset,
+				model->z[i],out,FALSE,binary,verbose);
     /* output of coefficient(s) (1 (ivec=0) or 3 (ivec=1)) */
-    sh_print_coefficients((model->exp+i*model->shps), 
-			  model->shps,out,fac,binary,verbose);
+    sh_print_coefficients_to_file((model->exp+i*model->shps), 
+				  model->shps,out,fac,binary,verbose);
   } /* end set loop */
   free(fac);
 }
@@ -260,10 +260,10 @@ void sh_read_model_spatial_data(struct sh_lms_model *model,
     }
   for(i=0;i < model->nset;i++)
     /* read in the data for this layer */
-    sh_read_spatial_data((model->exp+i*model->shps),in,(model->nset!=1)?(TRUE):(FALSE),
-			 model->shps,
-			 (*data+model->shps*model->exp[i*model->shps].npoints),
-			 (model->z+i));
+    sh_read_spatial_data_from_file((model->exp+i*model->shps),in,(model->nset!=1)?(TRUE):(FALSE),
+				   model->shps,
+				   (*data+model->shps*model->exp[i*model->shps].npoints),
+				   (model->z+i));
   model->spatial_init = TRUE;
 }
 

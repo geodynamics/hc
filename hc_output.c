@@ -34,15 +34,15 @@ void hc_print_spectral_solution(struct hcs *hc,struct sh_lms *sol,
     /* 
        write parameters, convert radius to depth in [km]  
     */
-    sh_print_parameters((sol+os),ntype,i,nradp2,
-			HC_Z_DEPTH(hc->r[i]),
-			out,FALSE,binary,verbose);
+    sh_print_parameters_to_file((sol+os),ntype,i,nradp2,
+				HC_Z_DEPTH(hc->r[i]),
+				out,FALSE,binary,verbose);
     /* 
        
        write the set of coefficients in D&T convention
        
     */
-    sh_print_coefficients((sol+os),ntype,out,fac,binary,verbose);
+    sh_print_coefficients_to_file((sol+os),ntype,out,fac,binary,verbose);
     if(verbose >= 2)
       fprintf(stderr,"hc_print_spectral_solution: z: %8.3f |r|: %11.3e |pol|: %11.3e |tor|: %11.3e (scale: %g cm/yr)\n",
 	      HC_Z_DEPTH(hc->r[i]),sqrt(sh_total_power((sol+os))),
@@ -259,23 +259,24 @@ void hc_compute_solution_scaling_factors(struct hcs *hc,int sol_mode,HC_PREC *fa
 }
 /* 
    
-output of poloidal solution up to l_max
+output of poloidal solution up to l_max 
 
- */
+*/
 void hc_print_poloidal_solution(struct sh_lms *pol_sol,
 				struct hcs *hc,
 				int l_max, char *filename,
+				hc_boolean convert_to_dt, /* convert to Dahlen & Tromp? */
 				hc_boolean verbose)
 {
   int l,m,i,j,a_or_b,ll,nl,os,alim;
   FILE *out;
   HC_PREC value[2];
   /* 
-     output of poloidal solution vectors in internal convention
+     output of poloidal solution vectors 
   */
   if(verbose)
-    fprintf(stderr,"hc_print_poloidal_solution: printing poloidal colution vector to %s\n",
-	    filename);
+    fprintf(stderr,"hc_print_poloidal_solution: printing poloidal solution vector %s to %s\n",
+	    (convert_to_dt)?("(physical convention"):("(internal convention)"),filename);
   /* find max output degree */
   ll = HC_MIN(l_max,pol_sol[0].lmax);
   /* number of output layers */
@@ -290,7 +291,7 @@ void hc_print_poloidal_solution(struct sh_lms *pol_sol,
 	  fprintf(out,"%3i %3i %1i %3i %8.5f ",l,m,a_or_b,i+1,
 		  hc->r[i]);
 	  for(j=0;j < 6;j++){
-	    sh_get_coeff((pol_sol+os+j),l,m,a_or_b,FALSE,value);
+	    sh_get_coeff((pol_sol+os+j),l,m,a_or_b,convert_to_dt,value);
 	    fprintf(out,"%11.4e ",value[0]);
 	  } /* end u_1 .. u_4 nu_1 nu_2 loop */
 	  fprintf(out,"\n");

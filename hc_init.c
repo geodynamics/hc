@@ -173,7 +173,7 @@ void hc_init_constants(struct hcs *hc, HC_PREC dens_anom_scale,
      constants
   */
   hc->timesc = HC_TIMESCALE_YR;		/* timescale [yr]*/
-  hc->visnor = 1e21;		/* normalizing viscosity [Pas]*/
+  hc->visnor = 1e22;		/* normalizing viscosity [Pas]*/
   hc->gacc = 10.0e2; 		/* gravitational acceleration [cm/s2]*/
   hc->g = 6.6742e-11;		/* gravitational constant [Nm2/kg2]*/
   /*  
@@ -335,8 +335,12 @@ void hc_assign_viscosity(struct hcs *hc,int mode,char filename[HC_CHAR_LENGTH],
     hc_get_flt_frmt_string(fstring,2,FALSE);
     rold = hc->r_cmb;
     /* start read loop  */
-    while(fscanf(in,"%lf %lf",
-		 (hc->rvisc+hc->nvis),(hc->visc+hc->nvis))==2){
+    while(fscanf(in,"%lf %lf",(hc->rvisc+hc->nvis),(hc->visc+hc->nvis))==2){
+      if(hc->visc[hc->nvis] < 1e15)
+	fprintf(stderr,"hc_assign_viscosity: WARNING: expecting viscosities in Pas, read %g at layer %i\n",
+		hc->visc[hc->nvis],hc->nvis);
+      /* normalize viscosity here */
+      hc->visc[hc->nvis] / hc->visnor;
       if(hc->nvis == 0)
 	if( hc->rvisc[hc->nvis] < hc->r_cmb-0.01){
 	  fprintf(stderr,"hc_assign_viscosity: error: first radius %g is below CMB, %g\n",
@@ -467,9 +471,9 @@ void hc_assign_density(struct hcs *hc,
        (physical) normalization
 
     */
-    while(sh_read_parameters(&type,&lmax,&shps,&ilayer, &nset,
-			     &zlabel,&ivec,in,FALSE,density_in_binary,
-			     verbose)){
+    while(sh_read_parameters_from_file(&type,&lmax,&shps,&ilayer, &nset,
+				       &zlabel,&ivec,in,FALSE,density_in_binary,
+				       verbose)){
       if((verbose)&&(!reported)){
 	if(nominal_lmax > lmax)
 	  fprintf(stderr,"hc_assign_density: density lmax: %3i filling up to nominal lmax: %3i with zeroes\n",
@@ -540,9 +544,9 @@ void hc_assign_density(struct hcs *hc,
 	 will assume input is in physical convention
 
       */
-      sh_read_coefficients((hc->dens_anom+hc->inho),1,lmax,
-			   in,density_in_binary,dens_scale,
-			   verbose);
+      sh_read_coefficients_from_file((hc->dens_anom+hc->inho),1,lmax,
+				     in,density_in_binary,dens_scale,
+				     verbose);
       hc->inho++;
     }
     if(hc->inho != nset)
@@ -673,9 +677,9 @@ void hc_assign_plate_velocities(struct hcs *hc,int mode,
 	fprintf(stderr,"hc_assign_plate_velocities: expecting [cm/yr] pol/tor from %s\n",
 		filename);
       in = hc_open(filename,"r","hc_assign_plate_velocities");
-      if(!sh_read_parameters(&type,&lmax,&shps,&ilayer, &nset,
-			     &zlabel,&ivec,in,FALSE,
-			     pvel_in_binary,verbose)){
+      if(!sh_read_parameters_from_file(&type,&lmax,&shps,&ilayer, &nset,
+				       &zlabel,&ivec,in,FALSE,
+				       pvel_in_binary,verbose)){
 	fprintf(stderr,"hc_assign_plate_velocities: read error file %s\n",
 		filename);
 	exit(-1);
@@ -699,8 +703,8 @@ void hc_assign_plate_velocities(struct hcs *hc,int mode,
 	 read in expansions, convert to internal format from 
 	 physical 
       */
-      sh_read_coefficients(hc->pvel,shps,-1,in,pvel_in_binary,
-			   vfac,verbose);
+      sh_read_coefficients_from_file(hc->pvel,shps,-1,in,pvel_in_binary,
+				     vfac,verbose);
       fclose(in);
       /* 
 	 scale by 1/sqrt(l(l+1))

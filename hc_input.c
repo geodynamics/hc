@@ -14,14 +14,15 @@ void hc_read_sh_solution(struct hcs *hc, struct sh_lms **sol, FILE *in,
   int nset,ilayer,shps,lmax,type,ivec,nsol,i,os,n;
   HC_PREC zlabel,unity[3]={1.,1.,1.};
    /* 
-     read all layes as spherical harmonics assuming real Dahlen & Tromp 
+
+   read all layes as spherical harmonics assuming real Dahlen & Tromp
      (physical) normalization
      
   */
   n = os = 0;
-  while(sh_read_parameters(&type,&lmax,&shps,&ilayer,&nset,
-			   &zlabel,&ivec,in,FALSE,binary,
-			   verbose)){
+  while(sh_read_parameters_from_file(&type,&lmax,&shps,&ilayer,&nset,
+				     &zlabel,&ivec,in,FALSE,binary,
+				     verbose)){
     hc->sh_type = type;
     if((shps != 3)||(ilayer != n)){
       fprintf(stderr,"hc_read_sh_solution: error: shps %i ilayer %i n %i\n",
@@ -45,8 +46,8 @@ void hc_read_sh_solution(struct hcs *hc, struct sh_lms **sol, FILE *in,
     /* 
        read coefficients
     */
-    sh_read_coefficients((*sol+os),shps,-1,in,
-			 binary,unity,verbose);
+    sh_read_coefficients_from_file((*sol+os),shps,-1,in,
+				   binary,unity,verbose);
     if(verbose)
       fprintf(stderr,"hc_read_sh_solution: z: %8.3f |r|: %12.5e |pol|: %12.5e |tor|: %12.5e\n",
 	      HC_Z_DEPTH(hc->r[ilayer]),

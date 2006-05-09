@@ -44,7 +44,10 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
 	      hc_boolean verbose)
 {
   int nsh_pol,nsh_tor=0;
-    static int iformat = 1;	/* no geoid for now */
+  static int iformat = 1;	/* no geoid for now */
+  static hc_boolean convert_to_dt = FALSE; /* convert the poloidal and
+					      toroidal solution
+					      vectors to physical SH convention */
   double *tvec;
   static hc_boolean 
     tor_init = FALSE,		
@@ -101,8 +104,10 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
 	      iformat,hc->geoid,hc->save_solution,
 	      verbose);
     if(print_pt_sol)
-      hc_print_poloidal_solution(hc->pol_sol,hc,31,
-				 HC_POLSOL_FILE,verbose);
+      hc_print_poloidal_solution(hc->pol_sol,hc,31, /* print only up
+						       to lmax = 31 or
+						       below */
+				 HC_POLSOL_FILE,convert_to_dt,verbose);
   }
   if(!free_slip){
     /* 
@@ -130,7 +135,8 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
 		verbose);
       if(print_pt_sol)
 	hc_print_toroidal_solution(tvec,hc->pvel[1].lmax,
-				   hc,hc->pvel[1].lmax,HC_TORSOL_FILE,verbose);
+				   hc,hc->pvel[1].lmax,HC_TORSOL_FILE,
+				   verbose);
       free(tvec);
     }
   }else{

@@ -570,9 +570,10 @@ void hc_polsol(struct hcs *hc, 	/*
 	    obtain the coefficients from the density field expansions
 
 	  */    
-	  for(i=0;i < inho;i++)/* A or B coeff */
-	    sh_get_coeff((dens_anom+i),l,m,a_or_b,
-			 HC_SH_CONV_DT,(b+i));
+	  for(i=0;i < inho;i++)/* A or B coeff, use the internal
+				  convention here
+				*/
+	    sh_get_coeff((dens_anom+i),l,m,a_or_b,FALSE,(b+i));
 	  //hc_print_vector(b,inho,stderr);
 	}else{
 	  /* 
@@ -624,6 +625,7 @@ void hc_polsol(struct hcs *hc, 	/*
 
 	  ilayer = 0;
 	  
+
 	  u3[ilayer].u[0][ibv] = u[0]; /* flow/stress */
 	  u3[ilayer].u[1][ibv] = u[1];
 	  u3[ilayer].u[2][ibv] = u[2];
@@ -705,7 +707,7 @@ void hc_polsol(struct hcs *hc, 	/*
 	    //
 	    if(hc->qwrite[i]){
 	      ilayer++;
-	      //	      fprintf(stderr,"%4i %4i %13.6e %13.6e %13.6e %13.6e %13.6e %13.6e\n",
+	      //fprintf(stderr,"%4i %4i %13.6e %13.6e %13.6e %13.6e %13.6e %13.6e\n",
 	      //l,m,u[0],u[1],u[2],u[3],poten[0],poten[1]);
 	      u3[ilayer].u[0][ibv] = u[0];
 	      u3[ilayer].u[1][ibv] = u[1];
@@ -750,7 +752,7 @@ void hc_polsol(struct hcs *hc, 	/*
 	   get one coefficient from the poloidal plate motion part
 	*/
 	if(!free_slip)
-	  sh_get_coeff(pvel_pol,l,m,a_or_b,HC_SH_CONV_DT,clm);
+	  sh_get_coeff(pvel_pol,l,m,a_or_b,FALSE,clm); /* use internal convention */
 	else
 	  clm[0] = 0.0;
 	/* 
@@ -781,12 +783,12 @@ void hc_polsol(struct hcs *hc, 	/*
 	    /* sum up contributions from vector solution */
 	    for(i2=1,j=0;j < 3;j++,i2++)
 	      u3[ilayer].u[i6][0] -= bvec[j]*u3[ilayer].u[i6][i2];
+	    //fprintf(stderr,"%i %i %i %i %g\n",l,m,ilayer,i6, u3[ilayer].u[i6][0]);
 	    /* 
 	       adding vector components to spherical harmonic solution 
 	    */
 	    /* A or B coefficients */
-	    sh_write_coeff((pol_sol+os+i6),l,m,
-			   a_or_b,HC_SH_CONV_DT,
+	    sh_write_coeff((pol_sol+os+i6),l,m,a_or_b,FALSE, /* use internal convention */
 			   &u3[ilayer].u[i6][0]);
 	  }
  	} /* end layer loop */
@@ -833,21 +835,21 @@ void hc_polsol(struct hcs *hc, 	/*
       n6 = -iformat-1;
     /* first coefficients are zero  */
     clm[0] = clm[1] = 0.0;
-    sh_write_coeff(geoid,0,0,0,HC_SH_CONV_DT,clm); /* 0,0 */
-    sh_write_coeff(geoid,1,0,0,HC_SH_CONV_DT,clm); /* 1,0 */
-    sh_write_coeff(geoid,1,1,2,HC_SH_CONV_DT,clm); /* 1,1 */
+    sh_write_coeff(geoid,0,0,0,FALSE,clm); /* 0,0 */
+    sh_write_coeff(geoid,1,0,0,FALSE,clm); /* 1,0 */
+    sh_write_coeff(geoid,1,1,2,FALSE,clm); /* 1,1 */
 
     os = nl * 6 + n6;	/* select component */
     for(l=2;l <= pol_sol[0].lmax;l++){
       for(m=0;m <= l;m++){
 	if (m != 0){
-	  sh_get_coeff((pol_sol+os),l,m,2,HC_SH_CONV_DT,clm);
+	  sh_get_coeff((pol_sol+os),l,m,2,FALSE,clm); /* internal convention */
 	  clm[0] *= gf;clm[1] *= gf;
-	  sh_write_coeff(geoid,l,m,2,HC_SH_CONV_DT,clm);
+	  sh_write_coeff(geoid,l,m,2,FALSE,clm);
 	}else{			/* m == 0 */
-	  sh_get_coeff((pol_sol+os),l,m,0,HC_SH_CONV_DT,clm);
+	  sh_get_coeff((pol_sol+os),l,m,0,FALSE,clm);
 	  clm[0] *= gf;
-	  sh_write_coeff(geoid,l,m,0,HC_SH_CONV_DT,clm);
+	  sh_write_coeff(geoid,l,m,0,FALSE,clm);
 	}
       }
     }
