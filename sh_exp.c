@@ -219,7 +219,8 @@ void sh_compute_power_per_degree(struct sh_lms *exp,
     power[l] = 0.0;
     for(m=0;m<=l;m++){
       need_b = (hc_boolean) ((m == 0) ? (0) : (2));
-      sh_get_coeff(exp,l,m,need_b,TRUE,value);
+      sh_get_coeff(exp,l,m,need_b,TRUE,value); /* convert to DT
+						  normalization  */
       power[l] += value[0] * value[0];
       if(need_b) 
 	power[l] += value[1] * value[1];

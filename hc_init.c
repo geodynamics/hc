@@ -173,7 +173,7 @@ void hc_init_constants(struct hcs *hc, HC_PREC dens_anom_scale,
      constants
   */
   hc->timesc = HC_TIMESCALE_YR;		/* timescale [yr]*/
-  hc->visnor = 1e22;		/* normalizing viscosity [Pas]*/
+  hc->visnor = 1e21;		/* normalizing viscosity [Pas]*/
   hc->gacc = 10.0e2; 		/* gravitational acceleration [cm/s2]*/
   hc->g = 6.6742e-11;		/* gravitational constant [Nm2/kg2]*/
   /*  
@@ -507,10 +507,11 @@ void hc_assign_density(struct hcs *hc,
 
       */
       prem_get_rho(&rho0,hc->rden[hc->inho],hc->prem);
+      rho0 /= 1000.0;
       /* 
 	 general density (add additional depth dependence here)
       */
-      dens_scale[0] = hc->dens_scale[0] * local_dens_fac * rho0/1000.;
+      dens_scale[0] = hc->dens_scale[0] * local_dens_fac * rho0;
       if(verbose >= 2)
 	fprintf(stderr,"hc_assign_density: r: %11g anom scales: %11g x %11g x %11g = %11g\n",
 		hc->rden[hc->inho],hc->dens_scale[0],

@@ -45,9 +45,9 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
 {
   int nsh_pol,nsh_tor=0;
   static int iformat = 1;	/* no geoid for now */
-  static hc_boolean convert_to_dt = FALSE; /* convert the poloidal and
-					      toroidal solution
-					      vectors to physical SH convention */
+  static hc_boolean convert_to_dt = TRUE; /* convert the poloidal and
+					     toroidal solution
+					     vectors to physical SH convention */
   double *tvec;
   static hc_boolean 
     tor_init = FALSE,		

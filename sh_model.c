@@ -370,10 +370,10 @@ void sh_print_model_spatial_data(struct sh_lms_model *model,
   os = 0;
   for(i=0;i < model->nset;i++){
     /* print out data for the set */
-    sh_print_spatial_data((model->exp+i*model->shps),
-			  (model->ivec)?(3):(1),(data+os),
-			  (model->nset == 1)?(FALSE):(TRUE),
-			  model->z[i],out);
+    sh_print_spatial_data_to_file((model->exp+i*model->shps),
+				  (model->ivec)?(3):(1),(data+os),
+				  (model->nset == 1)?(FALSE):(TRUE),
+				  model->z[i],out);
     if(model->ivec)
       for(j=0;j<3;j++)
 	os += model->exp[i*model->shps+j].npoints;
