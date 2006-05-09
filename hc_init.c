@@ -340,7 +340,7 @@ void hc_assign_viscosity(struct hcs *hc,int mode,char filename[HC_CHAR_LENGTH],
 	fprintf(stderr,"hc_assign_viscosity: WARNING: expecting viscosities in Pas, read %g at layer %i\n",
 		hc->visc[hc->nvis],hc->nvis);
       /* normalize viscosity here */
-      hc->visc[hc->nvis] / hc->visnor;
+      hc->visc[hc->nvis] /= hc->visnor;
       if(hc->nvis == 0)
 	if( hc->rvisc[hc->nvis] < hc->r_cmb-0.01){
 	  fprintf(stderr,"hc_assign_viscosity: error: first radius %g is below CMB, %g\n",
