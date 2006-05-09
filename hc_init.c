@@ -189,16 +189,19 @@ void hc_init_constants(struct hcs *hc, HC_PREC dens_anom_scale,
   hc->avg_den_mantle = 4.4488;
   hc->avg_den_core = 11.60101;
 
-
   /* 
      take the CMB radius from the Earth model 
   */
   hc->r_cmb = hc->prem->r[1];
   if(fabs(hc->r_cmb - 0.55) > 0.02)
     HC_ERROR("hc_init_constants","Earth model CMB radius appears off");
-  /* velocity scale if input is in [cm/yr], 
-     works out to be ~0.11 */
-  hc->vel_scale = hc->re*PIOVERONEEIGHTY/hc->timesc;
+
+  /* 
+  
+  velocity scale if input is in [cm/yr], works out to be ~0.11 
+
+  */
+  hc->vel_scale = hc->re*PIOVERONEEIGHTY/hc->timesc*100;
   init = TRUE;
 }
 
@@ -500,7 +503,7 @@ void hc_assign_density(struct hcs *hc,
       /* 
 	 assign depth, this assumes that we are reading in depths [km]
       */
-      hc->rden[hc->inho] = HC_ND_RADIUS(zlabel);
+      hc->rden[hc->inho] = HC_ND_RADIUS((double)zlabel);
       /* 
 
       get reference density at this level
@@ -658,7 +661,7 @@ void hc_assign_plate_velocities(struct hcs *hc,int mode,
   HC_PREC zlabel,vfac[2],t10[2],t11[2];
   FILE *in;
   /* scale to go from cm/yr to internal scale */
-  vfac[0] = vfac[1] = hc->vel_scale;
+  vfac[0] = vfac[1] = 1.0/hc->vel_scale;
   if(init)
     HC_ERROR("hc_assign_plate_velocities","what to do if called twice?");
   if(!vel_bc_zero){

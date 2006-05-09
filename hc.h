@@ -51,6 +51,7 @@ struct dcmplx{			/* double precision */
 #endif
 
 
+#define HC_PI 3.1415926535897932384626433832795
 
 /* 
 

@@ -29,6 +29,11 @@ void hc_print_spectral_solution(struct hcs *hc,struct sh_lms *sol,
      number of solution sets of ntype solutions 
   */
   nradp2 = hc->nrad+2;
+  /* 
+
+  scale to cm/yr, or other values for stress solutions
+
+  */
   hc_compute_solution_scaling_factors(hc,sol_mode,fac);
   for(i=os=0;i < nradp2;i++,os += ntype){
     /* 
@@ -43,12 +48,21 @@ void hc_print_spectral_solution(struct hcs *hc,struct sh_lms *sol,
        
     */
     sh_print_coefficients_to_file((sol+os),ntype,out,fac,binary,verbose);
-    if(verbose >= 2)
-      fprintf(stderr,"hc_print_spectral_solution: z: %8.3f |r|: %11.3e |pol|: %11.3e |tor|: %11.3e (scale: %g cm/yr)\n",
-	      HC_Z_DEPTH(hc->r[i]),sqrt(sh_total_power((sol+os))),
-	      sqrt(sh_total_power((sol+os+1))),
-	      sqrt(sh_total_power((sol+os+2))),
-	      fac[0]/8.99321605918731);
+    if(verbose >= 2){
+      switch(sol_mode){
+      case HC_VEL:
+	fprintf(stderr,"hc_print_spectral_solution: z: %8.3f |r|: %11.3e |pol|: %11.3e |tor|: %11.3e (scale: %g cm/yr)\n",
+		HC_Z_DEPTH(hc->r[i]),sqrt(sh_total_power((sol+os))),
+		sqrt(sh_total_power((sol+os+1))),
+		sqrt(sh_total_power((sol+os+2))),
+		fac[0]/11.1194926644559);
+	break;
+      default:
+	fprintf(stderr,"hc_print_spectral_solution: sol mode %i undefined\n",sol_mode);
+	exit(-1);
+	break;
+      }
+    }
   }
   if(verbose)
     fprintf(stderr,"hc_print_spectral_solution: wrote solution at %i levels\n",
@@ -243,7 +257,7 @@ void hc_compute_solution_scaling_factors(struct hcs *hc,int sol_mode,HC_PREC *fa
 
  switch(sol_mode){
   case HC_VEL:
-    fac[0]=fac[1]=fac[2] = 1.0/hc->vel_scale; /* go to cm/yr  */
+    fac[0]=fac[1]=fac[2] = hc->vel_scale; /* go to cm/yr  */
     break;
   case HC_STRESS:
     fac[0]=fac[1]=fac[2] = 1.0; /* go to ??? */
@@ -265,7 +279,8 @@ output of poloidal solution up to l_max
 void hc_print_poloidal_solution(struct sh_lms *pol_sol,
 				struct hcs *hc,
 				int l_max, char *filename,
-				hc_boolean convert_to_dt, /* convert to Dahlen & Tromp? */
+				hc_boolean convert_to_dt, /* convert spherical harmonic coefficients 
+							     to Dahlen & Tromp format */
 				hc_boolean verbose)
 {
   int l,m,i,j,a_or_b,ll,nl,os,alim;
@@ -288,8 +303,7 @@ void hc_print_poloidal_solution(struct sh_lms *pol_sol,
       alim = (m==0)?(1):(2);
       for(a_or_b=0;a_or_b < alim;a_or_b++){
 	for(i=os=0;i < nl;i++,os+=6){
-	  fprintf(out,"%3i %3i %1i %3i %8.5f ",l,m,a_or_b,i+1,
-		  hc->r[i]);
+	  fprintf(out,"%3i %3i %1i %3i %8.5f ",l,m,a_or_b,i+1,hc->r[i]);
 	  for(j=0;j < 6;j++){
 	    sh_get_coeff((pol_sol+os+j),l,m,a_or_b,convert_to_dt,value);
 	    fprintf(out,"%11.4e ",value[0]);

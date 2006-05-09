@@ -130,6 +130,7 @@ void sh_print_parameters_to_file(struct sh_lms *, int, int, int, double, FILE *,
 unsigned short sh_read_parameters_from_file(int *, int *, int *, int *, int *, double *, int *, FILE *, unsigned short, unsigned short, unsigned short);
 void sh_print_coefficients_to_file(struct sh_lms *, int, FILE *, double *, unsigned short, unsigned short);
 void sh_read_coefficients_from_file(struct sh_lms *, int, int, FILE *, unsigned short, double *, unsigned short);
+void sh_print_nonzero_coeff(struct sh_lms *, FILE *);
 void sh_read_spatial_data_from_file(struct sh_lms *, FILE *, unsigned short, int, float *, float *);
 void sh_compute_spatial_basis(struct sh_lms *, FILE *, unsigned short, float, float **, int, unsigned short);
 void sh_compute_spectral(float *, int, unsigned short, double **, struct sh_lms *, unsigned short);

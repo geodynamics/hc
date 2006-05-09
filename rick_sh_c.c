@@ -890,7 +890,7 @@ void rick_gauleg(SH_RICK_PREC x1, SH_RICK_PREC x2,
   xm=0.5*(x2+x1);
   xl=0.5*(x2-x1);
   for(i=0;i < m;i++){
-    z = cos(M_PI * (i+.75)/(n+.5));
+    z = cos(RICK_PI * (i+.75)/(n+.5));
     z1 = -2.0;
     while(fabs(z-z1) > 5.e-15){
       p1 = 1.0;

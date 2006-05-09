@@ -139,7 +139,7 @@ void ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,
   if(xloc[HC_PHI]>TWOPI)
     xloc[HC_PHI] -= TWOPI;
   if((xloc[HC_R]<0) || (xloc[HC_R]>1) || (xloc[HC_THETA]<0) ||
-     (xloc[HC_THETA] > M_PI) || (xloc[HC_PHI] < 0) || 
+     (xloc[HC_THETA] > GGRD_PI) || (xloc[HC_PHI] < 0) || 
      (xloc[HC_PHI] > TWOPI)){
     fprintf(stderr,"ggrd_find_vel_and_der: coordinate x{%g, %g, %g} (lon: %g, lat: %g, z: %g) out of range\n",
 	    xloc[HC_R],xloc[HC_THETA],xloc[HC_PHI],

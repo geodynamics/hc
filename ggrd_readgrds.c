@@ -195,7 +195,7 @@ void ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 	    v->dtheta=DEG2RAD( header->y_inc);
 	    if(HC_DIFFERENT(minphi,0.0) || 
 	       HC_DIFFERENT(mintheta,v->dtheta*0.5) || 
-	       HC_DIFFERENT(maxtheta,M_PI - v->dtheta*0.5) || 
+	       HC_DIFFERENT(maxtheta,GGRD_PI - v->dtheta*0.5) || 
 	       (HC_DIFFERENT(omaxphi,TWOPI) && 
 		HC_DIFFERENT(omaxphi,TWOPI - v->dphi))){
 	      fprintf(stderr,"ggrd_read_vel_grids: expecting 0/360(or %g)/%g/%g range, problem with %s\n",
@@ -221,13 +221,13 @@ void ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 	      wraparound = FALSE;
 	    }
 	    v->n[HC_THETA] = header->ny;
-	    if(HC_DIFFERENT(v->dtheta,M_PI /
+	    if(HC_DIFFERENT(v->dtheta,GGRD_PI /
 			 ((GGRD_CPREC)(v->n[HC_THETA])))||
 	       HC_DIFFERENT(v->dphi,TWOPI/
 			 ((GGRD_CPREC)(v->n[HC_PHI])))){
 	      fprintf(stderr,"ggrd_read_vel_grids: spacing error: ndx/dx phi: %g/%g theta: %g/%g\n",
 		      TWOPI/v->n[HC_PHI],v->dphi,
-		      M_PI/v->n[HC_THETA],v->dtheta);
+		      GGRD_PI/v->n[HC_THETA],v->dtheta);
 	      exit(-1);
 	    }
 	    //

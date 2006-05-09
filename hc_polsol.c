@@ -284,12 +284,12 @@ void hc_polsol(struct hcs *hc, 	/*
     //
     //    SET alpha, beta factors
     //
-    alpha  =  rho_scale * (hc->re*1e2) * hc->gacc / hc->visnor;	/*  */
+    alpha  =  rho_scale * (hc->re*10.) * hc->gacc / hc->visnor;	/*  */
     alpha *= ONEEIGHTYOVERPI * hc->secyr * hc->timesc; /*  */
     //
-    beta   = -4.0 * M_PI * (hc->g*1e3) * (hc->re*1e2) / hc->gacc;
+    beta   = -4.0 * HC_PI * (hc->g*1e3) * (hc->re*1e2) / hc->gacc;
     if(verbose)
-      fprintf(stderr,"hc_polsol: alpha: %g beta: %g\n",
+      fprintf(stderr,"hc_polsol: alpha: %.8f beta: %.8f\n",
 	      alpha,beta);
     ab_init = TRUE;
   }
@@ -403,9 +403,7 @@ void hc_polsol(struct hcs *hc, 	/*
 	    //
 	    //    IF RDEN, EVALUATE DEN, INCREMENT NIH
 	    //    
-	    hc->den[hc->nprops-1] = 
-	      dfact[nih] * hc->rden[nih] *
-	      hc->rden[nih] * alpha;
+	    hc->den[hc->nprops-1] = dfact[nih] * hc->rden[nih] * hc->rden[nih] * alpha;
 	    nih++;
 	  }
 	}
@@ -433,7 +431,7 @@ void hc_polsol(struct hcs *hc, 	/*
       for(i=i2=0;i < hc->nprops+1;i++){
 	if(fabs(hc->den[i]) > HC_EPS_PREC)
 	  i2++;
-	fprintf(stderr,"hc_polsol: prop: i: %3i(%3i) r: %8.5f v: %8.3f den: %11.3e ninho: %3i/%3i\n",
+	fprintf(stderr,"hc_polsol: prop: i: %3i(%3i) r: %8.5f v: %8.3f den: %12g ninho: %3i/%3i\n",
 		i+1,hc->nprops,hc->rprops[i],
 		hc->pvisc[i],hc->den[i],i2,inho);
       }
@@ -570,9 +568,10 @@ void hc_polsol(struct hcs *hc, 	/*
 	    obtain the coefficients from the density field expansions
 
 	  */    
-	  for(i=0;i < inho;i++)/* A or B coeff, use the internal
-				  convention here
-				*/
+	  for(i=0;i < inho;i++)/* 
+				  A or B coeff, use the internal
+				  convention here, as stored before
+			       */
 	    sh_get_coeff((dens_anom+i),l,m,a_or_b,FALSE,(b+i));
 	  //hc_print_vector(b,inho,stderr);
 	}else{
@@ -666,13 +665,14 @@ void hc_polsol(struct hcs *hc, 	/*
 	      //    ADD DEN * B, WHERE DEN = 0 FOR NO DENSITY CONTRAST
 	      //    
 	      dadd = hc->den[i] * b[ninho];
-	      //fprintf(stderr,"%g %g \n",hc->den[i],b[ninho]);
 	      u[2] += dadd;	/* this would have a factor 
 				   grav(i)/hc->grav
 				*/
 	      //    
 	      //    ADD DEN * BETA * B * RDEN
 	      //    
+	      //	      fprintf(stderr,"%15.5e %15.5e %15.5e %15.5e\n",
+	      //      beta, hc->den[i], b[ninho],hc->rden[ninho]);
 	      poten[1] += beta * dadd * hc->rden[ninho];
 	    }
 	    //    
@@ -828,7 +828,7 @@ void hc_polsol(struct hcs *hc, 	/*
     /* 
        geoid scaling factor
     */
-    gf = M_PI * hc->visnor/180./hc->secyr/hc->gacc/1.e8;
+    gf = HC_PI * hc->visnor/180./hc->secyr/hc->gacc/1.e8;
     if (iformat == 0) 		/* which component to select? */
       n6 = 4;
     else  

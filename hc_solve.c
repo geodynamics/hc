@@ -46,8 +46,11 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
   int nsh_pol,nsh_tor=0;
   static int iformat = 1;	/* no geoid for now */
   static hc_boolean convert_to_dt = TRUE; /* convert the poloidal and
-					     toroidal solution
-					     vectors to physical SH convention */
+					     toroidal solution vectors
+					     to physical SH convention
+					     (if set to FALSE, can
+					     compare with Benhard's
+					     densub densol output */
   double *tvec;
   static hc_boolean 
     tor_init = FALSE,		
@@ -103,7 +106,8 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
 	      (hc->pvel+0),hc->pol_sol,
 	      iformat,hc->geoid,hc->save_solution,
 	      verbose);
-    if(print_pt_sol)
+    if(print_pt_sol)		/* print poloidal solution without the
+				   scaling factors */
       hc_print_poloidal_solution(hc->pol_sol,hc,31, /* print only up
 						       to lmax = 31 or
 						       below */
@@ -219,8 +223,9 @@ void hc_sum(struct hcs *hc,
     hc_init_l_factors(hc,sol[0].lmax);
   nradp2 = nrad + 2;
   /* 
-     pick the right components for the radial, poloidal, and toroidal
-     solution
+
+  pick the right components for the radial, poloidal, and toroidal
+  solution
      
   */
   if (solve_mode == HC_VEL){
@@ -238,6 +243,14 @@ void hc_sum(struct hcs *hc,
     ipchoose = 3;// y4  for poloidal
     itchoose = 1;// y10 for toroidal 
   }
+  /* 
+
+
+  for velocities, this summation is OK. for some other properties,
+  might have to rescale by layer radius and such
+
+
+  */
   for(i=i3=i6=0;i < nradp2;i++,i3+=3,i6+=6){
     /* 
        radial part 

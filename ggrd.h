@@ -26,6 +26,8 @@
 /* radius of CMB */
 #define GGRD_RCMB_ND 0.546225
 
+#define GGRD_PI 3.1415926535897932384626433832795
+
 /* 
    
 modes

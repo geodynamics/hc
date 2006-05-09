@@ -72,7 +72,7 @@ void rick_realft_nr(SH_RICK_PREC *rdata, int n, int isign)
   int i,n2p3,ilim,i1,i2,i3,i4,n2;
   static int negunity = -1,unity = 1;
 
-  theta = M_PI/(double)(n); 
+  theta = RICK_PI/(double)(n); 
   
   wr = 1.0;
   wi = 0.0;

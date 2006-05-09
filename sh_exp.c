@@ -271,7 +271,7 @@ void sh_print_parameters_to_file(struct sh_lms *exp, int shps,
      }
   }else{
     if(!short_format)
-      fprintf(out,"%6i %6i %11g %6i %2i %2i ",
+      fprintf(out,"%6i %6i %.8e %6i %2i %2i ",
 	      exp[0].lmax,ilayer,zlabel,nset,
 	      shps,exp[0].type);
     else
@@ -563,9 +563,28 @@ void sh_read_coefficients_from_file(struct sh_lms *exp, int shps, int lmax,
 	for(j=0;j < shps;j++)
 	  sh_write_coeff((exp+j),l,m,(m==0)?(0):(2),TRUE,value);
   }
+
+
+
   for(j=0;j < shps;j++){
+    //sh_print_nonzero_coeff((exp+j),stderr);
     sh_scale_expansion((exp+j),fac[j]);
+    //sh_print_nonzero_coeff((exp+j),stderr);
     exp[j].spectral_init = TRUE;
+  }
+}
+/* print a raw set of coefficients to out if nonzero, for
+   debugging  */
+void sh_print_nonzero_coeff(struct sh_lms *exp,FILE *out)
+{
+  int l,m;
+  HC_CPREC value[2];
+  for(l=0;l <= exp->lmax;l++){
+    for(m=0;m <= l;m++){
+      sh_get_coeff(exp,l,m,2,FALSE,value);
+      if(fabs(value[0])+fabs(value[1]) > 1e-8)
+	fprintf(out,"%5i %5i %15.7e %15.7e\n",l,m,value[0],value[1]);
+    }
   }
 }
 

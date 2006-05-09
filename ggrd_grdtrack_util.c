@@ -914,7 +914,7 @@ void ggrd_interpol_time(GGRD_CPREC time,struct ggrd_t *thist,
 	  f2_loc = 1.0;
 	}else {            // in between 
 	  xll =     (xll-xllimit)/dxlimit; // normalize by transition width
-	  f2_loc = ((1.0 - cos(xll * M_PI))/2.0); // this goes from 0 to 1
+	  f2_loc = ((1.0 - cos(xll * GGRD_PI))/2.0); // this goes from 0 to 1
 	  //     weight for left velocities
 	  f1_loc = 1.0 - f2_loc;
 	}
