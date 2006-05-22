@@ -105,7 +105,7 @@ struct hc_parameters{
   hc_boolean verbose;		/* debugging output? (0,1,2,3,4...) */
   hc_boolean sol_binary_out;	/* binary or ASCII output of SH expansion */
   hc_boolean print_spatial;	/* print the spatial solution */
-  int solution_mode;	/* velocity, stress, or geoid */
+  int solution_mode;	/* velocity or stress */
   hc_boolean print_pt_sol;	/* output of p[6] and t[2] vectors */
   char visc_filename[HC_CHAR_LENGTH];	/* name of viscosity profile file */
   char pvel_filename[HC_CHAR_LENGTH];	/* name of plate velocities file */
@@ -189,7 +189,7 @@ struct hcs{
      SOLUTION RELATED 
   */
   /* poloidal solution */
-  struct sh_lms *pol_sol,*geoid;
+  struct sh_lms *pol_sol;
   double *rho,*rho_zero;	/* 
 				   density factors 
 				*/
@@ -239,7 +239,6 @@ struct hcs{
 solution modes
 
 */
-#define HC_GEOID 1		/* compute geoid */
 #define HC_VEL 0		/* compute velocities 
 				   v_r v_t v_p
 				*/

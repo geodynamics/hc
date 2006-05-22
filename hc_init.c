@@ -62,7 +62,7 @@ void hc_struc_init(struct hcs **hc)
   (*hc)->r = (*hc)->visc = (*hc)->rvisc = 
     (*hc)->dfact = (*hc)->rden = NULL;
   (*hc)->rpb = (*hc)->fpb= NULL;
-  (*hc)->dens_anom = (*hc)->geoid = NULL; /* expansions */
+  (*hc)->dens_anom = NULL; /* expansions */
   (*hc)->plm = NULL;
   (*hc)->prem_init = FALSE;
 }

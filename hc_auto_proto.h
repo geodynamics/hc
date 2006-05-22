@@ -68,6 +68,7 @@ void hc_calc_mean_and_stddev(double *, double *, int, double *, double *, double
 void hc_indexx(int, double *, int *);
 /* hc_output.c */
 void hc_print_spectral_solution(struct hcs *, struct sh_lms *, FILE *, int, unsigned short, unsigned short);
+void hc_print_sh_scalar_field(struct sh_lms *, FILE *, unsigned short, unsigned short, unsigned short);
 void hc_print_spatial_solution(struct hcs *, struct sh_lms *, float *, char *, char *, int, unsigned short, unsigned short);
 void hc_print_depth_layers(struct hcs *, FILE *, unsigned short);
 void hc_print_3x3(double [3][3], FILE *);
@@ -80,12 +81,12 @@ void hc_compute_solution_scaling_factors(struct hcs *, int, double *);
 void hc_print_poloidal_solution(struct sh_lms *, struct hcs *, int, char *, unsigned short, unsigned short);
 void hc_print_toroidal_solution(double *, int, struct hcs *, int, char *, unsigned short);
 /* hc_polsol.c */
-void hc_polsol(struct hcs *, int, double *, int, double *, unsigned short, struct sh_lms *, unsigned short, int, double *, double *, unsigned short, struct sh_lms *, struct sh_lms *, int, struct sh_lms *, unsigned short, unsigned short);
+void hc_polsol(struct hcs *, int, double *, int, double *, unsigned short, struct sh_lms *, unsigned short, int, double *, double *, unsigned short, struct sh_lms *, struct sh_lms *, unsigned short, struct sh_lms *, unsigned short, unsigned short);
 /* hc_propagator.c */
 void hc_evalpa(int, double, double, double, double *);
 void hc_evppot(int, double, double *);
 /* hc_solve.c */
-void hc_solve(struct hcs *, unsigned short, int, struct sh_lms *, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short);
+void hc_solve(struct hcs *, unsigned short, int, struct sh_lms *, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, struct sh_lms *, unsigned short);
 void hc_sum(struct hcs *, int, struct sh_lms *, struct sh_lms *, int, unsigned short, struct sh_lms *, unsigned short);
 void hc_compute_sol_spatial(struct hcs *, struct sh_lms *, float **, unsigned short);
 /* hc_torsol.c */

@@ -68,6 +68,22 @@ void hc_print_spectral_solution(struct hcs *hc,struct sh_lms *sol,
     fprintf(stderr,"hc_print_spectral_solution: wrote solution at %i levels\n",
 	    nradp2);
 }
+
+/* 
+
+print a single scalar field to file
+
+*/
+
+void hc_print_sh_scalar_field(struct sh_lms *sh, FILE *out, hc_boolean short_format,
+			      hc_boolean binary, hc_boolean verbose)
+{
+  HC_CPREC fac[1] = {1.0};
+  sh_print_parameters_to_file(sh,1,0,1,0.0,out,short_format,binary,verbose); /* parameters in long format */
+  sh_print_coefficients_to_file(sh,1,out,fac,binary,verbose); /* coefficients */
+}
+
+
 /* 
 
 print the spatial solution in 
@@ -260,9 +276,6 @@ void hc_compute_solution_scaling_factors(struct hcs *hc,int sol_mode,HC_PREC *fa
     fac[0]=fac[1]=fac[2] = hc->vel_scale; /* go to cm/yr  */
     break;
   case HC_STRESS:
-    fac[0]=fac[1]=fac[2] = 1.0; /* go to ??? */
-    break;
-  case HC_GEOID:
     fac[0]=fac[1]=fac[2] = 1.0; /* go to ??? */
     break;
   default:

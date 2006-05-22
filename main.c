@@ -24,9 +24,10 @@ int main(int argc, char **argv)
 {
   struct hcs *model;		/* main structure, make sure to initialize with 
 				   zeroes */
-  struct sh_lms *sol_spectral=NULL;		/* solution expansions */
+  struct sh_lms *sol_spectral=NULL, *geoid = NULL;		/* solution expansions */
   int nsol,lmax;
   FILE *out;
+  hc_boolean compute_geoid = TRUE; /* compute the geoid (only works for velocity solution) */
   struct hc_parameters p[1]; /* parameters */
   char filename[HC_CHAR_LENGTH];
   float *sol_spatial = NULL;	/* spatial solution,
@@ -102,11 +103,17 @@ int main(int argc, char **argv)
   */
   sh_allocate_and_init(&sol_spectral,nsol,lmax,model->sh_type,1,
 		       p->verbose);
+  if(compute_geoid)	
+    /* make room for geoid solution */
+    sh_allocate_and_init(&geoid,1,model->dens_anom[0].lmax,
+			 model->sh_type,0,p->verbose);
+  
   /* 
      solve poloidal and toroidal part and sum
   */
   hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
-	   TRUE,TRUE,TRUE,p->print_pt_sol,p->verbose);
+	   TRUE,TRUE,TRUE,p->print_pt_sol,compute_geoid,geoid,
+	   p->verbose);
   /* 
 
   OUTPUT PART
@@ -127,6 +134,18 @@ int main(int argc, char **argv)
 			     p->solution_mode,
 			     p->sol_binary_out,p->verbose);
   fclose(out);
+  if(compute_geoid){
+    /* 
+       print geoid solution 
+    */
+    sprintf(filename,"%s",HC_GEOID_FILE);
+    if(p->verbose)
+      fprintf(stderr,"%s: writing geoid to %s\n",argv[0],filename);
+    out = hc_open(filename,"w","main");
+    hc_print_sh_scalar_field(geoid,out,FALSE,FALSE,p->verbose);
+    fclose(out);
+  }
+
   if(p->print_spatial){
     /* 
        we wish to use the spatial solution
@@ -153,6 +172,9 @@ int main(int argc, char **argv)
 
   */
   sh_free_expansion(sol_spectral,nsol);
+  if(compute_geoid)
+    sh_free_expansion(geoid,1);
+
   free(sol_spatial);
   if(p->verbose)
     fprintf(stderr,"%s: done\n",argv[0]);

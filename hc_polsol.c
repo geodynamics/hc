@@ -67,13 +67,8 @@ void hc_polsol(struct hcs *hc, 	/*
 					     SHOULD BE PASSED INITIALIZED AS ZEROES
 
 					  */
-	       int iformat,	/* <= 0: geoid kernel computation, if
-				   < 0, will use n6 = -iformat if ==0,
-				   will use n6 = 4 >0 flow */
-	       struct sh_lms *geoid, 	/* geoid solution, 
-					   if iformat <= 0 
-					   [nrad*6]
-					*/
+	       hc_boolean compute_geoid, /* additionally compute the geoid? */
+	       struct sh_lms *geoid, 	/* geoid solution */
 	       hc_boolean save_prop_mats, /* 
 					     memory intensive speedup
 					     by saving all propagator
@@ -199,7 +194,7 @@ void hc_polsol(struct hcs *hc, 	/*
   //          R(I+1), FOR PROPAGATION FROM R(I) TO R(I+1) AT L),
   int i,i2,i3,i6,j,l,m,nih,nxtv,ivis,os,pos1,pos2,nradp2,
     prop_s1,prop_s2,nvisp1,nzero,n6,ninho,nl=0,ip1;
-  int newprp,newpot,mmax,jpb,inho2,ibv,indx[3],a_or_b,ilayer,lmax,
+  int newprp,newpot,jpb,inho2,ibv,indx[3],a_or_b,ilayer,lmax,
     nprops_max;
   HC_PREC *xprem;
   double *b,du1,du2,el,rnext,gf,drho,dadd;
@@ -207,7 +202,7 @@ void hc_polsol(struct hcs *hc, 	/*
   static int ncalled = 0;
   /* scaling factors will only be computed once */
   static double rho_scale = 1.0;
-  static double alpha, beta;
+  static double alpha, beta, geoid_factor;
   /* 
      structures which hold u[6][4] type arrays 
   */
@@ -215,7 +210,7 @@ void hc_polsol(struct hcs *hc, 	/*
   /* init flags */
   static hc_boolean rho_init = FALSE, 
     prop_params_init = FALSE, 	/* parameters for propagator computation */
-    ab_init = FALSE,		/* alpha, beta factors */
+    abg_init = FALSE,		/* alpha, beta factors */
     prop_mats_init = FALSE;	/* will be true only if save_prop_mats is 
 				   requested  */
   hc_boolean qvis,qinho,hit;
@@ -280,9 +275,9 @@ void hc_polsol(struct hcs *hc, 	/*
     hc_dvecalloc(&hc->props,prop_s1,"hc_polsol");
     hc_dvecalloc(&hc->ppots,prop_s2,"hc_polsol");
   }
-  if(!ab_init){
+  if(!abg_init){
     //
-    //    SET alpha, beta factors
+    //    SET alpha, beta and geoid factors
     //
     alpha  =  rho_scale * (hc->re*10.) * hc->gacc / hc->visnor;	/*  */
     alpha *= ONEEIGHTYOVERPI * hc->secyr * hc->timesc; /*  */
@@ -291,7 +286,13 @@ void hc_polsol(struct hcs *hc, 	/*
     if(verbose)
       fprintf(stderr,"hc_polsol: alpha: %.8f beta: %.8f\n",
 	      alpha,beta);
-    ab_init = TRUE;
+    
+    /* 
+       geoid scaling factor hc->gacc shoud be grav[nprops] for
+       compressibility
+    */
+    geoid_factor = HC_PI * 10.0* hc->visnor/180./hc->secyr/hc->gacc/1.e8;
+    abg_init = TRUE;
   }
   if((!prop_params_init) || (viscosity_or_layer_changed)){
     /* 
@@ -541,15 +542,8 @@ void hc_polsol(struct hcs *hc, 	/*
     begin m loop
 
     */
-    //    m=0
-    //    iformat < 0 is for kernel calculation; only needs to be done 
-    //    for m=0, as kernels are supposed to be equal for all m
-    //
-    if (iformat < 0)
-      mmax = 0;
-    else
-      mmax = l;
-    for(m=0;m <= mmax;m++){
+
+    for(m=0;m <= l;m++){
       /* 
 
 
@@ -813,46 +807,44 @@ void hc_polsol(struct hcs *hc, 	/*
   if(verbose)
     fprintf(stderr,"hc_polsol: assigned nl: %i nprop: %i nrad: %i layers\n",
 	    nl,hc->nprops,nrad);
-  if(nl != nrad+2)
-    HC_ERROR("hc_polsol","nl not equal to nrad+2");
-  if (iformat <= 0){
+  if(nl != nrad+2){
+    HC_ERROR("hc_polsol","nl not equal to nrad+2 at end of solution loop");
+  }
+  if (compute_geoid){
     //
     //    Calculating geoid coefficients. The factor gf comes from
     //    * u(5) is in units of r0 * pi/180 / Ma (about 111 km/Ma) 
     //    * normalizing density is presumably 1 g/cm**3 = 1000 kg / m**3
     //    * geoid is in units of meters
     //    
-    HC_ERROR("hc_polsol","geoid not tested yet");
-    if(verbose)
+    if(verbose > 1)
       fprintf(stderr,"hc_polsol: evaluating geoid\n");
-    /* 
-       geoid scaling factor
-    */
-    gf = HC_PI * hc->visnor/180./hc->secyr/hc->gacc/1.e8;
-    if (iformat == 0) 		/* which component to select? */
-      n6 = 4;
-    else  
-      n6 = -iformat-1;
+    n6 = 4;
+    //n6 = -iformat-1;
+
     /* first coefficients are zero  */
     clm[0] = clm[1] = 0.0;
     sh_write_coeff(geoid,0,0,0,FALSE,clm); /* 0,0 */
     sh_write_coeff(geoid,1,0,0,FALSE,clm); /* 1,0 */
     sh_write_coeff(geoid,1,1,2,FALSE,clm); /* 1,1 */
 
-    os = nl * 6 + n6;	/* select component */
+    os = (nrad+1) * 6 + n6;	/* select component */
     for(l=2;l <= pol_sol[0].lmax;l++){
       for(m=0;m <= l;m++){
 	if (m != 0){
 	  sh_get_coeff((pol_sol+os),l,m,2,FALSE,clm); /* internal convention */
-	  clm[0] *= gf;clm[1] *= gf;
+	  clm[0] *= geoid_factor;
+	  clm[1] *= geoid_factor;
 	  sh_write_coeff(geoid,l,m,2,FALSE,clm);
 	}else{			/* m == 0 */
 	  sh_get_coeff((pol_sol+os),l,m,0,FALSE,clm);
-	  clm[0] *= gf;
+	  clm[0] *= geoid_factor;
 	  sh_write_coeff(geoid,l,m,0,FALSE,clm);
 	}
       }
     }
+    if(verbose > 1)
+      fprintf(stderr,"hc_polsol: assigned geoid\n");
   }
   /* 
      free the local arrays 

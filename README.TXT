@@ -57,6 +57,17 @@ viscosity upward until the next entry.
 
 
 
+OUTPUT FILES
+
+After a regular run, file sol.bin will have the velocity solution
+(cm/yr) in binary format. This file can be extracted using
+hc_extract_sh_layer (see below). 
+
+File geoid.ab will have the geoid in meters in a spherical harmonic
+expansion.
+
+
+
 USING THE OUTPUT
 
 1) Extracting spherical harmonics solutions.

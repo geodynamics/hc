@@ -11,11 +11,10 @@ free_slip: TRUE/FALSE. if false, will either use the plate motions or no-slip,
 
 solve_mode: solution mode, used for summing the solutions
 
-iformat: flag that affects the poloidal solution routine
-iformat <= 0: geoid kernel computation, 
-              will use solution component -iformat-1
-	   0: will use solution component 4 out of [0....5]
-          >0 flow 
+compute_geoid: compute the geoid (this is done half-way anyway, and
+                    should not add much computation time)
+
+geoid: geoid expansion, needs to be initialized
 
 dens_fac_changed: has the density anomaly expansion changed since the last call to 
                   hc_solve?
@@ -41,10 +40,11 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
 	      hc_boolean plate_vel_changed,
 	      hc_boolean viscosity_or_layer_changed,
 	      hc_boolean print_pt_sol,
+	      hc_boolean compute_geoid,
+	      struct sh_lms *geoid, /* geoid solution, needs to be init */
 	      hc_boolean verbose)
 {
   int nsh_pol,nsh_tor=0;
-  static int iformat = 1;	/* no geoid for now */
   static hc_boolean convert_to_dt = TRUE; /* convert the poloidal and
 					     toroidal solution vectors
 					     to physical SH convention
@@ -54,11 +54,10 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
   double *tvec;
   static hc_boolean 
     tor_init = FALSE,		
-    pol_init = FALSE,
-    geoid_init = FALSE;
+    pol_init = FALSE;
   if(!hc->initialized)
     HC_ERROR("hc_solve","hc structure not initialized");
-  if(!free_slip&&(hc->pvel[0].lmax < hc->dens_anom[0].lmax)){
+  if((!free_slip) && (hc->pvel[0].lmax < hc->dens_anom[0].lmax)){
     fprintf(stderr,"hc_solve: error: plate expansion lmax (%i) has to be >= density lmax (%i)\n",
 	    hc->pvel[0].lmax,hc->dens_anom[0].lmax);
     exit(-1);
@@ -81,16 +80,8 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
 			 hc->dens_anom[0].lmax,hc->sh_type,
 			 0,verbose);
   }
-  if(iformat <= 0){
-    /* make room for geoid solution */
-    if((!geoid_init)||(!hc->save_solution)){
-      sh_allocate_and_init(&hc->geoid,nsh_pol,hc->dens_anom[0].lmax,
-			   hc->sh_type,0,verbose);
-      geoid_init = TRUE;
-    }
-  }
   if((!hc->save_solution) || (!pol_init) || viscosity_or_layer_changed ||
-     dens_anom_changed || ((!free_slip)&&(plate_vel_changed))){  
+     dens_anom_changed || ((!free_slip) && (plate_vel_changed))){  
     /* 
        
     FIND POLOIDAL SOLUTION 
@@ -104,7 +95,7 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
 	      hc->dens_anom,hc->compressible,
 	      hc->npb,hc->rpb,hc->fpb,free_slip,
 	      (hc->pvel+0),hc->pol_sol,
-	      iformat,hc->geoid,hc->save_solution,
+	      compute_geoid,geoid,hc->save_solution,
 	      verbose);
     if(print_pt_sol)		/* print poloidal solution without the
 				   scaling factors */
@@ -154,11 +145,8 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
   case HC_STRESS:
     if(verbose)
       fprintf(stderr,"hc_solve: computing solution for stresses\n");
-    break;
-  case HC_GEOID:
-    if(verbose)
-      fprintf(stderr,"hc_solve: computing solution for geoid\n");
-    HC_ERROR("hc_solve","geoid not implemented yet");
+    if(compute_geoid)
+      HC_ERROR("hc_solve","cannot compute stresses and geoid");
     break;
   default:
     fprintf(stderr,"hc_solve: error: solution mode %i undefined\n",
@@ -183,12 +171,6 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
        change with density anomalies and plate motions
     */
     sh_free_expansion(hc->pol_sol,nsh_pol);
-    if(iformat <= 0){		/* 
-				   geoid 
-				*/
-      sh_free_expansion(hc->geoid,nsh_pol);
-      geoid_init = TRUE;
-    }
     /* 
        toroidal, maybe save those, since they only depend on plate velocities
        and viscosities 
