@@ -56,22 +56,24 @@ void ggrd_init_vstruc(struct ggrd_vel *v)
 }
 
 /* 
-   read velocities 
+   read velocities, those are more restricted with regard to the geographic region 
+   (-R0/359/-89.5/89.5 scheme for -I1/1)
+
 */
-void ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
-						should be initialized first
-						
-					     */
-			 GGRD_CPREC scale, /* divide all velocities by this 
-					      factor */
-			 hc_boolean verbose, /* verbosity level */
-			 hc_boolean zero_boundary_vr, /* zero out top and 
-							 bottom layers 
-							 radial velocity 
-						      */
-			 char *prefix /* start filenames with this
-					 prefix */
-			 )
+int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
+					       should be initialized first
+					       
+					    */
+			GGRD_CPREC scale, /* divide all velocities by this 
+					     factor */
+			hc_boolean verbose, /* verbosity level */
+			hc_boolean zero_boundary_vr, /* zero out top and 
+							bottom layers 
+							radial velocity 
+						     */
+			char *prefix /* start filenames with this
+					prefix */
+			)
 {
   FILE *in,*out;
   int i,j,k,l,level,os,os1,dummy[4]={0,0,0,0},ivt,*index;
@@ -100,15 +102,15 @@ void ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
   v->velscale = scale;
   if(fabs(v->velscale) < HC_EPS_PREC){
     fprintf(stderr,"ggrd_read_vel_grids: error: velocity scale is zero\n");
-    exit(-1);
+    return(-1);
   }
   if(!v->init){
     //
 
     // read time intervals for velocities from file
     sprintf(tfilename,"%s%s",prefix,GGRD_THFILE);
-    ggrd_read_time_intervals(&v->thist,tfilename,
-			     v->history,verbose);
+    /* if v->history is set, will look for different time intervals */
+    ggrd_read_time_intervals(&v->thist,tfilename,v->history,verbose);
     //
     // read depth layers on which velocities are specified from files
     // this also creates a sorting array
@@ -139,7 +141,7 @@ void ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
       out = hc_open(vsfile_loc,"w","ggrd_read_vel_grids");
     }
     for(ivt=0;ivt < v->thist.nvtimes;ivt++){
-      if(v->history)
+      if((v->history)&&(verbose))
 	fprintf(stderr,"ggrd_read_vel_grids: reading velocities for time [%12g, %12g] from %3i/\n",
 		v->thist.vtimes[ivt*3],v->thist.vtimes[ivt*3+2],ivt+1);
       for(i=0;i < v->n[HC_R];i++){
@@ -165,7 +167,7 @@ void ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 	  if(v->read_gmt){
 	    if(GMT_cdf_read_grd_info (sname,header) == -1){
 	      fprintf(stderr,"ggrd_read_vel_grids: error opening GMT grd file %s\n",sname);
-	      exit(-1);
+	      return(-2);
 	    }
 	  }else{
 	    in = hc_open(sname,"r","ggrd_read_vel_grids");
@@ -209,7 +211,7 @@ void ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 	      
 	      fprintf(stderr,"ggrd_read_vel_grids: xy extreme: %g %g %g %g\n",
 		      header->x_min,header->x_max,header->y_min,header->y_max);
-	      exit(-1);
+	      return(-2);
 	    }
 	    //
 	    // check if we should throw away double entries at 0 and 360
@@ -228,7 +230,7 @@ void ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 	      fprintf(stderr,"ggrd_read_vel_grids: spacing error: ndx/dx phi: %g/%g theta: %g/%g\n",
 		      TWOPI/v->n[HC_PHI],v->dphi,
 		      GGRD_PI/v->n[HC_THETA],v->dtheta);
-	      exit(-1);
+	      return(-3);
 	    }
 	    //
 	    // set auxiliary grid dimensions
@@ -384,12 +386,13 @@ void ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
     if(v->amode == GGRD_ONLY_VEL_STATS){
       fclose(out);
       fprintf(stderr,"ggrd_read_vel_grids: exiting after printing vel stats\n");
-      exit(0);
+      return(0);
     }
     v->init = TRUE;
   }else{
     GGRD_PE("ggrd_read_vel_grds: error, already initialized");
   }
+  return 0;
 }
 
 /* 

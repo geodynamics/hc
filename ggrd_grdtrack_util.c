@@ -712,7 +712,7 @@ unsigned char ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degree
   returns error code 
 */
 int ggrd_read_time_intervals(struct ggrd_t *thist,char *input_file,
-			      unsigned char read_thistory,
+			     unsigned char read_thistory,
 			     unsigned char verbose)
 {
   FILE *in;

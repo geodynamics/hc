@@ -55,7 +55,9 @@ void ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,
     old_order = order;
     orderp1 = order+1;
     if(v->n[HC_R] < order+1){
-      fprintf(stderr,"ggrd_find_vel_and_der: WARNING: reducing r stencil to nl-1\n");
+      if(verbose)
+	fprintf(stderr,"ggrd_find_vel_and_der: WARNING: reducing r stencil to nl-1: %i\n",
+		v->n[HC_R] -1 );
       reduce_r_stencil = TRUE;
     }
     if(v->n[HC_PHI] < order+1){

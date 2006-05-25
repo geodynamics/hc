@@ -50,6 +50,7 @@ struct rick_module{
   // other stuff needed by more than one subroutine
   // Gauss points: cos(theta), weights, and actual theta
   SH_RICK_PREC  *gauss_z, *gauss_w, *gauss_theta;
+  //
   SH_RICK_PREC *lfac, *ilfac;
   // those are for Legendre polynomials (fac1  fac2 only for ivec=1)
   // make those double precision

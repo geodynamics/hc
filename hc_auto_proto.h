@@ -17,7 +17,7 @@ float ggrd_gt_mean(float *, int);
 void ggrd_gt_bcr_init_loc(void);
 /* ggrd_readgrds.c */
 void ggrd_init_vstruc(struct ggrd_vel *);
-void ggrd_read_vel_grids(struct ggrd_vel *, double, unsigned short, unsigned short, char *);
+int ggrd_read_vel_grids(struct ggrd_vel *, double, unsigned short, unsigned short, char *);
 void ggrd_resort_and_check(double *, float *, double *, int, int, unsigned short, double, unsigned short, unsigned short, double);
 void ggrd_read_depth_levels(struct ggrd_vel *, int **, char *, unsigned short);
 /* ggrd_test.c */
@@ -120,6 +120,16 @@ void rick_free_module(struct rick_module *, int);
 void rick_plmbar1(double *, double *, int, int, float, struct rick_module *);
 void rick_gauleg(float, float, float *, float *, int);
 /* sh_ana.c */
+/* shana_sh.c */
+void shana_compute_allplm(int, int, double *, double *, struct shana_module *);
+void shana_pix2ang(int, int, double *, double *, struct shana_module *);
+void shana_shc2d(double *, double *, int, int, double *, double *, struct shana_module *);
+void shana_shc2d_pre(double *, double *, int, double *, double *, int, float *, float *, struct shana_module *);
+void shana_shd2c(double *, double *, int, int, double *, double *, struct shana_module *);
+void shana_shd2c_pre(double *, double *, int, double *, double *, int, double *, double *, struct shana_module *);
+void shana_init(int, int, int *, int *, int *, struct shana_module *);
+void shana_free_module(struct shana_module *, int);
+void shana_plmbar1(double *, double *, int, int, double, struct shana_module *);
 /* sh_exp.c */
 void sh_allocate_and_init(struct sh_lms **, int, int, int, int, unsigned short);
 void sh_init_expansion(struct sh_lms *, int, int, int, unsigned short);

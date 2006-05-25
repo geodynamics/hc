@@ -167,7 +167,6 @@ void sh_clear_alm(struct sh_lms *exp)
   int i;
   switch(exp->type){
 #ifdef HC_USE_HEALPIX
-
   case SH_HEALPIX:
     /* init with zeroes */
     for(i=0;i<exp->n_lm;i++)

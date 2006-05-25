@@ -40,7 +40,7 @@ moderately external
 
 */
 int ggrd_read_time_intervals(struct ggrd_t *,char *,unsigned char ,unsigned char);
-
+int ggrd_read_vel_grids(struct ggrd_vel *, double, unsigned short, unsigned short, char *);
 #ifdef USE_GMT4
 unsigned char ggrd_grdtrack_interpolate(double *, unsigned char , struct GRD_HEADER *, float *,
 					struct GMT_EDGEINFO *, int, float *, int ,	double *,unsigned char,

@@ -11,14 +11,21 @@ same for Rick's spherical harmonic routines
 
 */
 #include "sh_rick.h"
+/* 
 
+shana
+
+ */
+#include "sh_shana.h"
 
 /* 
    spherical harmonics types 
 */
-#define SH_RICK 0
-#define SH_HEALPIX 1
-
+#define SH_RICK 0		/* Rick's Gauss quadrature/FFT routines */
+#define SH_HEALPIX 1		/* Healpix package */
+#define SH_SHANA 2		/* grid based spherical harmonics, similar to SH_RICK 
+				   but no FFT/Gauss points
+				*/
 
 
 /* 

@@ -12,10 +12,14 @@ int main(int argc, char **argv)
   */
   v = (struct ggrd_vel *)calloc(1,sizeof(struct ggrd_vel));
   ggrd_init_vstruc(v);
+  v->history = TRUE;		/* expect history */
   /* 
      read in velocities 
   */
-  ggrd_read_vel_grids(v,1.0,TRUE,TRUE,"");
+  if(ggrd_read_vel_grids(v,1.0,TRUE,TRUE,"")){
+    fprintf(stderr,"error opening grids\n");
+    exit(-1);
+  }
 
   time = 0.0;
   calc_derivatives = FALSE;

@@ -33,7 +33,7 @@ void rick_pix2ang(int index, int lmax, double *theta,
 		  double *phi, struct rick_module *rick) {
   int  i,j;
   if(!rick->initialized){
-    fprintf(stderr,"rick_pix2ang: error: rcik module not initialized\n");
+    fprintf(stderr,"rick_pix2ang: error: rick module not initialized\n");
     exit(-1);
   }
   
