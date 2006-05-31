@@ -22,14 +22,18 @@
 //
 //     returns normalized velocities, scaled by v->scale
 //
+//     dtrange determines the time range used for transitioning
+//
 //
 #include "hc.h"
 
 
-void ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,
-			   struct ggrd_vel *v,int order,
-			   hc_boolean icalc_der,hc_boolean verbose,
-			   GGRD_CPREC *dvr,GGRD_CPREC *dvtheta,GGRD_CPREC *dvphi)
+int ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,GGRD_CPREC dtrange,
+			  struct ggrd_vel *v,int order,
+			  hc_boolean icalc_der,
+			  hc_boolean verbose,
+			  GGRD_CPREC *dvr,GGRD_CPREC *dvtheta,
+			  GGRD_CPREC *dvphi)
 {
   GGRD_CPREC rnet,vrloc,vphiloc,vthetaloc;
   int i,k,j,m,iorder,idindex,ilim,ishift,igrid[3][GGRD_MAX_ORDERP1],index,lorder;
@@ -40,7 +44,7 @@ void ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,
   struct wgt weights[3];
   static int ider[1+3*GGRD_MAX_IORDER],istencil[3],
     ixtracer[3],old_order,orderp1,isshift[3];
-
+  
   static hc_boolean init = FALSE, reduce_r_stencil = FALSE;
   
   if(!init){
@@ -50,7 +54,7 @@ void ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,
     if(order > GGRD_MAX_ORDER){
       fprintf(stderr,"ggrd_find_vel_and_der: error: order %i too large, max is %i\n",
 	      order,GGRD_MAX_ORDER);
-      exit(-1);
+      return(-1);
     }
     old_order = order;
     orderp1 = order+1;
@@ -63,12 +67,12 @@ void ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,
     if(v->n[HC_PHI] < order+1){
       fprintf(stderr,"ggrd_find_vel_and_der: need at least four lon levels\n");
       fprintf(stderr,"ggrd_find_vel_and_der: using polynomial interpolation\n");
-      exit(-1);
+      return(-1);
     }
     if(v->n[HC_THETA] < order+1){
       fprintf(stderr,"ggrd_find_vel_and_der: need at least four lat levels\n");
       fprintf(stderr,"ggrd_find_vel_and_der: using polynomial interpolation\n");
-      exit(-1);
+      return(-1);
     }
     /* test levels */
     for(i=1;i < v->n[HC_R];i++){
@@ -77,7 +81,7 @@ void ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,
 	fprintf(stderr,"ggrd_find_vel_and_der: rlevels have to be ascending\n");
 	fprintf(stderr,"ggrd_find_vel_and_der: i: %i r(i): %g r(i-1): %g\n",i,
 		v->rlevels[i],v->rlevels[i-1]);
-	exit(-1);
+	return(-1);
       }
     }
 
@@ -89,7 +93,7 @@ void ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,
       if(lorder < 0){
 	fprintf(stderr,"ggrd_find_vel_and_der: error: (reduced) order smaller tan zero: %i\n",
 		lorder);
-	exit(-1);
+	return(-1);
       }
       /* loop through dimensions */
       /* all directions will be interpolated up to the 
@@ -108,7 +112,7 @@ void ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,
   if(order != old_order){
     fprintf(stderr,"ggrd_find_vel_and_der: error: order (%i) shouldn't change, old: %i\n",
 	    order,old_order);
-    exit(-1);
+    return(-1);
   }
   //     
   //     for the summing up routine of weights
@@ -125,7 +129,7 @@ void ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,
   if(iorder > GGRD_MAX_IORDER){
     fprintf(stderr,"ggrd_find_vel_and_der: error: dorder: %i max is %i\n",
 	    iorder,GGRD_MAX_IORDER);
-    exit(-1);
+    return(-1);
   }
   /* 
 
@@ -147,7 +151,7 @@ void ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,
 	    xloc[HC_R],xloc[HC_THETA],xloc[HC_PHI],
 	    PHI2LON(xloc[HC_PHI]),THETA2LAT(xloc[HC_THETA]),
 	    HC_Z_DEPTH(xloc[HC_R]));
-    exit(-1);
+    return(-1);
   }
 
 
@@ -247,25 +251,25 @@ void ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,
   for(i=0;i < istencil[HC_R];i++){
     if((igrid[HC_R][i]< 0)||(igrid[HC_R][i] >= v->n[HC_R])){
       fprintf(stderr,"ggrd_find_vel_and_der: row %i r index %i error\n",i,igrid[HC_R][i]);
-      exit(-1);
+      return(-1);
     }
   }
   for(i=0;i < istencil[HC_THETA];i++){
     if((igrid[HC_THETA][i] < 0) || (igrid[HC_THETA][i] >= v->n[HC_THETA])){
       fprintf(stderr,"ggrd_find_vel_and_der: row %i theta index %i error \n",i,igrid[HC_THETA][i]);
-      exit(-1);
+      return(-1);
     }
   }
   for(i=0;i < istencil[HC_PHI];i++){
     if((igrid[HC_PHI][i] < 0)||(igrid[HC_PHI][i] >= v->n[HC_PHI])){
       fprintf(stderr,"ggrd_find_vel_and_der: row %i phi index %i error\n",
 	      i,igrid[HC_PHI][i]);
-      exit(-1);
+      return(-1);
     }
   }
   if(idindex > 4){
     fprintf(stderr,"ggrd_find_vel_and_der: second derivatives not implemented\n");
-    exit(-1);
+    return(-1);
   }
 
   if(verbose >= 2){		/* debugging output */
@@ -298,7 +302,8 @@ void ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,
   //     
   //     first calculate velocities only (idindex=0) or vel and  derivatives 
   //     of velocity (e.g. v_(r,r)) if needed (idindex=3)
-  //      
+  // 
+
   /* 
      first velocities
   */
@@ -313,13 +318,14 @@ void ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,
 	  igrid[HC_THETA][j] * v->n[HC_PHI] + 
 	  igrid[HC_PHI][k];
 	ggrd_get_velocities(&vrloc,&vthetaloc,&vphiloc,index,
-			    v,time);
+			    v,time,dtrange);
 	dvr[0]     += rnet * vrloc;
 	dvtheta[0] += rnet * vthetaloc;
 	dvphi[0]   += rnet * vphiloc;
       }
     }
   }
+
 
   for(m=1;m < idindex;m++){           //m=0 -> no derivative
     dvr[m]=0.0;            //m=_R_ -> derivative wrt r
@@ -340,7 +346,7 @@ void ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,
 	    igrid[HC_THETA][j] * v->n[HC_PHI] + 
 	    igrid[HC_PHI][k];
 	  ggrd_get_velocities(&vrloc,&vthetaloc,&vphiloc,index,
-			      v,time);
+			      v,time,dtrange);
 	  dvr[m]     += rnet * vrloc;
 	  dvtheta[m] += rnet * vthetaloc;
 	  dvphi[m]   += rnet * vphiloc;
@@ -349,9 +355,10 @@ void ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,
     }
     ider[m]=0;              // reset derivative switxh  to zero
   }
-
+  /* succesful return */
+  return 0;
 }
-
+//
 //     get_velocities
 //
 //     
@@ -360,18 +367,20 @@ void ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,
 //     vr(nrntnp*nvtimes) long. the vtimes array is nvtimes*3 and has 
 //     t_left t_mid t_right for each interval in a row
 //
+//
+//     dtrange: time range used to transition between plate tectonic stages
+//
 void ggrd_get_velocities(GGRD_CPREC *vrloc,GGRD_CPREC *vthetaloc,
 			 GGRD_CPREC *vphiloc,
 			 int index, struct ggrd_vel *v,
-			 GGRD_CPREC time)
+			 GGRD_CPREC time,GGRD_CPREC dtrange)
 {
-  int index1,index2,i1,i2;
+  int index1,i1,i2;
   GGRD_CPREC vf1,vf2;
-  if((index < 0) || (index >= v->n[HC_NRNTNP] * v->thist.nvtimes)){
+  if((index < 0) || (index >= v->n[HC_NRNTNP]) ){
     HC_ERROR("ggrd_get_velocities","index out of bounds");
     exit(-1);
   }
-
   if(v->thist.nvtimes == 1){
     // only one time-step, steady-state calculation
     *vrloc=      v->vr[index];
@@ -379,7 +388,7 @@ void ggrd_get_velocities(GGRD_CPREC *vrloc,GGRD_CPREC *vthetaloc,
     *vphiloc=    v->vp[index];
   }  else {
     // interpolate in time
-    ggrd_interpol_time(time,&v->thist,&i1,&i2,&vf1,&vf2);
+    ggrd_interpol_time(time,&v->thist,&i1,&i2,&vf1,&vf2,dtrange);
     if(fabs(vf1) > 1e-7){
       index1 = i1 * v->n[HC_NRNTNP] + index;
       *vrloc=      v->vr[index1] * vf1 ;
@@ -389,10 +398,10 @@ void ggrd_get_velocities(GGRD_CPREC *vrloc,GGRD_CPREC *vthetaloc,
       *vrloc = *vthetaloc = *vphiloc = 0.0;
     }
     if(fabs(vf2) > 1e-7){
-      index2 = i2 * v->n[HC_NRNTNP] + index;
-      *vrloc     += v->vr[index2] * vf2;
-      *vthetaloc += v->vt[index2] * vf2;
-      *vphiloc   += v->vp[index2] * vf2;
+      index1 = i2 * v->n[HC_NRNTNP] + index;
+      *vrloc     += v->vr[index1] * vf2;
+      *vthetaloc += v->vt[index1] * vf2;
+      *vphiloc   += v->vp[index1] * vf2;
     }
   }
 }

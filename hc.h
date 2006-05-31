@@ -321,10 +321,21 @@ macro defintions
 #define FLT_MIN -1e20
 #endif 
 
-#define THETA2LAT(x) ( (90.0 - (x)*ONEEIGHTYOVERPI) )
+#ifndef THETA2LAT
+#define THETA2LAT(x) ( (90.0 - RAD2DEG(x)) )
+#endif
+
+#ifndef LAT2THETA
 #define LAT2THETA(x) ( (90.0 - (x))*PIOVERONEEIGHTY )
+#endif
+
+#ifndef PHI2LON
 #define PHI2LON(x) ( RAD2DEG(x) )
+#endif
+
+#ifndef LON2PHI
 #define LON2PHI(x) ( DEG2RAD(x) )
+#endif
 /* 
 
 other constants

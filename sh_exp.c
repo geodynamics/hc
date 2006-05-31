@@ -130,6 +130,19 @@ void sh_init_expansion(struct sh_lms *exp, int lmax, int type,
 		  &exp->n_plm,&exp->tn_plm);
 #endif
     break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    /* 
+       make room for coefficients
+    */
+
+    /* 
+       initialize 
+    */
+    
+    break;
+#endif
   default:
     sh_exp_type_error("sh_init_expansion",exp);
     break;
@@ -153,6 +166,11 @@ void sh_free_expansion(struct sh_lms *exp, int n)
     case SH_RICK:
       free(exp[i].alm);
       break;
+#ifdef HC_USE_SPHEREPACK
+    case SH_SPHEREPACK_GAUSS:
+    case SH_SPHEREPACK_EVEN:
+      break;
+#endif
     default:
       sh_exp_type_error("sh_free_expansion",(exp+i));
       break;
@@ -177,6 +195,12 @@ void sh_clear_alm(struct sh_lms *exp)
     for(i=0;i<exp->n_lm;i++)
       exp->alm[i] = 0.0;
     break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    
+    break;
+#endif
   default:
     sh_exp_type_error("sh_clear_alm",exp);
     break;
@@ -287,6 +311,11 @@ void sh_print_parameters_to_file(struct sh_lms *exp, int shps,
   case SH_HEALPIX:
     break;
 #endif
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    break;
+#endif
   default:
     sh_exp_type_error("sh_print_parameters",exp);
     break;
@@ -387,6 +416,11 @@ hc_boolean sh_read_parameters_from_file(int *type, int *lmax, int *shps,
     break;
 #ifdef HC_USE_HEALPIX
   case SH_HEALPIX:
+    break;
+#endif
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_EVEN:
+  case SH_SPHEREPACK_GAUSS:
     break;
 #endif
   default:
@@ -651,6 +685,11 @@ void sh_read_spatial_data_from_file(struct sh_lms *exp, FILE *in,
       rick_f90_pix2ang(&j,&exp->lmax,(xp+HC_THETA),(xp+HC_PHI));
 #endif
       break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    break;
+#endif
     default:
       sh_exp_type_error("sh_read_model_spatial_data",exp);
       break;
@@ -774,6 +813,11 @@ void sh_compute_spatial_basis(struct sh_lms *exp, FILE *out,
       rick_f90_pix2ang(&j,&exp->lmax,(xp+HC_THETA),(xp+HC_PHI));
 #endif
       break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    break;
+#endif
     default:
       sh_exp_type_error("sh_compute_spatial_basis",exp);
       break;
@@ -901,6 +945,11 @@ void sh_compute_spectral(float *data, int ivec,
 		 exp[0].alm,exp[1].alm);
 #endif
     break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    break;
+#endif
   default:
     sh_exp_type_error("sh_compute_spectral",exp);
     break;
@@ -987,6 +1036,11 @@ void sh_compute_spatial(struct sh_lms *exp, int ivec,
 		 data,(data+exp[0].npoints));
 #endif
     break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    break;
+#endif
   default:
     sh_exp_type_error("sh_compute_spatial",exp);
     break;
@@ -1035,6 +1089,11 @@ void sh_print_plm(double *plm, int n_plm, int ivec, int type,
       fprintf(out,"\n");
     }
     break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    break;
+#endif
   default:
     fprintf(stderr,"sh_print_plm: expansion type %i undefined\n",
 	    type);
@@ -1093,6 +1152,11 @@ void sh_print_spatial_data_to_file(struct sh_lms *exp, int shps,
       rick_f90_pix2ang(&j,&exp[0].lmax,(xp+HC_THETA),(xp+HC_PHI));
 #endif
       break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    break;
+#endif
     default:
       sh_exp_type_error("sh_print_spatial_data",exp);
       break;
@@ -1167,6 +1231,11 @@ void sh_compute_plm(struct sh_lms *exp,int ivec,double **plm,
 			      (*plm+exp->n_plm));
 #endif
       break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    break;
+#endif
     default:
       sh_exp_type_error("compute_plm",exp);
       break;
@@ -1294,6 +1363,11 @@ void sh_get_coeff(struct sh_lms *exp,int l, int m, int use_b,
       }
     }
     break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    break;
+#endif
   default:
     sh_exp_type_error("sh_read_coefficients_from_file",exp);
     break;
@@ -1393,6 +1467,11 @@ void sh_write_coeff(struct sh_lms *exp,int l, int m,
       }
     } 
     break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    break;
+#endif
   default:
     sh_exp_type_error("sh_write_coefficients",exp);
     break;
@@ -1440,6 +1519,11 @@ void sh_aexp_equals_bexp_coeff(struct sh_lms *a, struct sh_lms *b)
     for(i=b->n_lm;i < a->n_lm;i++)
       a->alm[i] = 0.0;
     break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    break;
+#endif
   default:
     sh_exp_type_error("sh_aexp_equals_bexp_coeff",a);
     break;
@@ -1478,12 +1562,21 @@ void sh_scale_expansion_l_factor(struct sh_lms *exp, HC_CPREC *lfac)
       }
     }
     break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    break;
+#endif
   default:
     sh_exp_type_error("sh_scale_expansion_l_factor",exp);
     break;
  }
 }
-/* scale all coefficients */
+
+
+/* 
+   scale all coefficients 
+*/
 void sh_scale_expansion(struct sh_lms *exp, HC_CPREC fac)
 {
   int l,m,index;
@@ -1505,6 +1598,11 @@ void sh_scale_expansion(struct sh_lms *exp, HC_CPREC fac)
 	exp->alm[index+1] *= fac;
       }
     break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    break;
+#endif
   default:
     sh_exp_type_error("sh_scale_expansion",exp);
     break;

@@ -11,7 +11,8 @@ void ggrd_print_layer_avg(float *, float *, int, int, FILE *);
 unsigned char ggrd_grdtrack_interpolate(double *, unsigned char, struct GRD_HEADER *, float *, struct GMT_EDGEINFO *, int, float *, int, double *, unsigned char);
 int ggrd_read_time_intervals(struct ggrd_t *, char *, unsigned char, unsigned char);
 void ggrd_gt_interpolate_z(double, float *, int, int *, int *, double *, double *, unsigned char);
-void ggrd_interpol_time(double, struct ggrd_t *, int *, int *, double *, double *);
+void ggrd_interpol_time(double, struct ggrd_t *, int *, int *, double *, double *, double);
+int interpolate_seafloor_ages(double, double, double, struct ggrd_vel *, double *);
 float ggrd_gt_rms(float *, int);
 float ggrd_gt_mean(float *, int);
 void ggrd_gt_bcr_init_loc(void);
@@ -22,8 +23,8 @@ void ggrd_resort_and_check(double *, float *, double *, int, int, unsigned short
 void ggrd_read_depth_levels(struct ggrd_vel *, int **, char *, unsigned short);
 /* ggrd_test.c */
 /* ggrd_velinterpol.c */
-void ggrd_find_vel_and_der(double *, double, struct ggrd_vel *, int, unsigned short, unsigned short, double *, double *, double *);
-void ggrd_get_velocities(double *, double *, double *, int, struct ggrd_vel *, double);
+int ggrd_find_vel_and_der(double *, double, double, struct ggrd_vel *, int, unsigned short, unsigned short, double *, double *, double *);
+void ggrd_get_velocities(double *, double *, double *, int, struct ggrd_vel *, double, double);
 void ggrd_weights(double, double *, int, int, double [(5 +1)][(1 +1)]);
 /* hc_extract_sh_layer.c */
 /* hc_init.c */
@@ -169,4 +170,5 @@ void sh_print_model_spatial_data(struct sh_lms_model *, float *, FILE *, unsigne
 /* sh_test.c */
 /* simple_test.c */
 void hc_dvecalloc(double **, int, char *);
+/* spherepack_sh.c */
 /* test_fft.c */

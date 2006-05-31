@@ -19,13 +19,13 @@ struct ggrd_t{
 				   are specified. this will hold
 				   t_left t_mid t_right
 				   ....
-				   
 
 				*/
   
-  int nvtimes,nvtimes3;			/* number of times where specified, and that 
-				   number times 3 */
+  int nvtimes,nvtimes3;		/* number of times where specified,
+				   and that number times 3 */
 
+  GGRD_CPREC tmin,tmax;		/* range of times */
   unsigned char init;
 };
 
@@ -43,7 +43,7 @@ struct ggrd_gt{
   /* 
      data 
   */
-  float *f;
+  float *f,*fmaxlim,bandlim;
   int mm;
   
   float *z;			/* depth levels */
@@ -75,9 +75,16 @@ struct ggrd_vel{
   GGRD_CPREC velscale,rcmb;
   struct ggrd_t thist;
   unsigned char init,		/* initialized? */
-    history,
+    history,			/* time-dependent? */
+    use_age,			/* use an additional age file */
     read_gmt;		/*  read GMT grd files or binary format?*/
   int amode;
+  struct ggrd_gt *ages;		/* for seafloor ages */
+  int nage;			/* ntime for velo + 1 */
+  GGRD_CPREC *age_time;		/* times  */
+  float age_bandlim;		/* bandlim for age to decide on
+				   continent 
+				*/
 };
 #define GGRD_STRUC_INIT
 #endif

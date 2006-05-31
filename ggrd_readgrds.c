@@ -49,6 +49,9 @@ void ggrd_init_vstruc(struct ggrd_vel *v)
   v->amode = GGRD_NORMAL;
   v->init = FALSE;
   v->history = FALSE;
+  v->use_age = FALSE;
+  v->age_bandlim = 200;
+  v->nage = 0;
   v->vr = v->vt = v->vp = NULL;
   v->thist.init = FALSE;
   v->velscale =  1.0; 
@@ -58,6 +61,14 @@ void ggrd_init_vstruc(struct ggrd_vel *v)
 /* 
    read velocities, those are more restricted with regard to the geographic region 
    (-R0/359/-89.5/89.5 scheme for -I1/1)
+
+
+   if v->use_age is set:
+
+   initialize seafloor ages specified at the beginning of each plate
+   tectonic stage. this needs nr_stages+1 files, and later ages will
+   be linearly interpolated
+
 
 */
 int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
@@ -82,7 +93,7 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
     wraparound = FALSE,
     pixelreg = FALSE,
     weighted = TRUE;
-  char sname[GGRD_STRLEN],suffix[50],loc_prefix[50],
+  char sname[GGRD_STRLEN],suffix[50],loc_prefix[50],*char_dummy,
     vsfile_loc[GGRD_STRLEN],tfilename[GGRD_STRLEN];
   float *fgrd;
   double *dgrd;
@@ -109,8 +120,57 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 
     // read time intervals for velocities from file
     sprintf(tfilename,"%s%s",prefix,GGRD_THFILE);
-    /* if v->history is set, will look for different time intervals */
+    /* 
+       if v->history is set, will look for different time intervals 
+    */
     ggrd_read_time_intervals(&v->thist,tfilename,v->history,verbose);
+    if(v->use_age){
+      /* 
+
+      initialize seafloor ages specified at the beginning of each 
+      plate tectonic stage. this needs nr_stages+1 files, and 
+      later ages will be linearly interpolated
+
+      */
+      
+      if(!v->history){
+	fprintf(stderr,"ggrd_read_vel_grids: error: for ages, need history input\n");
+	return(-1);
+      }
+      if(verbose)
+	fprintf(stderr,"ggrd_read_vel_grids: expecting %i (nt) + 1 age grids\n",
+		v->thist.nvtimes);
+      v->nage = v->thist.nvtimes + 1;
+      v->ages = (struct  ggrd_gt *)calloc(v->nage,
+					  sizeof(struct ggrd_gt));
+      v->age_time = (GGRD_CPREC *)malloc(v->nage*sizeof(GGRD_CPREC));
+      if(!v->ages || ! v->age_time){
+	fprintf(stderr,"ggrd_read_vel_grids: memory error\n");
+	return -5;
+      }
+      /* 
+	 read in the age grids 
+      */
+      for(ivt=0;ivt < v->nage;ivt++){
+	v->ages[ivt].bandlim = v->age_bandlim;
+	sprintf(tfilename,"%s%i/age.grd",prefix,ivt+1);
+	if(ggrd_grdtrack_init_general(FALSE,tfilename,char_dummy, /* load file */
+				      "-Lg",(v->ages+ivt),verbose,
+				      FALSE)){
+	  fprintf(stderr,"ggrd_read_vel_grids: file error\n");
+	  return -10;
+	}
+	if(ivt < v->nage-1)	/* assign beginning of stage as time 
+				   for seafloor age */
+	  v->age_time[ivt] = v->thist.vtimes[ivt*3];
+	else			/* end of last stage */
+	  v->age_time[ivt] = v->thist.vtimes[(ivt-1)*3+2];
+	if(verbose)
+	  fprintf(stderr,"ggrd_read_vel_grids: read %s for seafloor age at time %g\n",
+		  tfilename,v->age_time[ivt]);
+      }
+      /* end age init */
+    }
     //
     // read depth layers on which velocities are specified from files
     // this also creates a sorting array
@@ -143,7 +203,8 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
     for(ivt=0;ivt < v->thist.nvtimes;ivt++){
       if((v->history)&&(verbose))
 	fprintf(stderr,"ggrd_read_vel_grids: reading velocities for time [%12g, %12g] from %3i/\n",
-		v->thist.vtimes[ivt*3],v->thist.vtimes[ivt*3+2],ivt+1);
+		v->thist.vtimes[ivt*3],
+		v->thist.vtimes[ivt*3+2],ivt+1);
       for(i=0;i < v->n[HC_R];i++){
 	//
 	// determine number of grd file based on resorted arrays
