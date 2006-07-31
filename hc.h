@@ -90,7 +90,14 @@ for H & C solutions
 struct hc_sm{
   HC_PREC u[6][4];
 };
+/* 
 
+
+parameter structure to allow for settings that are specific to the
+implementation and higher level than the calls to the subroutines
+
+
+ */
 struct hc_parameters{
   hc_boolean compressible;	/* compressibility following Panasyuk
 				   & Steinberger */
@@ -105,6 +112,7 @@ struct hc_parameters{
   hc_boolean verbose;		/* debugging output? (0,1,2,3,4...) */
   hc_boolean sol_binary_out;	/* binary or ASCII output of SH expansion */
   hc_boolean print_spatial;	/* print the spatial solution */
+  hc_boolean compute_geoid; 	/* compute and print the geoid */
   int solution_mode;	/* velocity or stress */
   hc_boolean print_pt_sol;	/* output of p[6] and t[2] vectors */
   char visc_filename[HC_CHAR_LENGTH];	/* name of viscosity profile file */
@@ -225,6 +233,7 @@ struct hcs{
 				   velocity scale to change from input
 				   [cm/yr] to internal
 				*/
+  HC_PREC stress_scale;		/* to go to MPa */
   HC_PREC r_cmb;		/* radius of CMB */
   /* Legendre functions */
   double *plm;
@@ -242,7 +251,7 @@ solution modes
 #define HC_VEL 0		/* compute velocities 
 				   v_r v_t v_p
 				*/
-#define HC_STRESS -1		/* compute tractions 
+#define HC_TRACTIONS 1		/* compute tractions 
 				   trr trt trp  */
 /* 
 

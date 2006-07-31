@@ -17,6 +17,7 @@ original comments for grdtrack from GMT at bottom of file
 #define ONEEIGHTYOVERPI  57.295779513082320876798154814105
 #endif
 #include <math.h>
+#include <string.h>
 
 /* 
 
@@ -108,8 +109,8 @@ int ggrd_grdtrack_init_general(unsigned char is_three,
   //  if(change_z_sign)		/* reverse logic */
   //g->zlevels_are_negative = (g->zlevels_are_negative)?(FALSE):(TRUE);
   if(verbose){
-    fprintf(stderr,"ggrd_grdtrack_init_general: initialized from %s, %s.\n",
-	    grdfile,(is_three)?("3-D"):("1-D"));
+    fprintf(stderr,"ggrd_grdtrack_init_general: initialized from %s, %s, bcflag: %s.\n",
+	    grdfile,(is_three)?("3-D"):("1-D"),	gmt_edgeinfo_string);
     if(is_three){
       fprintf(stderr,"ggrd_grdtrack_init_general: depth file %s, %i levels, %s.\n",
 	      depth_file,g->nz,
@@ -155,6 +156,9 @@ int ggrd_grdtrack_rescale(struct ggrd_gt *g,
 
 
 /* 
+
+for 3-D spherical
+
    interpolation wrapper, uses r, theta, phi input. return value and TRUE if success,
    undefined and FALSE else
 */
@@ -195,6 +199,8 @@ unsigned char ggrd_grdtrack_interpolate_rtp(double r,double t,double p,
   return result;
 }
 /* 
+   for 3-D  cartesian
+
    interpolation wrapper, uses x, y, z input. return value and TRUE if success,
    undefined and FALSE else
 */
@@ -232,9 +238,13 @@ unsigned char ggrd_grdtrack_interpolate_xyz(double x,double y,double z,
 }
 
 /* 
-   interpolation wrapper, uses theta, phi input. 
-   return value and TRUE if success,
-   undefined and FALSE else
+
+for 2-D spherical 
+
+interpolation wrapper, uses theta, phi input. 
+return value and TRUE if success,
+undefined and FALSE else
+
 */
 unsigned char ggrd_grdtrack_interpolate_tp(double t,double p,
 					   struct ggrd_gt *g,
@@ -270,6 +280,42 @@ unsigned char ggrd_grdtrack_interpolate_tp(double t,double p,
 #endif
   return result;
 }
+
+/* 
+   for 2-D cartesian
+
+   interpolation wrapper, uses x,y input
+   return value and TRUE if success,
+   undefined and FALSE else
+*/
+unsigned char ggrd_grdtrack_interpolate_xy(double xin,double yin,
+					   struct ggrd_gt *g,
+					   double *value,
+					   unsigned char verbose)
+{
+  double x[3];
+  unsigned char result;
+  if(!g->init){			/* this will not necessarily work */
+    fprintf(stderr,"ggrd_grdtrack_interpolate_xy: error, g structure not initialized\n");
+    return FALSE;
+  }
+  if(g->is_three){
+    fprintf(stderr,"ggrd_grdtrack_interpolate_xy: error, g structure is not 2-D\n");
+    return FALSE;
+  }
+  x[0] = xin;
+  x[1] = yin;
+  x[2] = 0.0;
+#ifdef USE_GMT4
+  result = ggrd_grdtrack_interpolate(x,FALSE,g->grd,g->f,g->edgeinfo,g->mm,g->z,g->nz,
+				     value,verbose,&g->bcr);
+#else
+  result = ggrd_grdtrack_interpolate(x,FALSE,g->grd,g->f,g->edgeinfo,g->mm,g->z,g->nz,
+				     value,verbose);
+#endif
+  return result;
+}
+
 /* 
 
 free structure
@@ -382,18 +428,22 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
      init first edgeinfo 
   */
 
-
   GMT_boundcond_init (*edgeinfo);
-  if ((edgeinfo_string+2)){
+  /* check if geographic */
+  if (strlen(edgeinfo_string)>2){
     GMT_boundcond_parse (*edgeinfo, (edgeinfo_string+2));
-    if ((*edgeinfo)[0].gn) 
+    if ((*edgeinfo+0)->gn) 
       *geographic_in = TRUE;
     else
       *geographic_in = FALSE;
   }else{
     *geographic_in = FALSE;
   }
-
+  if(verbose >= 2)
+    if(*geographic_in)
+      fprintf(stderr,"ggrd_grdtrack_init: detected geographic region from geostring: %s\n",
+	      edgeinfo_string);
+  
   *z = (float *) GMT_memory 
     (VNULL, (size_t)1, sizeof(float), "ggrd_grdtrack_init");
  
@@ -586,8 +636,9 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
       return 10;
     }
 #endif
-    
-    /* prepare the boundaries */
+    /* 
+       prepare the boundaries 
+    */
     GMT_boundcond_param_prep ((*grd+i), (*edgeinfo+i));
     if(i == 0){
       

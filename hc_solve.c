@@ -142,11 +142,9 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
     if(verbose)
       fprintf(stderr,"hc_solve: computing solution for velocities\n");
     break;
-  case HC_STRESS:
+  case HC_TRACTIONS:
     if(verbose)
-      fprintf(stderr,"hc_solve: computing solution for stresses\n");
-    if(compute_geoid)
-      HC_ERROR("hc_solve","cannot compute stresses and geoid");
+      fprintf(stderr,"hc_solve: computing solution for tractions\n");
     break;
   default:
     fprintf(stderr,"hc_solve: error: solution mode %i undefined\n",
@@ -192,6 +190,11 @@ input:
 pol_sol[6*nradp2]: y1...y6    (six) poloidal solutions for each layer
 tor_sol[2*nradp2]: y9 and y10 (two) toroidal solutions for each layer
 
+
+THESE SOLUTIONS WILL NEED TO BE SCALED WITH CONSTANTS AS GIVEN IN 
+
+hc_compute_solution_scaling_factors
+
 */
 void hc_sum(struct hcs *hc,
 	    int nrad,struct sh_lms *pol_sol, struct sh_lms *tor_sol, 
@@ -210,20 +213,26 @@ void hc_sum(struct hcs *hc,
   solution
      
   */
-  if (solve_mode == HC_VEL){
+  switch(solve_mode){
+  case HC_VEL:
     //
     //    velocity output requested 
     //
     irchoose = 0; // y1 for radial
     ipchoose = 1; // y2 for poloidal
     itchoose = 0; // y9 for toroidal
-  }else{
+    break;
+  case HC_TRACTIONS:
     //
     //    srr srt srp stress output requested 
     //
     irchoose = 2;// y3  for radial
     ipchoose = 3;// y4  for poloidal
     itchoose = 1;// y10 for toroidal 
+    break;
+  default:
+    HC_ERROR("hc_sum","solve mode undefined");
+    break;
   }
   /* 
 

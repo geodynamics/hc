@@ -29,13 +29,13 @@ void hc_print_spectral_solution(struct hcs *hc,struct sh_lms *sol,
      number of solution sets of ntype solutions 
   */
   nradp2 = hc->nrad+2;
-  /* 
-
-  scale to cm/yr, or other values for stress solutions
-
-  */
-  hc_compute_solution_scaling_factors(hc,sol_mode,fac);
   for(i=os=0;i < nradp2;i++,os += ntype){
+    /* 
+       
+    scale to cm/yr, or MPa  for stress solutions
+    
+    */
+    hc_compute_solution_scaling_factors(hc,sol_mode,hc->r[i],fac);
     /* 
        write parameters, convert radius to depth in [km]  
     */
@@ -47,15 +47,23 @@ void hc_print_spectral_solution(struct hcs *hc,struct sh_lms *sol,
        write the set of coefficients in D&T convention
        
     */
-    sh_print_coefficients_to_file((sol+os),ntype,out,fac,binary,verbose);
+    sh_print_coefficients_to_file((sol+os),ntype,out,fac,
+				  binary,verbose);
     if(verbose >= 2){
       switch(sol_mode){
       case HC_VEL:
-	fprintf(stderr,"hc_print_spectral_solution: z: %8.3f |r|: %11.3e |pol|: %11.3e |tor|: %11.3e (scale: %g cm/yr)\n",
+	fprintf(stderr,"hc_print_spectral_solution: z: %8.3f vel: |r|: %11.3e |pol|: %11.3e |tor|: %11.3e (scale: %g cm/yr)\n",
 		HC_Z_DEPTH(hc->r[i]),sqrt(sh_total_power((sol+os))),
 		sqrt(sh_total_power((sol+os+1))),
 		sqrt(sh_total_power((sol+os+2))),
 		fac[0]/11.1194926644559);
+	break;
+      case HC_TRACTIONS:
+	fprintf(stderr,"hc_print_spectral_solution: z: %8.3f str: |r|: %11.3e |pol|: %11.3e |tor|: %11.3e (scale: %g MPa)\n",
+		HC_Z_DEPTH(hc->r[i]),sqrt(sh_total_power((sol+os))),
+		sqrt(sh_total_power((sol+os+1))),
+		sqrt(sh_total_power((sol+os+2))),
+		fac[0]/(0.553073278428428/hc->r[i]));
 	break;
       default:
 	fprintf(stderr,"hc_print_spectral_solution: sol mode %i undefined\n",sol_mode);
@@ -96,7 +104,8 @@ and pre is dat or bin, depending on ASCII or binary output.
 will also write the corresponding depth layers to dfilename
 
 */
-void hc_print_spatial_solution(struct hcs *hc, struct sh_lms *sol,
+void hc_print_spatial_solution(struct hcs *hc, 
+			       struct sh_lms *sol,
 			       float *sol_x, char *name, 
 			       char *dfilename, 
 			       int sol_mode, hc_boolean binary, 
@@ -122,16 +131,21 @@ void hc_print_spatial_solution(struct hcs *hc, struct sh_lms *sol,
   */
   sh_compute_spatial_basis(sol, file_dummy, FALSE,flt_dummy, &xy,
 			   1,verbose);
-  /* 
-     compute the scaling factors 
-  */
-  hc_compute_solution_scaling_factors(hc,sol_mode,fac);
+
   /* depth file */
   dout = hc_open(dfilename,"w","hc_print_spatial_solution");
   if(verbose >= 2)
     fprintf(stderr,"hc_print_spatial_solution: writing depth levels to %s\n",
 	    dfilename);
   for(i=0;i < nradp2;i++){
+    /* 
+
+    compute the scaling factors, those do depend on radius
+    in the case of the stresses, so leave inside loop!
+
+    */
+    hc_compute_solution_scaling_factors(hc,sol_mode,hc->r[i],fac);
+
     /* write depth in [km] to dout file */
     fprintf(dout,"%g\n",HC_Z_DEPTH(hc->r[i]));
     for(k=0;k < 3;k++)		/* pointers */
@@ -141,7 +155,9 @@ void hc_print_spatial_solution(struct hcs *hc, struct sh_lms *sol,
     format:
 
 
-    lon lat vr vt vp
+    lon lat vr vt vp   OR
+
+    lon lat srr srt srp 
 
     
     */
@@ -266,17 +282,21 @@ void hc_print_vector_row(HC_PREC *a, int n,FILE *out)
 }
 
 /* 
-   compute the r, theta, phi fac[3] scaling factors for the solution output 
+   compute the r, theta, phi fac[3] scaling factors for the solution
+   output
 */
-void hc_compute_solution_scaling_factors(struct hcs *hc,int sol_mode,HC_PREC *fac)
+void hc_compute_solution_scaling_factors(struct hcs *hc,
+					 int sol_mode,
+					 HC_PREC radius,
+					 HC_PREC *fac)
 {
 
  switch(sol_mode){
   case HC_VEL:
     fac[0]=fac[1]=fac[2] = hc->vel_scale; /* go to cm/yr  */
     break;
-  case HC_STRESS:
-    fac[0]=fac[1]=fac[2] = 1.0; /* go to ??? */
+  case HC_TRACTIONS:
+    fac[0]=fac[1]=fac[2] = hc->stress_scale/radius; /* go to MPa */
     break;
   default:
     HC_ERROR("hc_print_spectral_solution","mode undefined");

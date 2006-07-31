@@ -44,15 +44,15 @@ int main(int argc, char **argv)
   default:
     fprintf(stderr,"%s: usage\n%s sol.file layer [mode,%i] [short_format, %i]\n\n",
 	    argv[0],argv[0],mode,short_format);
-    fprintf(stderr,"extracts spherical harmonic solution from HC run\n");
+    fprintf(stderr,"extracts spherical harmonic solution x (vel or str) from HC run\n");
     fprintf(stderr,"layer: 1...nset\n");
     fprintf(stderr,"\tif ilayer=1..nset, will print one layer\n");
     fprintf(stderr,"\tif ilayer=-1, will select nset\n");
     fprintf(stderr,"\tif ilayer=-2, will print all layers\n");
     fprintf(stderr,"mode: 1...3\n");
-    fprintf(stderr,"\tif mode = 1, will print u_r \n");
-    fprintf(stderr,"\tif mode = 2, will print u_pol u_tor \n");
-    fprintf(stderr,"\tif mode = 3, will print u_r u_pol u_tor\n");
+    fprintf(stderr,"\tif mode = 1, will print x_r \n");
+    fprintf(stderr,"\tif mode = 2, will print x_pol x_tor \n");
+    fprintf(stderr,"\tif mode = 3, will print x_r x_pol x_tor\n");
     
     exit(-1);
     break;
@@ -101,21 +101,21 @@ int main(int argc, char **argv)
     case 1:
       /*  */
       if(verbose)
-	fprintf(stderr,"%s: printing u_r SHE at layer %i (depth: %g)\n",
+	fprintf(stderr,"%s: printing x_r SHE at layer %i (depth: %g)\n",
 		argv[0],ilayer,HC_Z_DEPTH(model->r[ilayer]));
       sh_print_coefficients_to_file((sol+ilayer*3),shps,stdout,fac,FALSE,verbose);
       break;
     case 2:
       /*  */
       if(verbose)
-	fprintf(stderr,"%s: printing u_pol u_tor SHE at layer %i (depth: %g)\n",
+	fprintf(stderr,"%s: printing x_pol x_tor SHE at layer %i (depth: %g)\n",
 		argv[0],ilayer,HC_Z_DEPTH(model->r[ilayer]));
       sh_print_coefficients_to_file((sol+ilayer*3+1),shps,stdout,fac,FALSE,verbose);
       break;
     case 3:
       /* mode == 3 */
       if(verbose)
-	fprintf(stderr,"%s: printing u_r u_pol u_tor SHE at layer %i (depth: %g)\n",
+	fprintf(stderr,"%s: printing x_r x_pol x_tor SHE at layer %i (depth: %g)\n",
 		argv[0],ilayer,HC_Z_DEPTH(model->r[ilayer]));
       sh_print_coefficients_to_file((sol+ilayer*3),shps,stdout,fac,FALSE,verbose);
       break;

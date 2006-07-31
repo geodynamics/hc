@@ -1,9 +1,60 @@
+INSTALLATION
+
+The code should compile on any basic UNIX/Linux system. See Makefile
+for comments. 				   
+
+
+HC CODE usage
+
+Described in the help page that is displayed for "hc -h" as below. See
+also the benchmark scripts in cig_bench.tgz. This tar file will expand
+into a cig subdirectory particularly "run_benchmark" there shows how
+to run all CIG benchmark tests.
+
+
+>>>
+
+
+hc - perform Hager & O'Connell flow computation
+
+This code can compute velocities, tractions, and geoid for simple
+density distributions and plate velocities using the semi-analytical
+approach of Hager & O'Connell (1981).  This particular implementation
+illustrates one possible way to combine the HC solver routines.
+
+Based on code by Brad Hager, Richard O'Connell, and Bernhard Steinberger.
+
+density anomaly options:
+-dens   name    use name as a SH density anomaly model (dens.sh.dat)
+                This expects density anomalies in % of PREM in DT format.
+-ds             additional density anomaly scaling factor (0.2)
+
+Earth model options:
+-prem   name    set Earth model to name (/home/becker/progs/src/hc-svn/prem/prem.dat)
+-vf     name    set viscosity structure filename to name (visc.dat)
+                This file is in non_dim_radius viscosity[Pas] format
+
+boundary condition options:
+-fs             perform free slip computation, else no slip or plates (OFF)
+-ns             perform no slip computation, else try to read plate velocities (OFF)
+-pvel   name    set surface velocity file to name (pvel.sh.dat)
+                This file is based on a DT expansion of cm/yr velocity fields.
+
+solution procedure and I/O options:
+-ng             do not compute and print the geoid (OFF)
+-pptsol         print pol[6] and tor[2] solution vectors (OFF)
+-px             print the spatial solution to file (OFF)
+-str            compute srr,srt,srp tractions [MPa] instead of velocities [cm/yr] (default: vel)
+-v      -vv     -vvv: verbosity levels (0)
+
+<<<
+
 SPHERICAL HARMONICS FORMAT
 
 All single layer spherical harmonics are in the fully normalized,
 physical convention, e.g. Dahlen & Tromp (1998). 
 
-
+				   
 All spherical harmonics files have an SH_HEADER
 
 	       lmax layer_i zlabel_i nlayer nrset type

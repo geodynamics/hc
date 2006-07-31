@@ -28,7 +28,8 @@
 #include "hc.h"
 
 
-int ggrd_find_vel_and_der(GGRD_CPREC *xloc,GGRD_CPREC time,GGRD_CPREC dtrange,
+int ggrd_find_vel_and_der(GGRD_CPREC *xloc,
+			  GGRD_CPREC time,GGRD_CPREC dtrange,
 			  struct ggrd_vel *v,int order,
 			  hc_boolean icalc_der,
 			  hc_boolean verbose,

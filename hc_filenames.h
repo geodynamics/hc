@@ -13,12 +13,13 @@
 #define HC_SOLOUT_FILE_ASCII  "sol.dat" /* solution output files */
 #define HC_SOLOUT_FILE_BINARY "sol.bin" 
 
-#define HC_SPATIAL_SOLOUT_FILE  "vsol" /* spatial solution 
-				     output files, those will ahave
-				     stuff appended like 5.bin */
+#define HC_SPATIAL_SOLOUT_FILE  "ssol" /* spatial solution output
+					  files, those will ahave stuff
+					  appended like 5.bin */
 
 
-#define HC_TORSOL_FILE "tsol.dat" /* toroidal solutions 1 and 2 as f(l,r) */
+#define HC_TORSOL_FILE "tsol.dat" /* toroidal solutions 1 and 2 as
+				     f(l,r) */
 
 #define HC_POLSOL_FILE "psol.dat"
 

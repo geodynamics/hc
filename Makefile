@@ -51,7 +51,7 @@ PREM_OBJS = $(ODIR)/prem_util.o
 PREM_DEFINES = -DPREM_MODEL_FILE=\"$(PWD)/prem/prem.dat\"
 PREM_INCS = prem.h
 #
-# GMT grd handling, need to define USE_GMT4 for version 4.0
+# GMT grd handling
 #
 GGRD_SRCS = ggrd_velinterpol.c ggrd_readgrds.c ggrd_grdtrack_util.c
 GGRD_OBJS = $(ODIR)/ggrd_velinterpol.o $(ODIR)/ggrd_readgrds.o $(ODIR)/ggrd_grdtrack_util.o

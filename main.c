@@ -17,6 +17,33 @@ this version by Thorsten Becker (twb@usc.edu)
 
 $Id: main.c,v 1.13 2006/01/22 01:11:34 becker Exp becker $
 
+>>> SOME COMMENTS FROM THE ORIGINAL CODE <<<
+
+C    * It uses the following Numerical Recipes (Press et al.) routines:
+C      four1, realft, gauleg, rk4, rkdumb, ludcmp, lubksb;
+C      !!!!!!!!!!!!!!!!!!! rkqc, odeint !!!!!!!!!! take out !!!!!!
+C      and the following routines by R.J. O'Connell: 
+C      shc2d, shd2c, ab2cs, cs2ab, plmbar, plvel2sh, pltgrid, pltvel,
+C      vshd2c, plmbar1.
+C      Further subroutines are: kinsub, evalpa, 
+C      torsol (all based on "kinflow" by Hager & O'Connell),
+C      densub and evppot (based on "denflow" by  Hager & O'Connell),
+C      sumsub (based on "sumkd" by  Hager & O'Connell, but
+C      substantially speeded up),
+C      convert, derivs and shc2dd (based on R.J. O'Connell's shc2d).
+C
+C      bugs found:
+C   * The combination of (1) high viscosity lithosphere 
+C     (2) compressible flow (3) kinematic (plate driven) flow
+C     doesn't work properly. The problem presumably only occurs
+C     at degree 1 (I didn't make this sure) but this is sufficient
+C     to screw up everything. It will usually work to reduce the
+C     contrast between lithospheric and asthenospheric viscosity.
+C     Then make sure that (1) two viscosity structures give similar
+C     results for incompressible and (2) incompressible and compressible
+C     reduced viscosity look similar (e.g. anomalous mass flux vs. depth)
+
+<<< END OLD COMMENTS 
 
 */
 
@@ -27,9 +54,8 @@ int main(int argc, char **argv)
   struct sh_lms *sol_spectral=NULL, *geoid = NULL;		/* solution expansions */
   int nsol,lmax;
   FILE *out;
-  hc_boolean compute_geoid = TRUE; /* compute the geoid (only works for velocity solution) */
   struct hc_parameters p[1]; /* parameters */
-  char filename[HC_CHAR_LENGTH];
+  char filename[HC_CHAR_LENGTH],file_prefix[10];
   float *sol_spatial = NULL;	/* spatial solution,
 				   e.g. velocities */
   /* 
@@ -83,9 +109,11 @@ int main(int argc, char **argv)
   */
   hc_init_main(model,SH_RICK,p);
   nsol = (model->nrad+2) * 3;	/* number of solution (r,pol,tor)*(nlayer+2) */
-  if(p->free_slip)
+  if(p->free_slip)		/* maximum degree is determined by the
+				   density expansion  */
     lmax = model->dens_anom[0].lmax;
-  else
+  else				/* max degree is determined by the
+				   plate velocities  */
     lmax = model->pvel[0].lmax;	/*  shouldn't be larger than that*/
 
 
@@ -103,7 +131,7 @@ int main(int argc, char **argv)
   */
   sh_allocate_and_init(&sol_spectral,nsol,lmax,model->sh_type,1,
 		       p->verbose);
-  if(compute_geoid)	
+  if(p->compute_geoid)	
     /* make room for geoid solution */
     sh_allocate_and_init(&geoid,1,model->dens_anom[0].lmax,
 			 model->sh_type,0,p->verbose);
@@ -112,7 +140,7 @@ int main(int argc, char **argv)
      solve poloidal and toroidal part and sum
   */
   hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
-	   TRUE,TRUE,TRUE,p->print_pt_sol,compute_geoid,geoid,
+	   TRUE,TRUE,TRUE,p->print_pt_sol,p->compute_geoid,geoid,
 	   p->verbose);
   /* 
 
@@ -122,10 +150,18 @@ int main(int argc, char **argv)
   /* 
      output of spherical harmonics solution
   */
+  switch(p->solution_mode){
+  case HC_VEL:
+    sprintf(file_prefix,"vel");break;
+  case HC_TRACTIONS:
+    sprintf(file_prefix,"str");break;
+  default:
+    HC_ERROR(argv[0],"solution mode undefined");break;
+  }
   if(p->sol_binary_out)
-    sprintf(filename,"%s",HC_SOLOUT_FILE_BINARY);
+    sprintf(filename,"%s.%s",file_prefix,HC_SOLOUT_FILE_BINARY);
   else
-    sprintf(filename,"%s",HC_SOLOUT_FILE_ASCII);
+    sprintf(filename,"%s.%s",file_prefix,HC_SOLOUT_FILE_ASCII);
   if(p->verbose)
     fprintf(stderr,"%s: writing spherical harmonics solution to %s\n",
 	    argv[0],filename);
@@ -134,7 +170,7 @@ int main(int argc, char **argv)
 			     p->solution_mode,
 			     p->sol_binary_out,p->verbose);
   fclose(out);
-  if(compute_geoid){
+  if(p->compute_geoid){
     /* 
        print geoid solution 
     */
@@ -159,10 +195,10 @@ int main(int argc, char **argv)
     /* 
        output of spatial solution
     */
+    sprintf(filename,"%s.%s",file_prefix,HC_SPATIAL_SOLOUT_FILE);
     /* print lon lat z v_r v_theta v_phi */
     hc_print_spatial_solution(model,sol_spectral,sol_spatial,
-			      HC_SPATIAL_SOLOUT_FILE,
-			      HC_LAYER_OUT_FILE,
+			      filename,HC_LAYER_OUT_FILE,
 			      p->solution_mode,p->sol_binary_out,
 			      p->verbose);
   }
@@ -172,7 +208,7 @@ int main(int argc, char **argv)
 
   */
   sh_free_expansion(sol_spectral,nsol);
-  if(compute_geoid)
+  if(p->compute_geoid)
     sh_free_expansion(geoid,1);
 
   free(sol_spatial);

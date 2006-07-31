@@ -25,13 +25,13 @@ void hc_init_parameters(struct hc_parameters *p)
 				   if false, plate velocities, else no
 				   slip if free_slip is false as well
 				*/
+  p->compute_geoid = TRUE;	/* compute the geoid?  */
   p->dens_anom_scale = 0.2;	/* default density anomaly scaling to
 				   go from PREM percent traveltime
 				   anomalies to density anomalies */
   p->verbose = 0;		/* debugging output? (0,1,2,3,4...) */
   p->sol_binary_out = TRUE;	/* binary or ASCII output of SH expansion */
-  p->solution_mode = HC_VEL;	/* velocity, stress, or geoid */
-
+  p->solution_mode = HC_VEL;	/* default: velocity */
   p->print_pt_sol = FALSE;
   p->print_spatial = FALSE;	/* by default, only print the spectral solution */
   /* 
@@ -172,12 +172,15 @@ void hc_init_constants(struct hcs *hc, HC_PREC dens_anom_scale,
   /* 
      constants
   */
-  hc->timesc = HC_TIMESCALE_YR;		/* timescale [yr]*/
+  hc->timesc = HC_TIMESCALE_YR;		/* timescale [yr], like 1e6 yrs */
   hc->visnor = 1e21;		/* normalizing viscosity [Pas]*/
   hc->gacc = 10.0e2; 		/* gravitational acceleration [cm/s2]*/
   hc->g = 6.6742e-11;		/* gravitational constant [Nm2/kg2]*/
+
   /*  
-      radius of Earth in [m]
+
+  radius of Earth in [m]
+
   */
   hc->re = hc->prem->r0;
   if(fabs(hc->re - (HC_RE_KM * 1e3)) > 1e-7)
@@ -197,11 +200,26 @@ void hc_init_constants(struct hcs *hc, HC_PREC dens_anom_scale,
     HC_ERROR("hc_init_constants","Earth model CMB radius appears off");
 
   /* 
+
+  derived quantities
+  
+  */
+  /* 
   
   velocity scale if input is in [cm/yr], works out to be ~0.11 
 
   */
   hc->vel_scale = hc->re*PIOVERONEEIGHTY/hc->timesc*100;
+  /* 
+  
+  stress scaling, will later be divided by non-dim radius, to go 
+  to MPa
+  
+  */
+  hc->stress_scale = (PIOVERONEEIGHTY * hc->visnor / hc->secyr)/
+    (hc->timesc * 1e6);
+  
+
   init = TRUE;
 }
 
@@ -223,29 +241,44 @@ void hc_handle_command_line(int argc, char **argv,
       */
       fprintf(stderr,"%s - perform Hager & O'Connell flow computation\n\n",
 	      argv[0]);
-      fprintf(stderr,"options:\n\n");
+      fprintf(stderr,"This code can compute velocities, tractions, and geoid for simple density distributions\n");
+      fprintf(stderr,"and plate velocities using the semi-analytical approach of Hager & O'Connell (1981).\n");
+      fprintf(stderr,"This particular implementation illustrates one possible way to combine the HC solver routines.\n\n");
+      fprintf(stderr,"Based on code by Brad Hager, Richard O'Connell, and Bernhard Steinberger.\n\n");
+      
+      fprintf(stderr,"density anomaly options:\n");
       fprintf(stderr,"-dens\tname\tuse name as a SH density anomaly model (%s)\n",
 	      p->dens_filename);
-      fprintf(stderr,"-ds\t\tdensity scaling (%g)\n",
+      fprintf(stderr,"\t\tThis expects density anomalies in %% of PREM in DT format.\n");
+      fprintf(stderr,"-ds\t\tadditional density anomaly scaling factor (%g)\n\n",
 	      p->dens_anom_scale);
+      
+      fprintf(stderr,"Earth model options:\n");
+      fprintf(stderr,"-prem\tname\tset Earth model to name (%s)\n",
+	      p->prem_model_filename);
+      fprintf(stderr,"-vf\tname\tset viscosity structure filename to name (%s)\n",
+	      p->visc_filename);
+      fprintf(stderr,"\t\tThis file is in non_dim_radius viscosity[Pas] format\n\n");
+
+      fprintf(stderr,"boundary condition options:\n");
       fprintf(stderr,"-fs\t\tperform free slip computation, else no slip or plates (%s)\n",
 	      hc_name_boolean(p->free_slip));
       fprintf(stderr,"-ns\t\tperform no slip computation, else try to read plate velocities (%s)\n",
 	      hc_name_boolean(p->vel_bc_zero));
-      fprintf(stderr,"-prem\tname\tset Earth model to name (%s)\n",
-	      p->prem_model_filename);
-      fprintf(stderr,"-pptsol\t\tprint pol[6] and tor[2] solution vectors (%s)\n",
-	      hc_name_boolean(p->print_pt_sol));
       fprintf(stderr,"-pvel\tname\tset surface velocity file to name (%s)\n",
 	      p->pvel_filename);
+      fprintf(stderr,"\t\tThis file is based on a DT expansion of cm/yr velocity fields.\n\n");
+
+      fprintf(stderr,"solution procedure and I/O options:\n");
+      fprintf(stderr,"-ng\t\tdo not compute and print the geoid (%s)\n",
+	      hc_name_boolean(!p->compute_geoid));
+       fprintf(stderr,"-pptsol\t\tprint pol[6] and tor[2] solution vectors (%s)\n",
+	      hc_name_boolean(p->print_pt_sol));
       fprintf(stderr,"-px\t\tprint the spatial solution to file (%s)\n",
 	      hc_name_boolean(p->print_spatial));
-      fprintf(stderr,"-vf\tname\tset viscosity structure filename to name (%s)\n",
-	      p->visc_filename);
+      fprintf(stderr,"-str\t\tcompute srr,srt,srp tractions [MPa] instead of velocities [cm/yr] (default: vel)\n");
       fprintf(stderr,"-v\t-vv\t-vvv: verbosity levels (%i)\n",
 	      (int)(p->verbose));
-      fprintf(stderr,"-visc\tname\tuse name as a viscosity structure (%s)\n",
-	      p->visc_filename);
       fprintf(stderr,"\n\n");
       exit(-1);
     }else if(strcmp(argv[i],"-ds")==0){	/* density anomaly scaling factor */
@@ -262,6 +295,8 @@ void hc_handle_command_line(int argc, char **argv,
 						   solution
 						   parameters */
       hc_toggle_boolean(&p->print_pt_sol);
+    }else if(strcmp(argv[i],"-ng")==0){	/* do not compute geoid */
+      hc_toggle_boolean(&p->compute_geoid);
     }else if(strcmp(argv[i],"-vf")==0){ /* viscosity filename */
       hc_advance_argument(&i,argc,argv);
       strncpy(p->visc_filename,argv[i],HC_CHAR_LENGTH);
@@ -277,6 +312,8 @@ void hc_handle_command_line(int argc, char **argv,
     }else if(strcmp(argv[i],"-visc")==0){ /* viscosity filename */
       hc_advance_argument(&i,argc,argv);
       strncpy(p->visc_filename,argv[i],HC_CHAR_LENGTH);
+    }else if(strcmp(argv[i],"-str")==0){	/* compute tractions */
+      p->solution_mode = HC_TRACTIONS;
     }else if(strcmp(argv[i],"-v")==0){	/* verbosities */
       p->verbose = 1;
     }else if(strcmp(argv[i],"-vv")==0){	/* verbosities */

@@ -79,9 +79,7 @@ void hc_polsol(struct hcs *hc, 	/*
 				     */
 	       hc_boolean verbose)
 {
-  //
-  //    PROGRAM POLNOV
-  //
+
   //    ****************************************************************
   //    * THIS PROGRAM IS TO USED CALCULATE AND OUTPUT THE POLOIDAL    *
   //    * COMPONENTS OF THE FLOW WITH PLATE MOTIONS                    *

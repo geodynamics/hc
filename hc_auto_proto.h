@@ -4,6 +4,7 @@ int ggrd_grdtrack_rescale(struct ggrd_gt *, unsigned char, unsigned char, unsign
 unsigned char ggrd_grdtrack_interpolate_rtp(double, double, double, struct ggrd_gt *, double *, unsigned char);
 unsigned char ggrd_grdtrack_interpolate_xyz(double, double, double, struct ggrd_gt *, double *, unsigned char);
 unsigned char ggrd_grdtrack_interpolate_tp(double, double, struct ggrd_gt *, double *, unsigned char);
+unsigned char ggrd_grdtrack_interpolate_xy(double, double, struct ggrd_gt *, double *, unsigned char);
 void ggrd_grdtrack_free_gstruc(struct ggrd_gt *);
 void ggrd_find_spherical_vel_from_rigid_cart_rot(double *, double *, double *, double *, double *);
 int ggrd_grdtrack_init(double *, double *, double *, double *, float **, int *, char *, struct GRD_HEADER **, struct GMT_EDGEINFO **, char *, unsigned char *, int *, unsigned char, char *, float **, int *, unsigned char, unsigned char, unsigned char);
@@ -78,7 +79,7 @@ void hc_print_vector(double *, int, FILE *);
 void hc_print_vector_label(double *, int, FILE *, char *);
 void hc_print_matrix_label(double *, int, int, FILE *, char *);
 void hc_print_vector_row(double *, int, FILE *);
-void hc_compute_solution_scaling_factors(struct hcs *, int, double *);
+void hc_compute_solution_scaling_factors(struct hcs *, int, double, double *);
 void hc_print_poloidal_solution(struct sh_lms *, struct hcs *, int, char *, unsigned short, unsigned short);
 void hc_print_toroidal_solution(double *, int, struct hcs *, int, char *, unsigned short);
 /* hc_polsol.c */
