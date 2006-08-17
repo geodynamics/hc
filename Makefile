@@ -173,7 +173,6 @@ hc_extract_sh_layer: $(LIBS) $(INCS) $(ODIR)/hc_extract_sh_layer.o
 
 # C function prototyper
 hc_auto_proto.h: 
-	rm hc_auto_proto.h;\
 	cproto  $(INC_FLAGS)-DGENERATE_PROTO  -f 2 -p *.c  | \
 		grep -v "void main("  | grep -v "int main(" > hc_auto_proto.h
 
@@ -195,7 +194,7 @@ dirs:
 	fi
 
 clean:
-	rm $(ODIR)/*.o hc_auto_proto.h
+	rm $(ODIR)/*.o 
 #
 # library
 #

@@ -212,7 +212,7 @@ void prem_get_values(double *rho, double *vs,  double *vsv, double *vsh,
   *vph = prem_compute_pval(x,(prem->cvph+os),prem->np,1e3);
   *vsv = prem_compute_pval(x,(prem->cvsv+os),prem->np,1e3);
   *vsh = prem_compute_pval(x,(prem->cvsh+os),prem->np,1e3);
-  /* anisotropy */
+  /* anisotropy ellipticity factor */
   *eta = prem_compute_pval(x,(prem->ceta+os),prem->np,1.0);
   /* q factors */
   *qmu = prem_compute_pval(x,   (prem->cqmu   +ilayer),1,1.0);
