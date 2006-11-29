@@ -7,16 +7,13 @@ unsigned char ggrd_grdtrack_interpolate_tp(double, double, struct ggrd_gt *, dou
 unsigned char ggrd_grdtrack_interpolate_xy(double, double, struct ggrd_gt *, double *, unsigned char);
 void ggrd_grdtrack_free_gstruc(struct ggrd_gt *);
 void ggrd_find_spherical_vel_from_rigid_cart_rot(double *, double *, double *, double *, double *);
-int ggrd_grdtrack_init(double *, double *, double *, double *, float **, int *, char *, struct GRD_HEADER **, struct GMT_EDGEINFO **, char *, unsigned char *, int *, unsigned char, char *, float **, int *, unsigned char, unsigned char, unsigned char);
 void ggrd_print_layer_avg(float *, float *, int, int, FILE *);
-unsigned char ggrd_grdtrack_interpolate(double *, unsigned char, struct GRD_HEADER *, float *, struct GMT_EDGEINFO *, int, float *, int, double *, unsigned char);
 int ggrd_read_time_intervals(struct ggrd_t *, char *, unsigned char, unsigned char);
 void ggrd_gt_interpolate_z(double, float *, int, int *, int *, double *, double *, unsigned char);
 void ggrd_interpol_time(double, struct ggrd_t *, int *, int *, double *, double *, double);
 int interpolate_seafloor_ages(double, double, double, struct ggrd_vel *, double *);
 float ggrd_gt_rms(float *, int);
 float ggrd_gt_mean(float *, int);
-void ggrd_gt_bcr_init_loc(void);
 /* ggrd_readgrds.c */
 void ggrd_init_vstruc(struct ggrd_vel *);
 int ggrd_read_vel_grids(struct ggrd_vel *, double, unsigned short, unsigned short, char *);

@@ -515,20 +515,38 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
   if(*nz == 1){
     if(verbose >= 2)
       fprintf(stderr,"ggrd_grdtrack_init: opening single file %s\n",grdfile);
+#ifndef USE_GMT4		/* old */
     if (GMT_cdf_read_grd_info (grdfile,(*grd))) {
       fprintf (stderr, "%s: error opening file %s\n", 
 	       "ggrd_grdtrack_init", grdfile);
       return 4;
     }
+#else  /* 4.1.2 */
+    sprintf((*grd)->name,"%s",grdfile);
+    if (GMT_cdf_read_grd_info ((*grd))) {
+      fprintf (stderr, "%s: error opening file %s\n", 
+	       "ggrd_grdtrack_init", grdfile);
+      return 4;
+    }
+#endif
   }else{
     /* loop through headers for testing purposess */
     for(i=0;i<(*nz);i++){
       sprintf(filename,"%s.%i.grd",grdfile,i+1);
+#ifndef USE_GMT4
       if (GMT_cdf_read_grd_info (filename, (*grd+i))) {
 	fprintf (stderr, "%s: error opening file %s (-D option was used)\n", 
 		 "ggrd_grdtrack_init", filename);
 	return 6;
       }
+#else
+      sprintf((*grd+i)->name,"%s",filename);
+      if (GMT_cdf_read_grd_info ((*grd+i))) {
+	fprintf (stderr, "%s: error opening file %s (-D option was used)\n", 
+		 "ggrd_grdtrack_init", filename);
+	return 6;
+      }
+#endif
       if(i == 0){
 	/* save the first grid parameters */
 	ogrd.x_min = (*grd)[0].x_min;
@@ -622,9 +640,10 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
        read the grd files
     */
 #ifdef USE_GMT4
-    if (GMT_cdf_read_grd (filename, (*grd+i), (*f+i* (*mm)), 
+    sprintf((*grd+i)->name,"%s",filename);
+    if (GMT_cdf_read_grd ((*grd+i), (*f+i* (*mm)), 
 			  *west, *east, *south, *north, 
-			  pad, FALSE,NC_FLOAT)) {
+			  pad, FALSE)) {
       fprintf (stderr, "%s: error reading file %s\n", "ggrd_grdtrack_init", grdfile);
       return 10;
     }

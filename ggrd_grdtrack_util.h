@@ -49,13 +49,16 @@ moderately external
 */
 int ggrd_read_time_intervals(struct ggrd_t *,char *,unsigned char ,unsigned char);
 int ggrd_read_vel_grids(struct ggrd_vel *, double, unsigned short, unsigned short, char *);
+
 #ifdef USE_GMT4
+/* GMT4.1.2 */
 unsigned char ggrd_grdtrack_interpolate(double *, unsigned char , struct GRD_HEADER *, float *,
 					struct GMT_EDGEINFO *, int, float *, int ,	double *,unsigned char,
 					struct GMT_BCR *);
 int ggrd_grdtrack_init(double *, double *, double *, double *, float **, int *, char *, struct GRD_HEADER **, struct GMT_EDGEINFO **, char *, unsigned char *, int *, unsigned char, char *, float **, int *, unsigned char, unsigned char, unsigned char, struct GMT_BCR *);
 
 #else
+/* GMT 3.4.5 */
 unsigned char ggrd_grdtrack_interpolate(double *, unsigned char , struct GRD_HEADER *, float *,
 				  struct GMT_EDGEINFO *, int, float *, int ,	double *,unsigned char);
 
@@ -76,6 +79,7 @@ int ggrd_grdtrack_init(double *, double *,double *, double *, /* geographic boun
 			int *,		/* number of layers */
 			unsigned char , /* linear/cubic? */
 			unsigned char ,unsigned char);
+void ggrd_gt_bcr_init_loc(void);
 #endif
 /* 
 

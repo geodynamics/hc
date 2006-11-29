@@ -195,7 +195,7 @@ void hc_polsol(struct hcs *hc, 	/*
   int newprp,newpot,jpb,inho2,ibv,indx[3],a_or_b,ilayer,lmax,
     nprops_max;
   HC_PREC *xprem;
-  double *b,du1,du2,el,rnext,gf,drho,dadd;
+  double *b,du1,du2,el,rnext,drho,dadd;
   double amat[3][3],bvec[3],u[4],poten[2],unew[4],potnew[2],clm[2];
   static int ncalled = 0;
   /* scaling factors will only be computed once */

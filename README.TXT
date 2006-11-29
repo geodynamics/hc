@@ -1,7 +1,44 @@
 INSTALLATION
 
-The code should compile on any basic UNIX/Linux system. See Makefile
-for comments. 				   
+The code should compile on any basic UNIX/Linux system with the GMT
+tools and libraries installed. See the Makefile for comments and what
+to modify. 
+
+The Makefile assumes that the following environment variables are
+predefined: 
+
+1) ARCH: should be the architecture you are compiling on, e.g. set with
+
+		setenv ARCH `uname -m | gawk '{print(tolower($1))}'`
+
+      for example, i686 for Intel
+
+
+2) GMTHOME: needs to point to the base directory of the GMT installation,
+e.g.
+	/usr/local/src/GMTdev/GMT3.4.5/
+	
+
+3) NETCDFHOME: for the netcdf libraries, should be e.g.
+
+   /usr/local/src/netcdf-3.5.0/
+
+Also, the Makefile uses the commonly defined compiler variables CC,
+F77, CFLAGS, LD, and LDFLAGS.
+
+One common problem is the interface of the ggrd_ subroutines with
+GMT. By default, the Makefile is set up for the old syntac of GMT
+version 3.4.5. The other alternative is to use 4.1.2 and upward (note
+that there were changes between 4.0 and 4.1.2). If you have GMT newer
+or equal to 4.1.2, uncomment the two corresponding lines in the
+Makefile.
+
+With all things set up, you should be able to type 
+
+make all
+
+to compile the programs.
+
 
 
 HC CODE usage

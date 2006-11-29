@@ -226,10 +226,18 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 	    sprintf(sname,"%s%svp.%i.%s",
 		    prefix,loc_prefix,level,suffix);
 	  if(v->read_gmt){
+#ifndef USE_GMT4	    	/* old */
 	    if(GMT_cdf_read_grd_info (sname,header) == -1){
 	      fprintf(stderr,"ggrd_read_vel_grids: error opening GMT grd file %s\n",sname);
 	      return(-2);
 	    }
+#else  /* new */
+	    sprintf(header->name,"%s",sname);
+	    if(GMT_cdf_read_grd_info (header) == -1){
+	      fprintf(stderr,"ggrd_read_vel_grids: error opening GMT grd file %s\n",sname);
+	      return(-2);
+	    }
+#endif
 	  }else{
 	    in = hc_open(sname,"r","ggrd_read_vel_grids");
 	    // read header type of information
@@ -345,16 +353,17 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 	      exit(-1);
 	    }
 	  }
-	  if(v->read_gmt)
+	  if(v->read_gmt){
 #ifdef USE_GMT4
 	    // read the netcdf GRD file
-	    GMT_cdf_read_grd (sname,header,fgrd, 0.0, 0.0, 0.0, 0.0, 
-			      dummy, 0, NC_FLOAT);
+	    sprintf(header->name,"%s",sname);
+	    GMT_cdf_read_grd (header,fgrd, 0.0, 0.0, 0.0, 0.0, 
+			      dummy, 0);
 #else
 	    GMT_cdf_read_grd (sname,header,fgrd, 0.0, 0.0, 0.0, 0.0, 
 			      dummy, 0);
 #endif
-	  else{
+	  }else{
 	    fread(dgrd,sizeof(double),header->nx*header->ny,in);
 	    fclose(in);
 	  }

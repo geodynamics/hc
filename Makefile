@@ -4,6 +4,22 @@
 #
 #
 #
+
+#
+# EDIT HERE FOR GMT VERSION 
+#
+#
+# for GMT3.4.5, use the next two lines
+GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include 
+GGRD_LIBS_LINKLINE = -lggrd -lgmt -lnetcdf
+# 
+# for GMT version >= 4.1.2, uncomment the next two lines
+#GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include -DUSE_GMT4
+#GGRD_LIBS_LINKLINE = -lggrd -lgmt -lpsl -lnetcdf 
+#
+#
+#
+#
 # object file directory
 ODIR = ../hc/objects/$(ARCH)/
 #
@@ -59,12 +75,6 @@ GGRD_OBJS_DBG = $(ODIR)/ggrd_velinterpol.dbg.o $(ODIR)/ggrd_readgrds.dbg.o $(ODI
 GGRD_DEFINES = -I$(GMTHOME)/include -I$(NETCDFHOME)/include 
 GGRD_LIB_FLAGS = -L$(GMTHOME)/lib -L$(NETCDFHOME)/lib 
 GGRD_LIBS = $(ODIR)/libggrd.a $(ODIR)/libggrd.dfast.a $(ODIR)/libggrd.dbg.a
-# for GMT3.4.5
-GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include 
-GGRD_LIBS_LINKLINE = -lggrd -lgmt -lnetcdf 
-# for GMT 4.0
-#GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include -DUSE_GMT4
-#GGRD_LIBS_LINKLINE = -lggrd -lgmt -lpsl -lnetcdf 
 #
 #
 #
@@ -129,7 +139,10 @@ hc_lib: $(HC_LIBS) $(GGRD_LIBS)
 
 really_all: dirs proto all 
 
+
 proto: hc_auto_proto.h
+
+
 
 sh_test: $(LIBS) $(INCS) $(ODIR)/sh_test.o
 	$(LD) $(LIB_FLAGS) $(ODIR)/sh_test.o \
@@ -170,11 +183,17 @@ hc_extract_sh_layer: $(LIBS) $(INCS) $(ODIR)/hc_extract_sh_layer.o
 		-o $(BDIR)/hc_extract_sh_layer \
 		-lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS) 
 
-
-# C function prototyper
+#
+# C function prototyper, strip out GMT version dependent things, 
+# those are handled in other header
+#
 hc_auto_proto.h: 
 	cproto  $(INC_FLAGS)-DGENERATE_PROTO  -f 2 -p *.c  | \
-		grep -v "void main("  | grep -v "int main(" > hc_auto_proto.h
+		grep -v "void main("  | \
+		grep -v "ggrd_gt_bcr_init_loc(" | \
+		grep -v "ggrd_grdtrack_interpolate(" | \
+		grep -v "ggrd_grdtrack_init(" | \
+	grep -v "int main(" > hc_auto_proto.h
 
 dirs:
 	if [ ! -s ../hc/ ]; then\
