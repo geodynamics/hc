@@ -6,7 +6,7 @@ int main(int argc, char **argv)
   HC_PREC xloc[3],time,vr[4],vphi[4],vtheta[4],dtrange;
   static int order = 3;
   hc_boolean calc_derivatives ;
-  double lon,lat,z,age;
+  double lon,lat,age;
   /* 
      initialize velocity structure
   */

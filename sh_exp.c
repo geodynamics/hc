@@ -513,7 +513,8 @@ void sh_print_coefficients_to_file(struct sh_lms *exp, int shps, FILE *out,
 	  /* output in physical convention, convert from internal
 	     convention */
 	  sh_get_coeff((exp+j),l,m,2,TRUE,value);
-	  fprintf(out,"%15.7e %15.7e\t",value[0]*fac[j],value[1]*fac[j]);
+	  fprintf(out,"%15.7e %15.7e\t",
+		  value[0]*fac[j],value[1]*fac[j]);
 	}
 	fprintf(out,"\n");
       } /* end m loop */

@@ -104,10 +104,10 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 
   in = out = NULL;
   fgrd = NULL;dgrd = NULL;
-  minphi = FLT_MAX;
-  omaxphi=FLT_MIN;
-  mintheta=FLT_MAX;
-  maxtheta = FLT_MIN;
+  minphi   = HC_FLT_MAX;
+  omaxphi  = HC_FLT_MIN;
+  mintheta = HC_FLT_MAX;
+  maxtheta = HC_FLT_MIN;
   weights=NULL;
 
   v->velscale = scale;
@@ -141,6 +141,8 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 	fprintf(stderr,"ggrd_read_vel_grids: expecting %i (nt) + 1 age grids\n",
 		v->thist.nvtimes);
       v->nage = v->thist.nvtimes + 1;
+      
+      /* important to use calloc so that some flags are set to zero */
       v->ages = (struct  ggrd_gt *)calloc(v->nage,
 					  sizeof(struct ggrd_gt));
       v->age_time = (GGRD_CPREC *)malloc(v->nage*sizeof(GGRD_CPREC));
@@ -155,7 +157,7 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 	v->ages[ivt].bandlim = v->age_bandlim;
 	sprintf(tfilename,"%s%i/age.grd",prefix,ivt+1);
 	if(ggrd_grdtrack_init_general(FALSE,tfilename,char_dummy, /* load file */
-				      "-Lg",(v->ages+ivt),verbose,
+				      "-Lx",(v->ages+ivt),verbose,
 				      FALSE)){
 	  fprintf(stderr,"ggrd_read_vel_grids: file error\n");
 	  return -10;

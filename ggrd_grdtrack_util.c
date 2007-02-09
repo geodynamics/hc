@@ -203,6 +203,7 @@ unsigned char ggrd_grdtrack_interpolate_rtp(double r,double t,double p,
 
    interpolation wrapper, uses x, y, z input. return value and TRUE if success,
    undefined and FALSE else
+   this mean lon lat z
 */
 unsigned char ggrd_grdtrack_interpolate_xyz(double x,double y,double z,
 					    struct ggrd_gt *g,double *value,

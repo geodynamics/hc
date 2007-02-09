@@ -53,7 +53,7 @@ void hc_init_parameters(struct hc_parameters *p)
 void hc_struc_init(struct hcs **hc)
 {
   
-  *hc = (struct hcs *)calloc(1,sizeof(struct hcs *));
+  *hc = (struct hcs *)calloc(1,sizeof(struct hcs ));
   if(!(*hc))
     HC_MEMERROR("hc_struc_init: hc");
   /* 

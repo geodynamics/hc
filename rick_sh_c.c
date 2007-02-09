@@ -7,8 +7,7 @@
 // */
 
 void rick_compute_allplm(int lmax,int ivec,double *plm,
-			 double *dplm, 
-			 struct rick_module *rick) 
+			 double *dplm, struct rick_module *rick) 
 {
   int i,os;
   

@@ -326,10 +326,10 @@ void hc_polsol(struct hcs *hc, 	/*
       if(!hc->qwrite)
 	HC_MEMERROR("hc_polsol: qwrite");
       /* those that go with (inho=nrad)+2 */
-      hc_dvecrealloc(&hc->rden,inho2,"hc_polsol");
+      hc_vecrealloc(&hc->rden,inho2,"hc_polsol");
       /* and those for nvis+1 */
-      hc_dvecrealloc(&hc->rvisc,nvisp1,"hc_polsol");
-      hc_dvecrealloc(&hc->visc,nvisp1,"hc_polsol");
+      hc_vecrealloc(&hc->rvisc,nvisp1,"hc_polsol");
+      hc_vecrealloc(&hc->visc,nvisp1,"hc_polsol");
       /* 
 	 save in case we want to check if parameters changed later
       */

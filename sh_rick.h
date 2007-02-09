@@ -27,6 +27,7 @@ and Tromp
 //
 
 #ifdef SH_RICK_DOUBLE_PRECISION
+
 #define SH_RICK_PREC double
 #define rick_vecalloc hc_dvecalloc
 #else

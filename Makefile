@@ -4,6 +4,8 @@
 #
 #
 #
+LD = $(CC)
+CFLAGS = $(CFLAGS_DEBUG) -Wall
 
 #
 # EDIT HERE FOR GMT VERSION 
@@ -48,10 +50,12 @@ OINCS = hc.h hc_filenames.h sh.h
 # new C version
 RICK_SRCS = rick_sh_c.c rick_fft_c.c
 #RICK_OBJS = $(ODIR)/rick_sh.o $(ODIR)/rick_sh_c.o  $(ODIR)/rick_fft.o $(ODIR)/rick_fft_c.o
-# if this is defined, will use double precision internally
+#
+#
 #RICK_DEFINES = -DSH_RICK_DOUBLE_PRECISION 
-# if those are defined, will only use C routines
-RICK_DEFINES =  -DNO_RICK_FORTRAN
+# if -DNO_RICK_FORTRAN is defined, will only use C routines
+RICK_DEFINES =  -DNO_RICK_FORTRAN 
+
 RICK_OBJS = $(ODIR)/rick_sh_c.o $(ODIR)/rick_fft_c.o
 RICK_OBJS_DBG = $(ODIR)/rick_sh_c.dbg.o $(ODIR)/rick_fft_c.dbg.o
 RICK_INC_FLAGS = -I. 
@@ -188,7 +192,7 @@ hc_extract_sh_layer: $(LIBS) $(INCS) $(ODIR)/hc_extract_sh_layer.o
 # those are handled in other header
 #
 hc_auto_proto.h: 
-	cproto  $(INC_FLAGS)-DGENERATE_PROTO  -f 2 -p *.c  | \
+	cproto  $(INC_FLAGS) $(DEFINES) -DGENERATE_PROTO  -f 2 -p *.c  | \
 		grep -v "void main("  | \
 		grep -v "ggrd_gt_bcr_init_loc(" | \
 		grep -v "ggrd_grdtrack_interpolate(" | \

@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <malloc.h>
 
 #include "hc_filenames.h"
 /* 
@@ -323,11 +324,11 @@ macro defintions
 #define RAD2DEG(x) ((x) * ONEEIGHTYOVERPI)
 #endif
 
-#ifndef FLT_MAX 
-#define FLT_MAX 1e20
+#ifndef HC_FLT_MAX 
+#define HC_FLT_MAX 1e20
 #endif
-#ifndef FLT_MIN
-#define FLT_MIN -1e20
+#ifndef HC_FLT_MIN
+#define HC_FLT_MIN -1e20
 #endif 
 
 #ifndef THETA2LAT

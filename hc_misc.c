@@ -6,7 +6,7 @@ miscellaneous functions for allocating arrays, copying arrays, opening
 file streams, the like
 
 
-$Id: hc_misc.c,v 1.5 2004/12/20 05:18:12 becker Exp becker $
+$Id: hc_misc.c,v 1.5  2004/12/20 05:18:12 becker Exp becker $
 
 */
 

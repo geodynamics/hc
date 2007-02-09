@@ -174,3 +174,23 @@ USING THE OUTPUT
 
       hc_extract_sh_layer sol.bin 5 2 0 | sh_syn
 
+
+
+
+
+
+DIRECTORY LISTING:
+
+becker@jackie:~/progs/src/hc-svn > ls *.c *.h
+ggrd_grdtrack_util.c   hc.h             prem.h          sh_rick.h
+ggrd_grdtrack_util.h   hc_init.c        prem_util.c     sh_shana.h
+ggrd.h                 hc_input.c       rick_fft_c.c    sh_spherepack.h
+ggrd_readgrds.c        hc_matrix.c      rick_sh_c.c     sh_syn.c
+ggrd_struc.h           hc_misc.c        sh_ana.c        sh_test.c
+ggrd_test.c            hc_output.c      shana_sh.c      simple_test.c
+ggrd_velinterpol.c     hc_polsol.c      sh_exp.c        spherepack_sh.c
+hc_auto_proto.h        hc_propagator.c  sh.h            test_fft.c
+hc_auto_proto.temp.h   hc_solve.c       sh_model.c
+hc_extract_sh_layer.c  hc_torsol.c      sh_power.c
+hc_filenames.h         main.c           sh_rick_ftrn.h
+
