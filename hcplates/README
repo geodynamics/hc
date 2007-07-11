@@ -1,0 +1,21 @@
+Routines for calculating plate velocities based on mantle flow, given pre-existing plate configurations.
+From the fortran routines of Lithgow-Bertelloni. C written by O'Neill.
+contact coneill@els.mq.edu.au with any queries.
+ 
+To compile the code type
+	make all
+
+The essential data files are: 
+	-enes (contains no. plates, and no, boundary points on each plate)
+	-data (contains plate boundary info described by enes)
+	-point.j (contains the load data, ie. internal density anomalies).
+
+All other data can be created by the routines.
+
+The programs provided are
+	hc_findplate - create a plates id file containing plate id info for each lat/long
+	hc_ptrot - calculate unit rotation coefficients for use in calculating plate vels (see CRLB's papers for details)
+	hcplates - calculates stage poles and surface lat/long velocity fields based flow from internal density anomalies
+
+Try running run_examples.mk to see if they are working ok, and for an examples on parameter usage.
+Use the -h option for details on input parameters (eg. hcplates -h)

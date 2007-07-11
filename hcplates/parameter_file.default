@@ -1,0 +1,51 @@
+#This is the default parameter file for hcplates
+#The defaults in this file are the initialized anyway
+#Too lazy to code a flexible read routine - so the file structure (line order etc) are important!!
+#First word of every line is the parameter name (as initialized in hcplates_init.c) - note: leave a space after name!
+
+#No. layers (note no. boundaries (r2) = nlayers +1. no. visc2 layers = nlayers)
+nlayer= 5
+
+#Radial layers (core out). (note nlayers must be defined above this)
+r2= 0.0 3480.0 5700.0 6140.0 6240.0 6370.0
+
+#Default viscosity
+visc0= 1.0e22
+
+#Viscosity variation from default (first zero does not count - core)
+visc2= 0 50 1 1 10
+
+#radius core
+Rcore= 3480.0
+
+#radius Earth
+erad= 6370.0
+
+#No. plates
+NPLT= 11
+
+#Plate areas: first value (0) is dummy value, make sure there is one for each plate (12= 0.42244E+14 if needed)
+parea= 0 0.77691E+14 0.59987E+14 0.49031E+13 0.36125E+13 0.31173E+13 0.68647E+14 0.61026E+14 0.58440E+14 0.16462E+14 0.10806E+15 0.57208E+13
+
+#LDIM - absolute max sph. har. deg.
+LDIM= 25
+
+# Geographical divisor (no. lat points = 180/dd)
+dd= 1
+
+#Conversion factor 365.0*24*60*60
+stoy= 31536000
+
+# Lmax - sph. harm. deg.
+Lmax= 20
+
+#n?
+n= 4
+
+#no slip always for plates calculations
+iba= 0
+
+#ratio of obs/pred rotations for scaling velocities...
+ratio= 1.0
+
+
