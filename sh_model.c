@@ -72,8 +72,9 @@ void sh_init_model(struct sh_lms_model *model,int lmax,int type,
 				   up total number of points 
 				   in spatial domain
 				*/
+    /* use irregular grid */
     sh_init_expansion((model->exp+i),lmax,type,model->ivec,
-		      verbose);
+		      verbose,FALSE);
     model->tnpoints += model->exp[i].npoints;
   }
   /* logic  flag for spatial data */

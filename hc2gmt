@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# convert HC output in binary format to GMT grd files
+# convert HC velocity output in binary format (as produced by -px) to GMT grd files for vr, vt, vp
 #
 dfile=vdepth.dat		# depth level file
 sfile=vsol			# prefix of solution files

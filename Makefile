@@ -1,11 +1,15 @@
 #
 #
 # makefile for experimental Hager & O'Connell routines
+# and hcplates Ricard/Vigny type plate velocity inversions
 #
+# see source files for comments and reference to original authors
+# 
+# 
 #
 #
 LD = $(CC)
-CFLAGS = $(CFLAGS_DEBUG) -Wall
+CFLAGS = $(CFLAGS_DEBUG) 
 
 #
 # EDIT HERE FOR GMT VERSION 
@@ -135,17 +139,21 @@ LIBS = $(HC_LIBS) $(GGRD_LIBS) $(HEAL_LIBS) $(RICK_LIB)
 
 all: dirs libs hc hc.dbg hc_extract_sh_layer \
 	sh_syn sh_ana sh_power \
-	ggrd_test 
+	ggrd_test hcplates
 
 libs: dirs hc_lib  $(HEAL_LIBS) $(RICK_LIB)
 
 hc_lib: $(HC_LIBS) $(GGRD_LIBS)  
 
-really_all: dirs proto all 
+really_all: proto all 
 
 
 proto: hc_auto_proto.h
 
+hcplates: 
+	cd hcplates; \
+	make ;\
+	cd ..
 
 
 sh_test: $(LIBS) $(INCS) $(ODIR)/sh_test.o

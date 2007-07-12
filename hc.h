@@ -92,6 +92,22 @@ struct hc_sm{
   HC_PREC u[6][4];
 };
 /* 
+   for polsol and solve
+*/
+struct hc_ps{
+  /* scaling factors will only be computed once */
+  int ncalled;
+  double rho_scale;
+  double alpha, beta, geoid_factor;
+  hc_boolean rho_init, 
+    prop_params_init, 	/* parameters for propagator computation */
+    abg_init  ,		/* alpha, beta factors */
+    prop_mats_init;	/* will be true only if save_prop_mats is 
+			   requested  */
+  /* for solve */
+  hc_boolean tor_init, pol_init;
+};
+/* 
 
 
 parameter structure to allow for settings that are specific to the
@@ -186,7 +202,7 @@ struct hcs{
 		      
 		      */
 
-
+  struct hc_ps psp;
   hc_boolean save_solution; /* memory intensive speedup in poloidal
 				solution by saving propagator matrices 
 				this will also keep the toroidal solution 
@@ -212,7 +228,7 @@ struct hcs{
   struct sh_lms *tor_sol; /* 
 			  toroidal solution
 		       */
-  hc_boolean initialized;	/* logic flag */
+  hc_boolean initialized,const_init,visc_init,dens_init,pvel_init;	/* logic flags */
   /* sqrt(l(l+1)) and 1/lfac factors */
   HC_PREC *lfac,*ilfac;
   int lfac_init;
@@ -237,7 +253,7 @@ struct hcs{
   HC_PREC stress_scale;		/* to go to MPa */
   HC_PREC r_cmb;		/* radius of CMB */
   /* Legendre functions */
-  double *plm;
+  SH_RICK_PREC *plm;
 
   /* more logic flags */
   my_boolean spectral_solution_computed, spatial_solution_computed;

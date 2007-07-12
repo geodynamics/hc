@@ -498,7 +498,6 @@ void shana_init(int lmax,int ivec,int *npoints,int *nplm,
   // local 
   HC_CPREC xtemp;
   int i,l;
-  static int old_lmax,old_ivec,old_npoints,old_nplm,old_tnplm;
 
   if(!shana->was_called){
     if(lmax == 0){
@@ -525,7 +524,7 @@ void shana_init(int lmax,int ivec,int *npoints,int *nplm,
     // number of points in one layer
     //
     *npoints = shana->nlat * shana->nlon; 
-    old_npoints = *npoints;
+    shana->old_npoints = *npoints;
     //
     //
     // for coordinate computations
@@ -541,8 +540,8 @@ void shana_init(int lmax,int ivec,int *npoints,int *nplm,
     // size of the Plm array 
     *nplm = shana->lmsize * shana->nlat;
     *tnplm = *nplm * (1+ivec);           // for all layers
-    old_tnplm = *tnplm;
-    old_nplm = *nplm;
+    shana->old_tnplm = *tnplm;
+    shana->old_nplm = *nplm;
     //
     // initialize the Gauss points, at which the latitudes are 
     // evaluated
@@ -596,23 +595,23 @@ void shana_init(int lmax,int ivec,int *npoints,int *nplm,
     /* 
        save initial call lmax and ivec settings
     */
-    old_lmax = lmax;
-    old_ivec = ivec;
+    shana->old_lmax = lmax;
+    shana->old_ivec = ivec;
 
     /* end initial branch */
   }else{
-    if(lmax != old_lmax){
+    if(lmax != shana->old_lmax){
       fprintf(stderr,"shana_init: error: was init with lmax %i, now: %i. (ivec: %i, now: %i)\n",
-	      old_lmax,lmax,old_ivec,ivec);
+	      shana->old_lmax,lmax,shana->old_ivec,ivec);
       exit(-1);
     }
-    if(ivec > old_ivec){
-      fprintf(stderr,"shana_init: error: original ivec %i, now %i\n",old_ivec,ivec);
+    if(ivec > shana->old_ivec){
+      fprintf(stderr,"shana_init: error: original ivec %i, now %i\n",shana->old_ivec,ivec);
       exit(-1);
     }
-    *npoints = old_npoints;
-    *nplm = old_nplm;
-    *tnplm = old_tnplm;
+    *npoints = shana->old_npoints;
+    *nplm = shana->old_nplm;
+    *tnplm = shana->old_tnplm;
   }
 } /* end shana init */
 
@@ -645,7 +644,7 @@ void shana_plmbar1(double  *p,double *dp,int ivec,int lmax,
   double plm,pm1,pm2,pmm,sintsq,fnum,fden;
   //
   int i,l,m,k,kstart,l2,mstop,lmaxm1;
-  static int old_lmax,old_ivec;
+
   if(!shana->initialized){
     fprintf(stderr,"shana_plmbar1: error: module not initialized, call shana_init first\n");
     exit(-1);
@@ -716,8 +715,8 @@ void shana_plmbar1(double  *p,double *dp,int ivec,int lmax,
 	k++;
       }
     } /* end ivec==1 */
-    old_lmax = lmax;
-    old_ivec = ivec;
+    shana->old_lmax = lmax;
+    shana->old_ivec = ivec;
     shana->computed_legendre = TRUE;
     /* 
        end first call 
@@ -727,13 +726,13 @@ void shana_plmbar1(double  *p,double *dp,int ivec,int lmax,
        subsequent call 
     */
     // test if lmax has changed
-    if(lmax != old_lmax){
-      fprintf(stderr,"shana_plmbar1: error: factors were computed for lmax %in",old_lmax);
+    if(lmax != shana->old_lmax){
+      fprintf(stderr,"shana_plmbar1: error: factors were computed for lmax %in",shana->old_lmax);
       fprintf(stderr,"shana_plmbar1: error: now, lmax is %i\n",lmax);
       exit(-1);
     }
-    if(ivec > old_ivec){
-      fprintf(stderr,"shana_plmbar1: error: init with %i, now ivec %i\n",old_ivec,ivec);
+    if(ivec > shana->old_ivec){
+      fprintf(stderr,"shana_plmbar1: error: init with %i, now ivec %i\n",shana->old_ivec,ivec);
       exit(-1);
     }
   }

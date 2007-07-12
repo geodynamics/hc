@@ -56,6 +56,21 @@ void ggrd_init_vstruc(struct ggrd_vel *v)
   v->thist.init = FALSE;
   v->velscale =  1.0; 
   v->rcmb = GGRD_RCMB_ND;
+  /* rlevels */
+  v->rlevels = NULL;
+  v->rl_warned = FALSE;
+  /* seafloor */
+  v->sf_init = FALSE;
+  /* thist structure  */
+  v->thist.init = FALSE;
+  v->thist.called = FALSE;
+
+  /* interpolation structure */
+  v->vd.init = FALSE;
+  v->vd.reduce_r_stencil = FALSE;
+  v->vd.z_warned = FALSE; 
+  v->vd.w_warned = FALSE;
+  
 }
 
 /* 
@@ -123,7 +138,7 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
     /* 
        if v->history is set, will look for different time intervals 
     */
-    ggrd_read_time_intervals(&v->thist,tfilename,v->history,verbose);
+    ggrd_init_thist_from_file(&v->thist,tfilename,v->history,verbose);
     if(v->use_age){
       /* 
 
@@ -389,18 +404,18 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 			level);
 	      ggrd_resort_and_check((v->vr+os1),fgrd,dgrd,v->n[HC_PHI],
 				    v->n[HC_THETA],wraparound,1.0/v->velscale,
-				    v->read_gmt,TRUE,0.0);
+				    v->read_gmt,TRUE,0.0,&v->vd.w_warned);
 	    }else if((zero_boundary_vr)&&(v->rlevels[i] < v->rcmb)){
 	      if(verbose)
 		fprintf(stderr,"ggrd_read_vel_grids: WARNING: assuming level %3i is at CMB     and setting vr to zero\n",
 			level);
 	      ggrd_resort_and_check((v->vr+os1),fgrd,dgrd,v->n[HC_PHI],
 				    v->n[HC_THETA],wraparound,1.0/v->velscale,
-				    v->read_gmt,TRUE,0.0);
+				    v->read_gmt,TRUE,0.0,&v->vd.w_warned);
 	    }else
 	      ggrd_resort_and_check((v->vr+os1),fgrd,dgrd,v->n[HC_PHI],
 				    v->n[HC_THETA],wraparound,1.0/v->velscale,
-			       v->read_gmt,FALSE,ddummy);
+			       v->read_gmt,FALSE,ddummy,&v->vd.w_warned);
 	    hc_calc_mean_and_stddev((v->vr+os1),&ddummy,v->n[HC_TPPROD],
 				    (mean+j),(std+j),(rms+j),FALSE,weighted,weights);
 	  }else if(j == HC_THETA){
@@ -409,7 +424,7 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 	    //
 	    ggrd_resort_and_check((v->vt+os1),fgrd,dgrd,v->n[HC_PHI],
 				  v->n[HC_THETA],wraparound,1.0/v->velscale,
-				  v->read_gmt,FALSE,ddummy);
+				  v->read_gmt,FALSE,ddummy,&v->vd.w_warned);
 	    hc_calc_mean_and_stddev((v->vt+os1),&ddummy,v->n[HC_TPPROD],
 				    (mean+j),(std+j),(rms+j),FALSE,weighted,weights);
 	  }else{
@@ -420,7 +435,7 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 	      GGRD_PE("ggrd_read_vel_grds: index error");
 	    ggrd_resort_and_check((v->vp+os1),fgrd,dgrd,v->n[HC_PHI],v->n[HC_THETA],
 				  wraparound,1.0/v->velscale,
-				  v->read_gmt,FALSE,ddummy);
+				  v->read_gmt,FALSE,ddummy,&v->vd.w_warned);
 	    hc_calc_mean_and_stddev((v->vp+os1),&ddummy,v->n[HC_TPPROD],
 				    (mean+j),(std+j),(rms+j),FALSE,weighted,weights);
 	    //
@@ -476,19 +491,19 @@ void ggrd_resort_and_check(GGRD_CPREC *a,float *fb,double *db,
 			   int m, int n,hc_boolean wrap,
 			   GGRD_CPREC factor,hc_boolean read_gmt,
 			   hc_boolean set_to_constant,
-			   GGRD_CPREC constant)
+			   GGRD_CPREC constant,
+			   ggrd_boolean *warned)
 {
   int i,j,nm,os1,os2,boff;
-  static hc_boolean warned = FALSE;
   nm = m*n;
   if(read_gmt){
     // check for NaNs
     for(i=0;i < nm;i++)
       if(!finite(fb[i])){
 	fb[i] = 0.0;
-	if(!warned){
+	if(!(*warned)){
 	  fprintf(stderr,"WARNING: at least one NaN entry in the data has been replaced with zero\n");
-	  warned=TRUE;
+	  *warned=TRUE;
 	}
       }
   }else{
@@ -496,9 +511,9 @@ void ggrd_resort_and_check(GGRD_CPREC *a,float *fb,double *db,
     for(i=0;i<nm;i++)
       if(!finite(db[i])){
 	db[i]=0.0;
-	if(!warned){
+	if(!(*warned)){
 	  fprintf(stderr,"WARNING: at least one NaN entry in the data has been replaced with zero\n");
-	  warned=TRUE;
+	  *warned=TRUE;
 	}
       }
   }
@@ -554,11 +569,11 @@ void ggrd_read_depth_levels(struct ggrd_vel *v,
   FILE *in;
   int i;
   GGRD_CPREC *rnew;
-  hc_boolean warned = FALSE;
-  in=hc_open(filename,"r","ggrd_read_depth_levels");
+
+  in = hc_open(filename,"r","ggrd_read_depth_levels");
   /* set counters */
   v->n[HC_R]=0;
-  v->rlevels=(GGRD_CPREC *)malloc(sizeof(GGRD_CPREC));
+  v->rlevels=(GGRD_CPREC *)realloc(v->rlevels,sizeof(GGRD_CPREC));
   if(!v->rlevels)
     HC_MEMERROR("ggrd_read_depth_levels");
   while(fscanf(in,HC_FLT_FORMAT,(v->rlevels + v->n[HC_R]))==1){
@@ -568,10 +583,10 @@ void ggrd_read_depth_levels(struct ggrd_vel *v,
     if(v->rlevels[v->n[HC_R]] < 0){
       /* flip sign */
       v->rlevels[v->n[HC_R]] = -v->rlevels[v->n[HC_R]];
-      if((!warned) && (verbose)){
+      if((!v->rl_warned) && (verbose)){
 	fprintf(stderr,"ggrd_read_depth_levels: WARNING: flipping sign of depth levels in %s\n",
 		GGRD_DFILE);
-	warned=TRUE;
+	v->rl_warned = TRUE;
       }
     }
     /* radius of levels */

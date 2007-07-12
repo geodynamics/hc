@@ -96,14 +96,10 @@ void hc_ptrot_command_line(int argc, char **argv,
       fprintf(stderr,"Options:\n\n");
       fprintf(stderr,"-B plate boundary file (%s)\n",
 	      p->boundary_file);
-      fprintf(stderr,"-D data file (enes) containg no. plates (first line), then no. points on each plate (rest). Both files needed. \n",
-	      p->data_filename);
-	   fprintf(stderr,"-P plate id file (default: plate_ids.ixz) containg plates id, lat & long. \n",
-	      p->data_filename);
-	  fprintf(stderr,"-O output file (default: unitrots.coeff) containg coefficients for unit rotations on each plate \n",
-	      p->data_filename);
-		fprintf(stderr,"-d degree of spherical harmonics (defaults to 20) \n",
-	      p->data_filename);  
+      fprintf(stderr,"-D data file (enes) containg no. plates (first line), then no. points on each plate (rest). Both files needed.\n");
+	   fprintf(stderr,"-P plate id file (default: plate_ids.ixz) containg plates id, lat & long. \n");
+	  fprintf(stderr,"-O output file (default: unitrots.coeff) containg coefficients for unit rotations on each plate \n");
+	  fprintf(stderr,"-d degree of spherical harmonics (defaults to 20) \n");  
       fprintf(stderr,"\n\n");
       exit(-1);
 	}

@@ -221,10 +221,8 @@ void hc_findplates_command_line(int argc, char **argv,
       fprintf(stderr,"options:\n\n");
       fprintf(stderr,"-B plate boundary file (%s)\n",
 	      p->boundary_file);
-      fprintf(stderr,"-D data file (enes) containg no. plates (first line), then no. points on each plate (rest). Both files needed. \n",
-	      p->data_filename);
-	   fprintf(stderr,"-O output file (default: plate_ids.ixz) containg plates id, lat & long. \n",
-	      p->data_filename);	  
+      fprintf(stderr,"-D data file (enes) containg no. plates (first line), then no. points on each plate (rest). Both files needed. \n");
+	   fprintf(stderr,"-O output file (default: plate_ids.ixz) containg plates id, lat & long\n");	  
       fprintf(stderr,"\n\n");
       exit(-1);
 	}

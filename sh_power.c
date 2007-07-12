@@ -54,7 +54,7 @@ int main(int argc, char **argv)
     /* 
        input and init 
     */
-    sh_allocate_and_init(&exp,shps,lmax, type,ivec,verbose);
+    sh_allocate_and_init(&exp,shps,lmax, type,ivec,verbose,FALSE);
     sh_read_coefficients_from_file(exp,shps,-1,stdin,binary,fac,verbose);
     /* get space */
     hc_svecrealloc(&power,exp->lmaxp1 * shps,"sh_power");

@@ -52,10 +52,14 @@ void hc_init_parameters(struct hc_parameters *p)
 */
 void hc_struc_init(struct hcs **hc)
 {
-  
+  /* this will take care of all flags and such */
   *hc = (struct hcs *)calloc(1,sizeof(struct hcs ));
   if(!(*hc))
     HC_MEMERROR("hc_struc_init: hc");
+  /* just to be sure */
+  (*hc)->initialized = (*hc)->const_init = (*hc)->visc_init = 
+    (*hc)->dens_init = (*hc)->pvel_init = FALSE;
+  hc_init_polsol_struct(&((*hc)->psp));
   /* 
      assign NULL pointers to allow reallocating 
   */
@@ -65,6 +69,18 @@ void hc_struc_init(struct hcs **hc)
   (*hc)->dens_anom = NULL; /* expansions */
   (*hc)->plm = NULL;
   (*hc)->prem_init = FALSE;
+}
+
+void hc_init_polsol_struct(struct hc_ps *psp)
+{
+  psp->ncalled = 0;
+   /* scaling factors will only be computed once */
+  psp->rho_scale = 1.0;
+  psp->rho_init = FALSE;
+  psp->prop_params_init = FALSE; 	/* parameters for propagator computation */
+  psp->abg_init = FALSE;		/* alpha, beta factors */
+  psp->prop_mats_init = FALSE;	/* will be true only if save_prop_mats is  */
+  psp->tor_init = psp->pol_init = FALSE;
 }
 /* 
 
@@ -152,9 +168,8 @@ void hc_init_main(struct hcs *hc,int sh_type,
 void hc_init_constants(struct hcs *hc, HC_PREC dens_anom_scale,
 		       char *prem_filename,hc_boolean verbose)
 {
-  static hc_boolean init=FALSE;
   int ec;
-  if(init)
+  if(hc->const_init)
     HC_ERROR("hc_init_constants","why would you call this routine twice?")
   if(!hc->prem_init){
     /* PREM constants */
@@ -220,7 +235,7 @@ void hc_init_constants(struct hcs *hc, HC_PREC dens_anom_scale,
     (hc->timesc * 1e6);
   
 
-  init = TRUE;
+  hc->const_init = TRUE;
 }
 
 /* 
@@ -348,7 +363,6 @@ void hc_assign_viscosity(struct hcs *hc,int mode,char filename[HC_CHAR_LENGTH],
   FILE *in;
   char fstring[100];
   HC_PREC mean,mweight,rold,mws;
-  static hc_boolean init=FALSE;
   switch(mode){
   case HC_INIT_FROM_FILE:		
     /* 
@@ -356,7 +370,7 @@ void hc_assign_viscosity(struct hcs *hc,int mode,char filename[HC_CHAR_LENGTH],
        init from file part 
     
     */
-    if(init)
+    if(hc->visc_init)
       HC_ERROR("hc_assign_viscosity","viscosity already read from file, really read again?");
     /* 
        read viscosity structure from file 
@@ -430,7 +444,7 @@ void hc_assign_viscosity(struct hcs *hc,int mode,char filename[HC_CHAR_LENGTH],
     HC_ERROR("hc_assign_viscosity","mode undefined");
     break;
   }
-  init = TRUE;
+  hc->visc_init = TRUE;
 }
 /* 
 
@@ -477,18 +491,17 @@ void hc_assign_density(struct hcs *hc,
 					   to 0.01 for percent input,
 					   for instance
 					*/
-  static hc_boolean init=FALSE;
   hc->compressible = compressible;
 
-  if(init)			/* clear old expansions, if 
-				   already initialized */
+  if(hc->dens_init)			/* clear old expansions, if 
+					   already initialized */
     sh_free_expansion(hc->dens_anom,hc->inho);
   /* get PREM model, if not initialized */
   if(!hc->prem_init)
     HC_ERROR("hc_assign_density","assign 1-D reference model (PREM) first");
   switch(mode){
   case HC_INIT_FROM_FILE:
-    if(init)
+    if(hc->dens_init)
       HC_ERROR("hc_assign_density","really read dens anomalies again from file?");
 
     /* 
@@ -573,11 +586,11 @@ void hc_assign_density(struct hcs *hc,
       hc_get_blank_expansions(&hc->dens_anom,hc->inho+1,hc->inho,
 			      "hc_assign_density");
       /* 
-	 initialize expansion
+	 initialize expansion on irregular grid
       */
       sh_init_expansion((hc->dens_anom+hc->inho),
 			(nominal_lmax > lmax) ? (nominal_lmax):(lmax),
-			hc->sh_type,1,verbose);
+			hc->sh_type,1,verbose,FALSE);
       /* 
 	 
 	 read parameters and scale (put possible depth dependence of
@@ -599,7 +612,7 @@ void hc_assign_density(struct hcs *hc,
     HC_ERROR("hc_assign_density","mode undefined");
     break;
   }
-  if((!init)||(layer_structure_changed)){
+  if((!hc->dens_init)||(layer_structure_changed)){
     /* 
        
     assign the other radii, nrad + 2
@@ -649,7 +662,7 @@ void hc_assign_density(struct hcs *hc,
 		sqrt(sh_total_power((hc->dens_anom+i))));
     free(dbot);free(dtop);
   } /* end layer structure part */
-  init = TRUE;
+  hc->dens_init = TRUE;
 }
 /* 
 
@@ -694,13 +707,12 @@ void hc_assign_plate_velocities(struct hcs *hc,int mode,
 				hc_boolean pvel_in_binary,
 				hc_boolean verbose)
 {
-  static hc_boolean init = FALSE;
   int type,shps,ilayer,nset,ivec;
   HC_PREC zlabel,vfac[2],t10[2],t11[2];
   FILE *in;
   /* scale to go from cm/yr to internal scale */
   vfac[0] = vfac[1] = 1.0/hc->vel_scale;
-  if(init)
+  if(hc->pvel_init)
     HC_ERROR("hc_assign_plate_velocities","what to do if called twice?");
   if(!vel_bc_zero){
     /* 
@@ -737,10 +749,10 @@ void hc_assign_plate_velocities(struct hcs *hc,int mode,
 	exit(-1);
       }
       /* 
-	 initialize expansion 
+	 initialize expansion using irregular grid
       */
-      sh_init_expansion((hc->pvel+0),lmax,hc->sh_type,1,verbose);
-      sh_init_expansion((hc->pvel+1),lmax,hc->sh_type,1,verbose);
+      sh_init_expansion((hc->pvel+0),lmax,hc->sh_type,1,verbose, FALSE);
+      sh_init_expansion((hc->pvel+1),lmax,hc->sh_type,1,verbose, FALSE);
       /* 
 	 read in expansions, convert to internal format from 
 	 physical 
@@ -774,20 +786,21 @@ void hc_assign_plate_velocities(struct hcs *hc,int mode,
     /* 
        initialize with zeroes
     */
-    if(init){
+    if(hc->pvel_init){
       sh_clear_alm(hc->pvel);
       sh_clear_alm((hc->pvel+1));
     }else{
+      /* use irregular grid */
       sh_init_expansion(hc->pvel,lmax,hc->sh_type, 
-			1,verbose);
+			1,verbose,FALSE);
       sh_init_expansion((hc->pvel+1),lmax,hc->sh_type, 
-			1,verbose);
+			1,verbose,FALSE);
     }
     if(verbose)
       fprintf(stderr,"hc_assign_plate_velocities: using no-slip surface BC, lmax %i\n",
 	      lmax);
   }
-  init = TRUE;
+  hc->pvel_init = TRUE;
 }
  
 /* 
@@ -858,4 +871,24 @@ void hc_get_blank_expansions(struct sh_lms **expansion,
   /* copy zeroes over */
   memcpy((*expansion+nold),tmpzero,ngrow*sizeof(struct sh_lms));
   free(tmpzero);
+}
+
+/* 
+
+
+be more careful with freeing
+
+
+ */
+void hc_struc_free(struct hcs **hc)
+{
+  free((*hc)->visc);
+  free((*hc)->rvisc);
+  free((*hc)->visc);
+
+  free((*hc)->qwrite);
+
+  sh_free_expansion((*hc)->dens_anom,1);
+  
+  free(*hc);
 }

@@ -4,6 +4,13 @@ The code should compile on any basic UNIX/Linux system with the GMT
 tools and libraries installed. See the Makefile for comments and what
 to modify. 
 
+
+What is described below is the hc Hager & O'Connell (1981) forward
+flow and geoid computation. For plate velocity inversions following
+the Ricard & Vigny (1989) method, see the hcplates subdirectory and
+the README there.
+
+
 The Makefile assumes that the following environment variables are
 predefined: 
 
@@ -88,6 +95,10 @@ solution procedure and I/O options:
 
 SPHERICAL HARMONICS FORMAT
 
+
+(A) Regular (long) format, which allows for both scalar and vector
+harmonics 
+				   
 All single layer spherical harmonics are in the fully normalized,
 physical convention, e.g. Dahlen & Tromp (1998). 
 
@@ -132,6 +143,13 @@ a10p b10p a10t b10t
 ...
 
 
+(B) Short format
+
+As above, but will only expect a single integer, lmax, as the header
+for a spherical harmonic expansion.
+
+
+
 
 OTHER INPUT FILE FORMATS
 
@@ -162,35 +180,46 @@ USING THE OUTPUT
 
    a) extract SH expansion of radial velocity at layer 2
 
-      hc_extract_sh_layer sol.bin 2 1
+      hc_extract_sh_layer vel.sol.bin 2 1
 
    b) extract SH expansion of radial velocity at layer 2 and convert
       to spatial expansion
 
-      hc_extract_sh_layer sol.bin 2 1 0 | sh_syn  
+      hc_extract_sh_layer vel.sol.bin 2 1 0 | sh_syn  
 
    c) extract SH expansion of poloidal and toroidal velocity at layer 5 and convert
       to spatial expansion of v_theta v_phi
 
-      hc_extract_sh_layer sol.bin 5 2 0 | sh_syn
+      hc_extract_sh_layer vel.sol.bin 5 2 0 | sh_syn
 
 
 
 
+USING THE SPHERICAL HARMONICS TOOLS AS STANDALONE
 
 
-DIRECTORY LISTING:
+1) Convert scalar values from a GMT/Netcdf grd file into a spherical
+   harmonics expansion of degree 31
 
-becker@jackie:~/progs/src/hc-svn > ls *.c *.h
-ggrd_grdtrack_util.c   hc.h             prem.h          sh_rick.h
-ggrd_grdtrack_util.h   hc_init.c        prem_util.c     sh_shana.h
-ggrd.h                 hc_input.c       rick_fft_c.c    sh_spherepack.h
-ggrd_readgrds.c        hc_matrix.c      rick_sh_c.c     sh_syn.c
-ggrd_struc.h           hc_misc.c        sh_ana.c        sh_test.c
-ggrd_test.c            hc_output.c      shana_sh.c      simple_test.c
-ggrd_velinterpol.c     hc_polsol.c      sh_exp.c        spherepack_sh.c
-hc_auto_proto.h        hc_propagator.c  sh.h            test_fft.c
-hc_auto_proto.temp.h   hc_solve.c       sh_model.c
-hc_extract_sh_layer.c  hc_torsol.c      sh_power.c
-hc_filenames.h         main.c           sh_rick_ftrn.h
+
+   a) obtain scalara data at the Gaussian intergration points
+
+      sh_ana -127 | grdtrack -Lx -G$datadir/etopo5/etopo5.1.grd > etopo5.dat
+
+
+   b) expand
+
+       cat etopo5.dat | sh_ana 127 > etopo5.ab
+
+2) convert spherical harmonics to spatial expansion
+
+      cat etopo5.ab | sh_syn > etopo5.127.dat
+
+
+
+     
+
+
+
+
 

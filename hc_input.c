@@ -36,8 +36,8 @@ void hc_read_sh_solution(struct hcs *hc, struct sh_lms **sol, FILE *in,
       if(!(*sol))
 	HC_MEMERROR("hc_read_sh_solution: sol");
       hc->sh_type = type;
-      for(i=0;i < nsol;i++)	/* init expansions */
-	sh_init_expansion((*sol+i),lmax,hc->sh_type,1,verbose);
+      for(i=0;i < nsol;i++)	/* init expansions on irregular grid */
+	sh_init_expansion((*sol+i),lmax,hc->sh_type,1,verbose,FALSE);
       hc->nrad = nset - 2;
       hc_vecrealloc(&hc->r,nset,"hc_read_sh_solution");
     }

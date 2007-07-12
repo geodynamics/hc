@@ -22,7 +22,7 @@ and Tromp
 // how to convert from rick's spherical harmonic convention to dahlen and tromp?
 // C_DT(l,m) = SH_RICK_FACTOR(l, m) * C_RICK(l,m)
 //
-#define SH_RICK_FACTOR(l, m) (pow(-1.0,(double)(m))*SH_RICK_TWO_SQRT_PI)
+#define SH_RICK_FACTOR(l, m) (pow(-1.0,(SH_RICK_PREC)(m))*SH_RICK_TWO_SQRT_PI)
 
 //
 
@@ -52,15 +52,18 @@ struct rick_module{
   // Gauss points: cos(theta), weights, and actual theta
   SH_RICK_PREC  *gauss_z, *gauss_w, *gauss_theta;
   //
+  //
+  SH_RICK_PREC *cfac,*sfac;
+
   SH_RICK_PREC *lfac, *ilfac;
   // those are for Legendre polynomials (fac1  fac2 only for ivec=1)
   // make those double precision
   //
-  double  *plm_f1,*plm_f2,*plm_fac1,*plm_fac2,*plm_srt;
+  SH_RICK_PREC  *plm_f1,*plm_f2,*plm_fac1,*plm_fac2,*plm_srt;
   // this is for vector harmonics, only for ivec=1
   SH_RICK_PREC  *sin_theta,*ell_factor;
   // spacing in longitudes
-  double dphi;
+  SH_RICK_PREC dphi;
   // int (bounds and such)
   int nlat,nlon,lmsize,lmsize2,nlonm1;
   // logic flags
@@ -68,6 +71,10 @@ struct rick_module{
     vector_sh_fac_init;
   // init
   my_boolean was_called;
+
+
+  /* more book keeping stuff */
+  int old_lmax,old_ivec,old_npoints,old_nplm,old_tnplm;
 
 };
 
@@ -104,19 +111,19 @@ f90 versions
 
 extern void rick_f90_shd2c(float *,float *,int *,int *, 
 			   SH_RICK_PREC *,SH_RICK_PREC *);
-extern void rick_f90_shd2c_pre(float *, float *,int *,double *,
-			   double *, int *,SH_RICK_PREC *,
+extern void rick_f90_shd2c_pre(float *, float *,int *,SH_RICK_PREC *,
+			   SH_RICK_PREC *, int *,SH_RICK_PREC *,
 			   SH_RICK_PREC *);
 extern void rick_f90_shc2d(SH_RICK_PREC *,SH_RICK_PREC *,int *,int *, 
 		       float *, float *);
 extern void rick_f90_shc2d_pre(SH_RICK_PREC *,SH_RICK_PREC *,
-			   int *,double *,
-			   double *,int *,float *,float *);
+			   int *,SH_RICK_PREC *,
+			   SH_RICK_PREC *,int *,float *,float *);
 extern void rick_f90_init(int *,int *,int *,int *, int *);
-extern void rick_f90_pix2ang(int *, int *, double *, double *);
+extern void rick_f90_pix2ang(int *, int *, SH_RICK_PREC *, SH_RICK_PREC *);
 extern void rick_f90_free_module(int *);
 extern void rick_f90_index(int *,int *,int *,int *);
-extern void rick_f90_compute_allplm(int *,int *,double *,double *);
+extern void rick_f90_compute_allplm(int *,int *,SH_RICK_PREC *,SH_RICK_PREC *);
 
 /* FFT stuff */
 extern void rick_f90_cs2ab( SH_RICK_PREC *, int *);

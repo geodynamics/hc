@@ -13,6 +13,7 @@
 				*/
 #define GGRD_CPREC double
 #define GGRD_EPS 5e-15
+#define ggrd_boolean unsigned char
 
 #define HC_FLT_FORMAT "%lf"
 #endif

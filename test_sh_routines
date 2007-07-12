@@ -3,9 +3,9 @@
 # test spherical harmonic routines for scalar fields
 #
 makegrid=${1-0}
-vec=0			       # 0: scalar test 1: velocity field test
+vec=1			       # 0: scalar test 1: velocity field test
 lmax=31
-type=1			       # 0: Healpix 1: Rick 
+type=0			       # 1: Healpix 0: Rick 
 
 
 

@@ -20,6 +20,18 @@ usage: cat data.lonlatz | sh_ana l_max ivec
 
 where data.lonlatz has the data at the required locations as put out by sh_ana -lmax
 
+
+for scalars, the input format is 
+
+lon[deg] lat[deg] scalar
+
+for vectors
+
+lon[deg] lat[deg] v_theta v_phi
+
+where theta and phi are the vector components in South and East direction, respectively. 
+
+
 $Id: sh_ana.c,v 1.6 2006/01/22 01:11:34 becker Exp $
 
 */
@@ -31,7 +43,7 @@ int main(int argc, char **argv)
   hc_boolean verbose = TRUE, use_3d = FALSE, short_format = FALSE,
     binary = FALSE, print_spatial_base = FALSE;
   float *data, zlabel = 0,*flt_dummy;
-  double *dbl_dummy;
+  SH_RICK_PREC *dummy;
   HC_PREC fac[3] = {1.,1.,1.};
 
   /* 
@@ -75,7 +87,7 @@ int main(int argc, char **argv)
   */
   shps = (ivec)?(2):(1);
   /* intialize expansion first */
-  sh_allocate_and_init(&exp,shps*nset,lmax,type,ivec,verbose);
+  sh_allocate_and_init(&exp,shps*nset,lmax,type,ivec,verbose,FALSE);
   /* make room for data */
   hc_svecalloc(&data,shps * exp->npoints,"sh_ana");
   if(print_spatial_base){
@@ -92,7 +104,7 @@ int main(int argc, char **argv)
     /* 
        perform spherical harmonic expansion 
     */
-    sh_compute_spectral(data,ivec,FALSE,&dbl_dummy,
+    sh_compute_spectral(data,ivec,FALSE,&dummy,
 			exp,verbose);
     /* print parameters of expansion */
     sh_print_parameters_to_file(exp,shps,ilayer,nset,zlabel,

@@ -35,39 +35,39 @@ wrapper
    grdfile: filename for 2-D and prefix for 3-D
    depth_file: file with depth layers for 3-D
    edge_info_string: as in GMT 
-   g: ggrd_gt structure 
+   g: ggrd_gt structure, pass allocated
 
    
    returns error code
 
 */
-int ggrd_grdtrack_init_general(unsigned char is_three,
+int ggrd_grdtrack_init_general(ggrd_boolean is_three,
 			       char *grdfile, char *depth_file,
 			       char *gmt_edgeinfo_string,
 			       struct ggrd_gt *g,
-			       unsigned char verbose,
-			       unsigned char change_z_sign)
+			       ggrd_boolean verbose,
+			       ggrd_boolean change_z_sign)
 {
-  static unsigned char bilinear = FALSE; /* cubic by default */
-  static double west=0.,east=0.,south=0.,north=0.; /* whole region by default */
+  /* this is a switch and can be left in */
+  static ggrd_boolean bilinear = TRUE; /* bilinear by default */
+  
   int pad[4];
-  unsigned char geographic_in;	/* this is set by grdtrack_init */
+  ggrd_boolean geographic_in;	/* this is set by grdtrack_init */
   int i,j;
   float zavg;
-  if(g->init){
-    fprintf(stderr,"ggrd_grdtrack_init_general: error: call only once\n");
-    return 1;
-  }
+  /* clear all entries */
+  g->east = g->west = g->south = g->north = 0.0;
   g->is_three = is_three;
+  g->init = FALSE;
 #ifdef USE_GMT4
-  if(ggrd_grdtrack_init(&west,&east,&south,&north,&g->f,&g->mm,
+  if(ggrd_grdtrack_init(&g->west,&g->east,&g->south,&g->north,&g->f,&g->mm,
 			grdfile,&g->grd,&g->edgeinfo,
 			gmt_edgeinfo_string,&geographic_in,
 			pad,is_three,depth_file,&g->z,&g->nz,
 			bilinear,verbose,change_z_sign,&g->bcr))
     return 2;
 #else
-  if(ggrd_grdtrack_init(&west,&east,&south,&north,&g->f,&g->mm,
+  if(ggrd_grdtrack_init(&g->west,&g->east,&g->south,&g->north,&g->f,&g->mm,
 			grdfile,&g->grd,&g->edgeinfo,
 			gmt_edgeinfo_string,&geographic_in,
 			pad,is_three,depth_file,&g->z,&g->nz,
@@ -128,9 +128,9 @@ take log10, 10^x and/or scale complete grid. log10 and 10^x applies first
 
  */
 int ggrd_grdtrack_rescale(struct ggrd_gt *g,
-			  unsigned char take_log10, /* take log10() */
-			  unsigned char take_power10, /* take 10^() */
-			  unsigned char rescale, /* rescale? */
+			  ggrd_boolean take_log10, /* take log10() */
+			  ggrd_boolean take_power10, /* take 10^() */
+			  ggrd_boolean rescale, /* rescale? */
 			  double scale	/* factor for rescaling */)
 {
   int i,j,k;
@@ -162,12 +162,12 @@ for 3-D spherical
    interpolation wrapper, uses r, theta, phi input. return value and TRUE if success,
    undefined and FALSE else
 */
-unsigned char ggrd_grdtrack_interpolate_rtp(double r,double t,double p,
+ggrd_boolean ggrd_grdtrack_interpolate_rtp(double r,double t,double p,
 					    struct ggrd_gt *g,double *value,
-					    unsigned char verbose)
+					    ggrd_boolean verbose)
 {
   double x[3];
-  unsigned char result;
+  ggrd_boolean result;
   if(!g->init){			/* this will not necessarily work */
     fprintf(stderr,"ggrd_grdtrack_interpolate_rtp: error, g structure not initialized\n");
     return FALSE;
@@ -205,12 +205,12 @@ unsigned char ggrd_grdtrack_interpolate_rtp(double r,double t,double p,
    undefined and FALSE else
    this mean lon lat z
 */
-unsigned char ggrd_grdtrack_interpolate_xyz(double x,double y,double z,
+ggrd_boolean ggrd_grdtrack_interpolate_xyz(double x,double y,double z,
 					    struct ggrd_gt *g,double *value,
-					    unsigned char verbose)
+					    ggrd_boolean verbose)
 {
   double xloc[3];
-  unsigned char result;
+  ggrd_boolean result;
   if(!g->init){			/* this will not necessarily work */
     fprintf(stderr,"ggrd_grdtrack_interpolate_xyz: error, g structure not initialized\n");
     return FALSE;
@@ -247,13 +247,13 @@ return value and TRUE if success,
 undefined and FALSE else
 
 */
-unsigned char ggrd_grdtrack_interpolate_tp(double t,double p,
+ggrd_boolean ggrd_grdtrack_interpolate_tp(double t,double p,
 					   struct ggrd_gt *g,
 					   double *value,
-					   unsigned char verbose)
+					   ggrd_boolean verbose)
 {
   double x[3];
-  unsigned char result;
+  ggrd_boolean result;
   if(!g->init){			/* this will not necessarily work */
     fprintf(stderr,"ggrd_grdtrack_interpolate_tp: error, g structure not initialized\n");
     return FALSE;
@@ -289,13 +289,13 @@ unsigned char ggrd_grdtrack_interpolate_tp(double t,double p,
    return value and TRUE if success,
    undefined and FALSE else
 */
-unsigned char ggrd_grdtrack_interpolate_xy(double xin,double yin,
+ggrd_boolean ggrd_grdtrack_interpolate_xy(double xin,double yin,
 					   struct ggrd_gt *g,
 					   double *value,
-					   unsigned char verbose)
+					   ggrd_boolean verbose)
 {
   double x[3];
-  unsigned char result;
+  ggrd_boolean result;
   if(!g->init){			/* this will not necessarily work */
     fprintf(stderr,"ggrd_grdtrack_interpolate_xy: error, g structure not initialized\n");
     return FALSE;
@@ -393,14 +393,14 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
 		       struct GRD_HEADER **grd,	/* pass as empty */
 		       struct GMT_EDGEINFO **edgeinfo, /* pass as empty */
 		       char *edgeinfo_string, /* -L type flags from GMT, can be empty */
-		       unsigned char *geographic_in, /* this is normally TRUE */
+		       ggrd_boolean *geographic_in, /* this is normally TRUE */
 		       int *pad,	/* [4] array with padding (output) */
-		       unsigned char three_d, char *dfile, 	/* depth file name */
+		       ggrd_boolean three_d, char *dfile, 	/* depth file name */
 		       float **z,	/* layers, pass as NULL */
 		       int *nz,		/* number of layers */
-		       unsigned char bilinear, /* linear/cubic? */
-		       unsigned char verbose,
-		       unsigned char change_depth_sign, /* change the
+		       ggrd_boolean bilinear, /* linear/cubic? */
+		       ggrd_boolean verbose,
+		       ggrd_boolean change_depth_sign, /* change the
 							  sign of the
 							  depth
 							  levels to go from depth (>0) to z (<0) */
@@ -409,10 +409,10 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
 int ggrd_grdtrack_init(double *west, double *east,double *south, double *north, 
 		       float **f,int *mm,char *grdfile,struct GRD_HEADER **grd,
 		       struct GMT_EDGEINFO **edgeinfo,char *edgeinfo_string, 
-		       unsigned char *geographic_in,int *pad,unsigned char three_d, 
+		       ggrd_boolean *geographic_in,int *pad,ggrd_boolean three_d, 
 		       char *dfile, 	float **z,int *nz,		
-		       unsigned char bilinear,unsigned char verbose,
-		       unsigned char change_depth_sign)
+		       ggrd_boolean bilinear,ggrd_boolean verbose,
+		       ggrd_boolean change_depth_sign)
 #endif
 {
   FILE *din;
@@ -699,8 +699,8 @@ interpolate value
 
  */
 #ifdef USE_GMT4
-unsigned char ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degrees/km */
-					unsigned char three_d, /* use 3-D inetrpolation or 2-D? */
+ggrd_boolean ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degrees/km */
+					ggrd_boolean three_d, /* use 3-D inetrpolation or 2-D? */
 					struct GRD_HEADER *grd, /* grd information */
 					float *f,	/* data array */
 					struct GMT_EDGEINFO *edgeinfo, /* edge information */
@@ -708,11 +708,11 @@ unsigned char ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degree
 					float *z, /* depth layers */
 					int nz,	/* number of depth layers */
 					double *value, /* output value */
-					unsigned char verbose,
+					ggrd_boolean verbose,
 					struct GMT_BCR *bcr)
 #else
-unsigned char ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degrees/km */
-					unsigned char three_d, /* use 3-D inetrpolation or 2-D? */
+ggrd_boolean ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degrees/km */
+					ggrd_boolean three_d, /* use 3-D inetrpolation or 2-D? */
 					struct GRD_HEADER *grd, /* grd information */
 					float *f,	/* data array */
 					struct GMT_EDGEINFO *edgeinfo, /* edge information */
@@ -720,12 +720,13 @@ unsigned char ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degree
 					float *z, /* depth layers */
 					int nz,	/* number of depth layers */
 					double *value, /* output value */
-					unsigned char verbose
+					ggrd_boolean verbose
 					)
 #endif
 {
   int i1,i2;
   double fac1,fac2,val1,val2;
+  static ggrd_boolean zwarned;	/* this should move, leave for now */
   /* If point is outside grd area, 
      shift it using periodicity or skip if not periodic. */
 
@@ -754,7 +755,7 @@ unsigned char ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degree
      interpolate 
   */
   if(three_d){
-    ggrd_gt_interpolate_z(in[2],z,nz,&i1,&i2,&fac1,&fac2,verbose);
+    ggrd_gt_interpolate_z(in[2],z,nz,&i1,&i2,&fac1,&fac2,verbose,&zwarned);
     /* 
        we need these calls to reset the bcr.i and bcr.j counters 
        otherwise the interpolation routine would assume we have the same 
@@ -820,10 +821,10 @@ unsigned char ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degree
   
   returns error code 
 */
-int ggrd_read_time_intervals(struct ggrd_t *thist,
-			     char *input_file,
-			     unsigned char read_thistory,
-			     unsigned char verbose)
+int ggrd_init_thist_from_file(struct ggrd_t *thist,
+			      char *input_file,
+			      ggrd_boolean read_thistory,
+			      ggrd_boolean verbose)
 {
   FILE *in;
   double ta,tb;
@@ -887,6 +888,7 @@ int ggrd_read_time_intervals(struct ggrd_t *thist,
     if(verbose)
       fprintf(stderr,"ggrd_read_time_intervals: only one timestep\n");
   }
+  thist->called = FALSE;
   thist->init = TRUE;
   return 0;
 }
@@ -899,17 +901,17 @@ use linear interpolation for z direction
 void ggrd_gt_interpolate_z(double z,float *za,int nz,
 			   int *i1, int *i2, 
 			   double *fac1, double *fac2,
-			   unsigned char verbose)
+			   ggrd_boolean verbose,
+			   ggrd_boolean *zwarned)
 {
   int nzm1;
-  static unsigned char warned=FALSE;
-  if((!warned)&&verbose){
+  if((!(*zwarned))&&verbose){
     if((z<za[0])||(z>za[nz-1])){
       fprintf(stderr,"interpolate_z: WARNING: at least one z value extrapolated\n");
       fprintf(stderr,"interpolate_z: zmin: %g z: %g zmax: %g\n",
 	      za[0],z,za[nz-1]);
       
-      warned = TRUE;
+      *zwarned = TRUE;
     }
   }
   nzm1 = nz-1;
@@ -952,15 +954,7 @@ void ggrd_interpol_time(GGRD_CPREC time,struct ggrd_t *thist,
 			int *i1,int *i2,GGRD_CPREC *f1,GGRD_CPREC *f2,
 			GGRD_CPREC dxlimit)
 {
-  //     dxlimit is the width of the transition between velocity stages
-  static  GGRD_CPREC xllimit,xrlimit;
 
-  //     these are the local, saved, quantities which are not determined anew
-  //     if the time doesn't change
-  //     
-  static GGRD_CPREC f1_loc,f2_loc,time_old;
-  static int ileft_loc,iright_loc,ntlim;
-  static unsigned char called = FALSE;
   GGRD_CPREC tloc,xll;
   int i22,i;
   if(!thist->init){
@@ -977,13 +971,13 @@ void ggrd_interpol_time(GGRD_CPREC time,struct ggrd_t *thist,
     *f1 = 1.0;
     *f2 = 0.0;
   }else{ // more than one stage
-    if(!called){
+    if(!thist->called){
       /* 
 	 init loop
 
       */
       /* check if dxlimit is larger than actual stage intervals */
-      for(i=0;i<thist->nvtimes;i++){
+      for(i=0;i < thist->nvtimes;i++){
 	xll =  thist->vtimes[i*3+2] - thist->vtimes[i*3];
 	if(dxlimit > xll){
 	  fprintf(stderr,"inter_vel: adjusting transition width to %g from time intervals\n",
@@ -991,15 +985,15 @@ void ggrd_interpol_time(GGRD_CPREC time,struct ggrd_t *thist,
 	  dxlimit = xll;
 	}
       }
-      ntlim = thist->nvtimes-1;
+      thist->ntlim = thist->nvtimes-1;
       /* init some more factors */
-      xllimit=  -dxlimit/2.0;
-      xrlimit=   dxlimit/2.0;
-      time_old = thist->vtimes[0] - 100; /* to make sure we get a
+      thist->xllimit=  -dxlimit/2.0;
+      thist->xrlimit=   dxlimit/2.0;
+      thist->time_old = thist->vtimes[0] - 100; /* to make sure we get a
 					    first fix */
-      called = TRUE;
+      thist->called = TRUE;
     } /* end init */
-    if(fabs(tloc - time_old)>5e-7){       
+    if(fabs(tloc - thist->time_old)>5e-7){       
       /* 
 	 need to get new factors 
       */
@@ -1029,19 +1023,19 @@ void ggrd_interpol_time(GGRD_CPREC time,struct ggrd_t *thist,
 	  exit(-1);
 	}
       }
-      iright_loc=0;  // right interval index
+      thist->iright_loc=0;  // right interval index
       i22=1;         // right interval midpoint
       //     find the right interval such that its midpoint is larger or equal than time
       while((tloc > thist->vtimes[i22]) && 
-	    (iright_loc < ntlim)){
-	iright_loc++;
+	    (thist->iright_loc < thist->ntlim)){
+	thist->iright_loc++;
 	i22 += 3;
       }
-      if(iright_loc == 0){
-	iright_loc = 1;
+      if(thist->iright_loc == 0){
+	thist->iright_loc = 1;
 	i22 = 4;
       }
-      ileft_loc = iright_loc - 1; // left interval index
+      thist->ileft_loc = thist->iright_loc - 1; // left interval index
       //
       //     distance from right boundary of left interval 
       //     (=left boundary of right interval) 
@@ -1055,29 +1049,29 @@ void ggrd_interpol_time(GGRD_CPREC time,struct ggrd_t *thist,
       //     vf1_loc and vf2_loc are the weights for velocities within the left and right
       //     intervals respectively
       //
-      if(xll < xllimit){ // xllimit should be 1-dx, dx~0.1
-	f1_loc = 1.0;
-	f2_loc = 0.0;
+      if(xll < thist->xllimit){ // xllimit should be 1-dx, dx~0.1
+	thist->f1_loc = 1.0;
+	thist->f2_loc = 0.0;
       }	else {
-	if(xll > xrlimit){ // xrlimit should be 1+dx, dx~0.1
-	  f1_loc = 0.0;
-	  f2_loc = 1.0;
+	if(xll > thist->xrlimit){ // xrlimit should be 1+dx, dx~0.1
+	  thist->f1_loc = 0.0;
+	  thist->f2_loc = 1.0;
 	}else {            // in between 
-	  xll =     (xll-xllimit)/dxlimit; // normalize by transition width
-	  f2_loc = ((1.0 - cos(xll * GGRD_PI))/2.0); // this goes from 0 to 1
+	  xll =     (xll-thist->xllimit)/dxlimit; // normalize by transition width
+	  thist->f2_loc = ((1.0 - cos(xll * GGRD_PI))/2.0); // this goes from 0 to 1
 	  //     weight for left velocities
-	  f1_loc = 1.0 - f2_loc;
+	  thist->f1_loc = 1.0 - thist->f2_loc;
 	}
       }
       //fprintf(stderr,"%g %g %g %i %i %g %g\n",time,f1_loc,f2_loc,ileft_loc,iright_loc,thist->vtimes[3*ileft_loc+2],thist->vtimes[3*iright_loc]);
-      time_old = tloc;
+      thist->time_old = tloc;
     }
     //     assign the local variables to the output variables
     //     
-    *i1 = ileft_loc;
-    *i2 = iright_loc;
-    *f1 = f1_loc;
-    *f2 = f2_loc;
+    *i1 = thist->ileft_loc;
+    *i2 = thist->iright_loc;
+    *f1 = thist->f1_loc;
+    *f2 = thist->f2_loc;
   } // end ntimes>1 part
 }
 
@@ -1085,26 +1079,25 @@ void ggrd_interpol_time(GGRD_CPREC time,struct ggrd_t *thist,
 
 interpolate seafloor age at location vt,vp and time age
 
+this is a scalar interpolation that needs special care
+
 */
 int interpolate_seafloor_ages(GGRD_CPREC xt, GGRD_CPREC xp,
 			      GGRD_CPREC age,
 			      struct ggrd_vel *v, 
 			      GGRD_CPREC *seafloor_age)
 {
-  static short int init = FALSE;
-  static GGRD_CPREC old_age,old_f1,old_f2;
-  static int old_left,old_right,ntlim;
   int left, right,i;
   GGRD_CPREC f1,f2;
   double a1,a2;
 
-  if(!init){
+  if(!v->sf_init){
     /* 
 
     init the constants
     
     */
-    ntlim = v->nage - 1;
+    v->sf_ntlim = v->nage - 1;
     if(!v->nage){
       fprintf(stderr,"interpolate_seafloor_ages: not initialized?!\n");
       return -2;
@@ -1114,25 +1107,25 @@ int interpolate_seafloor_ages(GGRD_CPREC xt, GGRD_CPREC xp,
 	fprintf(stderr,"interpolate_seafloor_ages: error: times need to be sorted monotnically increasing\n");
 	return -3;
       }
-    old_age =  v->age_time[0] - 1000; /* so that we get interpolation
+    v->sf_old_age =  v->age_time[0] - 1000; /* so that we get interpolation
 					 factors  */
-    init = TRUE;
+    v->sf_init = TRUE;
   } 
 
   /* check range */
-  if((age < v->age_time[0]) || (age > v->age_time[ntlim])){
+  if((age < v->age_time[0]) || (age > v->age_time[v->sf_ntlim])){
     fprintf(stderr,"interpolate_seafloor_ages: age: %g out of bounds [%g;%g]\n",
-	    age,v->age_time[0],v->age_time[ntlim]);
+	    age,v->age_time[0],v->age_time[v->sf_ntlim]);
     return -3;
   }
 
-  if(fabs(age-old_age) > 1e-8){
+  if(fabs(age- v->sf_old_age) > 1e-8){
     /* 
        time interpolation 
     */
     right = 0;
 
-    while((right < ntlim) && (v->age_time[right] < age))
+    while((right < v->sf_ntlim) && (v->age_time[right] < age))
       right++;
     if(right == 0)
       right++;
@@ -1141,12 +1134,12 @@ int interpolate_seafloor_ages(GGRD_CPREC xt, GGRD_CPREC xp,
     f2 = (age - v->age_time[left])/(v->age_time[right]-v->age_time[left]);
     f1 = 1.0-f2;
     //fprintf(stderr,"sai: %g %g %g\t%g %g\n",v->age_time[left],age,v->age_time[right],f1,f2);
-    old_age = age;
-    old_left = left;old_right = right;
-    old_f1 = f1;old_f2 = f2;
+    v->sf_old_age = age;
+    v->sf_old_left = left;v->sf_old_right = right;
+    v->sf_old_f1 = f1;v->sf_old_f2 = f2;
   }else{			/* reuse time interpolation */
-    left = old_left;right = old_right;
-    f1 = old_f1;f2 = old_f2;
+    left = v->sf_old_left;right = v->sf_old_right;
+    f1 = v->sf_old_f1;f2 = v->sf_old_f2;
   }
   if(!ggrd_grdtrack_interpolate_tp((double)xt,(double)xp,
 				   (v->ages+left),&a1,FALSE)){

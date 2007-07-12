@@ -52,9 +52,7 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
 					     compare with Benhard's
 					     densub densol output */
   double *tvec;
-  static hc_boolean 
-    tor_init = FALSE,		
-    pol_init = FALSE;
+
   if(!hc->initialized)
     HC_ERROR("hc_solve","hc structure not initialized");
   if((!free_slip) && (hc->pvel[0].lmax < hc->dens_anom[0].lmax)){
@@ -74,13 +72,13 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
      initialize a bunch of expansions for the poloidal solution 
   */
   nsh_pol = 6 * (hc->nrad+2);	/* u[4] plus poten[2] */
-  if((!pol_init)||(!hc->save_solution)){
+  if((!hc->psp.pol_init)||(!hc->save_solution)){
     /* room for pol solution */
     sh_allocate_and_init(&hc->pol_sol,nsh_pol,
 			 hc->dens_anom[0].lmax,hc->sh_type,
-			 0,verbose);
+			 0,verbose,FALSE); /* irregular grid */
   }
-  if((!hc->save_solution) || (!pol_init) || viscosity_or_layer_changed ||
+  if((!hc->save_solution) || (!hc->psp.pol_init) || viscosity_or_layer_changed ||
      dens_anom_changed || ((!free_slip) && (plate_vel_changed))){  
     /* 
        
@@ -110,12 +108,12 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
        solve toroidal part only for no-slip surface boundary condition
 
     */
-    if((!tor_init)||(!hc->save_solution)){
+    if((!hc->psp.tor_init)||(!hc->save_solution)){
       nsh_tor = 2 * (hc->nrad+2);
       sh_allocate_and_init(&hc->tor_sol,nsh_tor,hc->pvel[1].lmax,
-			   hc->sh_type,0,verbose);
+			   hc->sh_type,0,verbose,FALSE); /* irregular grid */
     }
-    if((!tor_init) || viscosity_or_layer_changed || plate_vel_changed || 
+    if((!hc->psp.tor_init) || viscosity_or_layer_changed || plate_vel_changed || 
        (!hc->save_solution)){
       /* 
 	 if we are not saving solutions, or the velocities or viscosities
@@ -176,8 +174,8 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
     if(!free_slip)
       sh_free_expansion(hc->tor_sol,nsh_tor);
   }
-  pol_init = TRUE;
-  tor_init = TRUE;
+  hc->psp.pol_init = TRUE;
+  hc->psp.tor_init = TRUE;
   hc->spectral_solution_computed = TRUE;
 }
 /* 

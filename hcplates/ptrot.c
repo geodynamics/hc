@@ -253,7 +253,8 @@ void torcoeff(struct hc_ptrot *p) {
 	double dvphixp,dvphixm,dvphiyp,dvphiym,dvphizp,dvphizm;
 	double term1x,term1y,term1z,term2xp,term2yp,term2zp,term2xm,term2ym,term2zm;
 	double term3xp,term3yp,term3zp,term3xm,term3ym,term3zm,theta,avephi,x,facx;
-	
+	/* added this TWB */
+	toss4 = 360;
 	/*Opening up boundary file */
 	strncpy(file4,p->plateids_file,HC_CHAR_LENGTH);
 	filePtr4 = fopen(file4, "r");

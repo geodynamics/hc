@@ -197,20 +197,10 @@ void hc_polsol(struct hcs *hc, 	/*
   HC_PREC *xprem;
   double *b,du1,du2,el,rnext,drho,dadd;
   double amat[3][3],bvec[3],u[4],poten[2],unew[4],potnew[2],clm[2];
-  static int ncalled = 0;
-  /* scaling factors will only be computed once */
-  static double rho_scale = 1.0;
-  static double alpha, beta, geoid_factor;
   /* 
      structures which hold u[6][4] type arrays 
   */
   struct hc_sm cmb, *u3;
-  /* init flags */
-  static hc_boolean rho_init = FALSE, 
-    prop_params_init = FALSE, 	/* parameters for propagator computation */
-    abg_init = FALSE,		/* alpha, beta factors */
-    prop_mats_init = FALSE;	/* will be true only if save_prop_mats is 
-				   requested  */
   hc_boolean qvis,qinho,hit;
   /*  
       define a few offset and size pointers
@@ -233,7 +223,7 @@ void hc_polsol(struct hcs *hc, 	/*
   /* 
      check if still same general number of layers 
   */
-  if((prop_params_init)&&((nradp2 != hc->nradp2)||
+  if((hc->psp.prop_params_init)&&((nradp2 != hc->nradp2)||
 			  (inho2 != hc->inho2)||
 			  (nvisp1 != hc->nvisp1))){
     HC_ERROR("hc_polsol","layer structure changed from last call");
@@ -252,7 +242,7 @@ void hc_polsol(struct hcs *hc, 	/*
     /* 
        propagators saved
     */
-    if(!prop_mats_init){
+    if(!hc->psp.prop_mats_init){
       /* 
 	 
       we will be saving all propagator matrices. this makes sense if
@@ -273,26 +263,26 @@ void hc_polsol(struct hcs *hc, 	/*
     hc_dvecalloc(&hc->props,prop_s1,"hc_polsol");
     hc_dvecalloc(&hc->ppots,prop_s2,"hc_polsol");
   }
-  if(!abg_init){
+  if(!hc->psp.abg_init){
     //
     //    SET alpha, beta and geoid factors
     //
-    alpha  =  rho_scale * (hc->re*10.) * hc->gacc / hc->visnor;	/*  */
-    alpha *= ONEEIGHTYOVERPI * hc->secyr * hc->timesc; /*  */
+    hc->psp.alpha  =  hc->psp.rho_scale * (hc->re*10.) * hc->gacc / hc->visnor;	/*  */
+    hc->psp.alpha *= ONEEIGHTYOVERPI * hc->secyr * hc->timesc; /*  */
     //
-    beta   = -4.0 * HC_PI * (hc->g*1e3) * (hc->re*1e2) / hc->gacc;
+    hc->psp.beta   = -4.0 * HC_PI * (hc->g*1e3) * (hc->re*1e2) / hc->gacc;
     if(verbose)
       fprintf(stderr,"hc_polsol: alpha: %.8f beta: %.8f\n",
-	      alpha,beta);
+	      hc->psp.alpha,hc->psp.beta);
     
     /* 
        geoid scaling factor hc->gacc shoud be grav[nprops] for
        compressibility
     */
-    geoid_factor = HC_PI * 10.0* hc->visnor/180./hc->secyr/hc->gacc/1.e8;
-    abg_init = TRUE;
+    hc->psp.geoid_factor = HC_PI * 10.0* hc->visnor/180./hc->secyr/hc->gacc/1.e8;
+    hc->psp.abg_init = TRUE;
   }
-  if((!prop_params_init) || (viscosity_or_layer_changed)){
+  if((!hc->psp.prop_params_init) || (viscosity_or_layer_changed)){
     /* 
        
        intialize arrays that depend on viscosity and density layer spacing 
@@ -308,7 +298,7 @@ void hc_polsol(struct hcs *hc, 	/*
     //    5)  IF AT RDEN(NIH) EVALUATE DEN, INCREMENT NIH
     //    6)  IF AT RAD(I) QWRITE = TRUE, INCREMENT I
     //    
-    if(!prop_params_init){
+    if(!hc->psp.prop_params_init){
       if(verbose)
 	fprintf(stderr,"hc_polsol: initializing for %i v layers and %i dens layers\n",
 		nrad,inho);
@@ -402,7 +392,7 @@ void hc_polsol(struct hcs *hc, 	/*
 	    //
 	    //    IF RDEN, EVALUATE DEN, INCREMENT NIH
 	    //    
-	    hc->den[hc->nprops-1] = dfact[nih] * hc->rden[nih] * hc->rden[nih] * alpha;
+	    hc->den[hc->nprops-1] = dfact[nih] * hc->rden[nih] * hc->rden[nih] * hc->psp.alpha;
 	    nih++;
 	  }
 	}
@@ -424,7 +414,7 @@ void hc_polsol(struct hcs *hc, 	/*
 
     */
     if(verbose >= 3){
-      if(prop_params_init)
+      if(hc->psp.prop_params_init)
 	fprintf(stderr,"hc_polsol: using old parameters: %i v layers and %i dens layers\n",
 		nrad,inho);
       for(i=i2=0;i < hc->nprops+1;i++){
@@ -435,7 +425,7 @@ void hc_polsol(struct hcs *hc, 	/*
 		hc->pvisc[i],hc->den[i],i2,inho);
       }
     }
-    if(!rho_init){
+    if(!hc->psp.rho_init){
       /* 
 	 initialize the density factors, for incompressible, those
 	 are all constant, else from PREM
@@ -478,9 +468,9 @@ void hc_polsol(struct hcs *hc, 	/*
 	  hc->rho_zero[i] = hc->avg_den_mantle;
       }
       hc->rho_zero[hc->nprops+1] = 0.0;
-      rho_init = TRUE;  
+      hc->psp.rho_init = TRUE;  
     } /* end rho init */
-    prop_params_init = TRUE;
+    hc->psp.prop_params_init = TRUE;
     /* 
        
     end of the propagator factor section, this will only get executed
@@ -499,7 +489,7 @@ void hc_polsol(struct hcs *hc, 	/*
   //
   if(verbose)
     fprintf(stderr,"hc_polsol: ncalled: %5i for lmax: %i dens lmax: %i, visc or layer %s changed\n",
-	    ncalled,pol_sol[0].lmax,dens_anom->lmax,
+	    hc->psp.ncalled,pol_sol[0].lmax,dens_anom->lmax,
 	    ((viscosity_or_layer_changed)?(""):("not")));
   if(free_slip)			/* select which components of pol solvec to 
 				   use */
@@ -518,7 +508,7 @@ void hc_polsol(struct hcs *hc, 	/*
     
     */
     el = (HC_PREC)l;
-    if((!save_prop_mats) || (!prop_mats_init)){
+    if((!save_prop_mats) || (!hc->psp.prop_mats_init)){
       //    
       // get all propagators now, as they only depend on l
       //    
@@ -610,7 +600,7 @@ void hc_polsol(struct hcs *hc, 	/*
 	     if we were allowing for compressibility, would multi with
 	     hc->grav[i]/hc->grav here (beta incorporates 1/grav0)
 	  */
-	  poten[1] += beta * hc->rprops[0] *
+	  poten[1] += hc->psp.beta * hc->rprops[0] *
 	    (u[2] - (hc->rho_zero[0] - hc->rho_zero[-1]) * 
 	     poten[0]);
 
@@ -665,7 +655,7 @@ void hc_polsol(struct hcs *hc, 	/*
 	      //    
 	      //	      fprintf(stderr,"%15.5e %15.5e %15.5e %15.5e\n",
 	      //      beta, hc->den[i], b[ninho],hc->rden[ninho]);
-	      poten[1] += beta * dadd * hc->rden[ninho];
+	      poten[1] += hc->psp.beta * dadd * hc->rden[ninho];
 	    }
 	    //    
 	    //    Changes due to radial density variations
@@ -685,7 +675,7 @@ void hc_polsol(struct hcs *hc, 	/*
 	    if ((jpb < npb)&&(hc->rprops[ip1] > rpb[jpb] - 0.0001)){
 	      if (ibv == 0) {
 		u[2] -= fpb[jpb] * b[ninho];
-		poten[1] -= beta * rpb[jpb] * fpb[jpb] * b[ninho] * rho_scale;
+		poten[1] -= hc->psp.beta * rpb[jpb] * fpb[jpb] * b[ninho] * hc->psp.rho_scale;
 	      }
 	      jpb++;
 	    }
@@ -717,7 +707,7 @@ void hc_polsol(struct hcs *hc, 	/*
 	  //    is proportional to total surface elevation (not minus equipotential
 	  //    surface)
 	  //
-	  poten[1] -= beta * hc->rprops[hc->nprops] *
+	  poten[1] -= hc->psp.beta * hc->rprops[hc->nprops] *
 	    (u[2] - hc->rho_zero[hc->nprops] * poten[0]);
 	  nl = ilayer;
 	  u3[nl].u[5][ibv] = poten[1];
@@ -801,7 +791,7 @@ void hc_polsol(struct hcs *hc, 	/*
   } /* end l loop */
   if(save_prop_mats)
     /* only now can we set the propagator matrix storage scheme to TRUE */
-    prop_mats_init = TRUE;
+    hc->psp.prop_mats_init = TRUE;
   if(verbose)
     fprintf(stderr,"hc_polsol: assigned nl: %i nprop: %i nrad: %i layers\n",
 	    nl,hc->nprops,nrad);
@@ -831,12 +821,12 @@ void hc_polsol(struct hcs *hc, 	/*
       for(m=0;m <= l;m++){
 	if (m != 0){
 	  sh_get_coeff((pol_sol+os),l,m,2,FALSE,clm); /* internal convention */
-	  clm[0] *= geoid_factor;
-	  clm[1] *= geoid_factor;
+	  clm[0] *= hc->psp.geoid_factor;
+	  clm[1] *= hc->psp.geoid_factor;
 	  sh_write_coeff(geoid,l,m,2,FALSE,clm);
 	}else{			/* m == 0 */
 	  sh_get_coeff((pol_sol+os),l,m,0,FALSE,clm);
-	  clm[0] *= geoid_factor;
+	  clm[0] *= hc->psp.geoid_factor;
 	  sh_write_coeff(geoid,l,m,0,FALSE,clm);
 	}
       }
@@ -856,7 +846,7 @@ void hc_polsol(struct hcs *hc, 	/*
     free(hc->props);free(hc->ppots);
   }
   /* all others should be saved */
-  ncalled++;
+  hc->psp.ncalled++;
   if(verbose)
     fprintf(stderr,"hc_polsol: done\n");
 }

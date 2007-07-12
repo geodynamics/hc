@@ -20,4 +20,6 @@ struct shana_module{
     vector_sh_fac_init;
   // init
   hc_boolean was_called;
+
+  int old_ivec,old_lmax,old_npoints,old_tnplm;
 };

@@ -27,6 +27,12 @@ struct ggrd_t{
 
   GGRD_CPREC tmin,tmax;		/* range of times */
   unsigned char init;
+
+  GGRD_CPREC xllimit,xrlimit;
+  GGRD_CPREC f1_loc,f2_loc,time_old;
+  int ileft_loc,iright_loc,ntlim;
+  unsigned char called;
+
 };
 
 /* 
@@ -52,11 +58,21 @@ struct ggrd_gt{
 
   unsigned char init,
     is_three;			/* is it a 3-D set? */
+
+  double west,east,south,north;
+
 #ifdef USE_GMT4
   struct GMT_BCR bcr;
 #endif
 };
 
+/* velocity interpolation structure */
+struct ggrd_vip{
+  int ider[1+3*GGRD_MAX_IORDER],istencil[3],
+    ixtracer[3],old_order,orderp1,isshift[3];
+  unsigned char init,reduce_r_stencil,z_warned,w_warned;
+
+};
 /*
 
 
@@ -78,6 +94,7 @@ struct ggrd_vel{
     history,			/* time-dependent? */
     use_age,			/* use an additional age file */
     read_gmt;		/*  read GMT grd files or binary format?*/
+  unsigned char rl_warned,vd_init,vd_reduce_r_stencil;	/*  */
   int amode;
   struct ggrd_gt *ages;		/* for seafloor ages */
   int nage;			/* ntime for velo + 1 */
@@ -85,6 +102,11 @@ struct ggrd_vel{
   float age_bandlim;		/* bandlim for age to decide on
 				   continent 
 				*/
+  struct ggrd_vip vd;		/* velocity interpolation structure */
+  /* seafloor stuff */
+  unsigned short sf_init;
+  GGRD_CPREC  sf_old_age,sf_old_f1,sf_old_f2;
+  int sf_old_left,sf_old_right,sf_ntlim;
 };
 #define GGRD_STRUC_INIT
 #endif

@@ -364,23 +364,23 @@ void read_parameter_file(struct hc_plates_params *p) {
    { printf("Error loading parameter file.  Will use defaults. Ciao. \n"); }
    else {
 
-	fscanf(filePtr_P,"%[^\n]%*1[\n]",&toss1);	//Skip first 4 lines
+	fscanf(filePtr_P,"%[^\n]%*1[\n]",toss1);	//Skip first 4 lines
 	//fprintf(stderr,"%s \n",toss1);
-	fscanf(filePtr_P,"%[^\n]%*1[\n]",&toss1);
+	fscanf(filePtr_P,"%[^\n]%*1[\n]",toss1);
 	//fprintf(stderr,"%s \n",toss1);
-	fscanf(filePtr_P,"%[^\n]%*1[\n]",&toss1);
+	fscanf(filePtr_P,"%[^\n]%*1[\n]",toss1);
 	//fprintf(stderr,"%s \n",toss1);
-	fscanf(filePtr_P,"%[^\n]%*1[\n]",&toss1);
+	fscanf(filePtr_P,"%[^\n]%*1[\n]",toss1);
 	//fprintf(stderr,"%s \n",toss1);
-	fscanf(filePtr_P," %[^\n]%*1[\n]",&toss1);  //This will read blank line and next text line as one
+	fscanf(filePtr_P," %[^\n]%*1[\n]",toss1);  //This will read blank line and next text line as one
 
 	// read no. distinct layers
-	fscanf(filePtr_P,"%s %i",&toss1,&nlayer);
+	fscanf(filePtr_P,"%s %i",toss1,&nlayer);
 	fprintf(stderr,"	nlayer = %i \n",nlayer);
-	fscanf(filePtr_P," %[^\n]%*1[\n]",&toss1);  //This will read blank line and next text line as one
+	fscanf(filePtr_P," %[^\n]%*1[\n]",toss1);  //This will read blank line and next text line as one
 	
 	//Scan in viscosity for different layers
-	fscanf(filePtr_P,"%s",&toss1);
+	fscanf(filePtr_P,"%s",toss1);
 	for (i=0; i<=nlayer; i++) {
 		fscanf(filePtr_P,"%lf",&r2[i]);
 	}
@@ -391,47 +391,47 @@ void read_parameter_file(struct hc_plates_params *p) {
 	}
 
 	//fprintf(stderr,"	%s  %lf, %lf, %lf, %lf %lf, %lf\n",toss1,p->r[0],p->r[1],p->r[2],p->r[3],p->r[4],p->r[5]);
-	fscanf(filePtr_P," %[^\n]%*1[\n]",&toss1);  //This will read blank line and next text line as one
+	fscanf(filePtr_P," %[^\n]%*1[\n]",toss1);  //This will read blank line and next text line as one
 	
 	// Read viscosity
-	fscanf(filePtr_P,"%s %lf",&toss1,&p->visc0);
+	fscanf(filePtr_P,"%s %lf",toss1,&p->visc0);
 	fprintf(stderr,"	visc0 = %lf \n",p->visc0);
-	fscanf(filePtr_P," %[^\n]%*1[\n]",&toss1);  //This will read blank line and next text line as one
+	fscanf(filePtr_P," %[^\n]%*1[\n]",toss1);  //This will read blank line and next text line as one
 	
 	// Viscosity layers
-	fscanf(filePtr_P,"%s",&toss1);
+	fscanf(filePtr_P,"%s",toss1);
 	for (i=0; i<nlayer; i++) {
 			fscanf(filePtr_P,"%lf",&visc2[i]);
 			fprintf(stderr,"		%i  %lf\n",i,visc2[i]);
 	}
 
-	fscanf(filePtr_P," %[^\n]%*1[\n]",&toss1);  //This will read blank line and next text line as one
+	fscanf(filePtr_P," %[^\n]%*1[\n]",toss1);  //This will read blank line and next text line as one
 	// core radius
-	fscanf(filePtr_P,"%s %lf",&toss1,&p->RCore);
+	fscanf(filePtr_P,"%s %lf",toss1,&p->RCore);
 	fprintf(stderr,"	Rcore = %lf km \n",p->RCore);
 	p->RCore *= 1e5;		//units not kms
-	fscanf(filePtr_P," %[^\n]%*1[\n]",&toss1);  //This will read blank line and next text line as one
+	fscanf(filePtr_P," %[^\n]%*1[\n]",toss1);  //This will read blank line and next text line as one
 	// earth radius
-	fscanf(filePtr_P,"%s %lf",&toss1,&p->erad);
+	fscanf(filePtr_P,"%s %lf",toss1,&p->erad);
 	fprintf(stderr,"	Rearth = %lf km \n",p->erad);
 	p->erad *= 1e5;			//units not kms
-	fscanf(filePtr_P," %[^\n]%*1[\n]",&toss1);  //This will read blank line and next text line as one
+	fscanf(filePtr_P," %[^\n]%*1[\n]",toss1);  //This will read blank line and next text line as one
 	//No .plates
-	fscanf(filePtr_P,"%s %i",&toss1,&p->NPLT);
+	fscanf(filePtr_P,"%s %i",toss1,&p->NPLT);
 	fprintf(stderr,"	NPLT = %i \n",p->NPLT);
-	fscanf(filePtr_P," %[^\n]%*1[\n]",&toss1);  //This will read blank line and next text line as one
+	fscanf(filePtr_P," %[^\n]%*1[\n]",toss1);  //This will read blank line and next text line as one
 	// Plate areas
 	// Viscosity layers
-	fscanf(filePtr_P,"%s",&toss1);
+	fscanf(filePtr_P,"%s",toss1);
 	for (i=0; i<=p->NPLT; i++) {
 			fscanf(filePtr_P,"%lf",&p_area[i]);
 			fprintf(stderr,"		%i  %lf\n",i,p_area[i]);
 	}
-	fscanf(filePtr_P," %[^\n]%*1[\n]",&toss1);  //This will read blank line and next text line as one
+	fscanf(filePtr_P," %[^\n]%*1[\n]",toss1);  //This will read blank line and next text line as one
 	//LDIM
-	fscanf(filePtr_P,"%s %i",&toss1,&p->LDIM);
+	fscanf(filePtr_P,"%s %i",toss1,&p->LDIM);
 	fprintf(stderr,"	LDIM = %i \n",p->LDIM);
-	fscanf(filePtr_P," %[^\n]%*1[\n]",&toss1);  //This will read blank line and next text line as one
+	fscanf(filePtr_P," %[^\n]%*1[\n]",toss1);  //This will read blank line and next text line as one
 	
 	// Dependents
 	p->NPDIM = 3 * p->NPLT;
@@ -439,30 +439,30 @@ void read_parameter_file(struct hc_plates_params *p) {
 	p->KDIM = (p->LDIM + 2)*(p->LDIM+1)/2;
 
 	// Geopgraphic divisor
-	fscanf(filePtr_P,"%s %i",&toss1,&p->dd);
+	fscanf(filePtr_P,"%s %i",toss1,&p->dd);
 	fprintf(stderr,"	dd = %i \n",p->dd);
-	fscanf(filePtr_P," %[^\n]%*1[\n]",&toss1);  //This will read blank line and next text line as one
+	fscanf(filePtr_P," %[^\n]%*1[\n]",toss1);  //This will read blank line and next text line as one
 	// time conversion factor
 
-	fscanf(filePtr_P,"%s %lf",&toss1,&p->stoy);
+	fscanf(filePtr_P,"%s %lf",toss1,&p->stoy);
 	fprintf(stderr,"	stoy = %lf \n",p->stoy);
-	fscanf(filePtr_P," %[^\n]%*1[\n]",&toss1);  //This will read blank line and next text line as one
+	fscanf(filePtr_P," %[^\n]%*1[\n]",toss1);  //This will read blank line and next text line as one
 	//Lmax
 
-	fscanf(filePtr_P,"%s %i",&toss1,&p->Lmax);
+	fscanf(filePtr_P,"%s %i",toss1,&p->Lmax);
 	fprintf(stderr,"	Lmax = %i \n",p->Lmax);
-	fscanf(filePtr_P," %[^\n]%*1[\n]",&toss1);  //This will read blank line and next text line as one
+	fscanf(filePtr_P," %[^\n]%*1[\n]",toss1);  //This will read blank line and next text line as one
 	//n
-	fscanf(filePtr_P,"%s %i",&toss1,&p->n);
+	fscanf(filePtr_P,"%s %i",toss1,&p->n);
 	fprintf(stderr,"	n = %i \n",p->n);
-	fscanf(filePtr_P," %[^\n]%*1[\n]",&toss1);  //This will read blank line and next text line as one
+	fscanf(filePtr_P," %[^\n]%*1[\n]",toss1);  //This will read blank line and next text line as one
 	//no-slip
-	fscanf(filePtr_P,"%s %i",&toss1,&p->iba);
+	fscanf(filePtr_P,"%s %i",toss1,&p->iba);
 	fprintf(stderr,"	iba = %i \n",p->iba);
 	// scaling ratio for velocities at end
 	//no-slip
-	fscanf(filePtr_P," %[^\n]%*1[\n]",&toss1);  //This will read blank line and next text line as one
-	fscanf(filePtr_P,"%s %lf",&toss1,&p->ratio);
+	fscanf(filePtr_P," %[^\n]%*1[\n]",toss1);  //This will read blank line and next text line as one
+	fscanf(filePtr_P,"%s %lf",toss1,&p->ratio);
 	fprintf(stderr,"	ratio = %lf \n",p->ratio);
 	//DONE
 	

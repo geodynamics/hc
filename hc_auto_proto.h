@@ -8,8 +8,8 @@ unsigned char ggrd_grdtrack_interpolate_xy(double, double, struct ggrd_gt *, dou
 void ggrd_grdtrack_free_gstruc(struct ggrd_gt *);
 void ggrd_find_spherical_vel_from_rigid_cart_rot(double *, double *, double *, double *, double *);
 void ggrd_print_layer_avg(float *, float *, int, int, FILE *);
-int ggrd_read_time_intervals(struct ggrd_t *, char *, unsigned char, unsigned char);
-void ggrd_gt_interpolate_z(double, float *, int, int *, int *, double *, double *, unsigned char);
+int ggrd_init_thist_from_file(struct ggrd_t *, char *, unsigned char, unsigned char);
+void ggrd_gt_interpolate_z(double, float *, int, int *, int *, double *, double *, unsigned char, unsigned char *);
 void ggrd_interpol_time(double, struct ggrd_t *, int *, int *, double *, double *, double);
 int interpolate_seafloor_ages(double, double, double, struct ggrd_vel *, double *);
 float ggrd_gt_rms(float *, int);
@@ -17,7 +17,7 @@ float ggrd_gt_mean(float *, int);
 /* ggrd_readgrds.c */
 void ggrd_init_vstruc(struct ggrd_vel *);
 int ggrd_read_vel_grids(struct ggrd_vel *, double, unsigned short, unsigned short, char *);
-void ggrd_resort_and_check(double *, float *, double *, int, int, unsigned short, double, unsigned short, unsigned short, double);
+void ggrd_resort_and_check(double *, float *, double *, int, int, unsigned short, double, unsigned short, unsigned short, double, unsigned char *);
 void ggrd_read_depth_levels(struct ggrd_vel *, int **, char *, unsigned short);
 /* ggrd_test.c */
 /* ggrd_velinterpol.c */
@@ -28,6 +28,7 @@ void ggrd_weights(double, double *, int, int, double [(5 +1)][(1 +1)]);
 /* hc_init.c */
 void hc_init_parameters(struct hc_parameters *);
 void hc_struc_init(struct hcs **);
+void hc_init_polsol_struct(struct hc_ps *);
 void hc_init_main(struct hcs *, int, struct hc_parameters *);
 void hc_init_constants(struct hcs *, double, char *, unsigned short);
 void hc_handle_command_line(int, char **, struct hc_parameters *);
@@ -37,6 +38,7 @@ void hc_init_phase_boundaries(struct hcs *, int, unsigned short);
 void hc_assign_plate_velocities(struct hcs *, int, char *, unsigned short, int, unsigned short, unsigned short);
 void hc_init_l_factors(struct hcs *, int);
 void hc_get_blank_expansions(struct sh_lms **, int, int, char *);
+void hc_struc_free(struct hcs **);
 /* hc_input.c */
 void hc_read_sh_solution(struct hcs *, struct sh_lms **, FILE *, unsigned short, unsigned short);
 /* hc_matrix.c */
@@ -108,15 +110,18 @@ void rick_ab2cs(float *, int);
 void rick_realft_nr(float *, int, int);
 void rick_four1_nr(float *, int, int);
 /* rick_sh_c.c */
-void rick_compute_allplm(int, int, double *, double *, struct rick_module *);
-void rick_pix2ang(int, int, double *, double *, struct rick_module *);
+void rick_compute_allplm(int, int, float *, float *, struct rick_module *);
+void rick_compute_allplm_irreg(int, int, float *, float *, struct rick_module *, float *, int);
+void rick_pix2ang(int, int, float *, float *, struct rick_module *);
 void rick_shc2d(float *, float *, int, int, float *, float *, struct rick_module *);
-void rick_shc2d_pre(float *, float *, int, double *, double *, int, float *, float *, struct rick_module *);
+void rick_shc2d_irreg(float *, float *, int, int, float *, float *, struct rick_module *, float *, int, float *, int, unsigned short);
+void rick_shc2d_pre(float *, float *, int, float *, float *, int, float *, float *, struct rick_module *);
+void rick_shc2d_pre_irreg(float *, float *, int, float *, float *, int, float *, float *, struct rick_module *, float *, int, float *, int, unsigned short);
 void rick_shd2c(float *, float *, int, int, float *, float *, struct rick_module *);
-void rick_shd2c_pre(float *, float *, int, double *, double *, int, float *, float *, struct rick_module *);
-void rick_init(int, int, int *, int *, int *, struct rick_module *);
+void rick_shd2c_pre(float *, float *, int, float *, float *, int, float *, float *, struct rick_module *);
+void rick_init(int, int, int *, int *, int *, struct rick_module *, unsigned short);
 void rick_free_module(struct rick_module *, int);
-void rick_plmbar1(double *, double *, int, int, float, struct rick_module *);
+void rick_plmbar1(float *, float *, int, int, float, struct rick_module *);
 void rick_gauleg(float, float, float *, float *, int);
 /* sh_ana.c */
 /* shana_sh.c */
@@ -130,8 +135,8 @@ void shana_init(int, int, int *, int *, int *, struct shana_module *);
 void shana_free_module(struct shana_module *, int);
 void shana_plmbar1(double *, double *, int, int, double, struct shana_module *);
 /* sh_exp.c */
-void sh_allocate_and_init(struct sh_lms **, int, int, int, int, unsigned short);
-void sh_init_expansion(struct sh_lms *, int, int, int, unsigned short);
+void sh_allocate_and_init(struct sh_lms **, int, int, int, int, unsigned short, unsigned short);
+void sh_init_expansion(struct sh_lms *, int, int, int, unsigned short, unsigned short);
 void sh_free_expansion(struct sh_lms *, int);
 void sh_clear_alm(struct sh_lms *);
 double sh_total_power(struct sh_lms *);
@@ -143,12 +148,15 @@ void sh_read_coefficients_from_file(struct sh_lms *, int, int, FILE *, unsigned 
 void sh_print_nonzero_coeff(struct sh_lms *, FILE *);
 void sh_read_spatial_data_from_file(struct sh_lms *, FILE *, unsigned short, int, float *, float *);
 void sh_compute_spatial_basis(struct sh_lms *, FILE *, unsigned short, float, float **, int, unsigned short);
-void sh_compute_spectral(float *, int, unsigned short, double **, struct sh_lms *, unsigned short);
-void sh_compute_spatial(struct sh_lms *, int, unsigned short, double **, float *, unsigned short);
+void sh_compute_spectral(float *, int, unsigned short, float **, struct sh_lms *, unsigned short);
+void sh_compute_spatial(struct sh_lms *, int, unsigned short, float **, float *, unsigned short);
+void sh_compute_spatial_irreg(struct sh_lms *, int, unsigned short, float **, float *, int, float *, int, float *, unsigned short, unsigned short);
 void sh_exp_type_error(char *, struct sh_lms *);
-void sh_print_plm(double *, int, int, int, FILE *);
+void sh_print_plm(float *, int, int, int, FILE *);
 void sh_print_spatial_data_to_file(struct sh_lms *, int, float *, unsigned short, float, FILE *);
-void sh_compute_plm(struct sh_lms *, int, double **, unsigned short);
+void sh_print_irreg_spatial_data_to_file(struct sh_lms *, int, float *, unsigned short, float, float *, int, float *, int, FILE *);
+void sh_compute_plm(struct sh_lms *, int, float **, unsigned short);
+void sh_compute_plm_irreg(struct sh_lms *, int, float **, unsigned short, float *, int);
 void sh_get_coeff(struct sh_lms *, int, int, int, unsigned short, double *);
 void sh_write_coeff(struct sh_lms *, int, int, int, unsigned short, double *);
 void sh_aexp_equals_bexp_coeff(struct sh_lms *, struct sh_lms *);

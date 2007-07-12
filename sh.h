@@ -65,11 +65,18 @@ struct sh_lms{
   /* 
      number of entries for the Legendre function array 
   */
-  int n_plm,tn_plm;
+  int n_plm,tn_plm,tn_plm_irr;
   /* 
      number of points in each layer the spatial domain 
   */
   int npoints;
+  /* 
+
+  */
+  hc_boolean plm_computed,plm_computed_irr;
+  int  old_lmax,old_ivec,old_tnplm,old_tnplm_irr,old_lmax_irr,old_ivec_irr;
+
+
   /*
 
     holds the coefficients:
@@ -115,9 +122,9 @@ struct sh_lms_model{
   /* expansions  */
   struct sh_lms *exp;
   int nexp;			/* number of expansions */
-  double *plm;			/* precomputed Legendre 
+  SH_RICK_PREC *plm;			/* precomputed Legendre 
 					   functions */
-
+  
   /* 
      spatial data points
   */

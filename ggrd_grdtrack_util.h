@@ -18,28 +18,28 @@ with grd interpolation
 wrappers
 
 */
-int ggrd_grdtrack_init_general(unsigned char ,char *, char *,char *,
-			       struct ggrd_gt *,unsigned char ,
-			       unsigned char);
-unsigned char ggrd_grdtrack_interpolate_rtp(double ,double ,double ,
+int ggrd_grdtrack_init_general(ggrd_boolean ,char *, char *,char *,
+			       struct ggrd_gt *,ggrd_boolean ,
+			       ggrd_boolean);
+ggrd_boolean ggrd_grdtrack_interpolate_rtp(double ,double ,double ,
 					    struct ggrd_gt *,double *,
-					    unsigned char);
-unsigned char ggrd_grdtrack_interpolate_xyz(double ,double ,double ,
+					    ggrd_boolean);
+ggrd_boolean ggrd_grdtrack_interpolate_xyz(double ,double ,double ,
 					    struct ggrd_gt *,double *,
-					    unsigned char);
-unsigned char ggrd_grdtrack_interpolate_xy(double ,double ,
+					    ggrd_boolean);
+ggrd_boolean ggrd_grdtrack_interpolate_xy(double ,double ,
 					   struct ggrd_gt *,
 					   double *,
-					   unsigned char );
-unsigned char ggrd_grdtrack_interpolate_tp(double ,double ,
+					   ggrd_boolean );
+ggrd_boolean ggrd_grdtrack_interpolate_tp(double ,double ,
 					   struct ggrd_gt *,
 					   double *,
-					   unsigned char );
+					   ggrd_boolean );
 
 void ggrd_grdtrack_free_gstruc(struct ggrd_gt *);
 
-int ggrd_grdtrack_rescale(struct ggrd_gt *,unsigned char , unsigned char , 
-			  unsigned char ,double);
+int ggrd_grdtrack_rescale(struct ggrd_gt *,ggrd_boolean , ggrd_boolean , 
+			  ggrd_boolean ,double);
 
 
 /* 
@@ -47,20 +47,20 @@ int ggrd_grdtrack_rescale(struct ggrd_gt *,unsigned char , unsigned char ,
 moderately external
 
 */
-int ggrd_read_time_intervals(struct ggrd_t *,char *,unsigned char ,unsigned char);
+int ggrd_init_thist_from_file(struct ggrd_t *,char *,ggrd_boolean ,ggrd_boolean);
 int ggrd_read_vel_grids(struct ggrd_vel *, double, unsigned short, unsigned short, char *);
 
 #ifdef USE_GMT4
 /* GMT4.1.2 */
-unsigned char ggrd_grdtrack_interpolate(double *, unsigned char , struct GRD_HEADER *, float *,
-					struct GMT_EDGEINFO *, int, float *, int ,	double *,unsigned char,
+ggrd_boolean ggrd_grdtrack_interpolate(double *, ggrd_boolean , struct GRD_HEADER *, float *,
+					struct GMT_EDGEINFO *, int, float *, int ,	double *,ggrd_boolean,
 					struct GMT_BCR *);
-int ggrd_grdtrack_init(double *, double *, double *, double *, float **, int *, char *, struct GRD_HEADER **, struct GMT_EDGEINFO **, char *, unsigned char *, int *, unsigned char, char *, float **, int *, unsigned char, unsigned char, unsigned char, struct GMT_BCR *);
+int ggrd_grdtrack_init(double *, double *, double *, double *, float **, int *, char *, struct GRD_HEADER **, struct GMT_EDGEINFO **, char *, ggrd_boolean *, int *, ggrd_boolean, char *, float **, int *, ggrd_boolean, ggrd_boolean, ggrd_boolean, struct GMT_BCR *);
 
 #else
 /* GMT 3.4.5 */
-unsigned char ggrd_grdtrack_interpolate(double *, unsigned char , struct GRD_HEADER *, float *,
-				  struct GMT_EDGEINFO *, int, float *, int ,	double *,unsigned char);
+ggrd_boolean ggrd_grdtrack_interpolate(double *, ggrd_boolean , struct GRD_HEADER *, float *,
+				  struct GMT_EDGEINFO *, int, float *, int ,	double *,ggrd_boolean);
 
 int ggrd_grdtrack_init(double *, double *,double *, double *, /* geographic bounds,
 								 set all to zero to 
@@ -72,13 +72,13 @@ int ggrd_grdtrack_init(double *, double *,double *, double *, /* geographic boun
 			char *,	/* name, or prefix, of grd file with scalars */
 			struct GRD_HEADER **,
 			struct GMT_EDGEINFO **,
-			char *,unsigned char *,
+			char *,ggrd_boolean *,
 			int *,	/* [4] array with padding (output) */
-			unsigned char _d, char *, 	/* depth file name */
+			ggrd_boolean _d, char *, 	/* depth file name */
 			float **,	/* layers, pass as NULL */
 			int *,		/* number of layers */
-			unsigned char , /* linear/cubic? */
-			unsigned char ,unsigned char);
+			ggrd_boolean , /* linear/cubic? */
+			ggrd_boolean ,ggrd_boolean);
 void ggrd_gt_bcr_init_loc(void);
 #endif
 /* 
@@ -89,7 +89,8 @@ local
 
 void ggrd_gt_bcr_init_loc(void);
 void ggrd_gt_interpolate_z(double,float *,int ,
-			   int *, int *, double *, double *,unsigned char); /*  */
+			   int *, int *, double *, double *,ggrd_boolean,
+			   ggrd_boolean *); /*  */
 float ggrd_gt_rms(float *,int );
 float ggrd_gt_mean(float *,int );
 

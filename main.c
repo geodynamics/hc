@@ -127,14 +127,14 @@ int main(int argc, char **argv)
 
   */
   /* 
-     make room for the spectral solution
+     make room for the spectral solution on irregular grid
   */
   sh_allocate_and_init(&sol_spectral,nsol,lmax,model->sh_type,1,
-		       p->verbose);
+		       p->verbose,FALSE);
   if(p->compute_geoid)	
     /* make room for geoid solution */
     sh_allocate_and_init(&geoid,1,model->dens_anom[0].lmax,
-			 model->sh_type,0,p->verbose);
+			 model->sh_type,0,p->verbose,FALSE);
   
   /* 
      solve poloidal and toroidal part and sum
@@ -214,7 +214,7 @@ int main(int argc, char **argv)
   free(sol_spatial);
   if(p->verbose)
     fprintf(stderr,"%s: done\n",argv[0]);
-  
+  hc_struc_free(&model);
   return 0;
 }
 

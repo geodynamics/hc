@@ -156,7 +156,7 @@ anew
 void hc_get_flt_frmt_string(char *string, int n, 
 			    hc_boolean append)
 {
-  static hc_boolean init=FALSE;
+  static hc_boolean init=FALSE;	/* that's OK, multiple instances calling are fine */
   static char type[2];
   int i;
   if(!init){
