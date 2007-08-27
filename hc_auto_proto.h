@@ -12,6 +12,8 @@ int ggrd_init_thist_from_file(struct ggrd_t *, char *, unsigned char, unsigned c
 void ggrd_gt_interpolate_z(double, float *, int, int *, int *, double *, double *, unsigned char, unsigned char *);
 void ggrd_interpol_time(double, struct ggrd_t *, int *, int *, double *, double *, double);
 int interpolate_seafloor_ages(double, double, double, struct ggrd_vel *, double *);
+void ggrd_vecalloc(double **, int, char *);
+void ggrd_vecrealloc(double **, int, char *);
 float ggrd_gt_rms(float *, int);
 float ggrd_gt_mean(float *, int);
 /* ggrd_readgrds.c */
@@ -33,7 +35,7 @@ void hc_init_main(struct hcs *, int, struct hc_parameters *);
 void hc_init_constants(struct hcs *, double, char *, unsigned short);
 void hc_handle_command_line(int, char **, struct hc_parameters *);
 void hc_assign_viscosity(struct hcs *, int, char [300], unsigned short);
-void hc_assign_density(struct hcs *, unsigned short, int, char *, int, unsigned short, unsigned short, unsigned short);
+void hc_assign_density(struct hcs *, unsigned short, int, char *, int, unsigned short, unsigned short, unsigned short, unsigned short);
 void hc_init_phase_boundaries(struct hcs *, int, unsigned short);
 void hc_assign_plate_velocities(struct hcs *, int, char *, unsigned short, int, unsigned short, unsigned short);
 void hc_init_l_factors(struct hcs *, int);

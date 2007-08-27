@@ -68,7 +68,7 @@ struct rick_module{
   int nlat,nlon,lmsize,lmsize2,nlonm1;
   // logic flags
   my_boolean initialized,computed_legendre,
-    vector_sh_fac_init;
+    vector_sh_fac_init,sin_cos_saved;
   // init
   my_boolean was_called;
 

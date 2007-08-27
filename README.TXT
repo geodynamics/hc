@@ -194,6 +194,10 @@ USING THE OUTPUT
 
 
 
+      Also see the script calc_vel_and_plot for some suggestions on
+      how to convert the output.
+
+
 
 USING THE SPHERICAL HARMONICS TOOLS AS STANDALONE
 

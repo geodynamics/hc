@@ -11,6 +11,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <malloc.h>
 #include <limits.h>
 #include <malloc.h>
 
@@ -131,6 +132,10 @@ struct hc_parameters{
   hc_boolean print_spatial;	/* print the spatial solution */
   hc_boolean compute_geoid; 	/* compute and print the geoid */
   int solution_mode;	/* velocity or stress */
+
+  hc_boolean read_short_dens_sh; /* short SH format for density
+				    files? */
+
   hc_boolean print_pt_sol;	/* output of p[6] and t[2] vectors */
   char visc_filename[HC_CHAR_LENGTH];	/* name of viscosity profile file */
   char pvel_filename[HC_CHAR_LENGTH];	/* name of plate velocities file */

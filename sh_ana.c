@@ -38,7 +38,7 @@ $Id: sh_ana.c,v 1.6 2006/01/22 01:11:34 becker Exp $
 
 int main(int argc, char **argv)
 {
-  int type = SH_RICK,lmax,shps, nset=1,ivec=0,ilayer=0;
+  int type = SH_RICK,lmax,shps, nset=1,ivec=0,ilayer=0,i;
   struct sh_lms *exp;
   hc_boolean verbose = TRUE, use_3d = FALSE, short_format = FALSE,
     binary = FALSE, print_spatial_base = FALSE;
@@ -64,16 +64,22 @@ int main(int argc, char **argv)
     sscanf(argv[2],"%i",&ivec);
   if(argc > 3)
     sscanf(argv[3],"%i",&type);
+  if(argc > 4){
+    sscanf(argv[4],"%i",&i);
+    short_format = (hc_boolean)i;
+  }
   if((argc > 4)||(argc<=1)){
-    fprintf(stderr,"usage: %s l_max [ivec, %i] [type, %i]\n",
-	    argv[0],ivec,type);
-    fprintf(stderr,"       l_max: max order of expansion. if negative, will print out the spatial\n");
-    fprintf(stderr,"                 locations needed on input\n");
-    fprintf(stderr,"              for Rick, lmax needs to be 2**n-1\n\n");
-    fprintf(stderr,"       ivec:  0: expand scalar field (input: lon lat scalar)\n");
-    fprintf(stderr,"              1: expand vector field (input: lon lat v_t v_p\n\n");
-    fprintf(stderr,"       type:  %i: use Healpix's routines\n",SH_HEALPIX);
-    fprintf(stderr,"              %i: use Rick's routines\n",SH_RICK);
+    fprintf(stderr,"usage: %s l_max [ivec, %i] [type, %i] [short_format, %i\n",
+	    argv[0],ivec,type,short_format);
+    fprintf(stderr,"        l_max: max order of expansion. if negative, will print out the spatial\n");
+    fprintf(stderr,"                  locations needed on input\n");
+    fprintf(stderr,"               for Rick SH format, lmax needs to be 2**n-1\n\n");
+    fprintf(stderr,"        ivec:  0: expand scalar field (input: lon lat scalar)\n");
+    fprintf(stderr,"               1: expand vector field (input: lon lat v_t v_p\n\n");
+    fprintf(stderr,"        type   %i: use Rick's routines internally (output format DT convection)\n",SH_RICK);
+    fprintf(stderr,"               %i: use Healpix's routines internally (output format DT convection)\n\n",SH_HEALPIX);
+    fprintf(stderr,"short_format:  0: use long header files format as in HC\n");
+    fprintf(stderr,"               1: use short header file format (only lmax)\n\n");
     exit(-1);
   }
   if(print_spatial_base)

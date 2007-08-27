@@ -29,6 +29,10 @@ void hc_init_parameters(struct hc_parameters *p)
   p->dens_anom_scale = 0.2;	/* default density anomaly scaling to
 				   go from PREM percent traveltime
 				   anomalies to density anomalies */
+  p->read_short_dens_sh = FALSE; /* read the density anomaly file in
+				    the short format of Becker &
+				    Boschi (2002)?  */
+
   p->verbose = 0;		/* debugging output? (0,1,2,3,4...) */
   p->sol_binary_out = TRUE;	/* binary or ASCII output of SH expansion */
   p->solution_mode = HC_VEL;	/* default: velocity */
@@ -121,7 +125,9 @@ void hc_init_main(struct hcs *hc,int sh_type,
       HC_ERROR("hc_init","vel_bc_zero and free_slip doesn't make sense");
     /* read in the densities */
     hc_assign_density(hc,p->compressible,HC_INIT_FROM_FILE,
-		      p->dens_filename,-1,FALSE,FALSE,p->verbose);
+		      p->dens_filename,-1,FALSE,FALSE,
+		      p->verbose,
+		      p->read_short_dens_sh);
     /* assign all zeroes up to the lmax of the density expansion */
     hc_assign_plate_velocities(hc,HC_INIT_FROM_FILE,
 			       p->pvel_filename,
@@ -138,14 +144,15 @@ void hc_init_main(struct hcs *hc,int sh_type,
 				 dummy,FALSE,p->verbose);
       hc_assign_density(hc,p->compressible,HC_INIT_FROM_FILE,
 			p->dens_filename,hc->pvel[0].lmax,
-			FALSE,FALSE,p->verbose);
+			FALSE,FALSE,p->verbose,
+			p->read_short_dens_sh);
     }else{
       if(p->verbose)
 	fprintf(stderr,"hc_init: initializing for free-slip\n");
       /* read in the density fields */
       hc_assign_density(hc,p->compressible,HC_INIT_FROM_FILE,
 			p->dens_filename,-1,FALSE,FALSE,
-			p->verbose);
+			p->verbose,p->read_short_dens_sh);
     }
   }
   /* 
@@ -250,7 +257,7 @@ void hc_handle_command_line(int argc, char **argv,
 {
   int i;
   for(i=1;i < argc;i++){
-    if(strcmp(argv[i],"-h")==0 || strcmp(argv[i],"-?")==0){// help
+    if(strcmp(argv[i],"-help")==0 || strcmp(argv[i],"-h")==0 || strcmp(argv[i],"-?")==0){// help
       /* 
 	 help page
       */
@@ -264,7 +271,11 @@ void hc_handle_command_line(int argc, char **argv,
       fprintf(stderr,"density anomaly options:\n");
       fprintf(stderr,"-dens\tname\tuse name as a SH density anomaly model (%s)\n",
 	      p->dens_filename);
-      fprintf(stderr,"\t\tThis expects density anomalies in %% of PREM in DT format.\n");
+      fprintf(stderr,"\t\tThis expects density anomalies in %% of PREM in Dahlen & Tromp format.\n");
+      
+      fprintf(stderr,"-dshs\t\tuse the short, Becker & Boschi (2002) format for the SH density model (%s)\n",
+	      hc_name_boolean(p->read_short_dens_sh));
+
       fprintf(stderr,"-ds\t\tadditional density anomaly scaling factor (%g)\n\n",
 	      p->dens_anom_scale);
       
@@ -305,6 +316,8 @@ void hc_handle_command_line(int argc, char **argv,
       hc_toggle_boolean(&p->vel_bc_zero);
     }else if(strcmp(argv[i],"-px")==0){	/* print spatial solution? */
       hc_toggle_boolean(&p->print_spatial);
+    }else if(strcmp(argv[i],"-dshs")==0){ /* use short format? */
+      hc_toggle_boolean(&p->read_short_dens_sh);
     }else if(strcmp(argv[i],"-pptsol")==0){	/* print
 						   poloidal/toroidal
 						   solution
@@ -477,12 +490,14 @@ void hc_assign_density(struct hcs *hc,
 		       char *filename,int nominal_lmax,
 		       hc_boolean layer_structure_changed,
 		       hc_boolean density_in_binary,
-		       hc_boolean verbose)
+		       hc_boolean verbose,
+		       hc_boolean use_short_format)
 {
   FILE *in;
   int type,lmax,shps,ilayer,nset,ivec,i,j;
   HC_PREC *dtop,*dbot,zlabel,dens_scale[1],rho0;
-  hc_boolean reported = FALSE;
+  double dtmp;
+  hc_boolean reported = FALSE,read_on;
   static HC_PREC local_dens_fac = .01;	/* this factor will be
 					   multiplied with the
 					   hc->dens_fac factor to
@@ -492,7 +507,7 @@ void hc_assign_density(struct hcs *hc,
 					   for instance
 					*/
   hc->compressible = compressible;
-
+  hc->inho = 0;
   if(hc->dens_init)			/* clear old expansions, if 
 					   already initialized */
     sh_free_expansion(hc->dens_anom,hc->inho);
@@ -512,98 +527,128 @@ void hc_assign_density(struct hcs *hc,
     this assumes that we are reading in anomalies in percent
     
     */
+
     in = hc_open(filename,"r","hc_assign_density");
     if(verbose)
       fprintf(stderr,"hc_assign_density: reading density anomalies in [%%] from %s, scaling by %g\n",
 	      filename,hc->dens_scale[0]);
     hc->inho = 0;		/* counter for density layers */
     /* get one density expansion */
-    hc_get_blank_expansions(&hc->dens_anom,1,0,"hc_assign_density");
+    hc_get_blank_expansions(&hc->dens_anom,1,0,
+			    "hc_assign_density");
     /* 
        read all layers as spherical harmonics assuming real Dahlen &
        Tromp (physical) normalization, short format
 
     */
-    while(sh_read_parameters_from_file(&type,&lmax,&shps,&ilayer, &nset,
-				       &zlabel,&ivec,in,FALSE,
-				       density_in_binary,
-				       verbose)){
-      if((verbose)&&(!reported)){
-	if(nominal_lmax > lmax)
-	  fprintf(stderr,"hc_assign_density: density lmax: %3i filling up to nominal lmax: %3i with zeroes\n",
-		  lmax,nominal_lmax);
-	if(nominal_lmax != -1){
-	  fprintf(stderr,"hc_assign_density: density lmax: %3i limiting to lmax: %3i\n",
-		  lmax,nominal_lmax);
-	}else{
-	  fprintf(stderr,"hc_assign_density: density lmax: %3i determines solution lmax\n",
-		  lmax);
-	}
-	reported = TRUE;
-      }
-      /* 
-	 do tests 
-      */
-      if((shps != 1)||(ivec))
-	HC_ERROR("hc_assign_density","vector field read in but only scalar expansion expected");
-      /* test and assign depth levels */
-      hc->rden=(HC_PREC *)
-	realloc(hc->rden,(1+hc->inho)*sizeof(HC_PREC));
-      if(!hc->rden)
-	HC_MEMERROR("hc_assign_density: rden");
-      /* 
-	 assign depth, this assumes that we are reading in depths [km]
-      */
-      hc->rden[hc->inho] = HC_ND_RADIUS((double)zlabel);
-      /* 
-
-      get reference density at this level
-
-      */
-      prem_get_rho(&rho0,hc->rden[hc->inho],hc->prem);
-      rho0 /= 1000.0;
-      /* 
-	 general density (add additional depth dependence here)
-      */
-      dens_scale[0] = hc->dens_scale[0] * local_dens_fac * rho0;
-      if(verbose >= 2)
-	fprintf(stderr,"hc_assign_density: r: %11g anom scales: %11g x %11g x %11g = %11g\n",
-		hc->rden[hc->inho],hc->dens_scale[0],
-		local_dens_fac,rho0,dens_scale[0]);
-      if(hc->inho){	
-	/* 
-	   check by comparison with previous expansion 
-	*/
-	if(nominal_lmax == -1)
-	  if(lmax != hc->dens_anom[0].lmax)
-	    HC_ERROR("hc_assign_density","lmax changed in file");
-	if(hc->rden[hc->inho] <= hc->rden[hc->inho-1])
-	  HC_ERROR("hc_assign_density","depth should decrease, radius increase (give z[km])");
-      }
-      /* 
-	 make room for new expansion 
-      */
-      hc_get_blank_expansions(&hc->dens_anom,hc->inho+1,hc->inho,
-			      "hc_assign_density");
-      /* 
-	 initialize expansion on irregular grid
-      */
-      sh_init_expansion((hc->dens_anom+hc->inho),
-			(nominal_lmax > lmax) ? (nominal_lmax):(lmax),
-			hc->sh_type,1,verbose,FALSE);
-      /* 
-	 
-	 read parameters and scale (put possible depth dependence of
-	 scaling here)
-	 
-	 will assume input is in physical convention
-
-      */
-      sh_read_coefficients_from_file((hc->dens_anom+hc->inho),1,lmax,
-				     in,density_in_binary,dens_scale,
-				     verbose);
-      hc->inho++;
+    if(use_short_format){
+      if(verbose)
+	fprintf(stderr,"hc_assign_density: using short format for density SH\n");
+      fscanf(in,"%i",&nset);
+      ilayer = -1;
+    }else{
+      if(verbose)
+	fprintf(stderr,"hc_assign_density: using default SH format for density\n");
     }
+    read_on = TRUE;
+    while(read_on){
+      if(use_short_format){
+	/* short format I/O */
+	i  = fscanf(in,"%lf",&dtmp);zlabel = (HC_PREC)dtmp;
+	i += fscanf(in,"%i",&lmax);
+	read_on = (i == 2)?(TRUE):(FALSE);
+	ivec = 0;shps = 1;type = HC_DEFAULT_INTERNAL_FORMAT;
+	ilayer++;
+      }else{
+	read_on = sh_read_parameters_from_file(&type,&lmax,&shps,
+					       &ilayer, &nset,
+					       &zlabel,&ivec,in,
+					       FALSE,density_in_binary,
+					       verbose);
+      }
+      if(read_on){
+	if((verbose)&&(!reported)){
+	  if(nominal_lmax > lmax)
+	    fprintf(stderr,"hc_assign_density: density lmax: %3i filling up to nominal lmax: %3i with zeroes\n",
+		    lmax,nominal_lmax);
+	  if(nominal_lmax != -1){
+	    fprintf(stderr,"hc_assign_density: density lmax: %3i limiting to lmax: %3i\n",
+		    lmax,nominal_lmax);
+	  }else{
+	    fprintf(stderr,"hc_assign_density: density lmax: %3i determines solution lmax\n",
+		    lmax);
+	  }
+	  reported = TRUE;
+	}
+	/* 
+	   do tests 
+	*/
+	if((shps != 1)||(ivec))
+	  HC_ERROR("hc_assign_density","vector field read in but only scalar expansion expected");
+	/* test and assign depth levels */
+	hc->rden=(HC_PREC *)
+	  realloc(hc->rden,(1+hc->inho)*sizeof(HC_PREC));
+	if(!hc->rden)
+	  HC_MEMERROR("hc_assign_density: rden");
+	/* 
+	   assign depth, this assumes that we are reading in depths [km]
+	*/
+	hc->rden[hc->inho] = HC_ND_RADIUS((double)zlabel);
+	/* 
+	   
+	get reference density at this level
+	
+	*/
+	prem_get_rho(&rho0,hc->rden[hc->inho],hc->prem);
+	rho0 /= 1000.0;
+	/* 
+	   general density (add additional depth dependence here)
+	*/
+	dens_scale[0] = hc->dens_scale[0] * local_dens_fac * rho0;
+	if(verbose >= 2){
+	  
+	  fprintf(stderr,"hc_assign_density: r: %11g anom scales: %11g x %11g x %11g = %11g\t%5i out of %i, z: %11g\n",
+		  hc->rden[hc->inho],hc->dens_scale[0],
+		  local_dens_fac,rho0,dens_scale[0],hc->inho+1,nset,zlabel);
+	}
+	if(hc->inho){	
+	  /* 
+	     check by comparison with previous expansion 
+	  */
+	  if(nominal_lmax == -1)
+	    if(lmax != hc->dens_anom[0].lmax)
+	      HC_ERROR("hc_assign_density","lmax changed in file");
+	  if(hc->rden[hc->inho] <= hc->rden[hc->inho-1]){
+	    fprintf(stderr,"hc_assign_density: %i %g %g\n",hc->inho,hc->rden[hc->inho] <= hc->rden[hc->inho-1]);
+	    HC_ERROR("hc_assign_density","depth should decrease, radius increase (give z[km])");
+	  }
+	}
+	/* 
+	   make room for new expansion 
+	*/
+	hc_get_blank_expansions(&hc->dens_anom,hc->inho+1,hc->inho,
+				"hc_assign_density");
+	/* 
+	   initialize expansion on irregular grid
+	*/
+	sh_init_expansion((hc->dens_anom+hc->inho),
+			  (nominal_lmax > lmax) ? (nominal_lmax):(lmax),
+			  hc->sh_type,1,verbose,FALSE);
+	/* 
+	   
+	read parameters and scale (put possible depth dependence of
+	scaling here)
+	
+	will assume input is in physical convention
+	
+	*/
+	sh_read_coefficients_from_file((hc->dens_anom+hc->inho),1,
+				       lmax,in,density_in_binary,
+				     dens_scale,verbose);
+	hc->inho++;
+      }	/* end actualy read on */
+    } /* end while */
+    
     if(hc->inho != nset)
       HC_ERROR("hc_assign_density","file mode: mismatch in number of layers");
     fclose(in);
@@ -884,8 +929,6 @@ void hc_struc_free(struct hcs **hc)
 {
   free((*hc)->visc);
   free((*hc)->rvisc);
-  free((*hc)->visc);
-
   free((*hc)->qwrite);
 
   sh_free_expansion((*hc)->dens_anom,1);

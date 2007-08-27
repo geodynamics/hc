@@ -128,12 +128,13 @@ void rick_shc2d(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
 
 converts on irregular basis with locations cos(theta)[], phi[]  long
 
- */
+*/
 void rick_shc2d_irreg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
 		      int lmax,int ivec,
 		      SH_RICK_PREC *rdatax,SH_RICK_PREC *rdatay,
 		      struct rick_module *rick,float *theta, int ntheta, 
-		      float *phi,int nphi, hc_boolean save_sincos_fac)
+		      float *phi,int nphi, 
+		      hc_boolean save_sincos_fac)
 {
   SH_RICK_PREC *plm,*dplm;
   if(!rick->initialized){
@@ -316,7 +317,8 @@ void rick_shc2d_pre_irreg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
 			  int lmax,SH_RICK_PREC *plm, SH_RICK_PREC *dplm,
 			  int ivec,float *rdatax,float *rdatay, 
 			  struct rick_module *rick, float *theta, int ntheta,
-			  float *phi,int nphi,my_boolean save_sincos_fac)
+			  float *phi,int nphi,
+			  my_boolean save_sincos_fac)
 {
   /* //
   // Legendre functions are precomputed
@@ -329,7 +331,7 @@ void rick_shc2d_pre_irreg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
     exit(-1);
   }
 
-  lmaxp1 = lmax + 1;                // this is nlat
+  lmaxp1 = lmax + 1;               
 
   if(ivec){
     if(!rick->vector_sh_fac_init){
@@ -345,14 +347,19 @@ void rick_shc2d_pre_irreg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
   /* 
      compute sin/cos factors
   */
-  hc_svecrealloc(&rick->sfac,nphi*lmaxp1,"rick_shc2d_pre_irreg");
-  hc_svecrealloc(&rick->cfac,nphi*lmaxp1,"rick_shc2d_pre_irreg");
-  for(ios1=i=0;i < nphi;i++){
-    for(m=0;m <= lmax;m++,ios1++){
-      mphi = (double)m*(double)phi[i];
-      rick->sfac[ios1] = (float)sin(mphi);
-      rick->cfac[ios1] = (float)cos(mphi);
+  if((!save_sincos_fac)||(!rick->sin_cos_saved)){
+    
+    hc_svecrealloc(&rick->sfac,nphi*lmaxp1,"rick_shc2d_pre_irreg");
+    hc_svecrealloc(&rick->cfac,nphi*lmaxp1,"rick_shc2d_pre_irreg");
+    for(ios1=i=0;i < nphi;i++){
+      for(m=0;m <= lmax;m++,ios1++){
+	mphi = (double)m*(double)phi[i];
+	rick->sfac[ios1] = (float)sin(mphi);
+	rick->cfac[ios1] = (float)cos(mphi);
+      }
     }
+    if(save_sincos_fac)
+      rick->sin_cos_saved = TRUE;
   }
   if(ivec == 0){
     /* 
@@ -368,8 +375,7 @@ void rick_shc2d_pre_irreg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
 	loc_plmb[ios1] =  cslm[k2+1] * plm[ios1];
       }
     }
-    for (idata=i=ios2=0;i < ntheta; i++,ios2 += rick->lmsize) { /* theta
-								   loop */
+    for (idata=i=ios2=0;i < ntheta; i++,ios2 += rick->lmsize) { /* theta loop */
       for(ios3=j=0;j < nphi;j++,idata++,ios3 += lmaxp1){ /* phi loop */
 	
 	/* m = 0 , l = 0*/
@@ -397,17 +403,22 @@ void rick_shc2d_pre_irreg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
       sin_theta = sin(theta[i]);
       for(ios3=j=0;j < nphi;j++,idata++,ios3 += lmaxp1){ /* phi loop */
 	
+
 	rdatax[idata] = rdatay[idata] = 0.0;
 
-	l = 0;m = -1;       
+	l = 0;m = 0;       
 	/* start at l = 1 */
 	for (k=1,k2=2; k < rick->lmsize; k++,k2+=2) { 
-	/* loop through l,m */
+	  /* loop through l,m */
 	  m++;
 	  if (m > l) {
 	    m=0;l++;
 	  }
 	  lm1 = l - 1;
+	  //	  fprintf(stderr,"%5i %5i\t %11g %11g\tPA: %11g  PB: %11g\tTA: %11g TB:%11g\n",
+	  //	  l,m,rick->ell_factor[lm1],plm[ios2+k], 
+	  //	  SH_RICK_FACTOR(l, m) * cslm[k2] ,SH_RICK_FACTOR(l, m) *cslm[k2+1],
+	  //	  SH_RICK_FACTOR(l, m) * dslm[k2], SH_RICK_FACTOR(l, m) *dslm[k2+1]);
 	  dpdt = dplm[ios2+k] * rick->ell_factor[lm1]; /* d_theta(P_lm) factor */
 	  dpdp  = ((SH_RICK_PREC)m) * plm[ios2+k]/ sin_theta;
 	  dpdp *= (SH_RICK_PREC)rick->ell_factor[lm1]; /* d_phi (P_lm) factor */
@@ -418,21 +429,23 @@ void rick_shc2d_pre_irreg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
 	  
 	  u_theta
 	  
-	*/
-	  rdatax[i] +=   /* cos term */
+	  */
+	  rdatax[idata] +=   /* cos term */
 	    (cslm[k2]   * dpdt + dslm[k2+1] * dpdp) * rick->cfac[ios3+m];
-	  rdatax[i] +=   /* sin term */
+	  rdatax[idata] +=   /* sin term */
 	    (cslm[k2+1] * dpdt - dslm[k2]   * dpdp) * rick->sfac[ios3+m];
 	  /* 
 	     u_phi
 	  */
-	  rdatay[i] +=  // cos term
+	  rdatay[idata] +=  // cos term
 	    (cslm[k2+1] * dpdp  - dslm[k2]   * dpdt) * rick->cfac[ios3+m];
-	  rdatay[i] +=   // sin term
+	  rdatay[idata] +=   // sin term
 	    (- cslm[k2] * dpdp  - dslm[k2+1] * dpdt) * rick->sfac[ios3+m];
 	}
-      }
-    }
+	//fprintf(stderr,"%11g %11g %11g %11g\n",theta[j],phi[i],rdatax[i],rdatay[i]);
+	
+      }	/* end phi loop */
+    } /* end theta loop */
   }
 
   if(!save_sincos_fac){
@@ -759,6 +772,10 @@ void rick_init(int lmax,int ivec,int *npoints,int *nplm,
     hc_svecalloc(&rick->plm_fac1,rick->lmsize,"rick_init 6");
     hc_svecalloc(&rick->plm_fac2,rick->lmsize,"rick_init 7");
     hc_svecalloc(&rick->plm_srt,rick->nlon,"rick_init 8");
+
+
+    rick->sin_cos_saved = FALSE;
+
     if(ivec){
       //
       // additional arrays for vector spherical harmonics

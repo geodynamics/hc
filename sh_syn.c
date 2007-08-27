@@ -21,11 +21,11 @@ int main(int argc, char **argv)
      switches 
   */
   hc_boolean verbose = TRUE, short_format = FALSE ,short_format_ivec = FALSE ,binary = FALSE;
-  int regular_basis = 0;
+  double regular_basis = 0;
   /*  */
-  float *data,*theta,*phi,x,y;
+  float *data,*theta,*phi;
   /* spacing for irregular output */
-  static float dphi = 2.0;
+  double dphi,x,y;
   HC_PREC fac[3] = {1.,1.,1.},zlabel;
   SH_RICK_PREC *dummy;
   struct sh_lms *exp;
@@ -44,15 +44,24 @@ int main(int argc, char **argv)
       short_format_ivec = TRUE;
   }
   if(argc > 3)
-    sscanf(argv[3],"%i",&regular_basis);
+    sscanf(argv[3],"%lf",&regular_basis);
 
   if((argc > 4)||(argc<0)){
-    fprintf(stderr,"usage: %s [short_format, %i] [short_ivec,%i] [regular_basis,%i]\n",
+    fprintf(stderr,"usage: %s [short_format, %i] [short_ivec,%i] [regular_basis,%g]\n",
 	    argv[0],short_format,short_format_ivec,regular_basis);
+    fprintf(stderr,"short_format:\n\t0: expects regular format with long header\n");
+    fprintf(stderr,"\t1: expects short format with only lmax in header\n\n");
+    fprintf(stderr,"short_ivec:\n\t0: for short format, expect AB for scalar expansion\n");
+    fprintf(stderr,"\t1: for short format, expect poloidal toroidal AP BP AT BT for vector expansion\n\n");
+    fprintf(stderr,"regular_basis:\n\t0: use Gauss latitudes and FFT divided longitudes dependening on lmax\n");
+    fprintf(stderr,"\t>0 use even spacing with regular_basis degree inrecrments on the globe\n\n");
+    fprintf(stderr,"The output format will depend on the type of SH input.\n");
+    fprintf(stderr,"\tfor scalara: lon lat scalar if a single SH is read in, else lon lat zlabel scalar.\n");
+    fprintf(stderr,"\tfor vectors: lon lat v_theta v_phi if a single SH is read in, else lon lat zlabel v_theta v_phi.\n\n\n");
     exit(-1);
   }
   if(verbose)
-    fprintf(stderr,"%s: waiting to read spherical harmonic coefficients from stdin, use -h for help\n",
+    fprintf(stderr,"%s: waiting to read spherical harmonic coefficients from stdin\n",
 	    argv[0]);
   while(sh_read_parameters_from_file(&type,&lmax,&shps,&ilayer,&nset,
 				     &zlabel,&ivec,stdin,short_format,
@@ -66,41 +75,37 @@ int main(int argc, char **argv)
 	      argv[0],lmax,ivec,zlabel);
 
     /* input and init */
-    sh_allocate_and_init(&exp,shps,lmax,type,ivec,verbose,regular_basis);
+    sh_allocate_and_init(&exp,shps,lmax,type,ivec,verbose,((regular_basis>0)?(1):(0)));
     sh_read_coefficients_from_file(exp,shps,-1,stdin,binary,fac,verbose);
-    if(regular_basis){
+    if(regular_basis > 0){
       /* 
 	 irregular basis output 
       */
-      switch(regular_basis){
-      case 1:
-	if(verbose)
-	  fprintf(stderr,"sh_syn: using regular spaced grid with %g deg spacing\n",dphi);
-	/*  */
-	dphi = DEG2RAD(dphi);
-	nphi = (TWOPI-dphi)/dphi;
-	ntheta = nphi/2+1;
-	npoints = nphi * ntheta;
-	/*  */
-	hc_svecalloc(&phi,nphi,"sh_shsyn");
-	hc_svecalloc(&theta,ntheta,"sh_shsyn");
-	for(x=0,i=0;i < nphi;i++,x+=dphi)
-	  phi[i] = x;
-	for(y=dphi/2,j=0;j<ntheta;y+=dphi,j++)
-	  theta[j] = y;
-	break;
-      default:
-	fprintf(stderr,"sh_syn: irregular basis code %i undefined\n",regular_basis);
-	exit(-1);
-	break;
-      }
-
+      dphi = regular_basis;
+      if(verbose)
+	fprintf(stderr,"sh_syn: using regular spaced grid with %g deg spacing\n",dphi);
+      /*  */
+      dphi = DEG2RAD(dphi);
+      nphi = (TWOPI-dphi)/dphi + 1;
+      ntheta = nphi/2;
+      npoints = nphi * ntheta;
+      /*  */
+      hc_svecalloc(&phi,nphi,"sh_shsyn");
+      hc_svecalloc(&theta,ntheta,"sh_shsyn");
+      for(x=0,i=0;i < nphi;i++,x+=dphi)
+	phi[i] = x;
+      for(y=dphi/2,j=0;j<ntheta;y+=dphi,j++)
+	theta[j] = y;
       hc_svecalloc(&data,npoints * shps,"sh_shsyn data");
+      /* compute the expansion */
       sh_compute_spatial_irreg(exp,ivec,FALSE,&dummy,
-			       theta,ntheta,phi,nphi,data,verbose,FALSE);
+			       theta,ntheta,phi,nphi,data,
+			       verbose,FALSE);
       /* output */
-      sh_print_irreg_spatial_data_to_file(exp,shps,data,(nset>1)?(TRUE):(FALSE),zlabel, 
-					  theta,ntheta,phi,nphi,stdout);
+      sh_print_irreg_spatial_data_to_file(exp,shps,data,
+					  (nset>1)?(TRUE):(FALSE),
+					  zlabel, theta,ntheta,
+					  phi,nphi,stdout);
       
       
 
@@ -109,7 +114,9 @@ int main(int argc, char **argv)
       hc_svecalloc(&data,exp[0].npoints * shps,"sh_syn");
       sh_compute_spatial(exp,ivec,FALSE,&dummy,data,verbose);
       /* output */
-      sh_print_spatial_data_to_file(exp,shps,data,(nset>1)?(TRUE):(FALSE),zlabel,stdout);
+      sh_print_spatial_data_to_file(exp,shps,data,
+				    (nset>1)?(TRUE):(FALSE),
+				    zlabel,stdout);
     }
 
 

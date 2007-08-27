@@ -103,7 +103,6 @@ void ggrd_find_spherical_vel_from_rigid_cart_rot(double *,
 						 double *);
 						 
 
-/* hc related utility functions */
 
-void hc_vecalloc(double **,int,char *);
-void hc_vecrealloc(double **,int,char *);
+void ggrd_vecalloc(double **,int,char *);
+void ggrd_vecrealloc(double **,int,char *);

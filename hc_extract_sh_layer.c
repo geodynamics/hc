@@ -53,10 +53,13 @@ int main(int argc, char **argv)
     fprintf(stderr,"\tif mode = 1, will print x_r \n");
     fprintf(stderr,"\tif mode = 2, will print x_pol x_tor \n");
     fprintf(stderr,"\tif mode = 3, will print x_r x_pol x_tor\n");
+    fprintf(stderr,"\tif mode = 4, will print the depth levels of all layers\n");
     
     exit(-1);
     break;
   }
+  if(mode == 4)
+    ilayer = -2;
   /* 
      read in solution
   */
@@ -92,11 +95,14 @@ int main(int argc, char **argv)
     /* 
        output 
     */
-    if(short_format && loop)
-      fprintf(stdout,"%g\n",HC_Z_DEPTH(model->r[ilayer]));
-    sh_print_parameters_to_file((sol+ilayer*3),shps,
-				ilayer,nset,(HC_PREC)(HC_Z_DEPTH(model->r[ilayer])),
-				stdout,short_format,FALSE,verbose);
+    if(mode != 4){
+      /* SH header */
+      if(short_format && loop)
+	fprintf(stdout,"%g\n",HC_Z_DEPTH(model->r[ilayer]));
+      sh_print_parameters_to_file((sol+ilayer*3),shps,
+				  ilayer,nset,(HC_PREC)(HC_Z_DEPTH(model->r[ilayer])),
+				  stdout,short_format,FALSE,verbose);
+    }
     switch(mode){
     case 1:
       /*  */
@@ -118,6 +124,9 @@ int main(int argc, char **argv)
 	fprintf(stderr,"%s: printing x_r x_pol x_tor SHE at layer %i (depth: %g)\n",
 		argv[0],ilayer,HC_Z_DEPTH(model->r[ilayer]));
       sh_print_coefficients_to_file((sol+ilayer*3),shps,stdout,fac,FALSE,verbose);
+      break;
+    case 4:
+      fprintf(stdout,"%5i %11g\n",ilayer,HC_Z_DEPTH(model->r[ilayer]));
       break;
     default:
       fprintf(stderr,"%s: error, mode %i undefined\n",argv[0],mode);

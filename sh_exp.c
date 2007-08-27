@@ -363,11 +363,15 @@ void sh_print_parameters_to_file(struct sh_lms *exp, int shps,
    
    
 */
-hc_boolean sh_read_parameters_from_file(int *type, int *lmax, int *shps,
+hc_boolean sh_read_parameters_from_file(int *type, int *lmax, 
+					int *shps,
 					int *ilayer, int *nset,
-					HC_CPREC *zlabel,int *ivec,
-					FILE *in, hc_boolean short_format,
-					hc_boolean binary,hc_boolean verbose)
+					HC_CPREC *zlabel,
+					int *ivec,
+					FILE *in, 
+					hc_boolean short_format,
+					hc_boolean binary,
+					hc_boolean verbose)
 {
   int input1[2],input2[3];
   HC_BIN_PREC fz;
@@ -1246,7 +1250,7 @@ void sh_print_spatial_data_to_file(struct sh_lms *exp, int shps,
       /* print lon lat z[i] */
       fprintf(out,"%11g %11g %11g\t",lon,lat,z);
     }
-    for(k=0;k<shps;k++)		/* loop through all scalars */
+    for(k=0;k < shps;k++)		/* loop through all scalars */
       fprintf(out,"%11g ",data[j+exp[0].npoints*k]);
     fprintf(out,"\n");
   }	/* end points in lateral space loop */

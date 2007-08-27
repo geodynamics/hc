@@ -832,7 +832,7 @@ int ggrd_init_thist_from_file(struct ggrd_t *thist,
     fprintf(stderr,"ggrd_read_time_intervals: error: already initialized\n");
     return 1;
   }
-  hc_vecalloc(&thist->vtimes,3,"rti: 1");
+  ggrd_vecalloc(&thist->vtimes,3,"rti: 1");
 
   if(read_thistory){
     in = fopen(input_file,"r");
@@ -859,7 +859,7 @@ int ggrd_init_thist_from_file(struct ggrd_t *thist,
 	(*(thist->vtimes+thist->nvtimes3) + *(thist->vtimes + thist->nvtimes3+2))/2.0;
       thist->nvtimes += 1;
       thist->nvtimes3 += 3;
-      hc_vecrealloc(&thist->vtimes,thist->nvtimes3+3,"rti: 2");
+      ggrd_vecrealloc(&thist->vtimes,thist->nvtimes3+3,"rti: 2");
     }
     thist->tmin = *(thist->vtimes+0);
     thist->tmax = *(thist->vtimes+ (thist->nvtimes-1) * 3 +2);
@@ -1160,6 +1160,29 @@ int interpolate_seafloor_ages(GGRD_CPREC xt, GGRD_CPREC xp,
     *seafloor_age = 0.0;	/* and >= 0 */
   return 0;
 }
+
+
+
+/* general floating point vector allocation */
+void ggrd_vecalloc(double **x,int n,char *message)
+{
+  *x = (double *)malloc(sizeof(double)*(size_t)n);
+  if(! (*x)){
+    fprintf(stderr,"mem error: %s\n",message);
+    exit(-1);
+  }
+}
+
+/* general version */
+void ggrd_vecrealloc(double **x,int n,char *message)
+{
+  *x = (double *)realloc(*x,sizeof(double)*(size_t)n);
+  if(!(*x)){
+    fprintf(stderr,"mem error: %s\n",message);
+    exit(-1);
+  }
+}
+
 
 /* 
 
