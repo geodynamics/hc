@@ -1,3 +1,5 @@
+#ifndef __READ_GGRD_HEADER__
+
 //
 //     max order of interpolation - 1
 //     ie. if 3, this means will do fourth order on 0,1,2,GGRD_DEF_ORDER arrays
@@ -14,8 +16,9 @@
 #define GGRD_CPREC double
 #define GGRD_EPS 5e-15
 #define ggrd_boolean unsigned char
-
+#ifndef HC_FLT_FORMAT
 #define HC_FLT_FORMAT "%lf"
+#endif
 #endif
 
 /* string length */
@@ -27,7 +30,16 @@
 /* radius of CMB */
 #define GGRD_RCMB_ND 0.546225
 
+#ifdef M_PI
+#define GGRD_PI M_PI
+#else
 #define GGRD_PI 3.1415926535897932384626433832795
+#endif
+
+#ifndef GGRD_TWOPI
+#define GGRD_TWOPI 6.283185307179586476925286766559005768394
+#endif
+
 
 /* 
    
@@ -45,3 +57,7 @@ modes
 #define GGRD_VSFILE "vrms.dat"	/* vel stat file */
 #define GGRD_THFILE "vtimes.dat" /* times for velocities */
 #define GGRD_DFILE "vdepth.dat"	/* depth layer file */
+
+#define  __READ_GGRD_HEADER__
+
+#endif

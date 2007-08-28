@@ -733,7 +733,7 @@ void rick_init(int lmax,int ivec,int *npoints,int *nplm,
     //
     // for coordinate computations
     //
-    rick->dphi = TWOPI / (SH_RICK_PREC)(rick->nlon);
+    rick->dphi = RICK_TWOPI / (SH_RICK_PREC)(rick->nlon);
     rick->nlonm1 = rick->nlon - 1;
     //
     // size of tighly packed arrays with l,m indices

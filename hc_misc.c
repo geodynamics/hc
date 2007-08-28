@@ -48,9 +48,9 @@ void hc_vecalloc(HC_PREC **x,int n,char *message)
     HC_MEMERROR(message);
 }
 /* single prec complex vector allocation */
-void hc_scmplx_vecalloc(struct scmplx **x,int n,char *message)
+void hc_scmplx_vecalloc(struct hc_scmplx **x,int n,char *message)
 {
-  *x = (struct scmplx *)malloc(sizeof(struct scmplx)*(size_t)n);
+  *x = (struct hc_scmplx *)malloc(sizeof(struct hc_scmplx)*(size_t)n);
   if(! (*x))
     HC_MEMERROR(message);
 }

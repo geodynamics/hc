@@ -238,6 +238,8 @@ int prem_read_model(char *filename,struct prem_model *prem,
   int i,rcnt;
   FILE *in;
   rcnt = 0;
+  sprintf(prem->model_filename,filename);
+
   in=fopen(filename,"r");
   if(!in){
     fprintf(stderr,"prem_read_model: error: can't open model file %s\n",filename);

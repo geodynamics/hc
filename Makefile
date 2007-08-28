@@ -75,14 +75,20 @@ PREM_OBJS = $(ODIR)/prem_util.o
 PREM_DEFINES = -DPREM_MODEL_FILE=\"$(PWD)/prem/prem.dat\"
 PREM_INCS = prem.h
 #
-# GMT grd handling
+# GMT grd handling, now includes PREM stuff
 #
-GGRD_SRCS = ggrd_velinterpol.c ggrd_readgrds.c ggrd_grdtrack_util.c
-GGRD_OBJS = $(ODIR)/ggrd_velinterpol.o $(ODIR)/ggrd_readgrds.o $(ODIR)/ggrd_grdtrack_util.o
-GGRD_OBJS_DBG = $(ODIR)/ggrd_velinterpol.dbg.o $(ODIR)/ggrd_readgrds.dbg.o $(ODIR)/ggrd_grdtrack_util.dbg.o
-GGRD_DEFINES = -I$(GMTHOME)/include -I$(NETCDFHOME)/include 
+GGRD_SRCS = ggrd_velinterpol.c ggrd_readgrds.c ggrd_grdtrack_util.c \
+	$(PREM_SRCS)
+GGRD_OBJS = $(ODIR)/ggrd_velinterpol.o $(ODIR)/ggrd_readgrds.o $(ODIR)/ggrd_grdtrack_util.o \
+	$(PREM_OBJS)
+GGRD_OBJS_DBG = $(ODIR)/ggrd_velinterpol.dbg.o $(ODIR)/ggrd_readgrds.dbg.o $(ODIR)/ggrd_grdtrack_util.dbg.o \
+	$(PREM_OBJS)
+GGRD_DEFINES = -I$(GMTHOME)/include -I$(NETCDFHOME)/include  \
+	$(PREM_DEFINES)
 GGRD_LIB_FLAGS = -L$(GMTHOME)/lib -L$(NETCDFHOME)/lib 
-GGRD_LIBS = $(ODIR)/libggrd.a $(ODIR)/libggrd.dfast.a $(ODIR)/libggrd.dbg.a
+GGRD_LIBS = $(ODIR)/libggrd.a $(ODIR)/libggrd.dfast.a $(ODIR)/libggrd.dbg.a 
+GGRD_INCS = $(PREM_INCS)
+
 #
 #
 #
@@ -96,7 +102,7 @@ HC_SOURCES = sh_exp.c sh_model.c hc_init.c hc_solve.c hc_propagator.c \
 	hc_misc.c hc_extract_sh_layer.c 
 
 # all C sources
-C_SOURCES = $(HC_SOURCES) $(RICK_SRCS) $(PREM_SRCS) $(GGRD_SRCS)
+C_SOURCES = $(HC_SOURCES) $(RICK_SRCS) $(GGRD_SRCS)
 #
 #
 # objects for HC library
@@ -104,17 +110,16 @@ C_SOURCES = $(HC_SOURCES) $(RICK_SRCS) $(PREM_SRCS) $(GGRD_SRCS)
 HC_OBJS = $(ODIR)/sh_exp.o $(ODIR)/sh_model.o $(ODIR)/hc_input.o \
 	$(ODIR)/hc_polsol.o $(ODIR)/hc_matrix.o $(ODIR)/hc_torsol.o \
 	$(ODIR)/hc_misc.o $(ODIR)/hc_init.o $(ODIR)/hc_propagator.o \
-	$(ODIR)/hc_output.o $(ODIR)/hc_solve.o \
-	$(PREM_OBJS)  
+	$(ODIR)/hc_output.o $(ODIR)/hc_solve.o 
 
 HC_OBJS_DBG = $(ODIR)/sh_exp.dbg.o $(ODIR)/sh_model.dbg.o $(ODIR)/hc_input.dbg.o \
 	$(ODIR)/hc_polsol.dbg.o $(ODIR)/hc_matrix.dbg.o $(ODIR)/hc_torsol.dbg.o \
 	$(ODIR)/hc_misc.dbg.o $(ODIR)/hc_init.dbg.o $(ODIR)/hc_propagator.dbg.o \
-	$(ODIR)/hc_output.dbg.o $(ODIR)/hc_solve.dbg.o \
-	$(PREM_OBJS)  
+	$(ODIR)/hc_output.dbg.o $(ODIR)/hc_solve.dbg.o 
 
-# HC library
-HC_LIBS = $(ODIR)/libhc.a $(ODIR)/libhc.dbg.a
+# HC libraries
+HC_LIBS = $(ODIR)/libhc.a 
+HC_LIBS_DEBUG =  $(ODIR)/libhc.dbg.a
 
 LIB_FLAGS = -L$(HOME)/progs/lib/$(ARCH)/ \
 	$(HEAL_LIB_FLAGS) $(RICK_LIB_FLAGS) \
@@ -126,26 +131,25 @@ INC_FLAGS = -I$(HOME)/progs/include/  $(HEAL_INC_FLAGS) \
 	$(RICK_INC_FLAGS) $(GGRD_INC_FLAGS) 
 #
 # includes 
-INCS = hc_auto_proto.h $(HEAL_INCS) $(RICK_INCS) $(PREM_INCS) \
-	$(GGRD_INCS) $(OINCS)
+INCS = hc_auto_proto.h $(HEAL_INCS) $(RICK_INCS)  $(GGRD_INCS) $(OINCS)
 #
 # defines
-DEFINES = $(RICK_DEFINES) $(HEAL_DEFINES) $(PREM_DEFINES) \
-	$(GGRD_DEFINES)
+DEFINES = $(RICK_DEFINES) $(HEAL_DEFINES)  $(GGRD_DEFINES)
 #
 # libraries
 LIBS = $(HC_LIBS) $(GGRD_LIBS) $(HEAL_LIBS) $(RICK_LIB)
 
 
-all: dirs libs hc hc.dbg hc_extract_sh_layer \
-	sh_syn sh_ana sh_power \
-	ggrd_test hcplates
+all: dirs libs hc  hc_extract_sh_layer \
+	sh_syn sh_ana sh_power 
 
 libs: dirs hc_lib  $(HEAL_LIBS) $(RICK_LIB)
 
 hc_lib: $(HC_LIBS) $(GGRD_LIBS)  
 
-really_all: proto all 
+debug_libs: $(HC_LIBS_DEBUG)
+
+really_all: proto all debug_libs hc.dbg hcplates ggrd_test
 
 
 proto: hc_auto_proto.h

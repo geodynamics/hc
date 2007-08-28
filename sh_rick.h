@@ -6,15 +6,21 @@ and Tromp
 
 
 */
+#ifndef __READ_RICK_SH_HEADER__
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
-#ifndef TWOPI
-#define TWOPI 6.283185307179586476925286766559005768394
+#ifndef RICK_TWOPI
+#define RICK_TWOPI 6.283185307179586476925286766559005768394
 #endif
 
+#ifdef M_PI
+#define RICK_PI M_PI
+#else
 #define RICK_PI 3.1415926535897932384626433832795
+#endif
 
 #define SH_RICK_TWO_SQRT_PI 3.5449077018110320545963349666823 /* sqrt(4 pi) */
 
@@ -130,3 +136,6 @@ extern void rick_f90_cs2ab( SH_RICK_PREC *, int *);
 extern void rick_f90_ab2cs( SH_RICK_PREC *, int *);
 extern void rick_f90_realft(SH_RICK_PREC *,int *,int *);
 extern void rick_f90_four1(SH_RICK_PREC *,int *,int *);
+
+#define  __READ_RICK_SH_HEADER__
+#endif

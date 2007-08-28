@@ -1,3 +1,5 @@
+#ifndef  __SH_HEADER_READ__
+
 #ifdef HC_USE_HEALPIX
 /* 
    load definitions for complex variable structures, Healpix structure
@@ -150,3 +152,5 @@ struct sh_lms_model{
 */
 #define LM_INDEX(l,m,a_or_b) ((((l)+1)*(l)/2+(m))*2+(a_or_b))
 
+#define __SH_HEADER_READ__
+#endif

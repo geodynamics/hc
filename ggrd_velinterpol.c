@@ -139,12 +139,12 @@ int ggrd_find_vel_and_der(GGRD_CPREC *xloc,
      check range 
   */
   if(xloc[HC_PHI]<0)
-    xloc[HC_PHI] += TWOPI;
-  if(xloc[HC_PHI]>TWOPI)
-    xloc[HC_PHI] -= TWOPI;
+    xloc[HC_PHI] += GGRD_TWOPI;
+  if(xloc[HC_PHI]>GGRD_TWOPI)
+    xloc[HC_PHI] -= GGRD_TWOPI;
   if((xloc[HC_R]<0) || (xloc[HC_R]>1) || (xloc[HC_THETA]<0) ||
      (xloc[HC_THETA] > GGRD_PI) || (xloc[HC_PHI] < 0) || 
-     (xloc[HC_PHI] > TWOPI)){
+     (xloc[HC_PHI] > GGRD_TWOPI)){
     fprintf(stderr,"ggrd_find_vel_and_der: coordinate x{%g, %g, %g} (lon: %g, lat: %g, z: %g) out of range\n",
 	    xloc[HC_R],xloc[HC_THETA],xloc[HC_PHI],
 	    PHI2LON(xloc[HC_PHI]),THETA2LAT(xloc[HC_THETA]),
@@ -276,7 +276,7 @@ int ggrd_find_vel_and_der(GGRD_CPREC *xloc,
 	    v->vd.ixtracer[HC_THETA],v->n[HC_THETA],
 	    v->vd.ixtracer[HC_PHI],v->n[HC_PHI]);
     for(i=0;i < 3;i++){
-      rnet = TWOPI;
+      rnet = GGRD_TWOPI;
       fprintf(stderr,"ggrd_velinterpol: dim: %i:",i);
       for(j=0;j < v->vd.istencil[i];j++){
 	fprintf(stderr,"%.5f (%3i) ",grid[i*(v->vd.orderp1)+j],igrid[i][j]);

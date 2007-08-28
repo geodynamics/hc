@@ -51,7 +51,7 @@ FILE *hc_open(char *, char *, char *);
 void hc_dvecalloc(double **, int, char *);
 void hc_svecalloc(float **, int, char *);
 void hc_vecalloc(double **, int, char *);
-void hc_scmplx_vecalloc(struct scmplx **, int, char *);
+void hc_scmplx_vecalloc(struct hc_scmplx **, int, char *);
 void hc_svecrealloc(float **, int, char *);
 void hc_dvecrealloc(double **, int, char *);
 void hc_vecrealloc(double **, int, char *);

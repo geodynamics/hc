@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 	fprintf(stderr,"sh_syn: using regular spaced grid with %g deg spacing\n",dphi);
       /*  */
       dphi = DEG2RAD(dphi);
-      nphi = (TWOPI-dphi)/dphi + 1;
+      nphi = (RICK_TWOPI-dphi)/dphi + 1;
       ntheta = nphi/2;
       npoints = nphi * ntheta;
       /*  */

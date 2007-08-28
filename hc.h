@@ -7,13 +7,14 @@
    $Id: hc.h,v 1.12 2006/05/01 17:46:18 becker Exp becker $
 
 */
+#ifndef __HC_READ_HEADER_FILE__
+
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
 #include <limits.h>
-#include <malloc.h>
 
 #include "hc_filenames.h"
 /* 
@@ -41,19 +42,23 @@ general variable type defines
 
 #define HC_BIN_PREC float	/* precision for binary I/O */
 
-#ifndef DEFINED_MY_COMPLEX
+
+#ifndef __HC_DEF_COMPLEX__
 /* complex variables */
-struct scmplx{			/* single precision */
+struct hc_scmplx{			/* single precision */
   float dr,di;
 };
-struct dcmplx{			/* double precision */
+struct hc_dcmplx{			/* double precision */
   double dr,di;
 };
-#define DEFINED_MY_COMPLEX
+#define __HC_DEF_COMPLEX__
 #endif
 
+#ifndef M_PI
+#define M_PI 3.1415926535897932384626433832795
+#endif
 
-#define HC_PI 3.1415926535897932384626433832795
+#define HC_PI M_PI
 
 /* 
 
@@ -327,10 +332,11 @@ macro defintions
    trigonometry stuff 
 */
 #ifndef SQRT_TWO 
-#define SQRT_TWO 1.41421356237309504880168872420970 
+#ifdef M_SQRT2
+#define SQRT_TWO M_SQRT2
+#else
+#define SQRT_TWO  1.41421356237309504880168872420970 
 #endif
-#ifndef M_PI
-#define M_PI 3.1415926535897932384626433832795
 #endif
 #ifndef PIOVERONEEIGHTY
 #define PIOVERONEEIGHTY  0.017453292519943295769236907684886 
@@ -388,3 +394,5 @@ other constants
 */
 #define HC_Z_DEPTH(x) ((HC_RE_KM * (1.0-(x))))
 
+#define __HC_READ_HEADER_FILE__
+#endif

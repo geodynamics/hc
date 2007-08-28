@@ -619,7 +619,8 @@ void hc_assign_density(struct hcs *hc,
 	    if(lmax != hc->dens_anom[0].lmax)
 	      HC_ERROR("hc_assign_density","lmax changed in file");
 	  if(hc->rden[hc->inho] <= hc->rden[hc->inho-1]){
-	    fprintf(stderr,"hc_assign_density: %i %g %g\n",hc->inho,hc->rden[hc->inho] <= hc->rden[hc->inho-1]);
+	    fprintf(stderr,"hc_assign_density: %i %g %g\n",hc->inho,
+		    hc->rden[hc->inho], hc->rden[hc->inho-1]);
 	    HC_ERROR("hc_assign_density","depth should decrease, radius increase (give z[km])");
 	  }
 	}
@@ -644,7 +645,7 @@ void hc_assign_density(struct hcs *hc,
 	*/
 	sh_read_coefficients_from_file((hc->dens_anom+hc->inho),1,
 				       lmax,in,density_in_binary,
-				     dens_scale,verbose);
+				       dens_scale,verbose);
 	hc->inho++;
       }	/* end actualy read on */
     } /* end while */

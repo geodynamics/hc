@@ -6,13 +6,13 @@ $Id: prem.h,v 1.4 2006/04/18 01:08:39 twb Exp twb $
 
 
 */
+
+#ifndef __READ_PREM_HEADER__
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <limits.h>
 #include <string.h>
-
-#ifndef __READ_PREM_HEADER__
 
 #define PREM_F_STRING "%lf"
 
@@ -25,9 +25,11 @@ $Id: prem.h,v 1.4 2006/04/18 01:08:39 twb Exp twb $
 #ifndef hc_boolean
 #define hc_boolean unsigned short
 #endif
+
 #ifndef TRUE 
 #define TRUE 1
 #endif
+
 #ifndef FALSE
 #define FALSE 0
 #endif
@@ -54,6 +56,8 @@ struct prem_model{
   double rb[PREM_N];		/* top boundary of layers, in meters */
   double r[PREM_N];		/* non-dimensionalized version  */
   double r0;			/* surface r in meters */
+
+  char model_filename[2000];	/* model file name */
 
   hc_boolean init;
 };
