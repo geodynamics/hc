@@ -1,0 +1,156 @@
+#!/bin/bash
+#
+# example script to compute and plot mantle velocities
+#
+
+compute=${1-1}			# produce a new solution
+plots=${2-"1 2"}		# plot output modes
+                                # 1: geoid
+                                # 2: plate velocities
+
+#
+# options
+#
+#
+# density options
+#
+dfac=0.25			# density scaling factor, needs to be specified
+dt=-dshs			# SH type "": new -dshs: Becker & Boschi (2002)
+dm=example_data/smean.31.m.ab   # density model, needs to be specified
+#
+# boundary conditions
+#
+tbc=-fs                	# -fs: free slip
+#tbc="-pvel example_data/pvel.sh.dat"         # empty: plates, or specific plate velocity file
+
+#
+# viscosity file
+#
+vf=example_data/visc.C2			# file name
+#vf=example_data/visc.dat			# file name
+
+verb=-vvv			# verbosity level
+
+
+#
+# for temporary files
+#
+tmpn=/tmp/$USER.$HOST.$$
+trap "rm -f $tmpn.* ; exit" 0 1 2 15
+
+
+
+if [ $compute -eq 1 ];then
+    rm vel.sol.bin 2> /dev/null
+    hc $verb -dens $dm $dt -ds $dfac $tbc -vf $vf 2> hc.log
+    cat hc.log
+    if [ ! -s vel.sol.bin ];then
+	echo $0: error, no output produced
+	exit
+    fi
+fi
+
+
+for plot in $plots;do
+
+
+    #
+    # take care of GMT crap
+    #
+    if [ -s $HOME/.gmtdefaults ];then
+	gf=$HOME/.gmtdefaults
+    elif [ -s $HOME/.gmtdefaults4 ];then
+	gf=$HOME/.gmtdefaults4
+    elif [ -s .gmtdefaults4 ];then
+	gf=.gmtdefaults4
+    elif [ -s .gmtdefaults ];then
+	gf=.gmtdefaults
+    fi
+    if [ -s $gf ];then
+	old_media=`grep PAPER_MEDIA $gf | gawk '{print($3)}'`
+    fi
+    
+    gmtset PAPER_MEDIA letter+
+
+
+
+#
+# plotting setting
+#
+    inc=1;greg=-R0/359/-89.5/89.5	# grid range
+    proj=-JH180/7i;preg=-R0/360/-90/90 # plotting range
+
+    if [ $plot -eq 1 ];then		# plot the geoid
+	
+	ofile=geoid.ps
+	
+	echo $0: plotting geoid to $ofile
+	
+	
+	makecpt -T-120/120/10 -Chaxby > $tmpn.cpt
+	cat geoid.ab | sh_syn 0 0 $inc 2> /dev/null | \
+	    xyz2grd $greg -I$inc -G$tmpn.grd 
+	grdimage $tmpn.grd $preg $proj -P \
+	    -C$tmpn.cpt -K > $ofile
+	pscoast $proj $preg -A70000 -K -O -Dc -W2 >> $ofile
+	psscale -D50 -D3.5i/-.3i/3i/.25ih -E -C$tmpn.cpt \
+	    -B100/:"[m]": -O >> $ofile
+	
+    elif [ $plot -eq 2 ];then	# plot velocities
+	
+        # extract all depths 
+	hc_extract_sh_layer vel.sol.bin 2 4 | gawk '{print($2)}' > vdepth.dat
+	nl=`wc -l vdepth.dat | gawk '{print($1)}'`
+
+        # colormaps for radial flow
+	makecpt -T-1.5/1.5/.125 -Chaxby > $tmpn.cpt
+	
+	# vector spacing
+	vinc=10;vreg=-R0/350/-85/85
+
+	# loop through some layers
+	layer=2
+	while [ $layer -le $nl ];do
+
+	    # extract depth
+	    z=`gawk '{if(NR==l)print($1)}' l=$layer vdepth.dat `
+	    
+	    ofile=vel.$layer.ps	# output file name
+
+	    echo $0: plotting velocities at $z to $ofile
+	#
+	# extract radial velocity of this layer
+	#
+	    hc_extract_sh_layer vel.sol.bin $layer 1 0 | sh_syn 0 0 $inc 2> /dev/null | \
+		xyz2grd $greg -I$inc -G$tmpn.grd
+	#
+	# extract vx and vy velocities
+	    hc_extract_sh_layer vel.sol.bin $layer  2 0 | sh_syn 0 0 $vinc 2> /dev/null > $tmpn.dat
+	    gawk '{print($1,$2,$4)}' $tmpn.dat | xyz2grd  -G$tmpn.vx.grd $vreg -I$vinc # vx = vphi
+	    gawk '{print($1,$2,-$3)}' $tmpn.dat | xyz2grd -G$tmpn.vy.grd $vreg -I$vinc # vy = -vtheta
+
+	    # actually plot velocities
+	    
+	    grdimage $tmpn.grd $preg $proj -P -C$tmpn.cpt -K > $ofile
+	    pscoast $proj $preg -A70000 -K -O -Dc -W2 >> $ofile
+	    echo 0.05 0 14 0 0 ML "z = $z km" | pstext -O -K -N -R0/1/0/1 -JX7/3.5i >> $ofile
+	    grdvector $tmpn.vx.grd  $tmpn.vy.grd \
+		-T $reg $proj  -Q0.015i/0.12i/0.045in.2 -S15 -O -K -G128/0/0 -W0.5 >> $ofile
+	    psscale -D50 -D3.5i/-.3i/3i/.25ih -E -C$tmpn.cpt \
+		-B1/:"v@-r@- [cm/yr]": -O >> $ofile
+
+	    
+
+	    ((layer=layer+6))
+	done
+
+
+
+    fi
+    if [ -s $gf ];then		# resset GMT 
+	gmtset PAPER_MEDIA $old_media
+
+    fi
+
+
+done
