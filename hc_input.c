@@ -39,6 +39,7 @@ void hc_read_sh_solution(struct hcs *hc, struct sh_lms **sol, FILE *in,
       for(i=0;i < nsol;i++)	/* init expansions on irregular grid */
 	sh_init_expansion((*sol+i),lmax,hc->sh_type,1,verbose,FALSE);
       hc->nrad = nset - 2;
+      hc->nradp2 = hc->nrad + 2;
       hc_vecrealloc(&hc->r,nset,"hc_read_sh_solution");
     }
     /* assign depth */

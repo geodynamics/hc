@@ -48,7 +48,8 @@
 //
 //
 //
-void hc_torsol(int nrad,int nvis,int lmax,HC_PREC *r,
+void hc_torsol(struct hcs *hc,
+	       int nrad,int nvis,int lmax,HC_PREC *r,
 	       HC_PREC **rv,HC_PREC **visc, struct sh_lms *pvel_tor,
 	       struct sh_lms *tor_sol,double *tvec,
 	       hc_boolean verbose)
@@ -62,7 +63,7 @@ void hc_torsol(int nrad,int nvis,int lmax,HC_PREC *r,
   //
   double coef,*vecnor,hold,rlast,rnext,tloc[2],*tvec1,*tvec2;
   double exp_fac[2],p[2][2],diflog,el,elp2,elm1,efdiff;
-  int l,jvisp1,jvis,i,j,nvisp1,nradp2,lmaxp1,os;
+  int l,jvisp1,jvis,i,j,nvisp1,lmaxp1,os;
   hc_boolean qvis;
   //
   //     PASSED PARAMETERS:  NRADP2: NUMBER OF OUTPUT RADII,
@@ -88,7 +89,7 @@ void hc_torsol(int nrad,int nvis,int lmax,HC_PREC *r,
      work!)
   */
   nvisp1 = nvis + 1;		/* length of rv and visc */
-  nradp2 = nrad + 2;		/* radius array */
+  //nradp2 = nrad + 2;		/* radius array */
   lmaxp1 = lmax+1;		/* length of 0:lmax array */
 
   /* 
@@ -106,10 +107,14 @@ void hc_torsol(int nrad,int nvis,int lmax,HC_PREC *r,
 				  */
   HC_TVISC(nvis) = HC_TVISC(nvis-1);	/* last entry in viscosity array */
 #ifdef DEBUG
+  if(hc->nradp2 != nrad + 2){
+    fprintf(stderr,"hc_torsol: radius number mismatch\n");
+    exit(-1);
+  }
   /* 
      test size of expansions 
   */
-  j = nradp2 * 2;
+  j = hc->nradp2 * 2;
   for(i=0;i < j;i++){
     if(tor_sol[i].lmax < pvel_tor->lmax){
       fprintf(stderr,"hc_torsol: error: toroidal expansion %i has lmax %i, plates have %i\n",
@@ -131,7 +136,7 @@ void hc_torsol(int nrad,int nvis,int lmax,HC_PREC *r,
   /* solution factors as f(l,r) */
   /* set local pointes */
   tvec1 = tvec;
-  tvec2 = (tvec + nradp2 * lmaxp1);
+  tvec2 = (tvec + hc->nradp2 * lmaxp1);
   //
   //     (PREVENTS THE REQUESTING OF NON-EXISTANT VALUES)
   //     
@@ -174,7 +179,7 @@ void hc_torsol(int nrad,int nvis,int lmax,HC_PREC *r,
     tvec1[os] = tloc[0];
     tvec2[os] = tloc[1];
 
-    for(i=1;i < nradp2;i++){	/* loop through radii */
+    for(i=1;i < hc->nradp2;i++){	/* loop through radii */
       os += lmaxp1;
       //
       //     TEST FOR CHANGE IN VISCOSITY IN NEXT LAYER
@@ -224,12 +229,12 @@ void hc_torsol(int nrad,int nvis,int lmax,HC_PREC *r,
   //     this
   //
   hc_dvecalloc(&vecnor,lmaxp1,"hc_torsol: vecnor");
-  os = (nradp2-1) * lmaxp1;
+  os = (hc->nradp2-1) * lmaxp1;
   vecnor[0] = 1.0;
   for(l=1;l < lmaxp1;l++)
     vecnor[l] = 1.0 / tvec1[os+l];
   /* normalize */
-  for(i=os=0;i < nradp2;i++,os+=lmaxp1)
+  for(i=os=0;i < hc->nradp2;i++,os+=lmaxp1)
     for(l=0;l < lmaxp1;l++){
       tvec1[os+l] *= vecnor[l];
       tvec2[os+l] *= vecnor[l];
@@ -242,7 +247,7 @@ void hc_torsol(int nrad,int nvis,int lmax,HC_PREC *r,
   of l and depth
 
   */
-  for(os=i=j=0;i < nradp2;i++,os+=lmaxp1,j+=2){
+  for(os=i=j=0;i < hc->nradp2;i++,os+=lmaxp1,j+=2){
     /* 
        assign toroidal plate motion fields to solution expansion
     */

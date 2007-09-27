@@ -1,7 +1,7 @@
 # GMT common arguments shelf
--B1/:v@-r@- [cm/yr]:
+-B.5/:v@-r@- [cm/yr]:
 -JH180/7i
--JX7/3.5i
+-JQ180/7
+-JX180/7
 -R0/360/-90/90
-EOF
 EOF

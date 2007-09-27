@@ -68,7 +68,7 @@ void hc_struc_init(struct hcs **hc)
      assign NULL pointers to allow reallocating 
   */
   (*hc)->r = (*hc)->visc = (*hc)->rvisc = 
-    (*hc)->dfact = (*hc)->rden = NULL;
+    (*hc)->dfact = (*hc)->rden = (*hc)->dvisc = NULL;
   (*hc)->rpb = (*hc)->fpb= NULL;
   (*hc)->dens_anom = NULL; /* expansions */
   (*hc)->plm = NULL;
@@ -302,7 +302,8 @@ void hc_handle_command_line(int argc, char **argv,
 	      hc_name_boolean(p->print_pt_sol));
       fprintf(stderr,"-px\t\tprint the spatial solution to file (%s)\n",
 	      hc_name_boolean(p->print_spatial));
-      fprintf(stderr,"-str\t\tcompute srr,srt,srp tractions [MPa] instead of velocities [cm/yr] (default: vel)\n");
+      fprintf(stderr,"-rtrac\t\tcompute srr,srt,srp tractions [MPa] instead of velocities [cm/yr] (default: vel)\n");
+      fprintf(stderr,"-htrac\t\tcompute stt,stp,spp tractions [MPa] instead of velocities [cm/yr] (default: vel)\n");
       fprintf(stderr,"-v\t-vv\t-vvv: verbosity levels (%i)\n",
 	      (int)(p->verbose));
       fprintf(stderr,"\n\n");
@@ -340,8 +341,12 @@ void hc_handle_command_line(int argc, char **argv,
     }else if(strcmp(argv[i],"-visc")==0){ /* viscosity filename */
       hc_advance_argument(&i,argc,argv);
       strncpy(p->visc_filename,argv[i],HC_CHAR_LENGTH);
-    }else if(strcmp(argv[i],"-str")==0){	/* compute tractions */
-      p->solution_mode = HC_TRACTIONS;
+    }else if(strcmp(argv[i],"-rtrac")==0){	/* compute radial
+						   tractions */
+      p->solution_mode = HC_RTRACTIONS;
+    }else if(strcmp(argv[i],"-htrac")==0){	/* compute horizontal
+						   tractions */
+      p->solution_mode = HC_HTRACTIONS;
     }else if(strcmp(argv[i],"-v")==0){	/* verbosities */
       p->verbose = 1;
     }else if(strcmp(argv[i],"-vv")==0){	/* verbosities */
@@ -665,7 +670,13 @@ void hc_assign_density(struct hcs *hc,
     
     */
     hc->nrad = hc->inho;
-    hc_vecrealloc(&hc->r,(2+hc->nrad),"hc_assign_density");
+    hc->nradp2 = hc->nrad + 2;
+    hc_vecrealloc(&hc->r,hc->nradp2,"hc_assign_density");
+    /* 
+       viscosity at density layers for horizontal stress
+       computations */
+    hc_vecrealloc(&hc->dvisc,hc->nradp2,"hc_assign_density");
+
     hc->r[0] = hc->r_cmb;	/* CMB  */
     if(hc->rden[0] <= hc->r[0])
       HC_ERROR("hc_assign_density","first density layer has to be above internal CMD limit");
@@ -674,6 +685,18 @@ void hc_assign_density(struct hcs *hc,
     if(hc->rden[hc->nrad-1] >= 1.0)
       HC_ERROR("hc_assign_density","uppermost density layer has to be below surface");
     hc->r[hc->nrad+1] = 1.0;	/* surface */
+    /* 
+
+    assign viscosity at density layers
+    
+    */
+    hc->dvisc[0] = hc->visc[0];
+    for(i=1;i < hc->nradp2;i++){
+      for(j=hc->nvis-1;j>=0;j--)
+	if(hc->rvisc[j] < hc->r[i-1])
+	  break;
+      hc->dvisc[i] = hc->visc[j];
+    }
     /* 
 
     assign the density jump factors

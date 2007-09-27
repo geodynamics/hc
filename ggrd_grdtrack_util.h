@@ -63,7 +63,10 @@ int ggrd_grdtrack_init(double *, double *, double *, double *, float **, int *, 
 #else
 /* GMT 3.4.5 */
 ggrd_boolean ggrd_grdtrack_interpolate(double *, ggrd_boolean , struct GRD_HEADER *, float *,
-				  struct GMT_EDGEINFO *, int, float *, int ,	double *,ggrd_boolean);
+				       struct GMT_EDGEINFO *, int, 
+				       float *, int ,	
+				       double *,ggrd_boolean,
+				       struct BCR *);
 
 int ggrd_grdtrack_init(double *, double *,double *, double *, /* geographic bounds,
 								 set all to zero to 
@@ -81,8 +84,14 @@ int ggrd_grdtrack_init(double *, double *,double *, double *, /* geographic boun
 			float **,	/* layers, pass as NULL */
 			int *,		/* number of layers */
 			ggrd_boolean , /* linear/cubic? */
-			ggrd_boolean ,ggrd_boolean);
-void ggrd_gt_bcr_init_loc(void);
+		       ggrd_boolean ,ggrd_boolean,
+		       struct BCR *);
+
+void ggrd_global_bcr_assign(struct BCR *);
+
+void my_GMT_bcr_init (struct GRD_HEADER *, int *, 
+		      int ,struct BCR *);
+
 #endif
 /* 
 
@@ -90,7 +99,6 @@ local
 
  */
 
-void ggrd_gt_bcr_init_loc(void);
 void ggrd_gt_interpolate_z(double,float *,int ,
 			   int *, int *, double *, double *,ggrd_boolean,
 			   ggrd_boolean *); /*  */

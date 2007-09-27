@@ -162,13 +162,19 @@ struct hcs{
 				   HEALPIX or RICK
 
 				*/
-  int nrad;			/* number of output radial layers */
+  int nrad;			/* number of output radial 
+				   layers 
+
+				   this is determined by the density
+				   model
+
+				*/
   HC_PREC *r;			/* non-dim radii */
+  HC_PREC *dvisc;		/* viscosity at the density layers */
   /* 
      viscosity structure
   */
-  int nvis;		/* number of viscosity
-			   layers */
+  int nvis;		/* number of viscosity layers */
   HC_PREC *visc;	/* values of normalized viscosities */
   HC_PREC *rvisc; 	/* radii of normalized viscosities */
 
@@ -278,8 +284,10 @@ solution modes
 #define HC_VEL 0		/* compute velocities 
 				   v_r v_t v_p
 				*/
-#define HC_TRACTIONS 1		/* compute tractions 
+#define HC_RTRACTIONS 1		/* compute tractions 
 				   trr trt trp  */
+#define HC_HTRACTIONS 2		/* compute tractions ttt, ttp, tpp */
+
 /* 
 
 init and assignment modes
@@ -309,6 +317,11 @@ macro defintions
 #define HC_TPPROD 3
 #define HC_NRNTNP 4
 
+
+/* for solution */
+#define HC_RAD 0
+#define HC_POL 1
+#define HC_TOR 2
 /* 
    boolean 
 */

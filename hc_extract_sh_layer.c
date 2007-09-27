@@ -12,7 +12,7 @@ $Id: hc_extract_sh_layer.c,v 1.9 2006/01/22 01:11:34 becker Exp becker $
 
 int main(int argc, char **argv)
 {
-  int ilayer,nradp2,nsol,i,mode,shps,nset=1,loop,i1,i2;
+  int ilayer,nsol,i,mode,shps,nset=1,loop,i1,i2;
   FILE *in;
   struct sh_lms *sol=NULL;
   struct hcs *model;
@@ -66,27 +66,26 @@ int main(int argc, char **argv)
   in = hc_open(argv[1],"r","hc_extract_sh_layer");
   hc_read_sh_solution(model,&sol,in,binary,verbose);
   fclose(in);
-  nradp2 = model->nrad+2;
-  nsol = nradp2 * 3;
+  nsol = model->nradp2 * 3;
   /* 
      deal with selection
   */
   loop = 0;
   if(ilayer == -1)
-    ilayer = nradp2;
+    ilayer = model->nradp2;
   if(ilayer == -2){
-    ilayer = nradp2;
+    ilayer = model->nradp2;
     loop =1;
   }
-  if((ilayer<1)||(ilayer > nradp2)){
+  if((ilayer<1)||(ilayer > model->nradp2)){
     fprintf(stderr,"%s: ilayer (%i) out of range, use 1 ... %i\n",
-	    argv[0],ilayer,nradp2);
+	    argv[0],ilayer,model->nradp2);
     exit(-1);
   }
   if(loop){
-    i1=0;i2=nradp2-1;
+    i1=0;i2=model->nradp2-1;
     if(short_format)
-      printf("%i\n",nradp2);
+      printf("%i\n",model->nradp2);
   }else{
     i1=ilayer-1;i2 = i1;
   }

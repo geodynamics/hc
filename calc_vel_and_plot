@@ -4,9 +4,10 @@
 #
 
 compute=${1-1}			# produce a new solution
-plots=${2-"1 2"}		# plot output modes
+plots=${2-"1 2 3"}		# plot output modes
                                 # 1: geoid
                                 # 2: plate velocities
+                                # 3: tractions
 
 #
 # options
@@ -27,10 +28,13 @@ tbc=-fs                	# -fs: free slip
 # viscosity file
 #
 vf=example_data/visc.C2			# file name
+#vf=example_data/visc.A			# file name
 #vf=example_data/visc.dat			# file name
 
 verb=-vvv			# verbosity level
 
+
+layers="21 15 6 2"		# layers for plotting
 
 #
 # for temporary files
@@ -40,18 +44,29 @@ trap "rm -f $tmpn.* ; exit" 0 1 2 15
 
 
 
-if [ $compute -eq 1 ];then
-    rm vel.sol.bin 2> /dev/null
-    hc $verb -dens $dm $dt -ds $dfac $tbc -vf $vf 2> hc.log
-    cat hc.log
-    if [ ! -s vel.sol.bin ];then
-	echo $0: error, no output produced
-	exit
-    fi
-fi
-
-
 for plot in $plots;do
+
+
+    if [[ $plot -eq 1 || $plot -eq 2  ]];then # velocities or geoid
+	f=vel
+
+	hc_opt=""
+	dfile=vdepth
+    elif [ $plot -eq 3 ];then	# radial tractions
+	f=rtrac
+	hc_opt="-rtrac"		# 
+	dfile=sdepth
+    fi
+
+    if [ $compute -eq 1 ];then
+	rm $f.sol.bin 2> /dev/null
+	hc $verb -dens $dm $dt $hc_opt -ds $dfac $tbc -vf $vf 2> hc.log
+	if [ ! -s $f.sol.bin ];then
+	    echo $0: error, no output $f.sol.bin produced
+	    exit
+	fi
+	cat hc.log
+    fi
 
 
     #
@@ -77,75 +92,117 @@ for plot in $plots;do
 #
 # plotting setting
 #
-    inc=1;greg=-R0/359/-89.5/89.5	# grid range
+    inc=1;
+    greg=-R0/359/-89.5/89.5	# grid range
     proj=-JH180/7i;preg=-R0/360/-90/90 # plotting range
 
     if [ $plot -eq 1 ];then		# plot the geoid
 	
-	ofile=geoid.ps
+	ofile=geoid.ps		# output PS filename
 	
 	echo $0: plotting geoid to $ofile
 	
 	
-	makecpt -T-120/120/10 -Chaxby > $tmpn.cpt
-	cat geoid.ab | sh_syn 0 0 $inc 2> /dev/null | \
-	    xyz2grd $greg -I$inc -G$tmpn.grd 
-	grdimage $tmpn.grd $preg $proj -P \
-	    -C$tmpn.cpt -K > $ofile
-	pscoast $proj $preg -A70000 -K -O -Dc -W2 >> $ofile
-	psscale -D50 -D3.5i/-.3i/3i/.25ih -E -C$tmpn.cpt \
-	    -B100/:"[m]": -O >> $ofile
-	
-    elif [ $plot -eq 2 ];then	# plot velocities
-	
-        # extract all depths 
-	hc_extract_sh_layer vel.sol.bin 2 4 | gawk '{print($2)}' > vdepth.dat
-	nl=`wc -l vdepth.dat | gawk '{print($1)}'`
+	makecpt -T-150/150/10 -Chaxby > $tmpn.cpt # makes colormap
 
+	# go from spherical harmonics to spatial
+	cat geoid.ab | sh_syn 0 0 $inc 2> /dev/null | \
+	    xyz2grd $greg -I$inc -G$tmpn.grd # and convert to netcdf GRD
+
+	# make postscript plot from grd file
+	grdimage $tmpn.grd $preg $proj -P -C$tmpn.cpt -K > $ofile # first: -K
+	# coastline
+	pscoast $proj $preg -A70000 -K -O -Dc -W2 >> $ofile # all intermediat: -O -K 
+	# colorbar
+	psscale -N50 -D3.5i/-.3i/3i/.25ih -E -C$tmpn.cpt -B50/:"[m]": -O >> $ofile # end: -O
+
+	# ps file done
+	
+    elif [[ $plot -eq 2 || $plot -eq 3 ]];then	# plot velocities or tractions
+	
+        # extract all depths , use second colume, print depth in [km]
+	hc_extract_sh_layer $f.sol.bin 2 4 | gawk '{print($2)}' > $dfile.dat
+
+	# count number of lines (assign command output to variable)
+	nl=`wc -l $dfile.dat | gawk '{print($1)}'`
+
+	if [ $plot -eq 2 ];then
         # colormaps for radial flow
-	makecpt -T-1.5/1.5/.125 -Chaxby > $tmpn.cpt
+	    makecpt -T-1.5/1.5/.125 -Chaxby > $tmpn.cpt
+	    scsp=.5		# scale spacing
+	    type="v";units="cm/yr"
+	else			# tractions
+	    scsp=50
+	    type="t";units="MPa"
+	    makecpt -T-150/150/10 -Chaxby > $tmpn.cpt
+	fi
 	
 	# vector spacing
 	vinc=10;vreg=-R0/350/-85/85
 
+	#
 	# loop through some layers
-	layer=2
-	while [ $layer -le $nl ];do
-
-	    # extract depth
-	    z=`gawk '{if(NR==l)print($1)}' l=$layer vdepth.dat `
+	#
+	lc=1
+	for layer in $layers;do	# loop
 	    
-	    ofile=vel.$layer.ps	# output file name
+	    if [ $layer -gt $nl ];then # check
+		echo $0: error, layer $layer out of bounds $nl
+		exit
+	    fi
 
-	    echo $0: plotting velocities at $z to $ofile
+	    #
+	    # extract depth
+	    z=`gawk '{if(NR==l)printf("%.0f",$1)}' l=$layer $dfile.dat `
+	    
+	    ofile=$f.$layer.ps	# output file name
+
+	    echo $0: plotting $f at $z to $ofile
 	#
 	# extract radial velocity of this layer
 	#
-	    hc_extract_sh_layer vel.sol.bin $layer 1 0 | sh_syn 0 0 $inc 2> /dev/null | \
+	    # extract layer $layer as spherical harmonics , radial component
+	    # convert to spatial
+	    # make netcdf GRD 
+	    hc_extract_sh_layer $f.sol.bin $layer 1 0 | sh_syn 0 0 $inc 2> /dev/null | \
 		xyz2grd $greg -I$inc -G$tmpn.grd
 	#
 	# extract vx and vy velocities
-	    hc_extract_sh_layer vel.sol.bin $layer  2 0 | sh_syn 0 0 $vinc 2> /dev/null > $tmpn.dat
-	    gawk '{print($1,$2,$4)}' $tmpn.dat | xyz2grd  -G$tmpn.vx.grd $vreg -I$vinc # vx = vphi
-	    gawk '{print($1,$2,-$3)}' $tmpn.dat | xyz2grd -G$tmpn.vy.grd $vreg -I$vinc # vy = -vtheta
+	    #
+	    hc_extract_sh_layer $f.sol.bin $layer  2 0 | sh_syn 0 0 $vinc 2> /dev/null > $tmpn.dat
+	    # 
+	    gawk '{print($1,$2,$4)}' $tmpn.dat  | xyz2grd  -G$tmpn.vx.grd $vreg -I$vinc # vx = vphi, tphi
+	    gawk '{print($1,$2,-$3)}' $tmpn.dat | xyz2grd -G$tmpn.vy.grd $vreg -I$vinc # vy = -vtheta,-ttheta
 
+	    # computing vector length
+	    grdmath $tmpn.vx.grd $tmpn.vy.grd R2 SQRT = $tmpn.abs.grd
+
+	    if [ $lc -eq 1 ];then # first time around
+		#
+	    # get scale from multiples of mean of first layer
+		hmean=`grdinfo -C -L2 $tmpn.abs.grd | gawk '{printf("%.1f",$12)}'` # compute mean
+		scale=`echo $hmean | gawk '{print($1*5)}'` # scale 
+	    fi
+	    #
 	    # actually plot velocities
-	    
-	    grdimage $tmpn.grd $preg $proj -P -C$tmpn.cpt -K > $ofile
+	    #
+	    grdimage $tmpn.grd $preg $proj -P -C$tmpn.cpt -K > $ofile # make a colormap 
+	    # coastline
 	    pscoast $proj $preg -A70000 -K -O -Dc -W2 >> $ofile
+
+	    #
 	    echo 0.05 0 14 0 0 ML "z = $z km" | pstext -O -K -N -R0/1/0/1 -JX7/3.5i >> $ofile
+	    echo 0.75 0 14 0 0 ML "@~\341@~$type@-h@-@~\361@~ = $hmean $units" | \
+		pstext -O -K -N -R0/1/0/1 -JX7/3.5i >> $ofile
+	    # plot a vector field
 	    grdvector $tmpn.vx.grd  $tmpn.vy.grd \
-		-T $reg $proj  -Q0.015i/0.12i/0.045in.2 -S15 -O -K -G128/0/0 -W0.5 >> $ofile
+		-T $reg $proj  -Q0.015i/0.12i/0.045in.2 -S$scale -O -K -G128/0/0 -W0.5 >> $ofile
+	    # scale 
 	    psscale -D50 -D3.5i/-.3i/3i/.25ih -E -C$tmpn.cpt \
-		-B1/:"v@-r@- [cm/yr]": -O >> $ofile
+		-B$scsp/:"$type@-r@- [$units]": -O >> $ofile
 
-	    
-
-	    ((layer=layer+6))
+	    ((lc=lc+1))
 	done
-
-
-
     fi
     if [ -s $gf ];then		# resset GMT 
 	gmtset PAPER_MEDIA $old_media

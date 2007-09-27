@@ -190,7 +190,7 @@ void hc_polsol(struct hcs *hc, 	/*
   //       SUBROUTINE EVPPOT (L,RATIO,PPOT):  OBTAINS PROPAGATOR FOR
   //          NON-EQUILIBRIUM POTENTIAL AND DERIVATIVE (RATIO IS R(I)/
   //          R(I+1), FOR PROPAGATION FROM R(I) TO R(I+1) AT L),
-  int i,i2,i3,i6,j,l,m,nih,nxtv,ivis,os,pos1,pos2,nradp2,
+  int i,i2,i3,i6,j,l,m,nih,nxtv,ivis,os,pos1,pos2,
     prop_s1,prop_s2,nvisp1,nzero,n6,ninho,nl=0,ip1;
   int newprp,newpot,jpb,inho2,ibv,indx[3],a_or_b,ilayer,lmax,
     nprops_max;
@@ -205,14 +205,22 @@ void hc_polsol(struct hcs *hc, 	/*
   /*  
       define a few offset and size pointers
   */
-  nradp2 = nrad + 2;
+
+#ifdef DEBUG
+  if(hc->nradp2 != nrad + 2){
+    fprintf(stderr,"hc_polsol: radius number mismatch\n");
+    exit(-1);
+  }
+#endif
+
+
   inho2 = inho + 2;
   nvisp1 = hc->nvis+1;
   lmax = pol_sol[0].lmax ;
   /* 
      max number of propagator levels, choose this generously
   */
-  nprops_max = nradp2 * 3;
+  nprops_max = hc->nradp2 * 3;
   /* 
      for prop and ppot: one set of propagators for all layers, there
      lmax of those
@@ -223,8 +231,7 @@ void hc_polsol(struct hcs *hc, 	/*
   /* 
      check if still same general number of layers 
   */
-  if((hc->psp.prop_params_init)&&((nradp2 != hc->nradp2)||
-			  (inho2 != hc->inho2)||
+  if((hc->psp.prop_params_init)&&((inho2 != hc->inho2)||
 			  (nvisp1 != hc->nvisp1))){
     HC_ERROR("hc_polsol","layer structure changed from last call");
   }
@@ -323,7 +330,7 @@ void hc_polsol(struct hcs *hc, 	/*
       /* 
 	 save in case we want to check if parameters changed later
       */
-      hc->inho2 = inho2;hc->nvisp1=nvisp1;hc->nradp2=nradp2;
+      hc->inho2 = inho2;hc->nvisp1=nvisp1;
     }
     //
     //    SET RDEN(INHO+1) = 1.1 TO PREVENT TESTING OF THAT VALUE
@@ -339,7 +346,7 @@ void hc_polsol(struct hcs *hc, 	/*
     hc->nprops = ivis = nih = 0;
     hc->rprops[0] = rad[0];
     hit = FALSE;
-    for(i=1;(i < nradp2)&&(!hit);i++){
+    for(i=1;(i < hc->nradp2)&&(!hit);i++){
       //    
       //    INITIALIZE
       //

@@ -20,7 +20,7 @@ void hc_print_spectral_solution(struct hcs *hc,struct sh_lms *sol,
 				hc_boolean binary, 
 				hc_boolean verbose)
 {
-  int nradp2,i,os;
+  int i,os;
   static int ntype = 3;			/* three sets of solutions, r/pol/tor */
   HC_PREC fac[3];
   if(!hc->spectral_solution_computed)
@@ -28,18 +28,17 @@ void hc_print_spectral_solution(struct hcs *hc,struct sh_lms *sol,
   /* 
      number of solution sets of ntype solutions 
   */
-  nradp2 = hc->nrad+2;
-  for(i=os=0;i < nradp2;i++,os += ntype){
+  for(i=os=0;i < hc->nradp2;i++,os += ntype){
     /* 
        
     scale to cm/yr, or MPa  for stress solutions
     
     */
-    hc_compute_solution_scaling_factors(hc,sol_mode,hc->r[i],fac);
+    hc_compute_solution_scaling_factors(hc,sol_mode,hc->r[i],hc->dvisc[i],fac);
     /* 
        write parameters, convert radius to depth in [km]  
     */
-    sh_print_parameters_to_file((sol+os),ntype,i,nradp2,
+    sh_print_parameters_to_file((sol+os),ntype,i,hc->nradp2,
 				HC_Z_DEPTH(hc->r[i]),
 				out,FALSE,binary,verbose);
     /* 
@@ -58,8 +57,15 @@ void hc_print_spectral_solution(struct hcs *hc,struct sh_lms *sol,
 		sqrt(sh_total_power((sol+os+2))),
 		fac[0]/11.1194926644559);
 	break;
-      case HC_TRACTIONS:
-	fprintf(stderr,"hc_print_spectral_solution: z: %8.3f str: |r|: %11.3e |pol|: %11.3e |tor|: %11.3e (scale: %g MPa)\n",
+      case HC_RTRACTIONS:
+	fprintf(stderr,"hc_print_spectral_solution: z: %8.3f rtrac: |r|: %11.3e |pol|: %11.3e |tor|: %11.3e (scale: %g MPa)\n",
+		HC_Z_DEPTH(hc->r[i]),sqrt(sh_total_power((sol+os))),
+		sqrt(sh_total_power((sol+os+1))),
+		sqrt(sh_total_power((sol+os+2))),
+		fac[0]/(0.553073278428428/hc->r[i]));
+	break;
+      case HC_HTRACTIONS:
+	fprintf(stderr,"hc_print_spectral_solution: z: %8.3f htrac: |r|: %11.3e |pol|: %11.3e |tor|: %11.3e (scale: %g MPa)\n",
 		HC_Z_DEPTH(hc->r[i]),sqrt(sh_total_power((sol+os))),
 		sqrt(sh_total_power((sol+os+1))),
 		sqrt(sh_total_power((sol+os+2))),
@@ -74,7 +80,7 @@ void hc_print_spectral_solution(struct hcs *hc,struct sh_lms *sol,
   }
   if(verbose)
     fprintf(stderr,"hc_print_spectral_solution: wrote solution at %i levels\n",
-	    nradp2);
+	    hc->nradp2);
 }
 
 /* 
@@ -111,7 +117,7 @@ void hc_print_spatial_solution(struct hcs *hc,
 			       int sol_mode, hc_boolean binary, 
 			       hc_boolean verbose)
 {
-  int nradp2,i,j,k,os[3],los,np,np2,np3;
+  int i,j,k,os[3],los,np,np2,np3;
   FILE *file_dummy=NULL,*out,*dout;
   float flt_dummy=0,*xy=NULL,value[3];
   HC_PREC fac[3];
@@ -119,7 +125,7 @@ void hc_print_spatial_solution(struct hcs *hc,
   if(!hc->spatial_solution_computed)
     HC_ERROR("hc_print_spatial_solution","spectral solution not computed");
   /* number of solution sets of ntype solutions */
-  nradp2 = hc->nrad+2;
+
   /* number of lateral points */
   np = sol[0].npoints;
   np2 = np*2;
@@ -137,14 +143,15 @@ void hc_print_spatial_solution(struct hcs *hc,
   if(verbose >= 2)
     fprintf(stderr,"hc_print_spatial_solution: writing depth levels to %s\n",
 	    dfilename);
-  for(i=0;i < nradp2;i++){
+  for(i=0;i < hc->nradp2;i++){
     /* 
 
     compute the scaling factors, those do depend on radius
     in the case of the stresses, so leave inside loop!
 
     */
-    hc_compute_solution_scaling_factors(hc,sol_mode,hc->r[i],fac);
+    hc_compute_solution_scaling_factors(hc,sol_mode,hc->r[i],
+					hc->dvisc[i],fac);
 
     /* write depth in [km] to dout file */
     fprintf(dout,"%g\n",HC_Z_DEPTH(hc->r[i]));
@@ -196,7 +203,7 @@ void hc_print_spatial_solution(struct hcs *hc,
   fclose(dout);
   if(verbose)
     fprintf(stderr,"hc_print_spatial_solution: wrote solution at %i levels\n",
-	    nradp2);
+	    hc->nradp2);
   free(xy);
 }
 
@@ -208,10 +215,9 @@ print the depth layers solution
 void hc_print_depth_layers(struct hcs *hc, FILE *out, 
 			   hc_boolean verbose)
 {
-  int nradp2,i;
+  int i;
   /* number of solution sets of ntype solutions */
-  nradp2 = hc->nrad + 2;
-  for(i=0;i < nradp2;i++)
+  for(i=0;i < hc->nradp2;i++)
     fprintf(out,"%g\n",HC_Z_DEPTH(hc->r[i]));
 }
 
@@ -288,6 +294,7 @@ void hc_print_vector_row(HC_PREC *a, int n,FILE *out)
 void hc_compute_solution_scaling_factors(struct hcs *hc,
 					 int sol_mode,
 					 HC_PREC radius,
+					 HC_PREC viscosity,
 					 HC_PREC *fac)
 {
 
@@ -295,8 +302,12 @@ void hc_compute_solution_scaling_factors(struct hcs *hc,
   case HC_VEL:
     fac[0]=fac[1]=fac[2] = hc->vel_scale; /* go to cm/yr  */
     break;
-  case HC_TRACTIONS:
+  case HC_RTRACTIONS:		/* radial tractions */
     fac[0]=fac[1]=fac[2] = hc->stress_scale/radius; /* go to MPa */
+    break;
+  case HC_HTRACTIONS:		/* horizontal tractions, are actually
+				   given as strain-rates  */
+    fac[0]=fac[1]=fac[2] = 2.0*viscosity*hc->stress_scale/radius; /* go to MPa */
     break;
   default:
     HC_ERROR("hc_print_spectral_solution","mode undefined");

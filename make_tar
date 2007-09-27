@@ -1,22 +1,30 @@
 #!/bin/bash
-ver=0.1
-date=`date '+%m-%d-%y'`
+#
+# create a tar file 
+#
+ver=${1-0.1}
+date=`date '+%m%d%y'`
+
+tf=$HOME/tmp/hc-$ver.$date.tgz 
 
 rm -rf $HOME/tmp/hc
 mkdir $HOME/tmp/hc
 mkdir $HOME/tmp/hc/example_data
 mkdir $HOME/tmp/hc/prem/
+mkdir $HOME/tmp/hc/hcplates/
 
 cp  *.c *.h Makefile  README.TXT INSTALLATION.TXT calc_vel_and_plot \
      $HOME/tmp/hc
 cp example_data/* $HOME/tmp/hc/example_data/
-cp prem/prem* $HOME/tmp/hc/prem
+cp prem/prem* $HOME/tmp/hc/prem/
+cp hcplates/* $HOME/tmp/hc/hcplates/
 
 
 cd $HOME/tmp/
 
-tar --create --gzip --verbose --file $HOME/tmp/hc-$ver.$date.tgz hc/
+tar --create --gzip --verbose --file $tf hc/
 
 rm -r hc/
 
 cd -
+echo $0: output in $tf

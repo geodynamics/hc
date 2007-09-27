@@ -80,7 +80,7 @@ void hc_print_vector(double *, int, FILE *);
 void hc_print_vector_label(double *, int, FILE *, char *);
 void hc_print_matrix_label(double *, int, int, FILE *, char *);
 void hc_print_vector_row(double *, int, FILE *);
-void hc_compute_solution_scaling_factors(struct hcs *, int, double, double *);
+void hc_compute_solution_scaling_factors(struct hcs *, int, double, double, double *);
 void hc_print_poloidal_solution(struct sh_lms *, struct hcs *, int, char *, unsigned short, unsigned short);
 void hc_print_toroidal_solution(double *, int, struct hcs *, int, char *, unsigned short);
 /* hc_polsol.c */
@@ -93,7 +93,7 @@ void hc_solve(struct hcs *, unsigned short, int, struct sh_lms *, unsigned short
 void hc_sum(struct hcs *, int, struct sh_lms *, struct sh_lms *, int, unsigned short, struct sh_lms *, unsigned short);
 void hc_compute_sol_spatial(struct hcs *, struct sh_lms *, float **, unsigned short);
 /* hc_torsol.c */
-void hc_torsol(int, int, int, double *, double **, double **, struct sh_lms *, struct sh_lms *, double *, unsigned short);
+void hc_torsol(struct hcs *, int, int, int, double *, double **, double **, struct sh_lms *, struct sh_lms *, double *, unsigned short);
 /* main.c */
 /* prem_util.c */
 int prem_find_layer_x(double, double, double *, int, int, double *);

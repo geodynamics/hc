@@ -123,7 +123,7 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
       hc_vecalloc(&tvec,(hc->nrad+2)*(hc->pvel[1].lmax+1)*2,
 		  "hc_solve");
       /* compute kernels, and assign kernel*pvel to tor_sol */
-      hc_torsol(hc->nrad,hc->nvis,hc->pvel[1].lmax,hc->r,
+      hc_torsol(hc,hc->nrad,hc->nvis,hc->pvel[1].lmax,hc->r,
 		&hc->rvisc,&hc->visc,(hc->pvel+1),hc->tor_sol,tvec,
 		verbose);
       if(print_pt_sol)
@@ -140,9 +140,13 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
     if(verbose)
       fprintf(stderr,"hc_solve: computing solution for velocities\n");
     break;
-  case HC_TRACTIONS:
+  case HC_RTRACTIONS:
     if(verbose)
-      fprintf(stderr,"hc_solve: computing solution for tractions\n");
+      fprintf(stderr,"hc_solve: computing solution for radial tractions\n");
+    break;
+  case HC_HTRACTIONS:
+    if(verbose)
+      fprintf(stderr,"hc_solve: computing solution for horizontal tractions\n");
     break;
   default:
     fprintf(stderr,"hc_solve: error: solution mode %i undefined\n",
@@ -201,10 +205,10 @@ void hc_sum(struct hcs *hc,
 	    hc_boolean verbose)
 {
   int itchoose,irchoose,ipchoose; /* indices for which solutions to use */
-  int i,j,i3,i6,nradp2;
+  int i,j,i3,i6;
   if(sol[0].lmax > hc->lfac_init)
     hc_init_l_factors(hc,sol[0].lmax);
-  nradp2 = nrad + 2;
+
   /* 
 
   pick the right components for the radial, poloidal, and toroidal
@@ -220,13 +224,17 @@ void hc_sum(struct hcs *hc,
     ipchoose = 1; // y2 for poloidal
     itchoose = 0; // y9 for toroidal
     break;
-  case HC_TRACTIONS:
+  case HC_RTRACTIONS:
     //
     //    srr srt srp stress output requested 
     //
     irchoose = 2;// y3  for radial
     ipchoose = 3;// y4  for poloidal
     itchoose = 1;// y10 for toroidal 
+    break;
+  case HC_HTRACTIONS:
+    fprintf(stderr,"hc_sum: horizontal tractions not implemented yet\n");
+    exit(-1);
     break;
   default:
     HC_ERROR("hc_sum","solve mode undefined");
@@ -240,24 +248,24 @@ void hc_sum(struct hcs *hc,
 
 
   */
-  for(i=i3=i6=0;i < nradp2;i++,i3+=3,i6+=6){
+  for(i=i3=i6=0;i < hc->nradp2;i++,i3+=3,i6+=6){
     /* 
        radial part 
     */
-    sh_aexp_equals_bexp_coeff((sol+i3+0),(pol_sol+i6+irchoose));
+    sh_aexp_equals_bexp_coeff((sol+i3+HC_RAD),(pol_sol+i6+irchoose));
     /* 
        poloidal part, need to scale with sqrt(l(l+1))
     */
-    sh_aexp_equals_bexp_coeff((sol+i3+1),(pol_sol+i6+ipchoose));
-    sh_scale_expansion_l_factor((sol+i3+1),hc->lfac);
+    sh_aexp_equals_bexp_coeff((sol+i3+HC_POL),(pol_sol+i6+ipchoose));
+    sh_scale_expansion_l_factor((sol+i3+HC_POL),hc->lfac);
     for(j=0;j<3;j++)
       sol[i3+j].spectral_init = TRUE;
     if(!free_slip){
       /* 
 	 toroidal part, need to scale with sqrt(l(l+1))
       */
-      sh_aexp_equals_bexp_coeff((sol+i3+2),(tor_sol+i*2+itchoose));
-      sh_scale_expansion_l_factor((sol+i3+2),hc->lfac);
+      sh_aexp_equals_bexp_coeff((sol+i3+HC_TOR),(tor_sol+i*2+itchoose));
+      sh_scale_expansion_l_factor((sol+i3+HC_TOR),hc->lfac);
     }else{
       /* no toroidal part for free-slip */
       sh_clear_alm((sol+i3+2));
@@ -278,9 +286,8 @@ data has to be initialized, eg. as NULL
 void hc_compute_sol_spatial(struct hcs *hc, struct sh_lms *sol_w,
 			    float **sol_x, hc_boolean verbose)
 {
-  int i,i3,nradp2,np,np2,np3,os;
+  int i,i3,np,np2,np3,os;
   static int ntype = 3;
-  nradp2 = hc->nrad + 2;
   np = sol_w[0].npoints;
   np2 = np * 2;
   np3 = np2 + np;	/* 
@@ -288,19 +295,19 @@ void hc_compute_sol_spatial(struct hcs *hc, struct sh_lms *sol_w,
 			   expansions for r, pol, tor
 			*/
   /* allocate space for spatial solution*/
-  hc_svecrealloc(sol_x,np3*nradp2,"sol_x");
+  hc_svecrealloc(sol_x,np3*hc->nradp2,"sol_x");
   /* 
      compute the plm factors 
   */
   sh_compute_plm(sol_w,1,&hc->plm,verbose);
-  for(i=i3=0;i < nradp2;i++,i3 += ntype){
+  for(i=i3=0;i < hc->nradp2;i++,i3 += ntype){
     os = i*np3;
     /* radial component */
-    sh_compute_spatial((sol_w+i3),0,TRUE,&hc->plm,
+    sh_compute_spatial((sol_w+i3+HC_RAD),0,TRUE,&hc->plm,
 		       (*sol_x+os),verbose);
     os += np;
     /* poloidal/toroidal component */
-    sh_compute_spatial((sol_w+i3+1),1,TRUE,&hc->plm,
+    sh_compute_spatial((sol_w+i3+HC_POL),1,TRUE,&hc->plm,
 		       (*sol_x+os),verbose);
   }
   hc->spatial_solution_computed = TRUE;

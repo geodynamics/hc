@@ -4,9 +4,8 @@ structure for GGRD stuff (scalar and velocity interpolation)
 
 
 */
-#ifdef USE_GMT4
 #include "gmt.h"
-#endif
+
 /* 
    
 plate tectonic stages interpolation structure
@@ -62,7 +61,10 @@ struct ggrd_gt{
   double west,east,south,north;
 
 #ifdef USE_GMT4
-  struct GMT_BCR bcr;
+#include "gmt_bcr.h"
+  struct GMT_BCR loc_bcr[1];
+#else
+  struct BCR loc_bcr[1];
 #endif
 };
 

@@ -153,8 +153,10 @@ int main(int argc, char **argv)
   switch(p->solution_mode){
   case HC_VEL:
     sprintf(file_prefix,"vel");break;
-  case HC_TRACTIONS:
-    sprintf(file_prefix,"str");break;
+  case HC_RTRACTIONS:
+    sprintf(file_prefix,"rtrac");break;
+  case HC_HTRACTIONS:
+    sprintf(file_prefix,"htrac");break;
   default:
     HC_ERROR(argv[0],"solution mode undefined");break;
   }

@@ -12,12 +12,14 @@ original comments for grdtrack from GMT at bottom of file
 */
 
 #include "gmt.h"
+#include "gmt_bcr.h"
 #include "ggrd_grdtrack_util.h"
 #ifndef ONEEIGHTYOVERPI
 #define ONEEIGHTYOVERPI  57.295779513082320876798154814105
 #endif
 #include <math.h>
 #include <string.h>
+
 
 /* 
 
@@ -59,21 +61,14 @@ int ggrd_grdtrack_init_general(ggrd_boolean is_three,
   g->east = g->west = g->south = g->north = 0.0;
   g->is_three = is_three;
   g->init = FALSE;
-#ifdef USE_GMT4
+
   if(ggrd_grdtrack_init(&g->west,&g->east,&g->south,&g->north,&g->f,&g->mm,
 			grdfile,&g->grd,&g->edgeinfo,
 			gmt_edgeinfo_string,&geographic_in,
 			pad,is_three,depth_file,&g->z,&g->nz,
-			bilinear,verbose,change_z_sign,&g->bcr))
+			bilinear,verbose,change_z_sign,
+			g->loc_bcr))
     return 2;
-#else
-  if(ggrd_grdtrack_init(&g->west,&g->east,&g->south,&g->north,&g->f,&g->mm,
-			grdfile,&g->grd,&g->edgeinfo,
-			gmt_edgeinfo_string,&geographic_in,
-			pad,is_three,depth_file,&g->z,&g->nz,
-			bilinear,verbose,change_z_sign))
-    return 2;
-#endif
   /* 
 
   check bandlimited maximum
@@ -110,7 +105,8 @@ int ggrd_grdtrack_init_general(ggrd_boolean is_three,
   //g->zlevels_are_negative = (g->zlevels_are_negative)?(FALSE):(TRUE);
   if(verbose){
     fprintf(stderr,"ggrd_grdtrack_init_general: initialized from %s, %s, bcflag: %s.\n",
-	    grdfile,(is_three)?("3-D"):("1-D"),	gmt_edgeinfo_string);
+	    grdfile,(is_three)?("3-D"):("1-D"),	
+	    gmt_edgeinfo_string);
     if(is_three){
       fprintf(stderr,"ggrd_grdtrack_init_general: depth file %s, %i levels, %s.\n",
 	      depth_file,g->nz,
@@ -163,8 +159,8 @@ for 3-D spherical
    undefined and FALSE else
 */
 ggrd_boolean ggrd_grdtrack_interpolate_rtp(double r,double t,double p,
-					    struct ggrd_gt *g,double *value,
-					    ggrd_boolean verbose)
+					   struct ggrd_gt *g,double *value,
+					   ggrd_boolean verbose)
 {
   double x[3];
   ggrd_boolean result;
@@ -189,13 +185,10 @@ ggrd_boolean ggrd_grdtrack_interpolate_rtp(double r,double t,double p,
   x[2] = (1.0-r) * 6371.0;	/* depth in [km] */
   if(g->zlevels_are_negative)	/* adjust for depth */
     x[2] = -x[2];
-#ifdef USE_GMT4
-  result = ggrd_grdtrack_interpolate(x,TRUE,g->grd,g->f,g->edgeinfo,g->mm,g->z,g->nz,
-				     value,verbose,&g->bcr);
-#else
-  result = ggrd_grdtrack_interpolate(x,TRUE,g->grd,g->f,g->edgeinfo,g->mm,g->z,g->nz,
-				     value,verbose);
-#endif
+  result = ggrd_grdtrack_interpolate(x,TRUE,g->grd,g->f,
+				     g->edgeinfo,g->mm,g->z,
+				     g->nz,value,verbose,
+				     g->loc_bcr);
   return result;
 }
 /* 
@@ -205,9 +198,11 @@ ggrd_boolean ggrd_grdtrack_interpolate_rtp(double r,double t,double p,
    undefined and FALSE else
    this mean lon lat z
 */
-ggrd_boolean ggrd_grdtrack_interpolate_xyz(double x,double y,double z,
-					    struct ggrd_gt *g,double *value,
-					    ggrd_boolean verbose)
+ggrd_boolean ggrd_grdtrack_interpolate_xyz(double x,double y,
+					   double z,
+					   struct ggrd_gt *g,
+					   double *value,
+					   ggrd_boolean verbose)
 {
   double xloc[3];
   ggrd_boolean result;
@@ -227,14 +222,10 @@ ggrd_boolean ggrd_grdtrack_interpolate_xyz(double x,double y,double z,
   xloc[2] = z;	/* depth, z*/
   if(g->zlevels_are_negative)	/* adjust for depth */
     xloc[2] = -xloc[2];
-#ifdef USE_GMT4
-  result = ggrd_grdtrack_interpolate(xloc,TRUE,g->grd,g->f,g->edgeinfo,g->mm,g->z,g->nz,
-				     value,verbose,&g->bcr);
-#else
-  result = ggrd_grdtrack_interpolate(xloc,TRUE,g->grd,g->f,g->edgeinfo,g->mm,g->z,g->nz,
-				     value,verbose);
-
-#endif
+  result = ggrd_grdtrack_interpolate(xloc,TRUE,g->grd,g->f,
+				     g->edgeinfo,g->mm,g->z,
+				     g->nz,value,verbose,
+				     g->loc_bcr);
   return result;
 }
 
@@ -272,13 +263,9 @@ ggrd_boolean ggrd_grdtrack_interpolate_tp(double t,double p,
     x[0]-=360.0;
   x[1] = 90.0 - t * ONEEIGHTYOVERPI; /* lat */
   x[2] = 1.0;
-#ifdef USE_GMT4
-  result = ggrd_grdtrack_interpolate(x,FALSE,g->grd,g->f,g->edgeinfo,g->mm,g->z,g->nz,
-				     value,verbose,&g->bcr);
-#else
-  result = ggrd_grdtrack_interpolate(x,FALSE,g->grd,g->f,g->edgeinfo,g->mm,g->z,g->nz,
-				     value,verbose);
-#endif
+  result = ggrd_grdtrack_interpolate(x,FALSE,g->grd,g->f,
+				     g->edgeinfo,g->mm,g->z,g->nz,
+				     value,verbose,g->loc_bcr);
   return result;
 }
 
@@ -307,13 +294,11 @@ ggrd_boolean ggrd_grdtrack_interpolate_xy(double xin,double yin,
   x[0] = xin;
   x[1] = yin;
   x[2] = 0.0;
-#ifdef USE_GMT4
-  result = ggrd_grdtrack_interpolate(x,FALSE,g->grd,g->f,g->edgeinfo,g->mm,g->z,g->nz,
-				     value,verbose,&g->bcr);
-#else
-  result = ggrd_grdtrack_interpolate(x,FALSE,g->grd,g->f,g->edgeinfo,g->mm,g->z,g->nz,
-				     value,verbose);
-#endif
+  result = ggrd_grdtrack_interpolate(x,FALSE,g->grd,g->f,
+				     g->edgeinfo,
+				     g->mm,g->z,g->nz,
+				     value,verbose,
+				     g->loc_bcr);
   return result;
 }
 
@@ -404,15 +389,16 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
 							  sign of the
 							  depth
 							  levels to go from depth (>0) to z (<0) */
-		       struct GMT_BCR *bcr)
+		       struct GMT_BCR *loc_bcr)
 #else
 int ggrd_grdtrack_init(double *west, double *east,double *south, double *north, 
 		       float **f,int *mm,char *grdfile,struct GRD_HEADER **grd,
 		       struct GMT_EDGEINFO **edgeinfo,char *edgeinfo_string, 
 		       ggrd_boolean *geographic_in,int *pad,ggrd_boolean three_d, 
-		       char *dfile, 	float **z,int *nz,		
+		       char *dfile, float **z,int *nz,		
 		       ggrd_boolean bilinear,ggrd_boolean verbose,
-		       ggrd_boolean change_depth_sign)
+		       ggrd_boolean change_depth_sign,
+		       struct BCR *loc_bcr)
 #endif
 {
   FILE *din;
@@ -428,8 +414,11 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
   /* 
      init first edgeinfo 
   */
-
+#ifdef USE_GMT4
+  GMT_io_init ();			/* Init the table i/o structure */
+#endif
   GMT_boundcond_init (*edgeinfo);
+  
   /* check if geographic */
   if (strlen(edgeinfo_string)>2){
     GMT_boundcond_parse (*edgeinfo, (edgeinfo_string+2));
@@ -664,13 +653,13 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
       
       /* 
 	 Initialize bcr structure, this can be the same for 
-	 all grids as long as they have the same dimesnions
+	 all grids as long as they have the same dimensions
 
       */
 #ifdef USE_GMT4
-      GMT_bcr_init ((*grd+i), pad, bilinear,1.0,bcr);
+      GMT_bcr_init ((*grd+i), pad, bilinear,1.0,loc_bcr);
 #else
-      GMT_bcr_init ((*grd+i), pad, bilinear);
+      my_GMT_bcr_init ((*grd+i), pad, bilinear,loc_bcr);
 #endif
      }
     /* Set boundary conditions  */
@@ -709,7 +698,7 @@ ggrd_boolean ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degrees
 					int nz,	/* number of depth layers */
 					double *value, /* output value */
 					ggrd_boolean verbose,
-					struct GMT_BCR *bcr)
+					struct GMT_BCR *loc_bcr)
 #else
 ggrd_boolean ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degrees/km */
 					ggrd_boolean three_d, /* use 3-D inetrpolation or 2-D? */
@@ -719,8 +708,9 @@ ggrd_boolean ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degrees
 					int mm, /* nx * ny */
 					float *z, /* depth layers */
 					int nz,	/* number of depth layers */
-					double *value, /* output value */
-					ggrd_boolean verbose
+				       double *value, /* output value */
+				       ggrd_boolean verbose,
+				       struct BCR *loc_bcr
 					)
 #endif
 {
@@ -770,12 +760,12 @@ ggrd_boolean ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degrees
        
     */
 #ifdef USE_GMT4
-    val1 = GMT_get_bcr_z((grd+i1), in[0], in[1], (f+i1*mm), (edgeinfo+i1),bcr);
-    val2 = GMT_get_bcr_z((grd+i2), in[0], in[1], (f+i2*mm), (edgeinfo+i2),bcr);
+    val1 = GMT_get_bcr_z((grd+i1), in[0], in[1], (f+i1*mm), (edgeinfo+i1),loc_bcr);
+    val2 = GMT_get_bcr_z((grd+i2), in[0], in[1], (f+i2*mm), (edgeinfo+i2),loc_bcr);
 #else
-    ggrd_gt_bcr_init_loc ();
+    ggrd_global_bcr_assign(loc_bcr);
     val1 = GMT_get_bcr_z((grd+i1), in[0], in[1], (f+i1*mm), (edgeinfo+i1));
-    ggrd_gt_bcr_init_loc ();
+    ggrd_global_bcr_assign(loc_bcr);
     val2 = GMT_get_bcr_z((grd+i2), in[0], in[1], (f+i2*mm), (edgeinfo+i2));
 #endif
     /*      fprintf(stderr,"z(%3i/%3i): %11g z: %11g z(%3i/%3i): %11g f1: %11g f2: %11g v1: %11g v2: %11g rms: %11g %11g\n",   */
@@ -786,8 +776,9 @@ ggrd_boolean ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degrees
   }else{
     /* single layer */
 #ifdef USE_GMT4
-    *value = GMT_get_bcr_z(grd, in[0], in[1], f, edgeinfo,bcr);
+    *value = GMT_get_bcr_z(grd, in[0], in[1], f, edgeinfo,loc_bcr);
 #else
+    ggrd_global_bcr_assign(loc_bcr);
     *value = GMT_get_bcr_z(grd, in[0], in[1], f, edgeinfo);
 #endif
   }
@@ -951,7 +942,8 @@ void ggrd_gt_interpolate_z(double z,float *za,int nz,
 //     not recalculate the weights
 //
 void ggrd_interpol_time(GGRD_CPREC time,struct ggrd_t *thist,
-			int *i1,int *i2,GGRD_CPREC *f1,GGRD_CPREC *f2,
+			int *i1,int *i2,GGRD_CPREC *f1,
+			GGRD_CPREC *f2,
 			GGRD_CPREC dxlimit)
 {
 
@@ -1131,7 +1123,8 @@ int interpolate_seafloor_ages(GGRD_CPREC xt, GGRD_CPREC xp,
       right++;
 
     left = right - 1;
-    f2 = (age - v->age_time[left])/(v->age_time[right]-v->age_time[left]);
+    f2 = (age - v->age_time[left])/
+      (v->age_time[right]-v->age_time[left]);
     f1 = 1.0-f2;
     //fprintf(stderr,"sai: %g %g %g\t%g %g\n",v->age_time[left],age,v->age_time[right],f1,f2);
     v->sf_old_age = age;
@@ -1212,16 +1205,28 @@ float ggrd_gt_mean(float *x,int n)
 #ifndef USE_GMT4
 /* 
 
-this is aweful, but works
+this is aweful, but works?
 
 
 */
-void ggrd_gt_bcr_init_loc(void)
+void ggrd_global_bcr_assign(struct BCR *loc_bcr)
 {
-  /* Initialize i,j so that they cannot look like they have been used:  */
-  bcr.i = -10;
-  bcr.j = -10;
+  /* copy to global */
+  memcpy((void *)(&bcr),(void *)loc_bcr,sizeof(struct BCR));
 }
+
+
+void my_GMT_bcr_init (struct GRD_HEADER *grd, int *pad, 
+		      int bilinear,struct BCR *loc_bcr)
+{
+
+  GMT_bcr_init(grd,pad,bilinear);
+  /* assign to local bcr */
+  memcpy((void *)loc_bcr,(void *)(&bcr),sizeof(struct BCR));
+}
+
+
+
 #endif
 /*
 

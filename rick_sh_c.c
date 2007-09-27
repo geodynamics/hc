@@ -921,6 +921,7 @@ void rick_plmbar1(SH_RICK_PREC  *p,SH_RICK_PREC *dp,int ivec,int lmax,
     // first call, set up some factors. the arrays were allocated in rick_init
     //
     for(k=0,i=1;k < rick->nlon;k++,i++){
+      /* plm_srt[n] = sqrt(n+1) */
       rick->plm_srt[k] = sqrt((SH_RICK_PREC)(i));
     }
     // initialize plm factors
@@ -961,9 +962,9 @@ void rick_plmbar1(SH_RICK_PREC  *p,SH_RICK_PREC *dp,int ivec,int lmax,
 	mstop = l - 1;
 	for(m=1;m <= mstop;m++){
 	  k++;
-	  rick->plm_fac1[k] = rick->plm_srt[l-m-1] * rick->plm_srt[l+m];
-	  rick->plm_fac2[k] = rick->plm_srt[l+m-1] * rick->plm_srt[l-m];
-	  if(m == 1){
+	  rick->plm_fac1[k] = rick->plm_srt[l-m-1] * rick->plm_srt[l+m]; /* sqrt((l-m)(l+m+1) */
+	  rick->plm_fac2[k] = rick->plm_srt[l+m-1] * rick->plm_srt[l-m]; /* sqrt((l+m)(l-m+1) */
+	  if(m == 1){		/* multiply with sqrt(2) */
 	    rick->plm_fac2[k] = rick->plm_fac2[k] * rick->plm_srt[1];
 	  }
 	}
@@ -1054,6 +1055,7 @@ void rick_plmbar1(SH_RICK_PREC  *p,SH_RICK_PREC *dp,int ivec,int lmax,
   if(ivec){
     // 
     // derivatives
+    //
     //     ---derivatives of P(z) wrt theta, where z=cos(theta)
     //     
     dp[1] = -p[2];
@@ -1062,13 +1064,12 @@ void rick_plmbar1(SH_RICK_PREC  *p,SH_RICK_PREC *dp,int ivec,int lmax,
     for(l=2;l <= lmax;l++){
       k++;
       //     treat m=0 and m=l separately
-      dp[k] =  -rick->plm_srt[l-1] * rick->plm_srt[l] / rick->plm_srt[1] * p[k+1];
-      dp[k+l] = rick->plm_srt[l-1] / rick->plm_srt[1] * p[k+l-1];
+      dp[k] =  -rick->plm_srt[l-1] * rick->plm_srt[l] / rick->plm_srt[1] * p[k+1]; /* m = 0 */
+      dp[k+l] = rick->plm_srt[l-1] / rick->plm_srt[1] * p[k+l-1]; /* m = l */
       mstop = l-1;
-      for(m=1;m <= mstop;m++){
+      for(m=1;m <= mstop;m++){	/* rest */
 	k++;
-	dp[k] = rick->plm_fac2[k] * p[k-1] - 
-	  rick->plm_fac1[k] * p[k+1];
+	dp[k] = rick->plm_fac2[k] * p[k-1] - rick->plm_fac1[k] * p[k+1];
 	dp[k] *= 0.5;
       }
       k++;

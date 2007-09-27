@@ -1,4 +1,7 @@
 #ifndef __READ_GGRD_HEADER__
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 //
 //     max order of interpolation - 1
@@ -40,7 +43,10 @@
 #define GGRD_TWOPI 6.283185307179586476925286766559005768394
 #endif
 
-
+/* 180/pi */
+#ifndef GGRD_PIF
+#define GGRD_PIF 57.295779513082320876798154814105
+#endif 
 /* 
    
 modes

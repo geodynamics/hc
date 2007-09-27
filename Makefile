@@ -9,19 +9,19 @@
 #
 #
 LD = $(CC)
-#CFLAGS = $(CFLAGS_DEBUG) 
+CFLAGS = $(CFLAGS_DEBUG) 
 
 #
 # EDIT HERE FOR GMT VERSION 
 #
 #
 # for GMT3.4.5, use the next two lines
-GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include 
-GGRD_LIBS_LINKLINE = -lggrd -lgmt -lnetcdf
+#GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include 
+#GGRD_LIBS_LINKLINE = -lggrd -lgmt -lnetcdf
 # 
 # for GMT version >= 4.1.2, uncomment the next two lines
-#GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include -DUSE_GMT4
-#GGRD_LIBS_LINKLINE = -lggrd -lgmt -lpsl -lnetcdf 
+GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include -DUSE_GMT4
+GGRD_LIBS_LINKLINE = -lggrd -lgmt -lpsl -lnetcdf 
 #
 #
 #
@@ -87,7 +87,7 @@ GGRD_DEFINES = -I$(GMTHOME)/include -I$(NETCDFHOME)/include  \
 	$(PREM_DEFINES)
 GGRD_LIB_FLAGS = -L$(GMTHOME)/lib -L$(NETCDFHOME)/lib 
 GGRD_LIBS = $(ODIR)/libggrd.a $(ODIR)/libggrd.dfast.a $(ODIR)/libggrd.dbg.a 
-GGRD_INCS = $(PREM_INCS)
+GGRD_INCS = $(PREM_INCS)  ggrd_grdtrack_util.h ggrd.h ggrd_struc.h
 
 #
 #
@@ -149,7 +149,7 @@ hc_lib: $(HC_LIBS) $(GGRD_LIBS)
 
 debug_libs: $(HC_LIBS_DEBUG)
 
-really_all: proto all debug_libs hc.dbg hcplates ggrd_test
+really_all: proto all debug_libs hc.dbg hcplates ggrd_test grdinttester
 
 
 proto: hc_auto_proto.h
@@ -192,6 +192,10 @@ test_fft: $(LIBS) $(INCS) $(ODIR)/test_fft.o
 
 ggrd_test: $(LIBS) $(INCS) $(ODIR)/ggrd_test.o
 	$(LD) $(LIB_FLAGS) $(ODIR)/ggrd_test.o -o $(BDIR)/ggrd_test \
+		$(GGRD_LIBS_LINKLINE) -lhc -lrick -lm $(LDFLAGS) 
+
+grdinttester: $(LIBS) $(INCS) $(ODIR)/grdinttester.o
+	$(LD) $(LIB_FLAGS) $(ODIR)/grdinttester.o -o $(BDIR)/grdinttester \
 		$(GGRD_LIBS_LINKLINE) -lhc -lrick -lm $(LDFLAGS) 
 
 hc_extract_sh_layer: $(LIBS) $(INCS) $(ODIR)/hc_extract_sh_layer.o

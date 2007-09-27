@@ -18,7 +18,7 @@ int main(int argc, char **argv)
   /* 
      read in velocities 
   */
-  if(ggrd_read_vel_grids(v,1.0,FALSE,TRUE,"/home/rcf-106/twb/data/plates/past/clb/hall/")){
+  if(ggrd_read_vel_grids(v,1.0,FALSE,TRUE,"/home/walter/becker/data/plates/past/clb/hall/")){
     fprintf(stderr,"error opening grids\n");
     exit(-1);
   }
