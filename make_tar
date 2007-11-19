@@ -27,4 +27,9 @@ tar --create --gzip --verbose --file $tf hc/
 rm -r hc/
 
 cd -
+
+cp $tf $HOME/public_html/ftp/
+
 echo $0: output in $tf
+
+ls $HOME/public_html/ftp/*tgz
