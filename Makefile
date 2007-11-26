@@ -177,13 +177,13 @@ sh_ana: $(LIBS) $(INCS) $(ODIR)/sh_ana.o
 		-o $(BDIR)/sh_ana -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS)
 
 
-hc: $(LIBS) $(INCS) $(ODIR)/main.o 
+hc: $(LIBS) $(INCS) $(ODIR)/main.o $(PREM_OBJS)
 	$(LD) $(LIB_FLAGS) $(ODIR)/main.o -o $(BDIR)/hc \
-		-lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS) 
+		-lhc -lrick $(HEAL_LIBS_LINKLINE) $(PREM_OBJS) -lm $(LDFLAGS) 
 
-hc.dbg: $(LIBS) $(INCS) $(ODIR)/main.dbg.o 
-	$(LD) $(LIB_FLAGS) $(ODIR)/main.dbg.o -o $(BDIR)/hc.dbg \
-		-lhc.dbg -lrick.dbg \
+hc.dbg: $(LIBS) $(INCS) $(ODIR)/main.dbg.o $(PREM_OBJS)
+	$(LD) $(LIB_FLAGS) $(ODIR)/main.dbg.o $(PREM_OBJS) \
+	-o $(BDIR)/hc.dbg -lhc.dbg -lrick.dbg \
 	$(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS) 
 
 test_fft: $(LIBS) $(INCS) $(ODIR)/test_fft.o
@@ -198,8 +198,8 @@ grdinttester: $(LIBS) $(INCS) $(ODIR)/grdinttester.o
 	$(LD) $(LIB_FLAGS) $(ODIR)/grdinttester.o -o $(BDIR)/grdinttester \
 		$(GGRD_LIBS_LINKLINE) -lhc -lrick -lm $(LDFLAGS) 
 
-hc_extract_sh_layer: $(LIBS) $(INCS) $(ODIR)/hc_extract_sh_layer.o
-	$(LD) $(LIB_FLAGS) $(ODIR)/hc_extract_sh_layer.o \
+hc_extract_sh_layer: $(LIBS) $(INCS) $(PREM_OBJS) $(ODIR)/hc_extract_sh_layer.o
+	$(LD) $(LIB_FLAGS) $(ODIR)/hc_extract_sh_layer.o $(PREM_OBJS) \
 		-o $(BDIR)/hc_extract_sh_layer \
 		-lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS) 
 
@@ -233,7 +233,8 @@ dirs:
 	fi
 
 clean:
-	rm $(ODIR)/*.o 
+	rm $(ODIR)/*.o  $(ODIR)/*.a
+
 #
 # library
 #
