@@ -74,7 +74,7 @@ PREM
 #include "ggrd_grdtrack_util.h"
 /*
 
-spherical haronics 
+spherical harmonics 
    
 */
 #include "sh.h"
@@ -140,12 +140,14 @@ struct hc_parameters{
 
   hc_boolean read_short_dens_sh; /* short SH format for density
 				    files? */
+  hc_boolean read_dens_scale_from_file; /* read the density/velocity scaling from file? */
 
   hc_boolean print_pt_sol;	/* output of p[6] and t[2] vectors */
   char visc_filename[HC_CHAR_LENGTH];	/* name of viscosity profile file */
   char pvel_filename[HC_CHAR_LENGTH];	/* name of plate velocities file */
   char dens_filename[HC_CHAR_LENGTH];	/* name of density model file */
   char prem_model_filename[HC_CHAR_LENGTH];	/* PREM model filename */
+  char dens_scaling_filename[HC_CHAR_LENGTH];	/*  */
 };
 
 /* 
@@ -186,13 +188,13 @@ struct hcs{
   HC_PREC *rden; 	/* radii of density layers [normalized] */
   
   struct sh_lms *dens_anom; /* 
-			    expansions of density
-			    anomalies has to be [inho] (if
-			    those change, that's OK, no
-			    need to call with
-			    dens_fac_changed == TRUE)
-			 */
-  HC_PREC dens_scale[1];		/* scale for density file */
+			       expansions of density
+			       anomalies has to be [inho] (if
+			       those change, that's OK, no
+			       need to call with
+			       dens_fac_changed == TRUE)
+			    */
+  HC_PREC dens_scale;		/* scale for density file */
 
  
 
@@ -406,6 +408,15 @@ other constants
    the other way around
 */
 #define HC_Z_DEPTH(x) ((HC_RE_KM * (1.0-(x))))
+
+/* 
+
+default constant scaling for input density file, use 0.01 for % 
+
+*/
+
+#define HC_DENSITY_SCALING 0.01
+
 
 #define __HC_READ_HEADER_FILE__
 #endif
