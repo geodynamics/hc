@@ -58,38 +58,42 @@ to run all CIG benchmark tests.
 
 >>>
 
-
+> hc -help
 hc - perform Hager & O'Connell flow computation
 
-This code can compute velocities, tractions, and geoid for simple
-density distributions and plate velocities using the semi-analytical
-approach of Hager & O'Connell (1981).  This particular implementation
-illustrates one possible way to combine the HC solver routines.
-
+This code can compute velocities, tractions, and geoid for simple density distributions
+and plate velocities using the semi-analytical approach of Hager & O'Connell (1981).
+This particular implementation illustrates one possible way to combine the HC solver routines.
 Based on code by Brad Hager, Richard O'Connell, and Bernhard Steinberger.
+This version by Thorsten Becker and Craig O'Neill
 
 density anomaly options:
 -dens   name    use name as a SH density anomaly model (dens.sh.dat)
-                This expects density anomalies in % of PREM in DT format.
--ds             additional density anomaly scaling factor (0.2)
+                All density anomalies are in units of 1% of PREM, all SH coefficients in Dahlen & Tromp convention.
+-dshs           use the short, Becker & Boschi (2002) format for the SH density model (OFF)
+-ds             density scaling factor (0.2)
+-dsf    file    read depth dependent density scaling from file
+                (overrides -ds, OFF), use pdens.py to edit
 
 Earth model options:
--prem   name    set Earth model to name (/home/becker/progs/src/hc-svn/prem/prem.dat)
--vf     name    set viscosity structure filename to name (visc.dat)
+-prem   name    set Earth model to name (/home/walter/becker/progs/src/hc-svn/prem/prem.dat)
+-vf     name    viscosity structure filename (visc.dat), use pvisc.py to edit
                 This file is in non_dim_radius viscosity[Pas] format
 
 boundary condition options:
--fs             perform free slip computation, else no slip or plates (OFF)
--ns             perform no slip computation, else try to read plate velocities (OFF)
--pvel   name    set surface velocity file to name (pvel.sh.dat)
-                This file is based on a DT expansion of cm/yr velocity fields.
+-fs             perform free slip computation (ON)
+-ns             perform no slip computation (OFF)
+-pvel   name    set prescribed surface velocities from file name (OFF)
+                The file (e.g. pvel.sh.dat) is based on a DT expansion of cm/yr velocity fields.
 
 solution procedure and I/O options:
 -ng             do not compute and print the geoid (OFF)
 -pptsol         print pol[6] and tor[2] solution vectors (OFF)
 -px             print the spatial solution to file (OFF)
--str            compute srr,srt,srp tractions [MPa] instead of velocities [cm/yr] (default: vel)
+-rtrac          compute srr,srt,srp tractions [MPa] instead of velocities [cm/yr] (default: vel)
+-htrac          compute stt,stp,spp tractions [MPa] instead of velocities [cm/yr] (default: vel)
 -v      -vv     -vvv: verbosity levels (0)
+
 
 <<<
 
@@ -159,7 +163,16 @@ r_i e_i
 
 Unformatted list of radii (radius of layer/Earth radius) and viscosity
 (in Pas) values, reads until end of file. Values determine each layer
-viscosity upward until the next entry.
+viscosity upward until the next entry. Use the graphical tool
+pvisc.py to edit such files.
+
+2) Depth dependent density scaling file 
+
+r_i d_i
+
+Format as for the viscosity file, but d_i are the depth-dependent
+scaling factors (this overridings -ds). Use the graphical tool
+pdens.py to edit such files. 
 
 
 
@@ -220,10 +233,15 @@ USING THE SPHERICAL HARMONICS TOOLS AS STANDALONE
       cat etopo5.ab | sh_syn > etopo5.127.dat
 
 
+SEATREE
 
+HC is a module of the Solid Earth Teaching and Research Environment
+(SEATREE) which provides a graphical user interface to flow
+computations and plotting. 
+
+https://geosys.usc.edu/projects/seatree/wiki/ 
      
 
 
-
-
+				   
 

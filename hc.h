@@ -125,10 +125,10 @@ struct hc_parameters{
   hc_boolean compressible;	/* compressibility following Panasyuk
 				   & Steinberger */
   hc_boolean free_slip;		/* surface mechanical boundary condition */
-  hc_boolean vel_bc_zero;		/* 
-				   if false, plate velocities, else no
-				   slip if free_slip is false as well
+  hc_boolean no_slip;		/* 
+				   zero surface velocities
 				*/
+  hc_boolean platebc;		/* plate velocity BC */
   HC_PREC dens_anom_scale;	/* default density anomaly scaling to
 				   go from PREM percent traveltime
 				   anomalies to density anomalies */

@@ -20,11 +20,11 @@ void hc_init_parameters(struct hc_parameters *p)
   */
   p->compressible = FALSE;		/* compressibility following Panasyuk
 				   & Steinberger */
-  p->free_slip = FALSE;		/* surface mechanical boundary condition */
-  p->vel_bc_zero = FALSE;		/* 
-				   if false, plate velocities, else no
-				   slip if free_slip is false as well
-				*/
+  /* surface mechanical boundary condition */
+  p->free_slip = TRUE;		/* free slip? */
+  p->no_slip = FALSE;		/* no slip boundary condition? */
+  p->platebc = FALSE;		/* plate velocities? */
+  
   p->compute_geoid = TRUE;	/* compute the geoid?  */
   p->dens_anom_scale = 0.2;	/* default density anomaly scaling to
 				   go from PREM percent traveltime
@@ -46,7 +46,6 @@ void hc_init_parameters(struct hc_parameters *p)
   */
   strncpy(p->visc_filename,HC_VISC_FILE,HC_CHAR_LENGTH);
   strncpy(p->dens_filename,HC_DENS_SH_FILE,HC_CHAR_LENGTH);
-  strncpy(p->pvel_filename,HC_PVEL_FILE,HC_CHAR_LENGTH);
   strncpy(p->prem_model_filename,PREM_MODEL_FILE,HC_CHAR_LENGTH);
 }
 
@@ -104,7 +103,11 @@ void hc_init_main(struct hcs *hc,int sh_type,
 {
   int dummy=0;
   /* mechanical boundary condition */
-  hc->free_slip = p->free_slip;
+  if(p->free_slip){
+    if(p->no_slip || p->platebc)
+      HC_ERROR("hc_init_main","free slip and no slip does not make sense");
+    hc->free_slip = TRUE;
+  }
   /* 
      set the default expansion type, input expansions will be 
      converted 
@@ -118,39 +121,66 @@ void hc_init_main(struct hcs *hc,int sh_type,
   /* 
      initialize viscosity structure from file
   */
-  hc_assign_viscosity(hc,HC_INIT_FROM_FILE,
-		      p->visc_filename,p->verbose);
-  if(p->vel_bc_zero){
-    /* no slip (zero velocity) surface boundary conditions */
+  hc_assign_viscosity(hc,HC_INIT_FROM_FILE,p->visc_filename,p->verbose);
+
+  if(p->no_slip && (!p->platebc)){
+    /* 
+
+       no slip (zero velocity) surface boundary conditions 
+
+    */
     if(p->free_slip)
-      HC_ERROR("hc_init","vel_bc_zero and free_slip doesn't make sense");
-    /* read in the densities */
+      HC_ERROR("hc_init","no slip and free_slip doesn't make sense");
+    if(p->verbose)
+      fprintf(stderr,"hc_init: initializing for no slip\n");
+
+    /* 
+       read in the densities first to determine L from the density expansion
+    */
     hc_assign_density(hc,p->compressible,HC_INIT_FROM_FILE,
 		      p->dens_filename,-1,FALSE,FALSE,p->verbose,p->read_short_dens_sh,
 		      p->read_dens_scale_from_file,p->dens_scaling_filename);
-    /* assign all zeroes up to the lmax of the density expansion */
-    hc_assign_plate_velocities(hc,HC_INIT_FROM_FILE,p->pvel_filename,p->vel_bc_zero,hc->dens_anom[0].lmax,
+    /* 
+       assign all zeroes up to the lmax of the density expansion 
+    */
+    hc_assign_plate_velocities(hc,HC_INIT_FROM_FILE,p->pvel_filename,TRUE,hc->dens_anom[0].lmax,
 			       FALSE,p->verbose);
+  }else if(p->platebc){
+    /* 
+
+       surface velocities 
+
+    */
+    if(p->free_slip)
+      HC_ERROR("hc_init","plate boundary condition and free_slip doesn't make sense");
+    if(p->verbose)
+      fprintf(stderr,"hc_init: initializing for surface velocities\n");
+    /* 
+       read in velocities, which will determine the solution lmax 
+    */
+    hc_assign_plate_velocities(hc,HC_INIT_FROM_FILE,p->pvel_filename,FALSE,dummy,FALSE,p->verbose);
+    /* then read in the density anomalies */
+    hc_assign_density(hc,p->compressible,HC_INIT_FROM_FILE,p->dens_filename,hc->pvel[0].lmax,
+		      FALSE,FALSE,p->verbose,p->read_short_dens_sh,
+		      p->read_dens_scale_from_file,p->dens_scaling_filename);
+  }else if(p->free_slip){
+    /* 
+       
+       free slip
+
+    */
+    if(p->no_slip)
+      HC_ERROR("hc_init","no slip and free slip does not make sense");
+    if(p->verbose)
+      fprintf(stderr,"hc_init: initializing for free-slip\n");
+    /* read in the density fields */
+    hc_assign_density(hc,p->compressible,HC_INIT_FROM_FILE,p->dens_filename,-1,FALSE,FALSE,
+		      p->verbose,p->read_short_dens_sh,
+		      p->read_dens_scale_from_file,p->dens_scaling_filename);
   }else{
-    /* presribed surface velocities */
-    if(!p->free_slip){
-      /* read in velocities, which will determine the solution lmax */
-      hc_assign_plate_velocities(hc,HC_INIT_FROM_FILE,
-				 p->pvel_filename,
-				 p->vel_bc_zero,
-				 dummy,FALSE,p->verbose);
-      hc_assign_density(hc,p->compressible,HC_INIT_FROM_FILE,p->dens_filename,hc->pvel[0].lmax,
-			FALSE,FALSE,p->verbose,p->read_short_dens_sh,
-			p->read_dens_scale_from_file,p->dens_scaling_filename);
-    }else{
-      if(p->verbose)
-	fprintf(stderr,"hc_init: initializing for free-slip\n");
-      /* read in the density fields */
-      hc_assign_density(hc,p->compressible,HC_INIT_FROM_FILE,p->dens_filename,-1,FALSE,FALSE,
-			p->verbose,p->read_short_dens_sh,
-			p->read_dens_scale_from_file,p->dens_scaling_filename);
-    }
+    HC_ERROR("hc_init","boundary condition logic error");
   }
+
   /* 
      phase boundaries, if any 
   */
@@ -274,25 +304,24 @@ void hc_handle_command_line(int argc, char **argv,
       fprintf(stderr,"-dshs\t\tuse the short, Becker & Boschi (2002) format for the SH density model (%s)\n",
 	      hc_name_boolean(p->read_short_dens_sh));
 
-      fprintf(stderr,"-ds\t\tadditional density anomaly scaling factor (%g)\n",
+      fprintf(stderr,"-ds\t\tdensity scaling factor (%g)\n",
 	      p->dens_anom_scale);
-      fprintf(stderr,"-dsf\tfile\tread depth dependent density scaling from file (overrides -ds, %s)\n\n",
+      fprintf(stderr,"-dsf\tfile\tread depth dependent density scaling from file\n");
+      fprintf(stderr,"\t\t(overrides -ds, %s), use pdens.py to edit\n\n",
 	      hc_name_boolean(p->read_dens_scale_from_file));
       fprintf(stderr,"Earth model options:\n");
       fprintf(stderr,"-prem\tname\tset Earth model to name (%s)\n",
 	      p->prem_model_filename);
-      fprintf(stderr,"-vf\tname\tset viscosity structure filename to name (%s)\n",
+      fprintf(stderr,"-vf\tname\tviscosity structure filename (%s), use pvisc.py to edit\n",
 	      p->visc_filename);
       fprintf(stderr,"\t\tThis file is in non_dim_radius viscosity[Pas] format\n\n");
 
       fprintf(stderr,"boundary condition options:\n");
-      fprintf(stderr,"-fs\t\tperform free slip computation, else no slip or plates (%s)\n",
-	      hc_name_boolean(p->free_slip));
-      fprintf(stderr,"-ns\t\tperform no slip computation, else try to read plate velocities (%s)\n",
-	      hc_name_boolean(p->vel_bc_zero));
-      fprintf(stderr,"-pvel\tname\tset surface velocity file to name (%s)\n",
-	      p->pvel_filename);
-      fprintf(stderr,"\t\tThis file is based on a DT expansion of cm/yr velocity fields.\n\n");
+      fprintf(stderr,"-fs\t\tperform free slip computation (%s)\n",hc_name_boolean(p->free_slip));
+      fprintf(stderr,"-ns\t\tperform no slip computation (%s)\n",hc_name_boolean(p->no_slip));
+      fprintf(stderr,"-pvel\tname\tset prescribed surface velocities from file name (%s)\n",
+	      hc_name_boolean(p->platebc));
+      fprintf(stderr,"\t\tThe file (e.g. %s) is based on a DT expansion of cm/yr velocity fields.\n\n",HC_PVEL_FILE);
 
       fprintf(stderr,"solution procedure and I/O options:\n");
       fprintf(stderr,"-ng\t\tdo not compute and print the geoid (%s)\n",
@@ -311,9 +340,9 @@ void hc_handle_command_line(int argc, char **argv,
       hc_advance_argument(&i,argc,argv);
       sscanf(argv[i],HC_FLT_FORMAT,&p->dens_anom_scale);
     }else if(strcmp(argv[i],"-fs")==0){	/* free slip flag */
-      hc_toggle_boolean(&p->free_slip);
+      p->free_slip = TRUE;p->no_slip = FALSE;
     }else if(strcmp(argv[i],"-ns")==0){	/* no slip flag */
-      hc_toggle_boolean(&p->vel_bc_zero);
+      p->no_slip = TRUE;p->free_slip = FALSE;
     }else if(strcmp(argv[i],"-px")==0){	/* print spatial solution? */
       hc_toggle_boolean(&p->print_spatial);
     }else if(strcmp(argv[i],"-dshs")==0){ /* use short format? */
@@ -331,9 +360,10 @@ void hc_handle_command_line(int argc, char **argv,
     }else if(strcmp(argv[i],"-prem")==0){ /* PREM filename */
       hc_advance_argument(&i,argc,argv);
       strncpy(p->prem_model_filename,argv[i],HC_CHAR_LENGTH);
-    }else if(strcmp(argv[i],"-pvel")==0){ /* velocity filename */
+    }else if(strcmp(argv[i],"-pvel")==0){ /* velocity filename, this will switch off free slip */
       hc_advance_argument(&i,argc,argv);
       strncpy(p->pvel_filename,argv[i],HC_CHAR_LENGTH);
+      p->platebc = TRUE;p->no_slip = TRUE;p->free_slip = FALSE;
     }else if(strcmp(argv[i],"-dens")==0){ /* density filename */
       hc_advance_argument(&i,argc,argv);
       strncpy(p->dens_filename,argv[i],HC_CHAR_LENGTH);
@@ -782,9 +812,8 @@ HC_PREC hc_find_dens_scale(HC_PREC r, HC_PREC s0,hc_boolean depth_dependent, HC_
   int i;
   if(depth_dependent){
     i=0;
-    while((i<n) && (rd[i] < r)){
+    while((i<n) && (rd[i] < r))
       i++;
-    }
     i--;
     return sd[i];
   }else{
@@ -829,11 +858,8 @@ we expect velocities to be in cm/yr, convert to m/yr
 
 */
 
-void hc_assign_plate_velocities(struct hcs *hc,int mode, 
-				char *filename,
-				hc_boolean vel_bc_zero,int lmax,
-				hc_boolean pvel_in_binary,
-				hc_boolean verbose)
+void hc_assign_plate_velocities(struct hcs *hc,int mode, char *filename,hc_boolean vel_bc_zero,
+				int lmax,hc_boolean pvel_in_binary,hc_boolean verbose)
 {
   int type,shps,ilayer,nset,ivec;
   HC_PREC zlabel,vfac[2],t10[2],t11[2];
