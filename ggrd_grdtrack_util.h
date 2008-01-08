@@ -5,17 +5,19 @@ with grd interpolation
 
 */
 
-#include <string.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #ifndef __GGRD_READ_GMT__
 #include "gmt.h"
 #define __GGRD_READ_GMT__
 #endif
 
+
 #include "ggrd.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
 /* 
 
 wrappers

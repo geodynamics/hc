@@ -1,7 +1,4 @@
 #ifndef __READ_GGRD_HEADER__
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 //
 //     max order of interpolation - 1

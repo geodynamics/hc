@@ -9,12 +9,11 @@
 */
 #ifndef __HC_READ_HEADER_FILE__
 
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
-#include <malloc.h>
-#include <limits.h>
+#ifndef __GMT_INCLUDED__
+#include "gmt.h"
+#include "gmt_bcr.h"
+#define __GMT_INCLUDED__
+#endif
 
 #include "hc_filenames.h"
 /* 
@@ -78,6 +77,15 @@ spherical harmonics
    
 */
 #include "sh.h"
+
+
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <malloc.h>
+#include <limits.h>
+
 
 /* 
 

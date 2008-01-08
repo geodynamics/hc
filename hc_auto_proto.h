@@ -16,8 +16,6 @@ void ggrd_vecalloc(double **, int, char *);
 void ggrd_vecrealloc(double **, int, char *);
 float ggrd_gt_rms(float *, int);
 float ggrd_gt_mean(float *, int);
-void ggrd_global_bcr_assign(struct BCR *);
-void my_GMT_bcr_init(struct GRD_HEADER *, int *, int, struct BCR *);
 /* ggrd_readgrds.c */
 void ggrd_init_vstruc(struct ggrd_vel *);
 int ggrd_read_vel_grids(struct ggrd_vel *, double, unsigned short, unsigned short, char *);

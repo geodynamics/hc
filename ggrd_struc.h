@@ -4,8 +4,11 @@ structure for GGRD stuff (scalar and velocity interpolation)
 
 
 */
+#ifndef __GMT_INCLUDED__
 #include "gmt.h"
 #include "gmt_bcr.h"
+#define __GMT_INCLUDED__
+#endif
 /* 
    
 plate tectonic stages interpolation structure

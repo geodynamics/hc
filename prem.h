@@ -9,10 +9,7 @@ $Id: prem.h,v 1.4 2006/04/18 01:08:39 twb Exp twb $
 
 #ifndef __READ_PREM_HEADER__
 #include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <limits.h>
-#include <string.h>
+
 
 #define PREM_F_STRING "%lf"
 

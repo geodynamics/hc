@@ -2,7 +2,7 @@
 #
 # create a tar file 
 #
-ver=${1-0.1.1}
+ver=${1-0.1.3}
 date=`date '+%m%d%y'`
 
 tf=$HOME/tmp/hc-$ver.$date.tgz 
@@ -28,8 +28,15 @@ rm -r hc/
 
 cd -
 
-cp $tf $HOME/public_html/ftp/
+mv $tf $HOME/public_html/software/
+tf=$HOME/public_html/software/hc-$ver.$date.tgz 
 
 echo $0: output in $tf
 
-ls $HOME/public_html/ftp/*tgz
+if [ -s $tf ];then
+    cd $HOME/public_html/
+    ln -fs software/hc-$ver.$date.tgz hc-recent.tgz
+    echo $0: linked to  hc-recent.tgz in `pwd`
+    cd -
+fi
+

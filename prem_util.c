@@ -9,8 +9,10 @@ twb@usc.edu
 
 
 
- */
+*/
 #include "prem.h"
+#include <math.h>
+#include <stdlib.h>
 /* 
 
 given a radius in ruinits and n layers at radii, find the layer index
