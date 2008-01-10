@@ -4,17 +4,23 @@ structure for GGRD stuff (scalar and velocity interpolation)
 
 
 */
+#ifndef __GGRD_STRUC_INIT__
+
+
 #ifndef __GMT_INCLUDED__
 #include "gmt.h"
-#include "gmt_bcr.h"
 #define __GMT_INCLUDED__
 #endif
+
+
+
+
 /* 
    
 plate tectonic stages interpolation structure
 
 */
-#ifndef GGRD_STRUC_INIT
+
 
 struct ggrd_t{
   GGRD_CPREC *vtimes;		/* times at which velocities 
@@ -114,5 +120,5 @@ struct ggrd_vel{
   GGRD_CPREC  sf_old_age,sf_old_f1,sf_old_f2;
   int sf_old_left,sf_old_right,sf_ntlim;
 };
-#define GGRD_STRUC_INIT
+#define __GGRD_STRUC_INIT__
 #endif

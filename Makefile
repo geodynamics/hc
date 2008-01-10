@@ -8,22 +8,19 @@
 # 
 #
 #
-LD = $(CC)
-#CFLAGS = $(CFLAGS_DEBUG) 
-
 #
 # EDIT HERE FOR GMT VERSION 
 #
 #
 # for GMT3.4.5, use the next two lines
-GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include 
-GGRD_LIBS_LINKLINE = -lggrd -lgmt -lnetcdf
+#GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include 
+#GGRD_LIBS_LINKLINE = -lggrd -lgmt -lnetcdf
 # 
 #
 # for GMT version >= 4.1.2, uncomment the next two lines
 #
-#GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include -DUSE_GMT4 
-#GGRD_LIBS_LINKLINE = -lggrd -lgmt -lpsl -lnetcdf 
+GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include -DUSE_GMT4 
+GGRD_LIBS_LINKLINE = -lggrd -lgmt -lpsl -lnetcdf 
 #
 #
 #
@@ -163,45 +160,45 @@ hcplates:
 
 
 sh_test: $(LIBS) $(INCS) $(ODIR)/sh_test.o
-	$(LD) $(LIB_FLAGS) $(ODIR)/sh_test.o \
+	$(CC) $(LIB_FLAGS) $(ODIR)/sh_test.o \
 		-o $(BDIR)/sh_test -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS)
 
 sh_syn: $(LIBS) $(INCS) $(ODIR)/sh_syn.o
-	$(LD) $(LIB_FLAGS) $(ODIR)/sh_syn.o \
-		-o $(BDIR)/sh_syn -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS)
+	$(CC) $(LIB_FLAGS) $(ODIR)/sh_syn.o \
+		-o $(BDIR)/sh_syn -lhc -lrick $(HEAL_LIBS_LINKLINE) $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS)
 
 sh_power: $(LIBS) $(INCS) $(ODIR)/sh_power.o
-	$(LD) $(LIB_FLAGS) $(ODIR)/sh_power.o \
+	$(CC) $(LIB_FLAGS) $(ODIR)/sh_power.o \
 		-o $(BDIR)/sh_power -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS)
 
 sh_ana: $(LIBS) $(INCS) $(ODIR)/sh_ana.o
-	$(LD) $(LIB_FLAGS) $(ODIR)/sh_ana.o \
+	$(CC) $(LIB_FLAGS) $(ODIR)/sh_ana.o \
 		-o $(BDIR)/sh_ana -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS)
 
 
 hc: $(LIBS) $(INCS) $(ODIR)/main.o $(PREM_OBJS)
-	$(LD) $(LIB_FLAGS) $(ODIR)/main.o -o $(BDIR)/hc \
+	$(CC) $(LIB_FLAGS) $(ODIR)/main.o -o $(BDIR)/hc \
 		-lhc -lrick $(HEAL_LIBS_LINKLINE) $(PREM_OBJS) -lm $(LDFLAGS) 
 
 hc.dbg: $(LIBS) $(INCS) $(ODIR)/main.dbg.o $(PREM_OBJS)
-	$(LD) $(LIB_FLAGS) $(ODIR)/main.dbg.o $(PREM_OBJS) \
+	$(CC) $(LIB_FLAGS) $(ODIR)/main.dbg.o $(PREM_OBJS) \
 	-o $(BDIR)/hc.dbg -lhc.dbg -lrick.dbg \
 	$(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS) 
 
 test_fft: $(LIBS) $(INCS) $(ODIR)/test_fft.o
-	$(LD) $(LIB_FLAGS) $(ODIR)/test_fft.o -o $(BDIR)/test_fft \
+	$(CC) $(LIB_FLAGS) $(ODIR)/test_fft.o -o $(BDIR)/test_fft \
 		-lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS) 
 
 ggrd_test: $(LIBS) $(INCS) $(ODIR)/ggrd_test.o
-	$(LD) $(LIB_FLAGS) $(ODIR)/ggrd_test.o -o $(BDIR)/ggrd_test \
+	$(CC) $(LIB_FLAGS) $(ODIR)/ggrd_test.o -o $(BDIR)/ggrd_test \
 		$(GGRD_LIBS_LINKLINE) -lhc -lrick -lm $(LDFLAGS) 
 
 grdinttester: $(LIBS) $(INCS) $(ODIR)/grdinttester.o
-	$(LD) $(LIB_FLAGS) $(ODIR)/grdinttester.o -o $(BDIR)/grdinttester \
+	$(CC) $(LIB_FLAGS) $(ODIR)/grdinttester.o -o $(BDIR)/grdinttester \
 		$(GGRD_LIBS_LINKLINE) -lhc -lrick -lm $(LDFLAGS) 
 
 hc_extract_sh_layer: $(LIBS) $(INCS) $(PREM_OBJS) $(ODIR)/hc_extract_sh_layer.o
-	$(LD) $(LIB_FLAGS) $(ODIR)/hc_extract_sh_layer.o $(PREM_OBJS) \
+	$(CC) $(LIB_FLAGS) $(ODIR)/hc_extract_sh_layer.o $(PREM_OBJS) \
 		-o $(BDIR)/hc_extract_sh_layer \
 		-lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS) 
 
