@@ -83,7 +83,9 @@ spherical harmonics
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <malloc.h>
+/* do we need this for 64 bit? OS-X didn't like it */
+//#include <malloc.h>
+
 #include <limits.h>
 
 

@@ -11,16 +11,8 @@
 #
 # EDIT HERE FOR GMT VERSION 
 #
-#
-# for GMT3.4.5, use the next two lines
-#GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include 
-#GGRD_LIBS_LINKLINE = -lggrd -lgmt -lnetcdf
-# 
-#
-# for GMT version >= 4.1.2, uncomment the next two lines
-#
-GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include -DUSE_GMT4 
-GGRD_LIBS_LINKLINE = -lggrd -lgmt -lpsl -lnetcdf 
+
+include Makefile.include
 #
 #
 #
