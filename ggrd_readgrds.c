@@ -41,7 +41,8 @@
   format
 
 */
-
+int finite(double );		/* why? */
+    
 /* init a v structure  */
 void ggrd_init_vstruc(struct ggrd_vel *v)
 {
@@ -108,7 +109,7 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
     wraparound = FALSE,
     pixelreg = FALSE,
     weighted = TRUE;
-  char sname[GGRD_STRLEN],suffix[50],loc_prefix[50],*char_dummy,
+  char sname[GGRD_STRLEN],suffix[50],loc_prefix[50],*char_dummy=NULL,
     vsfile_loc[GGRD_STRLEN],tfilename[GGRD_STRLEN];
   float *fgrd;
   double *dgrd;
@@ -499,7 +500,7 @@ void ggrd_resort_and_check(GGRD_CPREC *a,float *fb,double *db,
   if(read_gmt){
     // check for NaNs
     for(i=0;i < nm;i++)
-      if(!finite(fb[i])){
+      if(!finite((double)fb[i])){
 	fb[i] = 0.0;
 	if(!(*warned)){
 	  fprintf(stderr,"WARNING: at least one NaN entry in the data has been replaced with zero\n");
@@ -509,7 +510,7 @@ void ggrd_resort_and_check(GGRD_CPREC *a,float *fb,double *db,
   }else{
     // check for NaNs
     for(i=0;i<nm;i++)
-      if(!finite(db[i])){
+      if(!finite((double)db[i])){
 	db[i]=0.0;
 	if(!(*warned)){
 	  fprintf(stderr,"WARNING: at least one NaN entry in the data has been replaced with zero\n");
