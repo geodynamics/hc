@@ -52,6 +52,8 @@ int ggrd_grdtrack_rescale(struct ggrd_gt *,ggrd_boolean , ggrd_boolean ,
 moderately external
 
 */
+void ggrd_init_master(struct ggrd_master *);
+
 int ggrd_init_thist_from_file(struct ggrd_t *,char *,ggrd_boolean ,ggrd_boolean);
 int ggrd_read_vel_grids(struct ggrd_vel *, double, unsigned short, unsigned short, char *);
 

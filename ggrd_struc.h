@@ -13,20 +13,22 @@ structure for GGRD stuff (scalar and velocity interpolation)
 #endif
 
 
-
+#include "prem.h"
 
 /* 
    
 plate tectonic stages interpolation structure
 
 */
-
-
 struct ggrd_t{
-  GGRD_CPREC *vtimes;		/* times at which velocities 
+  char file[1000];		/* filename */
+  GGRD_CPREC *vtimes;		/* times at which velocities or materials 
 				   are specified. this will hold
+				   
 				   t_left t_mid t_right
+
 				   ....
+
 
 				*/
   
@@ -39,6 +41,9 @@ struct ggrd_t{
   GGRD_CPREC xllimit,xrlimit;
   GGRD_CPREC f1_loc,f2_loc,time_old;
   int ileft_loc,iright_loc,ntlim;
+
+  GGRD_CPREC vstage_transition;
+
   unsigned char called;
 
 };
@@ -120,5 +125,42 @@ struct ggrd_vel{
   GGRD_CPREC  sf_old_age,sf_old_f1,sf_old_f2;
   int sf_old_left,sf_old_right,sf_ntlim;
 };
+
+
+
+struct ggrd_temp_init{
+  /* 
+     for temperature init from grd files 
+  */
+  int init,scale_with_prem;
+  int override_tbc,limit_trange;
+  double scale,offset;
+  char gfile[1000];
+  char dfile[1000];
+  struct ggrd_gt d[1];		/* grid structure */
+  struct prem_model prem; 	/* PREM model */
+};
+
+struct ggrd_master{		/* master structure */
+
+  int mat_control,mat_control_init;
+  int vel_control,vel_control_init;
+  
+  char mat_file[1000];
+  char vel_file[1000];
+  
+  /* grid structures */
+  struct ggrd_gt *mat;		/* material grids */
+
+  /* different for velocities */
+  struct ggrd_vel *ggrd_v;	/* velocity grids */
+  struct ggrd_t time_hist;	/* time history structure */
+
+  /* temperature init */
+  struct ggrd_temp_init temp_init;
+};
+
+
+
 #define __GGRD_STRUC_INIT__
 #endif

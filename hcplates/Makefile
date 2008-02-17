@@ -55,10 +55,10 @@ $(BDIR)/hcplates: $(LIST)
 	$(CC) -o $(BDIR)/hcplates $(LIST) $(LIBS)
 
 $(BDIR)/hc_findplate: $(LIST2)
-	$(CC)  -o $(BDIR)/hc_findplate $(LIST2)
+	$(CC)  -o $(BDIR)/hc_findplate $(LIST2) $(LIBS)
 
 $(BDIR)/hc_ptrot: $(INCS2) $(LIST3)
-	$(CC)  -o $(BDIR)/hc_ptrot $(LIST3) 
+	$(CC)  -o $(BDIR)/hc_ptrot $(LIST3)  $(LIBS)
 
 $(ODIR)/%.o: %.c  $(INCS)
 	$(CC) $(CFLAGS) $(INC_FLAGS) $(DEFINES) -c $< -o $(ODIR)/$*.o

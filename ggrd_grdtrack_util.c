@@ -21,6 +21,16 @@ original comments for grdtrack from GMT at bottom of file
 #include <string.h>
 
 
+void ggrd_init_master(struct ggrd_master *ggrd)
+{
+  ggrd->mat_control = ggrd->mat_control_init = 0;
+  ggrd->vel_control = ggrd->vel_control_init = 0;
+  ggrd->time_hist.init = 0;
+  ggrd->temp_init.init = 0;
+  ggrd->time_hist.vstage_transition = 0.1; /* in Ma, transition */
+}
+
+
 /* 
 
 wrapper
@@ -294,10 +304,8 @@ ggrd_boolean ggrd_grdtrack_interpolate_xy(double xin,double yin,
   x[0] = xin;
   x[1] = yin;
   x[2] = 0.0;
-  result = ggrd_grdtrack_interpolate(x,FALSE,g->grd,g->f,
-				     g->edgeinfo,
-				     g->mm,g->z,g->nz,
-				     value,verbose,
+  result = ggrd_grdtrack_interpolate(x,FALSE,g->grd,g->f,g->edgeinfo,
+				     g->mm,g->z,g->nz,value,verbose,
 				     g->loc_bcr);
   return result;
 }
@@ -819,19 +827,25 @@ int ggrd_init_thist_from_file(struct ggrd_t *thist,
 {
   FILE *in;
   double ta,tb;
+  ggrd_boolean opened_file = FALSE;
   if(thist->init){
     fprintf(stderr,"ggrd_read_time_intervals: error: already initialized\n");
     return 1;
   }
   ggrd_vecalloc(&thist->vtimes,3,"rti: 1");
-
+  
   if(read_thistory){
     in = fopen(input_file,"r");
     if(!in){
-      fprintf(stderr,"ggrd_read_time_intervals: error: could not open file %s\n",
-	      input_file);
-      return 2;
+      if(verbose)
+	fprintf(stderr,"ggrd_read_time_intervals: WARNING: could not open file %s\n",
+		input_file);
+      opened_file = FALSE;
+    }else{
+      opened_file = TRUE;
     }
+  }
+  if(opened_file){
     thist->nvtimes = thist->nvtimes3 = 0;
     while(fscanf(in,"%lf %lf",&ta,&tb) == 2){
       thist->vtimes[thist->nvtimes3] = ta;
@@ -870,14 +884,14 @@ int ggrd_init_thist_from_file(struct ggrd_t *thist,
 
   }else{
     /* 
-       only one time step 
+       only one time step, or no file
     */
     thist->nvtimes = 1;
     thist->nvtimes3 = thist->nvtimes * 3;
     *(thist->vtimes+0) = *(thist->vtimes+1) = 
       *(thist->vtimes+2) = thist->tmin = thist->tmax= 0.0;
     if(verbose)
-      fprintf(stderr,"ggrd_read_time_intervals: only one timestep\n");
+      fprintf(stderr,"ggrd_read_time_intervals: only one timestep / constant fields\n");
   }
   thist->called = FALSE;
   thist->init = TRUE;
@@ -942,8 +956,7 @@ void ggrd_gt_interpolate_z(double z,float *za,int nz,
 //     not recalculate the weights
 //
 void ggrd_interpol_time(GGRD_CPREC time,struct ggrd_t *thist,
-			int *i1,int *i2,GGRD_CPREC *f1,
-			GGRD_CPREC *f2,
+			int *i1,int *i2,GGRD_CPREC *f1,GGRD_CPREC *f2,
 			GGRD_CPREC dxlimit)
 {
 
@@ -1075,8 +1088,7 @@ this is a scalar interpolation that needs special care
 
 */
 int interpolate_seafloor_ages(GGRD_CPREC xt, GGRD_CPREC xp,
-			      GGRD_CPREC age,
-			      struct ggrd_vel *v, 
+			      GGRD_CPREC age,struct ggrd_vel *v, 
 			      GGRD_CPREC *seafloor_age)
 {
   int left, right,i;
@@ -1100,7 +1112,7 @@ int interpolate_seafloor_ages(GGRD_CPREC xt, GGRD_CPREC xp,
 	return -3;
       }
     v->sf_old_age =  v->age_time[0] - 1000; /* so that we get interpolation
-					 factors  */
+					       factors  */
     v->sf_init = TRUE;
   } 
 
