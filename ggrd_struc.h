@@ -93,37 +93,24 @@ struct ggrd_vip{
 /*
 
 
-velocity structure for interpolation
+structure for 3-D velocity interpolation
 
 */
 struct ggrd_vel{
-  
   GGRD_CPREC *vr,*vt,*vp;	/* velocity field */
   int n[5];		/* dimensions in r, theta, and 
 				   phi directions */
   int ntnp,nrntnp;		/*  */
   GGRD_CPREC *rlevels;		/* levels where velocities are 
 				   specified */
-  GGRD_CPREC dtheta,dphi;		/* spacing in theta and phi */
+  GGRD_CPREC dtheta,dphi;	/* spacing in theta and phi */
   GGRD_CPREC velscale,rcmb;
-  struct ggrd_t thist;
   unsigned char init,		/* initialized? */
     history,			/* time-dependent? */
-    use_age,			/* use an additional age file */
     read_gmt;		/*  read GMT grd files or binary format?*/
   unsigned char rl_warned,vd_init,vd_reduce_r_stencil;	/*  */
-  int amode;
-  struct ggrd_gt *ages;		/* for seafloor ages */
-  int nage;			/* ntime for velo + 1 */
-  GGRD_CPREC *age_time;		/* times  */
-  float age_bandlim;		/* bandlim for age to decide on
-				   continent 
-				*/
+
   struct ggrd_vip vd;		/* velocity interpolation structure */
-  /* seafloor stuff */
-  unsigned short sf_init;
-  GGRD_CPREC  sf_old_age,sf_old_f1,sf_old_f2;
-  int sf_old_left,sf_old_right,sf_ntlim;
 };
 
 
@@ -144,18 +131,32 @@ struct ggrd_temp_init{
 struct ggrd_master{		/* master structure */
 
   int mat_control,mat_control_init;
-  int vel_control,vel_control_init;
+  int vtop_control,vtop_control_init;
+  int age_control,age_control_init;
   
   char mat_file[1000];
-  char vel_file[1000];
+  char vtop_file[1000];
+  char age_file[1000];
   
   /* grid structures */
   struct ggrd_gt *mat;		/* material grids */
+  /* surface velocity */
+  struct ggrd_gt *svp,*svt;	/* phi/theta surface velocities */
+  /* age stuff */
+  struct ggrd_gt *ages;
+  int nage,amode;
+  GGRD_CPREC *age_time;		/* times  */
+  float age_bandlim;		/* bandlim for age to decide on
+				   continent  */
 
-  /* different for velocities */
-  struct ggrd_vel *ggrd_v;	/* velocity grids */
+  unsigned short sf_init;	/* seafloor stuff */
+  GGRD_CPREC  sf_old_age,sf_old_f1,sf_old_f2;
+  int sf_old_left,sf_old_right,sf_ntlim;
+
+  struct ggrd_vel v;	/* 3D velocity grid structure */
+
+  /* time histtory */
   struct ggrd_t time_hist;	/* time history structure */
-
   /* temperature init */
   struct ggrd_temp_init temp_init;
 };

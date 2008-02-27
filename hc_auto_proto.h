@@ -11,20 +11,20 @@ void ggrd_print_layer_avg(float *, float *, int, int, FILE *);
 int ggrd_init_thist_from_file(struct ggrd_t *, char *, unsigned char, unsigned char);
 void ggrd_gt_interpolate_z(double, float *, int, int *, int *, double *, double *, unsigned char, unsigned char *);
 void ggrd_interpol_time(double, struct ggrd_t *, int *, int *, double *, double *, double);
-int interpolate_seafloor_ages(double, double, double, struct ggrd_vel *, double *);
+int interpolate_seafloor_ages(double, double, double, struct ggrd_master *, double *);
 void ggrd_vecalloc(double **, int, char *);
 void ggrd_vecrealloc(double **, int, char *);
 float ggrd_gt_rms(float *, int);
 float ggrd_gt_mean(float *, int);
 /* ggrd_readgrds.c */
-void ggrd_init_vstruc(struct ggrd_vel *);
-int ggrd_read_vel_grids(struct ggrd_vel *, double, unsigned short, unsigned short, char *);
+void ggrd_init_vstruc(struct ggrd_master *);
+int ggrd_read_vel_grids(struct ggrd_master *, double, unsigned short, unsigned short, char *);
 void ggrd_resort_and_check(double *, float *, double *, int, int, unsigned short, double, unsigned short, unsigned short, double, unsigned char *);
-void ggrd_read_depth_levels(struct ggrd_vel *, int **, char *, unsigned short);
+void ggrd_read_depth_levels(struct ggrd_master *, int **, char *, unsigned short);
 /* ggrd_test.c */
 /* ggrd_velinterpol.c */
-int ggrd_find_vel_and_der(double *, double, double, struct ggrd_vel *, int, unsigned short, unsigned short, double *, double *, double *);
-void ggrd_get_velocities(double *, double *, double *, int, struct ggrd_vel *, double, double);
+int ggrd_find_vel_and_der(double *, double, double, struct ggrd_master *, int, unsigned short, unsigned short, double *, double *, double *);
+void ggrd_get_velocities(double *, double *, double *, int, struct ggrd_master *, double, double);
 void ggrd_weights(double, double *, int, int, double [(5 +1)][(1 +1)]);
 /* grdinttester.c */
 /* hc_extract_sh_layer.c */

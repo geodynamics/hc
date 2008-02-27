@@ -44,34 +44,25 @@
 int finite(double );		/* why? */
     
 /* init a v structure  */
-void ggrd_init_vstruc(struct ggrd_vel *v)
+void ggrd_init_vstruc(struct ggrd_master *ggrd)
 {
-  v->read_gmt = TRUE;		/* read GMT by default */
-  v->amode = GGRD_NORMAL;
-  v->init = FALSE;
-  v->history = FALSE;
-  v->use_age = FALSE;
-  v->age_bandlim = 200;
-  v->nage = 0;
-  v->vr = v->vt = v->vp = NULL;
-  v->thist.init = FALSE;
-  v->velscale =  1.0; 
-  v->rcmb = GGRD_RCMB_ND;
-  /* rlevels */
-  v->rlevels = NULL;
-  v->rl_warned = FALSE;
-  /* seafloor */
-  v->sf_init = FALSE;
-  /* thist structure  */
-  v->thist.init = FALSE;
-  v->thist.called = FALSE;
-
-  /* interpolation structure */
-  v->vd.init = FALSE;
-  v->vd.reduce_r_stencil = FALSE;
-  v->vd.z_warned = FALSE; 
-  v->vd.w_warned = FALSE;
+  /* directly velocity related */
+  ggrd->v.read_gmt = TRUE;		/* read GMT by default */
+  ggrd->v.init = FALSE;
+  ggrd->v.history = FALSE;
   
+  ggrd->v.vr = ggrd->v.vt = ggrd->v.vp = NULL;
+  ggrd->v.velscale =  1.0; 
+  ggrd->v.rcmb = GGRD_RCMB_ND;
+  /* rlevels */
+  ggrd->v.rlevels = NULL;
+  ggrd->v.rl_warned = FALSE;
+  /* interpolation structure */
+  ggrd->v.vd.init = FALSE;
+  ggrd->v.vd.reduce_r_stencil = FALSE;
+  ggrd->v.vd.z_warned = FALSE; 
+  ggrd->v.vd.w_warned = FALSE;
+
 }
 
 /* 
@@ -87,10 +78,9 @@ void ggrd_init_vstruc(struct ggrd_vel *v)
 
 
 */
-int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
-					       should be initialized first
-					       
-					    */
+int ggrd_read_vel_grids(struct ggrd_master *ggrd, /* ggrd master structure
+						     should be initialized first
+						  */
 			GGRD_CPREC scale, /* divide all velocities by this 
 					     factor */
 			hc_boolean verbose, /* verbosity level */
@@ -126,21 +116,21 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
   maxtheta = HC_FLT_MIN;
   weights=NULL;
 
-  v->velscale = scale;
-  if(fabs(v->velscale) < HC_EPS_PREC){
+  ggrd->v.velscale = scale;
+  if(fabs(ggrd->v.velscale) < HC_EPS_PREC){
     fprintf(stderr,"ggrd_read_vel_grids: error: velocity scale is zero\n");
     return(-1);
   }
-  if(!v->init){
+  if(!ggrd->v.init){
     //
 
     // read time intervals for velocities from file
     sprintf(tfilename,"%s%s",prefix,GGRD_THFILE);
     /* 
-       if v->history is set, will look for different time intervals 
+       if ggrd->v.history is set, will look for different time intervals 
     */
-    ggrd_init_thist_from_file(&v->thist,tfilename,v->history,verbose);
-    if(v->use_age){
+    ggrd_init_thist_from_file(&ggrd->time_hist,tfilename,ggrd->v.history,verbose);
+    if(ggrd->age_control){
       /* 
 
       initialize seafloor ages specified at the beginning of each 
@@ -149,43 +139,43 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 
       */
       
-      if(!v->history){
+      if(!ggrd->v.history){
 	fprintf(stderr,"ggrd_read_vel_grids: error: for ages, need history input\n");
 	return(-1);
       }
       if(verbose)
 	fprintf(stderr,"ggrd_read_vel_grids: expecting %i (nt) + 1 age grids\n",
-		v->thist.nvtimes);
-      v->nage = v->thist.nvtimes + 1;
+		ggrd->time_hist.nvtimes);
+      ggrd->nage = ggrd->time_hist.nvtimes + 1;
       
       /* important to use calloc so that some flags are set to zero */
-      v->ages = (struct  ggrd_gt *)calloc(v->nage,
+      ggrd->ages = (struct  ggrd_gt *)calloc(ggrd->nage,
 					  sizeof(struct ggrd_gt));
-      v->age_time = (GGRD_CPREC *)malloc(v->nage*sizeof(GGRD_CPREC));
-      if(!v->ages || ! v->age_time){
+      ggrd->age_time = (GGRD_CPREC *)malloc(ggrd->nage*sizeof(GGRD_CPREC));
+      if(!ggrd->ages || ! ggrd->age_time){
 	fprintf(stderr,"ggrd_read_vel_grids: memory error\n");
 	return -5;
       }
       /* 
 	 read in the age grids 
       */
-      for(ivt=0;ivt < v->nage;ivt++){
-	v->ages[ivt].bandlim = v->age_bandlim;
+      for(ivt=0;ivt < ggrd->nage;ivt++){
+	ggrd->ages[ivt].bandlim = ggrd->age_bandlim;
 	sprintf(tfilename,"%s%i/age.grd",prefix,ivt+1);
 	if(ggrd_grdtrack_init_general(FALSE,tfilename,char_dummy, /* load file */
-				      "-Lx",(v->ages+ivt),verbose,
+				      "-Lx",(ggrd->ages+ivt),verbose,
 				      FALSE)){
 	  fprintf(stderr,"ggrd_read_vel_grids: file error\n");
 	  return -10;
 	}
-	if(ivt < v->nage-1)	/* assign beginning of stage as time 
+	if(ivt < ggrd->nage-1)	/* assign beginning of stage as time 
 				   for seafloor age */
-	  v->age_time[ivt] = v->thist.vtimes[ivt*3];
+	  ggrd->age_time[ivt] = ggrd->time_hist.vtimes[ivt*3];
 	else			/* end of last stage */
-	  v->age_time[ivt] = v->thist.vtimes[(ivt-1)*3+2];
+	  ggrd->age_time[ivt] = ggrd->time_hist.vtimes[(ivt-1)*3+2];
 	if(verbose)
 	  fprintf(stderr,"ggrd_read_vel_grids: read %s for seafloor age at time %g\n",
-		  tfilename,v->age_time[ivt]);
+		  tfilename,ggrd->age_time[ivt]);
       }
       /* end age init */
     }
@@ -194,15 +184,15 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
     // this also creates a sorting array
     //
     sprintf(vsfile_loc,"%s%s",prefix,GGRD_DFILE);
-    ggrd_read_depth_levels(v,&index,vsfile_loc,verbose);
+    ggrd_read_depth_levels(ggrd,&index,vsfile_loc,verbose);
     /*
       
       read the velocities in binary format, either GMT grd or double bin
       
     */
-    if(v->n[HC_R] < 1)
+    if(ggrd->v.n[HC_R] < 1)
       GGRD_PE("ggrd_read_vel_grids: error: should have more than one layer, check depth file");
-    if(v->read_gmt){
+    if(ggrd->v.read_gmt){
       /* prepare filenames  */
       if(verbose)
 	fprintf(stderr,"ggrd_read_vel_grids: reading grd files\n");
@@ -212,24 +202,24 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 	fprintf(stderr,"ggrd_read_vel_grids: reading bin files\n");
       strcpy(suffix,"bin");
     }
-    if(v->amode == GGRD_ONLY_VEL_STATS){
+    if(ggrd->amode == GGRD_ONLY_VEL_STATS){
       sprintf(vsfile_loc,"%s.%s",prefix,GGRD_VSFILE);
       fprintf(stderr,"ggrd_read_vel_grids: writing z rms_vr rms_vt rms_vp rms_vh to %s\n",
 	      vsfile_loc);
-      out = hc_open(vsfile_loc,"w","ggrd_read_vel_grids");
+      out = ggrd_open(vsfile_loc,"w","ggrd_read_vel_grids");
     }
-    for(ivt=0;ivt < v->thist.nvtimes;ivt++){
-      if((v->history)&&(verbose))
+    for(ivt=0;ivt < ggrd->time_hist.nvtimes;ivt++){
+      if((ggrd->v.history)&&(verbose))
 	fprintf(stderr,"ggrd_read_vel_grids: reading velocities for time [%12g, %12g] from %3i/\n",
-		v->thist.vtimes[ivt*3],
-		v->thist.vtimes[ivt*3+2],ivt+1);
-      for(i=0;i < v->n[HC_R];i++){
+		ggrd->time_hist.vtimes[ivt*3],
+		ggrd->time_hist.vtimes[ivt*3+2],ivt+1);
+      for(i=0;i < ggrd->v.n[HC_R];i++){
 	//
 	// determine number of grd file based on resorted arrays
 	//
 	level = index[i]+1;// level numbers should go from 1 .. N 
 	for(j=0;j<3;j++){
-	  if(v->history)
+	  if(ggrd->v.history)
 	    sprintf(loc_prefix,"%i/",ivt+1);
 	  else
 	    sprintf(loc_prefix,"./");
@@ -243,7 +233,7 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 	  else
 	    sprintf(sname,"%s%svp.%i.%s",
 		    prefix,loc_prefix,level,suffix);
-	  if(v->read_gmt){
+	  if(ggrd->v.read_gmt){
 #ifndef USE_GMT4	    	/* old */
 	    if(GMT_cdf_read_grd_info (sname,header) == -1){
 	      fprintf(stderr,"ggrd_read_vel_grids: error opening GMT grd file %s\n",sname);
@@ -257,7 +247,7 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 	    }
 #endif
 	  }else{
-	    in = hc_open(sname,"r","ggrd_read_vel_grids");
+	    in = ggrd_open(sname,"r","ggrd_read_vel_grids");
 	    // read header type of information
 	    header->node_offset=FALSE;
 	    fread(&header->x_min, sizeof(double), 1, in);
@@ -280,16 +270,16 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 	    omaxphi= LON2PHI(header->x_max-(pixelreg?header->x_inc/2.0:0.0));
 	    maxtheta=LAT2THETA(header->y_min+(pixelreg?header->y_inc/2.0:0.0));
 	    mintheta=LAT2THETA(header->y_max-(pixelreg?header->y_inc/2.0:0.0));
-	    v->dphi=  DEG2RAD( header->x_inc);
-	    v->dtheta=DEG2RAD( header->y_inc);
+	    ggrd->v.dphi=  DEG2RAD( header->x_inc);
+	    ggrd->v.dtheta=DEG2RAD( header->y_inc);
 	    if(HC_DIFFERENT(minphi,0.0) || 
-	       HC_DIFFERENT(mintheta,v->dtheta*0.5) || 
-	       HC_DIFFERENT(maxtheta,GGRD_PI - v->dtheta*0.5) || 
+	       HC_DIFFERENT(mintheta,ggrd->v.dtheta*0.5) || 
+	       HC_DIFFERENT(maxtheta,GGRD_PI - ggrd->v.dtheta*0.5) || 
 	       (HC_DIFFERENT(omaxphi,GGRD_TWOPI) && 
-		HC_DIFFERENT(omaxphi,GGRD_TWOPI - v->dphi))){
+		HC_DIFFERENT(omaxphi,GGRD_TWOPI - ggrd->v.dphi))){
 	      fprintf(stderr,"ggrd_read_vel_grids: expecting 0/360(or %g)/%g/%g range, problem with %s\n",
-		      360-RAD2DEG(v->dphi),-90+RAD2DEG(v->dtheta*0.5),
-		      90-RAD2DEG(v->dtheta*0.5),sname);
+		      360-RAD2DEG(ggrd->v.dphi),-90+RAD2DEG(ggrd->v.dtheta*0.5),
+		      90-RAD2DEG(ggrd->v.dtheta*0.5),sname);
 	      fprintf(stderr,"ggrd_read_vel_grids: expected range in radians: t: %g/%g p: %g/%g\n",
 		      mintheta,maxtheta,minphi,omaxphi);
 	      fprintf(stderr,"ggrd_read_vel_grids: expected range in degrees: %g/%g/%g/%g\n",
@@ -303,75 +293,75 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 	    //
 	    // check if we should throw away double entries at 0 and 360
 	    if(!HC_DIFFERENT(omaxphi,GGRD_TWOPI)){
-	      v->n[HC_PHI] = header->nx - 1;
+	      ggrd->v.n[HC_PHI] = header->nx - 1;
 	      wraparound = TRUE;
 	    }else{
-	      v->n[HC_PHI] = header->nx;
+	      ggrd->v.n[HC_PHI] = header->nx;
 	      wraparound = FALSE;
 	    }
-	    v->n[HC_THETA] = header->ny;
-	    if(HC_DIFFERENT(v->dtheta,GGRD_PI /
-			 ((GGRD_CPREC)(v->n[HC_THETA])))||
-	       HC_DIFFERENT(v->dphi,GGRD_TWOPI/
-			 ((GGRD_CPREC)(v->n[HC_PHI])))){
+	    ggrd->v.n[HC_THETA] = header->ny;
+	    if(HC_DIFFERENT(ggrd->v.dtheta,GGRD_PI /
+			 ((GGRD_CPREC)(ggrd->v.n[HC_THETA])))||
+	       HC_DIFFERENT(ggrd->v.dphi,GGRD_TWOPI/
+			 ((GGRD_CPREC)(ggrd->v.n[HC_PHI])))){
 	      fprintf(stderr,"ggrd_read_vel_grids: spacing error: ndx/dx phi: %g/%g theta: %g/%g\n",
-		      GGRD_TWOPI/v->n[HC_PHI],v->dphi,
-		      GGRD_PI/v->n[HC_THETA],v->dtheta);
+		      GGRD_TWOPI/ggrd->v.n[HC_PHI],ggrd->v.dphi,
+		      GGRD_PI/ggrd->v.n[HC_THETA],ggrd->v.dtheta);
 	      return(-3);
 	    }
 	    //
 	    // set auxiliary grid dimensions
 	    //
-	    v->n[HC_TPPROD] = v->n[HC_THETA]  * v->n[HC_PHI];// ny * nx
-	    v->n[HC_NRNTNP] = v->n[HC_TPPROD] * v->n[HC_R];  // ny * nx * nr
-	    os = v->n[HC_NRNTNP] * v->thist.nvtimes;//              ny * nx * nr *nt
+	    ggrd->v.n[HC_TPPROD] = ggrd->v.n[HC_THETA]  * ggrd->v.n[HC_PHI];// ny * nx
+	    ggrd->v.n[HC_NRNTNP] = ggrd->v.n[HC_TPPROD] * ggrd->v.n[HC_R];  // ny * nx * nr
+	    os = ggrd->v.n[HC_NRNTNP] * ggrd->time_hist.nvtimes;//              ny * nx * nr *nt
 	    //
 	    // allocate space
-	    hc_vecalloc(&v->vr,os,"ggrd_readgrds: vr");
-	    hc_vecalloc(&v->vt,os,"ggrd_readgrds: vt");
-	    hc_vecalloc(&v->vp,os,"ggrd_readgrds: vp");
-	    if(v->read_gmt){
+	    ggrd_vecalloc(&ggrd->v.vr,os,"ggrd_readgrds: vr");
+	    ggrd_vecalloc(&ggrd->v.vt,os,"ggrd_readgrds: vt");
+	    ggrd_vecalloc(&ggrd->v.vp,os,"ggrd_readgrds: vp");
+	    if(ggrd->v.read_gmt){
 	      // this has to be of the original GRD file size
 	      // NOT the new grid dimensions
 	      fgrd = (float  *)malloc(sizeof(float)  * header->nx * header->ny);
 	    }else{
 	      dgrd = (double *)malloc(sizeof(double) * header->nx * header->ny);
 	    }
-	    if((v->read_gmt && !fgrd) ||(!v->read_gmt && !dgrd))
+	    if((ggrd->v.read_gmt && !fgrd) ||(!ggrd->v.read_gmt && !dgrd))
 	      HC_MEMERROR("ggrd_read_vel_grids: velocity fields:");
 	    if(weighted){
 	      //
 	      // need to construct 2-D array with area weights
 	      //
-	      hc_vecalloc(&weights,v->n[HC_TPPROD],"readgrds");
+	      ggrd_vecalloc(&weights,ggrd->v.n[HC_TPPROD],"readgrds");
 	      for(theta=mintheta,
-		    k=0;k < v->n[HC_THETA];k++,theta += v->dtheta){
+		    k=0;k < ggrd->v.n[HC_THETA];k++,theta += ggrd->v.dtheta){
 		tmp = sin(theta);
-		for(l=0;l < v->n[HC_PHI];l++)
-		  weights[k*v->n[HC_PHI]+l] = tmp;
+		for(l=0;l < ggrd->v.n[HC_PHI];l++)
+		  weights[k*ggrd->v.n[HC_PHI]+l] = tmp;
 	      }
 	    }
 	    if(verbose)
 	      fprintf(stderr,"ggrd_read_vel_grids: x: %g/%g/%g nx: %i y: %g/%g/%g ny: %i wrap: %i v_c: %g\n",
 		      PHI2LON(minphi),PHI2LON(omaxphi),
-		      RAD2DEG(v->dphi),v->n[HC_PHI],
+		      RAD2DEG(ggrd->v.dphi),ggrd->v.n[HC_PHI],
 		      THETA2LAT(maxtheta),THETA2LAT(mintheta),
-		      RAD2DEG(v->dtheta),v->n[HC_THETA],wraparound,
-		      v->velscale);
+		      RAD2DEG(ggrd->v.dtheta),ggrd->v.n[HC_THETA],wraparound,
+		      ggrd->v.velscale);
 	    init = TRUE;
 	  }else{
 	    if(HC_DIFFERENT(minphi,LON2PHI(header->x_min+(pixelreg?header->x_inc/2.0:0.0)))||
 	       HC_DIFFERENT(omaxphi,LON2PHI(header->x_max-(pixelreg?header->x_inc/2.0:0.0)))||
 	       HC_DIFFERENT(maxtheta,LAT2THETA(header->y_min+(pixelreg?header->y_inc/2.0:0.0)))||
 	       HC_DIFFERENT(mintheta,LAT2THETA(header->y_max-(pixelreg?header->y_inc/2.0:0.0)))||
-	       HC_DIFFERENT(v->dphi,DEG2RAD(header->x_inc))||
-	       HC_DIFFERENT(v->dtheta,DEG2RAD( header->y_inc))){
+	       HC_DIFFERENT(ggrd->v.dphi,DEG2RAD(header->x_inc))||
+	       HC_DIFFERENT(ggrd->v.dtheta,DEG2RAD( header->y_inc))){
 	      fprintf(stderr,"ggrd_read_vel_grids: grd files have different size, grd: %s\n",
 		      sname);
 	      exit(-1);
 	    }
 	  }
-	  if(v->read_gmt){
+	  if(ggrd->v.read_gmt){
 #ifdef USE_GMT4
 	    // read the netcdf GRD file
 	    sprintf(header->name,"%s",sname);
@@ -391,42 +381,42 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 	  // AND: leave those pointer calculations here, since we
 	  // do not initially have the size of the arrays
 	  //
-	  os1  = v->n[HC_NRNTNP] * ivt;
-	  os1 += v->n[HC_TPPROD] * i;
+	  os1  = ggrd->v.n[HC_NRNTNP] * ivt;
+	  os1 += ggrd->v.n[HC_TPPROD] * i;
 	  // these should theoretically be == zero
 	  if(j == HC_R){
 	    //
 	    // vr
 	    //
 	    if(zero_boundary_vr &&
-	       (1.0 - v->rlevels[i] < HC_EPS_PREC)){
+	       (1.0 - ggrd->v.rlevels[i] < HC_EPS_PREC)){
 	      if(verbose)
 		fprintf(stderr,"ggrd_read_vel_grids: WARNING: assuming level %3i is at surface and setting vr to zero\n",
 			level);
-	      ggrd_resort_and_check((v->vr+os1),fgrd,dgrd,v->n[HC_PHI],
-				    v->n[HC_THETA],wraparound,1.0/v->velscale,
-				    v->read_gmt,TRUE,0.0,&v->vd.w_warned);
-	    }else if((zero_boundary_vr)&&(v->rlevels[i] < v->rcmb)){
+	      ggrd_resort_and_check((ggrd->v.vr+os1),fgrd,dgrd,ggrd->v.n[HC_PHI],
+				    ggrd->v.n[HC_THETA],wraparound,1.0/ggrd->v.velscale,
+				    ggrd->v.read_gmt,TRUE,0.0,&ggrd->v.vd.w_warned);
+	    }else if((zero_boundary_vr)&&(ggrd->v.rlevels[i] < ggrd->v.rcmb)){
 	      if(verbose)
 		fprintf(stderr,"ggrd_read_vel_grids: WARNING: assuming level %3i is at CMB     and setting vr to zero\n",
 			level);
-	      ggrd_resort_and_check((v->vr+os1),fgrd,dgrd,v->n[HC_PHI],
-				    v->n[HC_THETA],wraparound,1.0/v->velscale,
-				    v->read_gmt,TRUE,0.0,&v->vd.w_warned);
+	      ggrd_resort_and_check((ggrd->v.vr+os1),fgrd,dgrd,ggrd->v.n[HC_PHI],
+				    ggrd->v.n[HC_THETA],wraparound,1.0/ggrd->v.velscale,
+				    ggrd->v.read_gmt,TRUE,0.0,&ggrd->v.vd.w_warned);
 	    }else
-	      ggrd_resort_and_check((v->vr+os1),fgrd,dgrd,v->n[HC_PHI],
-				    v->n[HC_THETA],wraparound,1.0/v->velscale,
-			       v->read_gmt,FALSE,ddummy,&v->vd.w_warned);
-	    hc_calc_mean_and_stddev((v->vr+os1),&ddummy,v->n[HC_TPPROD],
+	      ggrd_resort_and_check((ggrd->v.vr+os1),fgrd,dgrd,ggrd->v.n[HC_PHI],
+				    ggrd->v.n[HC_THETA],wraparound,1.0/ggrd->v.velscale,
+			       ggrd->v.read_gmt,FALSE,ddummy,&ggrd->v.vd.w_warned);
+	    ggrd_calc_mean_and_stddev((ggrd->v.vr+os1),&ddummy,ggrd->v.n[HC_TPPROD],
 				    (mean+j),(std+j),(rms+j),FALSE,weighted,weights);
 	  }else if(j == HC_THETA){
 	    //
 	    // vtheta
 	    //
-	    ggrd_resort_and_check((v->vt+os1),fgrd,dgrd,v->n[HC_PHI],
-				  v->n[HC_THETA],wraparound,1.0/v->velscale,
-				  v->read_gmt,FALSE,ddummy,&v->vd.w_warned);
-	    hc_calc_mean_and_stddev((v->vt+os1),&ddummy,v->n[HC_TPPROD],
+	    ggrd_resort_and_check((ggrd->v.vt+os1),fgrd,dgrd,ggrd->v.n[HC_PHI],
+				  ggrd->v.n[HC_THETA],wraparound,1.0/ggrd->v.velscale,
+				  ggrd->v.read_gmt,FALSE,ddummy,&ggrd->v.vd.w_warned);
+	    ggrd_calc_mean_and_stddev((ggrd->v.vt+os1),&ddummy,ggrd->v.n[HC_TPPROD],
 				    (mean+j),(std+j),(rms+j),FALSE,weighted,weights);
 	  }else{
 	    //
@@ -434,49 +424,49 @@ int ggrd_read_vel_grids(struct ggrd_vel *v, /* velocity structure,
 	    //
 	    if(j != HC_PHI)
 	      GGRD_PE("ggrd_read_vel_grds: index error");
-	    ggrd_resort_and_check((v->vp+os1),fgrd,dgrd,v->n[HC_PHI],v->n[HC_THETA],
-				  wraparound,1.0/v->velscale,
-				  v->read_gmt,FALSE,ddummy,&v->vd.w_warned);
-	    hc_calc_mean_and_stddev((v->vp+os1),&ddummy,v->n[HC_TPPROD],
+	    ggrd_resort_and_check((ggrd->v.vp+os1),fgrd,dgrd,ggrd->v.n[HC_PHI],ggrd->v.n[HC_THETA],
+				  wraparound,1.0/ggrd->v.velscale,
+				  ggrd->v.read_gmt,FALSE,ddummy,&ggrd->v.vd.w_warned);
+	    ggrd_calc_mean_and_stddev((ggrd->v.vp+os1),&ddummy,ggrd->v.n[HC_TPPROD],
 				    (mean+j),(std+j),(rms+j),FALSE,weighted,weights);
 	    //
 	    // and horizontal stats, put those in the 4th element 
 	    // of mean
 	    //
-	    hc_calc_mean_and_stddev((v->vp+os1),(v->vt+os1),v->n[HC_TPPROD],
+	    ggrd_calc_mean_and_stddev((ggrd->v.vp+os1),(ggrd->v.vt+os1),ggrd->v.n[HC_TPPROD],
 				    (mean+3),(std+3),(rms+3),TRUE,weighted,weights);
 	  }
 	}
 	if(verbose)
 	  fprintf(stderr,"ggrd_read_depth_levels: %13s: l: %3i i: %3i r: %9.7f z: %9.2f %s mean/RMS: vr: %9.2e/%9.2e vt: %9.2e/%9.2e vp: %9.2e/%9.2e\n",
-		  sname,level,i,v->rlevels[i],
-		  HC_Z_DEPTH(v->rlevels[i]),
-		  (weighted?"weighted":"unweighted"),mean[HC_R]*v->velscale,
-		  rms[HC_R]*v->velscale,mean[HC_THETA]*v->velscale,
-		  rms[HC_THETA]*v->velscale,mean[HC_PHI]*v->velscale,
-		  rms[HC_PHI]*v->velscale);
-	if(v->amode == GGRD_ONLY_VEL_STATS)// velocity statistics output
+		  sname,level,i,ggrd->v.rlevels[i],
+		  HC_Z_DEPTH(ggrd->v.rlevels[i]),
+		  (weighted?"weighted":"unweighted"),mean[HC_R]*ggrd->v.velscale,
+		  rms[HC_R]*ggrd->v.velscale,mean[HC_THETA]*ggrd->v.velscale,
+		  rms[HC_THETA]*ggrd->v.velscale,mean[HC_PHI]*ggrd->v.velscale,
+		  rms[HC_PHI]*ggrd->v.velscale);
+	if(ggrd->amode == GGRD_ONLY_VEL_STATS)// velocity statistics output
 	  fprintf(out,"%14.5e %14.5e %14.5e %14.5e %14.5e %5i %13.5f\n",
-		  HC_Z_DEPTH(v->rlevels[i]),rms[HC_R]*v->velscale,
-		  rms[HC_THETA]*v->velscale,rms[HC_PHI]*v->velscale,
-		  rms[3]*v->velscale,ivt+1,
-		  ((v->history)?(v->thist.vtimes[ivt*3+1]):(0.0)));
+		  HC_Z_DEPTH(ggrd->v.rlevels[i]),rms[HC_R]*ggrd->v.velscale,
+		  rms[HC_THETA]*ggrd->v.velscale,rms[HC_PHI]*ggrd->v.velscale,
+		  rms[3]*ggrd->v.velscale,ivt+1,
+		  ((ggrd->v.history)?(ggrd->time_hist.vtimes[ivt*3+1]):(0.0)));
       }
     }
     /* free sorting array */
     free(index);
-    if(v->read_gmt)
+    if(ggrd->v.read_gmt)
       free(fgrd);
     else
       free(dgrd);
     if(weighted)
       free(weights);
-    if(v->amode == GGRD_ONLY_VEL_STATS){
+    if(ggrd->amode == GGRD_ONLY_VEL_STATS){
       fclose(out);
       fprintf(stderr,"ggrd_read_vel_grids: exiting after printing vel stats\n");
       return(0);
     }
-    v->init = TRUE;
+    ggrd->v.init = TRUE;
   }else{
     GGRD_PE("ggrd_read_vel_grds: error, already initialized");
   }
@@ -563,7 +553,7 @@ void ggrd_resort_and_check(GGRD_CPREC *a,float *fb,double *db,
    and create sorting index
    
 */
-void ggrd_read_depth_levels(struct ggrd_vel *v,
+void ggrd_read_depth_levels(struct ggrd_master *ggrd,
 			    int **index,char *filename,
 			    hc_boolean verbose)
 {
@@ -571,53 +561,53 @@ void ggrd_read_depth_levels(struct ggrd_vel *v,
   int i;
   GGRD_CPREC *rnew;
 
-  in = hc_open(filename,"r","ggrd_read_depth_levels");
+  in = ggrd_open(filename,"r","ggrd_read_depth_levels");
   /* set counters */
-  v->n[HC_R]=0;
-  v->rlevels=(GGRD_CPREC *)realloc(v->rlevels,sizeof(GGRD_CPREC));
-  if(!v->rlevels)
+  ggrd->v.n[HC_R]=0;
+  ggrd->v.rlevels=(GGRD_CPREC *)realloc(ggrd->v.rlevels,sizeof(GGRD_CPREC));
+  if(!ggrd->v.rlevels)
     HC_MEMERROR("ggrd_read_depth_levels");
-  while(fscanf(in,HC_FLT_FORMAT,(v->rlevels + v->n[HC_R]))==1){
-    if(v->n[HC_R] > 1)		/* test, if sorted */
-      if(fabs(v->rlevels[v->n[HC_R]] - v->rlevels[v->n[HC_R]-1]) < 1e-7)
+  while(fscanf(in,HC_FLT_FORMAT,(ggrd->v.rlevels + ggrd->v.n[HC_R]))==1){
+    if(ggrd->v.n[HC_R] > 1)		/* test, if sorted */
+      if(fabs(ggrd->v.rlevels[ggrd->v.n[HC_R]] - ggrd->v.rlevels[ggrd->v.n[HC_R]-1]) < 1e-7)
 	GGRD_PE("ggrd_read_depth_levels: error: two radii are at same level");
-    if(v->rlevels[v->n[HC_R]] < 0){
+    if(ggrd->v.rlevels[ggrd->v.n[HC_R]] < 0){
       /* flip sign */
-      v->rlevels[v->n[HC_R]] = -v->rlevels[v->n[HC_R]];
-      if((!v->rl_warned) && (verbose)){
+      ggrd->v.rlevels[ggrd->v.n[HC_R]] = -ggrd->v.rlevels[ggrd->v.n[HC_R]];
+      if((!ggrd->v.rl_warned) && (verbose)){
 	fprintf(stderr,"ggrd_read_depth_levels: WARNING: flipping sign of depth levels in %s\n",
 		GGRD_DFILE);
-	v->rl_warned = TRUE;
+	ggrd->v.rl_warned = TRUE;
       }
     }
     /* radius of levels */
-    v->rlevels[v->n[HC_R]] = HC_ND_RADIUS(v->rlevels[v->n[HC_R]]);
-    if((v->rlevels[v->n[HC_R]] > 1)||
-       (v->rlevels[v->n[HC_R]] < GGRD_RCMB_ND)){
+    ggrd->v.rlevels[ggrd->v.n[HC_R]] = HC_ND_RADIUS(ggrd->v.rlevels[ggrd->v.n[HC_R]]);
+    if((ggrd->v.rlevels[ggrd->v.n[HC_R]] > 1)||
+       (ggrd->v.rlevels[ggrd->v.n[HC_R]] < GGRD_RCMB_ND)){
       // check for above surface or below CMB
-      fprintf(stderr,"ggrd_read_depth_levels: radius %g out of range\n",v->rlevels[v->n[HC_R]]);
+      fprintf(stderr,"ggrd_read_depth_levels: radius %g out of range\n",ggrd->v.rlevels[ggrd->v.n[HC_R]]);
       exit(-1);
     }
-    v->n[HC_R]++;
-    v->rlevels=(GGRD_CPREC *)realloc(v->rlevels,sizeof(GGRD_CPREC)*
-				       (v->n[HC_R]+1));
-    if(!v->rlevels)
+    ggrd->v.n[HC_R]++;
+    ggrd->v.rlevels=(GGRD_CPREC *)realloc(ggrd->v.rlevels,sizeof(GGRD_CPREC)*
+				       (ggrd->v.n[HC_R]+1));
+    if(!ggrd->v.rlevels)
       HC_MEMERROR("ggrd_read_depth_levels");
   }
   fclose(in);
   // sort and create index
-  *index=(int *)malloc(sizeof(int)*v->n[HC_R]);
+  *index=(int *)malloc(sizeof(int)*ggrd->v.n[HC_R]);
   if(! *index)
     HC_MEMERROR("ggrd_read_depth_levels");
-  hc_indexx(v->n[HC_R],(v->rlevels-1),(*index-1));
+  ggrd_indexx(ggrd->v.n[HC_R],(ggrd->v.rlevels-1),(*index-1));
   // reassign
-  rnew=(GGRD_CPREC *)malloc(sizeof(GGRD_CPREC)*v->n[HC_R]);
-  for(i=0;i < v->n[HC_R];i++)
-    rnew[i] = v->rlevels[(*index)[i]];
-  for(i=0;i < v->n[HC_R];i++)
-    v->rlevels[i] = rnew[i];
+  rnew=(GGRD_CPREC *)malloc(sizeof(GGRD_CPREC)*ggrd->v.n[HC_R]);
+  for(i=0;i < ggrd->v.n[HC_R];i++)
+    rnew[i] = ggrd->v.rlevels[(*index)[i]];
+  for(i=0;i < ggrd->v.n[HC_R];i++)
+    ggrd->v.rlevels[i] = rnew[i];
   free(rnew);
   if(verbose)
     fprintf(stderr,"ggrd_read_depth_levels: read %i levels from %s, r_min: %g r_max: %g \n",
-	    v->n[HC_R],GGRD_DFILE,v->rlevels[0],v->rlevels[v->n[HC_R]-1]);
+	    ggrd->v.n[HC_R],GGRD_DFILE,ggrd->v.rlevels[0],ggrd->v.rlevels[ggrd->v.n[HC_R]-1]);
 }

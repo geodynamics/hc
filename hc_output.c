@@ -139,7 +139,7 @@ void hc_print_spatial_solution(struct hcs *hc,
 			   1,verbose);
 
   /* depth file */
-  dout = hc_open(dfilename,"w","hc_print_spatial_solution");
+  dout = ggrd_open(dfilename,"w","hc_print_spatial_solution");
   if(verbose >= 2)
     fprintf(stderr,"hc_print_spatial_solution: writing depth levels to %s\n",
 	    dfilename);
@@ -172,7 +172,7 @@ void hc_print_spatial_solution(struct hcs *hc,
     if(binary){
       /* binary output */
       sprintf(filename,"%s.%i.bin",name,i+1);
-      out = hc_open(filename,"w","hc_print_spatial_solution");
+      out = ggrd_open(filename,"w","hc_print_spatial_solution");
       for(j=los=0;j < np;j++,los+=2){ /* loop through all points in layer */
 	fwrite((xy+los),sizeof(float),2,out);
 	for(k=0;k<3;k++)
@@ -184,7 +184,7 @@ void hc_print_spatial_solution(struct hcs *hc,
     }else{
       /* ASCII output */
       sprintf(filename,"%s.%i.dat",name,i+1);
-      out = hc_open(filename,"w","hc_print_spatial_solution");
+      out = ggrd_open(filename,"w","hc_print_spatial_solution");
       for(j=los=0;j < np;j++,los+=2){ /* loop through all points in layer */
 	for(k=0;k<3;k++)
 	  value[k] = sol_x[os[k]] * fac[k];
@@ -341,7 +341,7 @@ void hc_print_poloidal_solution(struct sh_lms *pol_sol,
   /* number of output layers */
   nl = hc->nrad + 2;
   
-  out = hc_open(filename,"w","hc_print_poloidal_solution");
+  out = ggrd_open(filename,"w","hc_print_poloidal_solution");
   for(l=1;l <= ll;l++){
     for(m=0;m <= l;m++){
       alim = (m==0)?(1):(2);
@@ -380,7 +380,7 @@ void hc_print_toroidal_solution(double *tvec,int lmax,
   if(verbose)
     fprintf(stderr,"hc_print_toiroidal_solution: writing toroidal solutions 1 and 2 as f(l,r) to %s\n",
 	    filename);
-  out = hc_open(filename,"w","hc_toroidal_solution");
+  out = ggrd_open(filename,"w","hc_toroidal_solution");
   for(l=1;l <= ll;l++){
     for(os=i=0;i < nl;i++,os+=lmaxp1)
       fprintf(out,"%3i %16.7e %16.7e %16.7e\n",

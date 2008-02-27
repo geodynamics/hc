@@ -73,7 +73,7 @@ int main(int argc, char **argv)
        spherical harmonics routines operate
     */
     sprintf(filename,"hc.%i.dat",type);
-    out = hc_open(filename,"w",argv[0]);
+    out = ggrd_open(filename,"w",argv[0]);
     sh_print_model_spatial_basis(&model,out,verbose);
     fclose(out);
     if(verbose)
@@ -87,7 +87,7 @@ int main(int argc, char **argv)
      read in data at pixel locations , allocates odata array
   */
   sprintf(filename,"test.%i.data",type);
-  in = hc_open(filename,"r",argv[0]);
+  in = ggrd_open(filename,"r",argv[0]);
   sh_read_model_spatial_data(&model,&model.data,in,verbose);
   fclose(in);
   
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
      output of spatial basis of that expansion 
   */
   sprintf(filename,"testn.%i.data",type);
-  out = hc_open(filename,"w",argv[0]);
+  out = ggrd_open(filename,"w",argv[0]);
   sh_print_model_spatial_data(&model,ndata,out,verbose);
   fclose(out);
   for(i=0;i<3;i++){

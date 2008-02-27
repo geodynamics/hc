@@ -63,7 +63,7 @@ int main(int argc, char **argv)
   /* 
      read in solution
   */
-  in = hc_open(argv[1],"r","hc_extract_sh_layer");
+  in = ggrd_open(argv[1],"r","hc_extract_sh_layer");
   hc_read_sh_solution(model,&sol,in,binary,verbose);
   fclose(in);
   nsol = model->nradp2 * 3;

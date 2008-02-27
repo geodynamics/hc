@@ -2,7 +2,7 @@
 
 int main(int argc, char **argv)
 {
-  struct ggrd_vel *v;
+  struct ggrd_master *ggrd;
   HC_PREC xloc[3],time,vr[4],vphi[4],vtheta[4],dtrange;
   static int order = 3;
   hc_boolean calc_derivatives ;
@@ -10,15 +10,16 @@ int main(int argc, char **argv)
   /* 
      initialize velocity structure
   */
-  v = (struct ggrd_vel *)calloc(1,sizeof(struct ggrd_vel));
-  ggrd_init_vstruc(v);
-  v->history = TRUE;		/* expect history */
-  v->use_age = TRUE;		/* expect seafloor age files */
-  v->age_bandlim = 900;
+  ggrd = (struct ggrd_master *)calloc(1,sizeof(struct ggrd_master));
+  ggrd_init_master(ggrd);
+  ggrd->v.history = TRUE;		/* expect history */
+  ggrd->age_control = TRUE;		/* expect seafloor age files */
+  ggrd->age_bandlim = 900;
   /* 
      read in velocities 
   */
-  if(ggrd_read_vel_grids(v,1.0,FALSE,TRUE,"/home/walter/becker/data/plates/past/clb/hall/")){
+  if(ggrd_read_vel_grids(ggrd,1.0,FALSE,TRUE,
+			 "/home/walter/becker/data/plates/past/clb/hall/")){
     fprintf(stderr,"error opening grids\n");
     exit(-1);
   }
@@ -42,11 +43,11 @@ int main(int argc, char **argv)
       /* 
 	 interpolate
       */
-      if(ggrd_find_vel_and_der(xloc,time,dtrange,v,order,calc_derivatives,
+      if(ggrd_find_vel_and_der(xloc,time,dtrange,ggrd,order,calc_derivatives,
 			       TRUE,vr,vtheta,vphi))
 	exit(-1);
       if(interpolate_seafloor_ages(xloc[HC_THETA], 
-				   xloc[HC_PHI],time,v, &age))
+				   xloc[HC_PHI],time,ggrd, &age))
 	exit(-1);
 
       fprintf(stdout,"%11g %11g\t%11g %11g %11g\t%11g\n",lon,lat,vphi[0],-vtheta[0],vr[0],age);

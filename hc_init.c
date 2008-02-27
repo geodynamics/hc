@@ -432,7 +432,7 @@ void hc_assign_viscosity(struct hcs *hc,int mode,char filename[HC_CHAR_LENGTH],
 
        from bottom to top
     */
-    in = hc_open(filename,"r","hc_assign_viscosity");
+    in = ggrd_open(filename,"r","hc_assign_viscosity");
     hc_vecrealloc(&hc->rvisc,1,"hc_assign_viscosity");
     hc_vecrealloc(&hc->visc,1,"hc_assign_viscosity");
     hc->nvis = 0;mean = 0.0;mws = 0.0;
@@ -557,7 +557,7 @@ void hc_assign_density(struct hcs *hc,
 	fprintf(stderr,"hc_assign_density: reading depth dependent  dln\\rho/dln density scaling from %s\n",
 		dens_scaling_filename);
       ndf=0;smean = 0.0;
-      in = hc_open(dens_scaling_filename,"r","hc_assign_density");
+      in = ggrd_open(dens_scaling_filename,"r","hc_assign_density");
       while(fscanf(in,"%lf %lf",dtmp,(dtmp+1)) == 2){
 	hc_vecrealloc(&rdf,(1+ndf),"hc_assign_density");
 	hc_vecrealloc(&sdf,(1+ndf),"hc_assign_density");
@@ -590,7 +590,7 @@ void hc_assign_density(struct hcs *hc,
     
     */
 
-    in = hc_open(filename,"r","hc_assign_density");
+    in = ggrd_open(filename,"r","hc_assign_density");
     if(verbose)
       fprintf(stderr,"hc_assign_density: reading density anomalies in [%g%%] from %s\n",
 	      100*HC_DENSITY_SCALING,filename);
@@ -884,7 +884,7 @@ void hc_assign_plate_velocities(struct hcs *hc,int mode, char *filename,hc_boole
       if(verbose)
 	fprintf(stderr,"hc_assign_plate_velocities: expecting [cm/yr] pol/tor from %s\n",
 		filename);
-      in = hc_open(filename,"r","hc_assign_plate_velocities");
+      in = ggrd_open(filename,"r","hc_assign_plate_velocities");
       if(!sh_read_parameters_from_file(&type,&lmax,&shps,&ilayer, &nset,
 				       &zlabel,&ivec,in,FALSE,
 				       pvel_in_binary,verbose)){

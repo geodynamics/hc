@@ -18,6 +18,12 @@ with grd interpolation
 #include <string.h>
 #include <math.h>
 
+#ifdef USE_GMT4
+#define GGRD_GMT_GLOBAL_STRING "-fg"
+#else
+#define GGRD_GMT_GLOBAL_STRING "-Lg"
+#endif
+
 /* 
 
 wrappers
@@ -55,7 +61,7 @@ moderately external
 void ggrd_init_master(struct ggrd_master *);
 
 int ggrd_init_thist_from_file(struct ggrd_t *,char *,ggrd_boolean ,ggrd_boolean);
-int ggrd_read_vel_grids(struct ggrd_vel *, double, unsigned short, unsigned short, char *);
+int ggrd_read_vel_grids(struct ggrd_master *, double, unsigned short, unsigned short, char *);
 
 #ifdef USE_GMT4
 /* GMT4.1.2 */
@@ -108,6 +114,7 @@ void ggrd_gt_interpolate_z(double,float *,int ,
 			   ggrd_boolean *); /*  */
 float ggrd_gt_rms(float *,int );
 float ggrd_gt_mean(float *,int );
+FILE *ggrd_open(char *, char *, char *);
 
 void ggrd_print_layer_avg(float *,float *,int , int ,FILE *);
 
@@ -121,3 +128,8 @@ void ggrd_find_spherical_vel_from_rigid_cart_rot(double *,
 
 void ggrd_vecalloc(double **,int,char *);
 void ggrd_vecrealloc(double **,int,char *);
+void ggrd_indexx(int ,GGRD_CPREC *, int *);
+void ggrd_calc_mean_and_stddev(GGRD_CPREC *, GGRD_CPREC *,int ,GGRD_CPREC *,
+			       GGRD_CPREC *,GGRD_CPREC *, 
+			       ggrd_boolean , ggrd_boolean,GGRD_CPREC *);
+

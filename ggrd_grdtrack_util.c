@@ -24,10 +24,15 @@ original comments for grdtrack from GMT at bottom of file
 void ggrd_init_master(struct ggrd_master *ggrd)
 {
   ggrd->mat_control = ggrd->mat_control_init = 0;
-  ggrd->vel_control = ggrd->vel_control_init = 0;
+  ggrd->vtop_control = ggrd->vtop_control_init = 0;
+  ggrd->age_control = ggrd->age_control_init = 0;
+  ggrd->nage = 0;ggrd->age_bandlim = 200.;
+  ggrd->sf_init = 0;
   ggrd->time_hist.init = 0;
   ggrd->temp_init.init = 0;
   ggrd->time_hist.vstage_transition = 0.1; /* in Ma, transition */
+  /* 3-D velocity settings  */
+  ggrd_init_vstruc(ggrd);
 }
 
 
@@ -1088,78 +1093,78 @@ this is a scalar interpolation that needs special care
 
 */
 int interpolate_seafloor_ages(GGRD_CPREC xt, GGRD_CPREC xp,
-			      GGRD_CPREC age,struct ggrd_vel *v, 
+			      GGRD_CPREC age,struct ggrd_master *ggrd, 
 			      GGRD_CPREC *seafloor_age)
 {
   int left, right,i;
   GGRD_CPREC f1,f2;
   double a1,a2;
 
-  if(!v->sf_init){
+  if(!ggrd->sf_init){
     /* 
 
     init the constants
     
     */
-    v->sf_ntlim = v->nage - 1;
-    if(!v->nage){
+    ggrd->sf_ntlim = ggrd->nage - 1;
+    if(!ggrd->nage){
       fprintf(stderr,"interpolate_seafloor_ages: not initialized?!\n");
       return -2;
     }
-    for(i=1;i < v->nage;i++)
-      if(v->age_time[i] < v->age_time[i-1]){
+    for(i=1;i < ggrd->nage;i++)
+      if(ggrd->age_time[i] < ggrd->age_time[i-1]){
 	fprintf(stderr,"interpolate_seafloor_ages: error: times need to be sorted monotnically increasing\n");
 	return -3;
       }
-    v->sf_old_age =  v->age_time[0] - 1000; /* so that we get interpolation
+    ggrd->sf_old_age =  ggrd->age_time[0] - 1000; /* so that we get interpolation
 					       factors  */
-    v->sf_init = TRUE;
+    ggrd->sf_init = TRUE;
   } 
 
   /* check range */
-  if((age < v->age_time[0]) || (age > v->age_time[v->sf_ntlim])){
+  if((age < ggrd->age_time[0]) || (age > ggrd->age_time[ggrd->sf_ntlim])){
     fprintf(stderr,"interpolate_seafloor_ages: age: %g out of bounds [%g;%g]\n",
-	    age,v->age_time[0],v->age_time[v->sf_ntlim]);
+	    age,ggrd->age_time[0],ggrd->age_time[ggrd->sf_ntlim]);
     return -3;
   }
 
-  if(fabs(age- v->sf_old_age) > 1e-8){
+  if(fabs(age- ggrd->sf_old_age) > 1e-8){
     /* 
        time interpolation 
     */
     right = 0;
 
-    while((right < v->sf_ntlim) && (v->age_time[right] < age))
+    while((right < ggrd->sf_ntlim) && (ggrd->age_time[right] < age))
       right++;
     if(right == 0)
       right++;
 
     left = right - 1;
-    f2 = (age - v->age_time[left])/
-      (v->age_time[right]-v->age_time[left]);
+    f2 = (age - ggrd->age_time[left])/
+      (ggrd->age_time[right]-ggrd->age_time[left]);
     f1 = 1.0-f2;
-    //fprintf(stderr,"sai: %g %g %g\t%g %g\n",v->age_time[left],age,v->age_time[right],f1,f2);
-    v->sf_old_age = age;
-    v->sf_old_left = left;v->sf_old_right = right;
-    v->sf_old_f1 = f1;v->sf_old_f2 = f2;
+    //fprintf(stderr,"sai: %g %g %g\t%g %g\n",ggrd->age_time[left],age,ggrd->age_time[right],f1,f2);
+    ggrd->sf_old_age = age;
+    ggrd->sf_old_left = left;ggrd->sf_old_right = right;
+    ggrd->sf_old_f1 = f1;ggrd->sf_old_f2 = f2;
   }else{			/* reuse time interpolation */
-    left = v->sf_old_left;right = v->sf_old_right;
-    f1 = v->sf_old_f1;f2 = v->sf_old_f2;
+    left = ggrd->sf_old_left;right = ggrd->sf_old_right;
+    f1 = ggrd->sf_old_f1;f2 = ggrd->sf_old_f2;
   }
   if(!ggrd_grdtrack_interpolate_tp((double)xt,(double)xp,
-				   (v->ages+left),&a1,FALSE)){
+				   (ggrd->ages+left),&a1,FALSE)){
     fprintf(stderr,"interpolate_seafloor_ages: interpolation error left\n");
     return -6;
   }
-  if(a1 > v->ages[left].fmaxlim[0]) /* limit to bandlim */
-    a1 = v->ages[left].bandlim;
+  if(a1 > ggrd->ages[left].fmaxlim[0]) /* limit to bandlim */
+    a1 = ggrd->ages[left].bandlim;
   if(!ggrd_grdtrack_interpolate_tp((double)xt,(double)xp,
-				   (v->ages+right),&a2,FALSE)){
+				   (ggrd->ages+right),&a2,FALSE)){
     fprintf(stderr,"interpolate_seafloor_ages: interpolation error right\n");
     return -6;
   }
-  if(a2 > v->ages[right].fmaxlim[0]) 
-    a2 = v->ages[right].bandlim;
+  if(a2 > ggrd->ages[right].fmaxlim[0]) 
+    a2 = ggrd->ages[right].bandlim;
   *seafloor_age = (GGRD_CPREC)(f1 * a1 + f2 * a2);
   if(*seafloor_age < 0)
     *seafloor_age = 0.0;	/* and >= 0 */
@@ -1167,6 +1172,20 @@ int interpolate_seafloor_ages(GGRD_CPREC xt, GGRD_CPREC xp,
 }
 
 
+/* 
+   open a file safely and give an error message if there was
+   a problem
+*/
+FILE *ggrd_open(char *name, char *mode, char *program)
+{
+  FILE *in;
+  if((in=fopen(name,mode)) == NULL){
+    fprintf(stderr,"%s: error: can not open file %s for mode %s access\n",
+	    program,name,mode);
+    exit(-1);
+  }
+  return in;
+}
 
 /* general floating point vector allocation */
 void ggrd_vecalloc(double **x,int n,char *message)
@@ -1187,6 +1206,153 @@ void ggrd_vecrealloc(double **x,int n,char *message)
     exit(-1);
   }
 }
+
+/*
+
+  calculate mean and standard deviation of x_i
+  if hypoth is set, calc mean and stddev of sqrt(x_i^2 + y_i^2)
+  if weighted is set, uses weights[n] for weighting the mean and so on
+
+  this way of calculating the stddev is inaccurate but fast
+
+*/
+void ggrd_calc_mean_and_stddev(GGRD_CPREC *x, GGRD_CPREC *y,int n,GGRD_CPREC *mean,
+			       GGRD_CPREC *stddev,GGRD_CPREC *rms, 
+			       ggrd_boolean hypoth, ggrd_boolean weighted,GGRD_CPREC *weight)
+{
+  GGRD_CPREC sum1=0.0,sum2=0.0,tmp,ws;
+  int i;
+  if(n <= 1){
+    fprintf(stderr,"ggrd_calc_mean_and_stddev: error: n: %i\n",n);
+    exit(-1);
+  }
+  ws=0.0;
+  if(hypoth){// sqrt(x^2+y+2)
+    for(i=0;i<n;i++){
+      if(weighted){
+	tmp = hypot(x[i],y[i]) * weight[i];
+	ws += weight[i];
+      }else{
+	tmp = hypot(x[i],y[i]);
+	ws += 1.0;
+      }
+      sum1 += tmp;sum2 += tmp * tmp;
+    }
+  }else{
+    for(i=0;i<n;i++){
+      if(weighted){
+	tmp  = x[i] * weight[i];
+	ws += weight[i];
+      }else{
+	tmp = x[i];
+	ws += 1.0;
+      }
+      sum1 += tmp;sum2 += tmp*tmp;
+    }
+  }
+  // standard deviation
+  tmp = (ws * sum2 - sum1 * sum1) / (ws*(ws-1.0));
+  if(tmp > 0)
+    *stddev = sqrt(tmp);
+  else
+    *stddev = 0.0;
+  *rms  = sqrt(sum2 / ws);// RMS 
+  *mean = sum1 / ws;      // mean 
+}
+/*
+
+  sort array by order, returns index
+
+  GIVE INPUT INDEX SHIFTED
+  (ie.    x-1)
+  output will be 0...n-1
+
+  based on numerical recipes
+
+  
+*/
+
+
+#define GGRD_INDEXX_SWAP(a,b) itemp=(a);(a)=(b);(b)=itemp;
+#define GGRD_INDEXX_M 7
+#define GGRD_INDEXX_NSTACK 5000
+
+void ggrd_indexx(int n,GGRD_CPREC *arr, int *indx)
+{
+  int i,indxt,ir=n,itemp,j,k,l=1;
+  int jstack=0,*istack;
+  GGRD_CPREC a;
+  //
+  istack=(int *)malloc(sizeof(int)*(GGRD_INDEXX_NSTACK+1));
+  if(!istack)
+    GGRD_MEMERROR("indexx");
+  //
+  for (j=1;j<=n;j++) 
+    indx[j]=j;
+  for (;;) {
+    if (ir-l < GGRD_INDEXX_M) {
+      for (j=l+1;j<=ir;j++) {
+	indxt=indx[j];
+	a=arr[indxt];
+	for (i=j-1;i>=1;i--) {
+	  if (arr[indx[i]] <= a) break;
+	  indx[i+1]=indx[i];
+	}
+	indx[i+1]=indxt;
+      }
+      if (jstack == 0) break;
+      ir=istack[jstack--];
+      l=istack[jstack--];
+    } else {
+      k=(l+ir) >> 1;
+      GGRD_INDEXX_SWAP(indx[k],indx[l+1]);
+      if (arr[indx[l+1]] > arr[indx[ir]]) {
+	GGRD_INDEXX_SWAP(indx[l+1],indx[ir]);
+      }
+      if (arr[indx[l]] > arr[indx[ir]]) {
+	GGRD_INDEXX_SWAP(indx[l],indx[ir]);
+      }
+      if (arr[indx[l+1]] > arr[indx[l]]) {
+	GGRD_INDEXX_SWAP(indx[l+1],indx[l]);
+      }
+      i=l+1;
+      j=ir;
+      indxt=indx[l];
+      a=arr[indxt];
+      for (;;) {
+	do i++; while (arr[indx[i]] < a);
+	do j--; while (arr[indx[j]] > a);
+	if (j < i) break;
+	GGRD_INDEXX_SWAP(indx[i],indx[j]);
+      }
+      indx[l]=indx[j];
+      indx[j]=indxt;
+      jstack += 2;
+      if (jstack > GGRD_INDEXX_NSTACK) {
+	fprintf(stderr,
+		"indexx: GGRD_INDEXX_NSTACK too small");
+	exit(-1);
+      }
+      if (ir-i+1 >= j-l) {
+	istack[jstack]=ir;
+	istack[jstack-1]=i;
+	ir=j-1;
+      } else {
+	istack[jstack]=j-1;
+	istack[jstack-1]=l;
+	l=i;
+      }
+    }
+  }
+  free(istack);
+  // go back to normal numbering
+  for(i=1;i<=n;i++)
+    indx[i]--;
+}
+#undef GGRD_INDEXX_M
+#undef GGRD_INDEXX_NSTACK
+#undef GGRD_INDEXX_SWAP
+
 
 
 /* 

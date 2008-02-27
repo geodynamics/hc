@@ -167,7 +167,7 @@ int main(int argc, char **argv)
   if(p->verbose)
     fprintf(stderr,"%s: writing spherical harmonics solution to %s\n",
 	    argv[0],filename);
-  out = hc_open(filename,"w","main");
+  out = ggrd_open(filename,"w","main");
   hc_print_spectral_solution(model,sol_spectral,out,
 			     p->solution_mode,
 			     p->sol_binary_out,p->verbose);
@@ -179,7 +179,7 @@ int main(int argc, char **argv)
     sprintf(filename,"%s",HC_GEOID_FILE);
     if(p->verbose)
       fprintf(stderr,"%s: writing geoid to %s\n",argv[0],filename);
-    out = hc_open(filename,"w","main");
+    out = ggrd_open(filename,"w","main");
     hc_print_sh_scalar_field(geoid,out,FALSE,FALSE,p->verbose);
     fclose(out);
   }
