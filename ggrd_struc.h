@@ -135,7 +135,7 @@ struct ggrd_master{		/* master structure */
   int age_control,age_control_init;
   
   char mat_file[1000];
-  char vtop_file[1000];
+  char vtop_dir[1000];
   char age_file[1000];
   
   /* grid structures */

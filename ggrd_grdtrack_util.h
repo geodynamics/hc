@@ -20,8 +20,10 @@ with grd interpolation
 
 #ifdef USE_GMT4
 #define GGRD_GMT_GLOBAL_STRING "-fg"
+#define GGRD_GMT_XPERIODIC_STRING "-fx"
 #else
 #define GGRD_GMT_GLOBAL_STRING "-Lg"
+#define GGRD_GMT_XPERIODIC_STRING "-Lx"
 #endif
 
 /* 
