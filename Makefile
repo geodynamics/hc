@@ -170,7 +170,8 @@ sh_ana: $(LIBS) $(INCS) $(ODIR)/sh_ana.o
 
 hc: $(LIBS) $(INCS) $(ODIR)/main.o $(PREM_OBJS)
 	$(CC) $(LIB_FLAGS) $(ODIR)/main.o -o $(BDIR)/hc \
-		-lhc -lrick $(HEAL_LIBS_LINKLINE) $(PREM_OBJS) -lm $(LDFLAGS) 
+		-lhc -lrick $(HEAL_LIBS_LINKLINE) $(PREM_OBJS) \
+		 $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS) 
 
 hc.dbg: $(LIBS) $(INCS) $(ODIR)/main.dbg.o $(PREM_OBJS)
 	$(CC) $(LIB_FLAGS) $(ODIR)/main.dbg.o $(PREM_OBJS) \
@@ -192,7 +193,7 @@ grdinttester: $(LIBS) $(INCS) $(ODIR)/grdinttester.o
 hc_extract_sh_layer: $(LIBS) $(INCS) $(PREM_OBJS) $(ODIR)/hc_extract_sh_layer.o
 	$(CC) $(LIB_FLAGS) $(ODIR)/hc_extract_sh_layer.o $(PREM_OBJS) \
 		-o $(BDIR)/hc_extract_sh_layer \
-		-lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS) 
+		-lhc -lrick $(HEAL_LIBS_LINKLINE)  $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS) 
 
 #
 # C function prototyper, strip out GMT version dependent things, 

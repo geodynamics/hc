@@ -54,6 +54,7 @@ void ggrd_grdtrack_free_gstruc(struct ggrd_gt *);
 int ggrd_grdtrack_rescale(struct ggrd_gt *,ggrd_boolean , ggrd_boolean , 
 			  ggrd_boolean ,double);
 
+void ggrd_init_vstruc(struct ggrd_master *);
 
 /* 
 
