@@ -175,7 +175,7 @@ hc: $(LIBS) $(INCS) $(ODIR)/main.o $(PREM_OBJS)
 
 hc.dbg: $(LIBS) $(INCS) $(ODIR)/main.dbg.o $(PREM_OBJS)
 	$(CC) $(LIB_FLAGS) $(ODIR)/main.dbg.o $(PREM_OBJS) \
-	-o $(BDIR)/hc.dbg -lhc.dbg -lrick.dbg \
+	-o $(BDIR)/hc.dbg -lhc.dbg -lrick.dbg -lggrd.dbg -lgmt -lnetcdf \
 	$(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS) 
 
 test_fft: $(LIBS) $(INCS) $(ODIR)/test_fft.o
