@@ -91,7 +91,7 @@ int main(int argc, char **argv)
     i1=ilayer-1;i2 = i1;
   }
   /* detect number of expansions */
-  if((mode == 1)||(mode == 5)||(mode = 6))
+  if((mode == 1)||(mode == 5)||(mode == 6))
     shps = 1;
   else if(mode == 2)
     shps = 2;
