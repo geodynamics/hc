@@ -46,15 +46,16 @@ int main(int argc, char **argv)
 	    argv[0],argv[0],mode,short_format);
     fprintf(stderr,"extracts spherical harmonic solution x (vel or str) from HC run\n");
     fprintf(stderr,"layer: 1...nset\n");
-    fprintf(stderr,"\tif ilayer=1..nset, will print one layer\n");
-    fprintf(stderr,"\tif ilayer=-1, will select nset\n");
-    fprintf(stderr,"\tif ilayer=-2, will print all layers\n");
-    fprintf(stderr,"mode: 1...3\n");
+    fprintf(stderr,"\tif ilayer= 1..nset, will print one layer\n");
+    fprintf(stderr,"\t          -1, will select nset\n");
+    fprintf(stderr,"\t          -2, will print all layers\n");
+    fprintf(stderr,"mode: 1...6\n");
     fprintf(stderr,"\tif mode = 1, will print x_r \n");
-    fprintf(stderr,"\tif mode = 2, will print x_pol x_tor \n");
-    fprintf(stderr,"\tif mode = 3, will print x_r x_pol x_tor\n");
-    fprintf(stderr,"\tif mode = 4, will print the depth levels of all layers\n");
-    
+    fprintf(stderr,"\t          2, will print x_pol x_tor \n");
+    fprintf(stderr,"\t          3, will print x_r x_pol x_tor\n");
+    fprintf(stderr,"\t          4, will print the depth levels of all layers\n");
+    fprintf(stderr,"\t          5, will print x_pol\n");
+    fprintf(stderr,"\t          6, will print x_tor\n");
     exit(-1);
     break;
   }
@@ -89,7 +90,13 @@ int main(int argc, char **argv)
   }else{
     i1=ilayer-1;i2 = i1;
   }
-  shps = mode;
+  /* detect number of expansions */
+  if((mode == 1)||(mode == 5)||(mode = 6))
+    shps = 1;
+  else if(mode == 2)
+    shps = 2;
+  else if(mode == 3)
+    shps = 3;
   for(ilayer=i1;ilayer <= i2;ilayer++){
     /* 
        output 
@@ -127,6 +134,21 @@ int main(int argc, char **argv)
     case 4:
       fprintf(stdout,"%5i %11g\n",ilayer,HC_Z_DEPTH(model->r[ilayer]));
       break;
+    case 5:
+      /*  */
+      if(verbose)
+	fprintf(stderr,"%s: printing x_pol SHE at layer %i (depth: %g)\n",
+		argv[0],ilayer,HC_Z_DEPTH(model->r[ilayer]));
+      sh_print_coefficients_to_file((sol+ilayer*3+1),shps,stdout,fac,FALSE,verbose);
+      break;
+    case 6:
+      /*  */
+      if(verbose)
+	fprintf(stderr,"%s: printing x_tor SHE at layer %i (depth: %g)\n",
+		argv[0],ilayer,HC_Z_DEPTH(model->r[ilayer]));
+      sh_print_coefficients_to_file((sol+ilayer*3+2),shps,stdout,fac,FALSE,verbose);
+      break;
+ 
     default:
       fprintf(stderr,"%s: error, mode %i undefined\n",argv[0],mode);
       exit(-1);
