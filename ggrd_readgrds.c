@@ -107,6 +107,13 @@ int ggrd_read_vel_grids(struct ggrd_master *ggrd, /* ggrd master structure
     mean[4],ddummy,*weights,theta,tmp=0.0;
   /* gmt  */
   struct GRD_HEADER header[1];
+#ifdef USE_GMT4
+  GMT_io_init ();/* Init the table i/o structure */
+  GMT_grdio_init();
+  GMT_program = "g";
+  GMT_make_fnan (GMT_f_NaN);
+  GMT_make_dnan (GMT_d_NaN);
+#endif
 
   in = out = NULL;
   fgrd = NULL;dgrd = NULL;
@@ -240,8 +247,7 @@ int ggrd_read_vel_grids(struct ggrd_master *ggrd, /* ggrd master structure
 	      return(-2);
 	    }
 #else  /* new */
-	    sprintf(header->name,"%s",sname);
-	    if(GMT_cdf_read_grd_info (header) == -1){
+	    if(GMT_read_grd_info (sname,header) == -1){
 	      fprintf(stderr,"ggrd_read_vel_grids: error opening GMT grd file %s\n",sname);
 	      return(-2);
 	    }
@@ -363,10 +369,8 @@ int ggrd_read_vel_grids(struct ggrd_master *ggrd, /* ggrd master structure
 	  }
 	  if(ggrd->v.read_gmt){
 #ifdef USE_GMT4
-	    // read the netcdf GRD file
-	    sprintf(header->name,"%s",sname);
-	    GMT_cdf_read_grd (header,fgrd, 0.0, 0.0, 0.0, 0.0, 
-			      dummy, 0);
+	    GMT_read_grd (sname,header,fgrd, 0.0, 0.0, 0.0, 0.0, 
+			  dummy,0);
 #else
 	    GMT_cdf_read_grd (sname,header,fgrd, 0.0, 0.0, 0.0, 0.0, 
 			      dummy, 0);

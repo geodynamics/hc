@@ -443,6 +443,8 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
   GMT_io_init ();/* Init the table i/o structure */
   GMT_grdio_init();
   GMT_program = "g";
+  GMT_make_fnan (GMT_f_NaN);
+  GMT_make_dnan (GMT_d_NaN);
 #endif
   if(verbose >= 2)
     if(*geographic_in)
@@ -528,8 +530,6 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
     }
 #else  /* 4.1.2 */
     if(GMT_read_grd_info (grdfile,*grd)){
-      
-    //if (GMT_cdf_read_grd_info ((*grd))) {
       fprintf (stderr, "%s: error opening file %s for header\n", 
 	       "ggrd_grdtrack_init", grdfile);
       return 4;
