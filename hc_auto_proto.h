@@ -1,4 +1,5 @@
 /* ggrd_grdtrack_util.c */
+void ggrd_init_master(struct ggrd_master *);
 int ggrd_grdtrack_init_general(unsigned char, char *, char *, char *, struct ggrd_gt *, unsigned char, unsigned char);
 int ggrd_grdtrack_rescale(struct ggrd_gt *, unsigned char, unsigned char, unsigned char, double);
 unsigned char ggrd_grdtrack_interpolate_rtp(double, double, double, struct ggrd_gt *, double *, unsigned char);
@@ -12,8 +13,11 @@ int ggrd_init_thist_from_file(struct ggrd_t *, char *, unsigned char, unsigned c
 void ggrd_gt_interpolate_z(double, float *, int, int *, int *, double *, double *, unsigned char, unsigned char *);
 void ggrd_interpol_time(double, struct ggrd_t *, int *, int *, double *, double *, double);
 int interpolate_seafloor_ages(double, double, double, struct ggrd_master *, double *);
+FILE *ggrd_open(char *, char *, char *);
 void ggrd_vecalloc(double **, int, char *);
 void ggrd_vecrealloc(double **, int, char *);
+void ggrd_calc_mean_and_stddev(double *, double *, int, double *, double *, double *, unsigned char, unsigned char, double *);
+void ggrd_indexx(int, double *, int *);
 float ggrd_gt_rms(float *, int);
 float ggrd_gt_mean(float *, int);
 /* ggrd_readgrds.c */
@@ -49,7 +53,6 @@ void hc_read_sh_solution(struct hcs *, struct sh_lms **, FILE *, unsigned short,
 void hc_ludcmp_3x3(double [3][3], int *);
 void hc_lubksb_3x3(double [3][3], int *, double *);
 /* hc_misc.c */
-FILE *hc_open(char *, char *, char *);
 void hc_dvecalloc(double **, int, char *);
 void hc_svecalloc(float **, int, char *);
 void hc_vecalloc(double **, int, char *);
@@ -69,8 +72,6 @@ void hc_get_flt_frmt_string(char *, int, unsigned short);
 char *hc_name_boolean(unsigned short);
 unsigned short hc_toggle_boolean(unsigned short *);
 void hc_advance_argument(int *, int, char **);
-void hc_calc_mean_and_stddev(double *, double *, int, double *, double *, double *, unsigned short, unsigned short, double *);
-void hc_indexx(int, double *, int *);
 /* hc_output.c */
 void hc_print_spectral_solution(struct hcs *, struct sh_lms *, FILE *, int, unsigned short, unsigned short);
 void hc_print_sh_scalar_field(struct sh_lms *, FILE *, unsigned short, unsigned short, unsigned short);
@@ -151,6 +152,8 @@ void sh_print_coefficients_to_file(struct sh_lms *, int, FILE *, double *, unsig
 void sh_read_coefficients_from_file(struct sh_lms *, int, int, FILE *, unsigned short, double *, unsigned short);
 void sh_print_nonzero_coeff(struct sh_lms *, FILE *);
 void sh_read_spatial_data_from_file(struct sh_lms *, FILE *, unsigned short, int, float *, float *);
+void sh_read_spatial_data_from_grd(struct sh_lms *, struct ggrd_gt *, unsigned short, int, float *, float *);
+void sh_read_spatial_data(struct sh_lms *, FILE *, struct ggrd_gt *, unsigned short, unsigned short, int, float *, float *);
 void sh_compute_spatial_basis(struct sh_lms *, FILE *, unsigned short, float, float **, int, unsigned short);
 void sh_compute_spectral(float *, int, unsigned short, float **, struct sh_lms *, unsigned short);
 void sh_compute_spatial(struct sh_lms *, int, unsigned short, float **, float *, unsigned short);

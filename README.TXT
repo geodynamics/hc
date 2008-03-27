@@ -219,7 +219,7 @@ USING THE SPHERICAL HARMONICS TOOLS AS STANDALONE
    harmonics expansion of degree 31
 
 
-   a) obtain scalara data at the Gaussian intergration points
+   a) obtain scalar data at the Gaussian intergration points
 
       sh_ana -127 | grdtrack -Lx -G$datadir/etopo5/etopo5.1.grd > etopo5.dat
 
@@ -227,6 +227,10 @@ USING THE SPHERICAL HARMONICS TOOLS AS STANDALONE
    b) expand
 
        cat etopo5.dat | sh_ana 127 > etopo5.ab
+
+   c) Alternative: use the grd file directly
+
+   sh_ana 127 $datadir/etopo5/etopo5.1.grd
 
 2) convert spherical harmonics to spatial expansion
 

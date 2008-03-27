@@ -390,7 +390,7 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
 		       char *grdfile,	/* name, or prefix, of grd file with scalars */
 		       struct GRD_HEADER **grd,	/* pass as empty */
 		       struct GMT_EDGEINFO **edgeinfo, /* pass as empty */
-		       char *edgeinfo_string, /* -L type flags from GMT, can be empty */
+		       char *edgeinfo_string, /* -fg/ -L type flags from GMT, can be empty */
 		       ggrd_boolean *geographic_in, /* this is normally TRUE */
 		       int *pad,	/* [4] array with padding (output) */
 		       ggrd_boolean three_d, char *dfile, 	/* depth file name */
@@ -427,9 +427,6 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
   /* 
      init first edgeinfo 
   */
-#ifdef USE_GMT4
-  GMT_io_init ();			/* Init the table i/o structure */
-#endif
   GMT_boundcond_init (*edgeinfo);
   
   /* check if geographic */
@@ -442,6 +439,11 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
   }else{
     *geographic_in = FALSE;
   }
+#ifdef USE_GMT4
+  GMT_io_init ();/* Init the table i/o structure */
+  GMT_grdio_init();
+  GMT_program = "g";
+#endif
   if(verbose >= 2)
     if(*geographic_in)
       fprintf(stderr,"ggrd_grdtrack_init: detected geographic region from geostring: %s\n",
@@ -525,9 +527,10 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
       return 4;
     }
 #else  /* 4.1.2 */
-    sprintf((*grd)->name,"%s",grdfile);
-    if (GMT_cdf_read_grd_info ((*grd))) {
-      fprintf (stderr, "%s: error opening file %s\n", 
+    if(GMT_read_grd_info (grdfile,*grd)){
+      
+    //if (GMT_cdf_read_grd_info ((*grd))) {
+      fprintf (stderr, "%s: error opening file %s for header\n", 
 	       "ggrd_grdtrack_init", grdfile);
       return 4;
     }
@@ -542,9 +545,8 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
 		 "ggrd_grdtrack_init", filename);
 	return 6;
       }
-#else
-      sprintf((*grd+i)->name,"%s",filename);
-      if (GMT_cdf_read_grd_info ((*grd+i))) {
+#else  /* gmt 4 */
+      if (GMT_read_grd_info (filename,(*grd+i))) {
 	fprintf (stderr, "%s: error opening file %s (-D option was used)\n", 
 		 "ggrd_grdtrack_init", filename);
 	return 6;
@@ -643,14 +645,15 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
        read the grd files
     */
 #ifdef USE_GMT4
-    sprintf((*grd+i)->name,"%s",filename);
-    if (GMT_cdf_read_grd ((*grd+i), (*f+i* (*mm)), 
+    /* GMT 4 */
+    if (GMT_read_grd (filename,(*grd+i), (*f+i* (*mm)), 
 			  *west, *east, *south, *north, 
 			  pad, FALSE)) {
       fprintf (stderr, "%s: error reading file %s\n", "ggrd_grdtrack_init", grdfile);
       return 10;
     }
 #else
+    /* old GMT */
     if (GMT_cdf_read_grd (filename, (*grd+i), (*f+i* (*mm)), 
 			  *west, *east, *south, *north, 
 			  pad, FALSE)) {

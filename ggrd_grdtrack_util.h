@@ -8,6 +8,7 @@ with grd interpolation
 
 #ifndef __GGRD_READ_GMT__
 #include "gmt.h"
+void GMT_grdio_init (void);
 #define __GGRD_READ_GMT__
 #endif
 
