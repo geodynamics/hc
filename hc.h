@@ -8,14 +8,16 @@
 
 */
 #ifndef __HC_READ_HEADER_FILE__
+#include "hc_filenames.h"
+#include <math.h>
 
 #ifndef __GMT_INCLUDED__
+#define _GMT_MATH_H		/* gmt_math.h led to clashes with some other codes */
 #include "gmt.h"
-#include "gmt_bcr.h"
 #define __GMT_INCLUDED__
 #endif
 
-#include "hc_filenames.h"
+
 /* 
 
 general variable type defines 
@@ -25,8 +27,8 @@ general variable type defines
 #define hc_boolean unsigned short
 #endif
 #ifndef HC_PREC			/* 
-					   precision for most C functions
-					*/
+				   precision for most C functions
+				*/
 #define HC_PREC double
 #define HC_FLT_FORMAT "%lf"
 #define HC_TWO_FLT_FORMAT "%lf %lf"
@@ -65,6 +67,9 @@ PREM
 
 */
 #include "prem.h"
+
+
+
 /* 
    dealing with velocity grids 
 

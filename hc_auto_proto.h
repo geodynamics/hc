@@ -1,5 +1,6 @@
 /* ggrd_grdtrack_util.c */
 void ggrd_init_master(struct ggrd_master *);
+void ggrd_grdinfo(char *);
 int ggrd_grdtrack_init_general(unsigned char, char *, char *, char *, struct ggrd_gt *, unsigned char, unsigned char);
 int ggrd_grdtrack_rescale(struct ggrd_gt *, unsigned char, unsigned char, unsigned char, double);
 unsigned char ggrd_grdtrack_interpolate_rtp(double, double, double, struct ggrd_gt *, double *, unsigned char);
@@ -8,7 +9,7 @@ unsigned char ggrd_grdtrack_interpolate_tp(double, double, struct ggrd_gt *, dou
 unsigned char ggrd_grdtrack_interpolate_xy(double, double, struct ggrd_gt *, double *, unsigned char);
 void ggrd_grdtrack_free_gstruc(struct ggrd_gt *);
 void ggrd_find_spherical_vel_from_rigid_cart_rot(double *, double *, double *, double *, double *);
-void ggrd_print_layer_avg(float *, float *, int, int, FILE *);
+void ggrd_print_layer_avg(float *, float *, int, int, int, FILE *, int *);
 int ggrd_init_thist_from_file(struct ggrd_t *, char *, unsigned char, unsigned char);
 void ggrd_gt_interpolate_z(double, float *, int, int *, int *, double *, double *, unsigned char, unsigned char *);
 void ggrd_interpol_time(double, struct ggrd_t *, int *, int *, double *, double *, double);
@@ -128,6 +129,8 @@ void rick_init(int, int, int *, int *, int *, struct rick_module *, unsigned sho
 void rick_free_module(struct rick_module *, int);
 void rick_plmbar1(float *, float *, int, int, float, struct rick_module *);
 void rick_gauleg(float, float, float *, float *, int);
+/* rotvec2vel.c */
+FILE *myopen(const char *, const char *);
 /* sh_ana.c */
 /* shana_sh.c */
 void shana_compute_allplm(int, int, double *, double *, struct shana_module *);

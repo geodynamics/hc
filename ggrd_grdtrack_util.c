@@ -44,6 +44,18 @@ wrapper
 
 
 
+/* for debugging, mostly */
+
+void ggrd_grdinfo(char *filename)
+{
+  struct ggrd_gt g[1];
+  char cdummy='c';
+  ggrd_grdtrack_init_general(FALSE,filename,&cdummy,"",g,2,FALSE);
+  fprintf(stderr,"ggrd_grdinfo: %s W: %g E: %g S: %g N: %g\n",
+	  filename,g->grd->x_min,g->grd->x_max,g->grd->y_min,g->grd->y_max);
+  
+}
+
 /* 
    init structure and files for the general case, this is a wrapper
    for what's below
@@ -418,34 +430,42 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
   float dz1,dz2;
   struct GRD_HEADER ogrd;
   int i,one_or_zero,nx,ny,mx,my,nn;
-  char filename[BUFSIZ*2];
+  char filename[BUFSIZ*2],**cdummy;
+  static int gmt_init = FALSE;
   /* 
      deal with edgeinfo 
   */
   *edgeinfo = (struct GMT_EDGEINFO *)
     GMT_memory (VNULL, (size_t)1, sizeof(struct GMT_EDGEINFO), "ggrd_grdtrack_init");
+
+#ifdef USE_GMT4
+
+  if(!gmt_init){
+    /* this should be OK as is. init only once globally */
+    GMT_program = "ggrd";
+    GMT_make_fnan (GMT_f_NaN);
+    GMT_make_dnan (GMT_d_NaN);
+    GMT_io_init ();/* Init the table i/o structure */
+    GMT_grdio_init();
+    gmt_init = TRUE;
+  }
+
+#endif
   /* 
-     init first edgeinfo 
+     init first edgeinfo (period/global?)
   */
   GMT_boundcond_init (*edgeinfo);
-  
   /* check if geographic */
-  if (strlen(edgeinfo_string)>2){
+  if (strlen(edgeinfo_string)>2){ /* the boundary flag was set */
+    /* parse */
     GMT_boundcond_parse (*edgeinfo, (edgeinfo_string+2));
-    if ((*edgeinfo+0)->gn) 
+    if ((*edgeinfo)->gn) 
       *geographic_in = TRUE;
     else
       *geographic_in = FALSE;
   }else{
     *geographic_in = FALSE;
   }
-#ifdef USE_GMT4
-  GMT_io_init ();/* Init the table i/o structure */
-  GMT_grdio_init();
-  GMT_program = "g";
-  GMT_make_fnan (GMT_f_NaN);
-  GMT_make_dnan (GMT_d_NaN);
-#endif
   if(verbose >= 2)
     if(*geographic_in)
       fprintf(stderr,"ggrd_grdtrack_init: detected geographic region from geostring: %s\n",
@@ -519,22 +539,30 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
     GMT_memory (*edgeinfo, (size_t)(*nz), sizeof(struct GMT_EDGEINFO), "ggrd_grdtrack_init");
   if(verbose >= 2)
     fprintf(stderr,"ggrd_grdtrack_init: mem alloc ok\n");
+#ifdef USE_GMT4  
+  /* init the header */
+  GMT_grd_init (*grd,0,cdummy,FALSE);
+#endif
   if(*nz == 1){
     if(verbose >= 2)
-      fprintf(stderr,"ggrd_grdtrack_init: opening single file %s\n",grdfile);
+      
 #ifndef USE_GMT4		/* old */
+      fprintf(stderr,"ggrd_grdtrack_init: opening single file %s, GMT3 mode\n",grdfile);
     if (GMT_cdf_read_grd_info (grdfile,(*grd))) {
       fprintf (stderr, "%s: error opening file %s\n", 
 	       "ggrd_grdtrack_init", grdfile);
       return 4;
     }
+   
 #else  /* 4.1.2 */
+    if(verbose >= 2)
+      fprintf(stderr,"ggrd_grdtrack_init: opening single file %s, GMT4 mode\n",grdfile);
     if(GMT_read_grd_info (grdfile,*grd)){
       fprintf (stderr, "%s: error opening file %s for header\n", 
 	       "ggrd_grdtrack_init", grdfile);
       return 4;
     }
-#endif
+#endif 
   }else{
     /* loop through headers for testing purposess */
     for(i=0;i<(*nz);i++){
@@ -625,10 +653,6 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
      pad on sides 
   */
   pad[0] = pad[1] = pad[2] = pad[3] = 2;
-  if (verbose) 
-    fprintf(stderr,"ggrd_grdtrack_init: reading grd files (%g - %g (%i) %g - %g (%i); %i %s)\n",
-	    *west,*east,nx,*south,*north,ny,
-	    *geographic_in,(edgeinfo_string+2));
   for(i=0;i < (*nz);i++){
     /* 
        loop through layers
@@ -640,6 +664,10 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
     }else{			/* construct full filename */
       sprintf(filename,"%s.%i.grd",grdfile,i+1);
     }
+    if (verbose) 
+      fprintf(stderr,"ggrd_grdtrack_init: reading grd file %s (%g - %g (%i) %g - %g (%i); geo: %i flag: %s\n",
+	      filename,*west,*east,nx,*south,*north,ny,
+	      *geographic_in,edgeinfo_string);
 
     /* 
        read the grd files
@@ -647,11 +675,12 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
 #ifdef USE_GMT4
     /* GMT 4 */
     if (GMT_read_grd (filename,(*grd+i), (*f+i* (*mm)), 
-			  *west, *east, *south, *north, 
-			  pad, FALSE)) {
+		      *west, *east, *south, *north, 
+		      pad, FALSE)) {
       fprintf (stderr, "%s: error reading file %s\n", "ggrd_grdtrack_init", grdfile);
       return 10;
     }
+    //fprintf(stderr,"%g %g %i %i %i %i\n",(*grd)->z_scale_factor,(*grd)->z_add_offset,nx,ny,mx,my);
 #else
     /* old GMT */
     if (GMT_cdf_read_grd (filename, (*grd+i), (*f+i* (*mm)), 
@@ -679,21 +708,39 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
 #endif
      }
     /* Set boundary conditions  */
-    GMT_boundcond_set ((*grd+i), (*edgeinfo+i), pad, 
-		       (*f+i*(*mm)));
+    GMT_boundcond_set ((*grd+i), (*edgeinfo+i), pad, (*f+i*(*mm)));
   } /* end layer loop */
   if(verbose){
-    ggrd_print_layer_avg(*f,*z,*mm,*nz,stderr);
+    ggrd_print_layer_avg(*f,*z,mx,my,*nz,stderr,pad);
   }
   return 0;
 
 }
-void ggrd_print_layer_avg(float *x,float *z,int n, int m,FILE *out)
+void ggrd_print_layer_avg(float *x,float *z,int nx, int ny, int m,FILE *out,int *pad)
 {
-  int i;
-  for(i=0;i < m;i++){
-    fprintf(stderr,"ggrd_grdtrack_init: layer %3i at depth %11g, mean: %11g rms: %11g\n",
-	    i+1,z[i],ggrd_gt_mean((x+i*n),n),ggrd_gt_rms((x+i*n),n));
+  int i,j,k,yl,xl,l,nxny,nxnyr;
+  float *tmp;
+  nxny = nx*ny;		/* size with padding */
+  if(pad[0]+pad[1]+pad[2]+pad[3] == 0){
+    for(i=0;i < m;i++){
+      fprintf(stderr,"ggrd_grdtrack_init: layer %3i at depth %11g, mean: %11g rms: %11g\n",
+	      i+1,z[i],ggrd_gt_mean((x+i*nxny),nxny),ggrd_gt_rms((x+i*nxny),nxny));
+    }
+  }else{
+
+    nxnyr = (nx-pad[0]-pad[1]) * (ny-pad[2]-pad[3]); /* actual data */
+    tmp = (float *)malloc(sizeof(float)*nxnyr);
+    if(!tmp)GGRD_MEMERROR("ggrd_print_layer_avg");
+    xl = nx - pad[1];
+    yl = ny - pad[2];
+    for(i=0;i < m;i++){		/* loop through depths */
+      for(l=0,j=pad[3];j < yl;j++)
+	for(k=pad[0];k < xl;k++,l++)
+	  tmp[l] = x[i*nxny + j * nx + k];
+      fprintf(stderr,"ggrd_grdtrack_init: layer %3i at depth %11g, mean: %11g rms: %11g\n",
+	      i+1,z[i],ggrd_gt_mean(tmp,nxnyr),ggrd_gt_rms(tmp,nxnyr));
+    }
+    free(tmp);
   }
 }
 

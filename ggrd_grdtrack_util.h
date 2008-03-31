@@ -120,7 +120,7 @@ float ggrd_gt_rms(float *,int );
 float ggrd_gt_mean(float *,int );
 FILE *ggrd_open(char *, char *, char *);
 
-void ggrd_print_layer_avg(float *,float *,int , int ,FILE *);
+void ggrd_print_layer_avg(float *,float *,int , int ,int, FILE *,int *);
 
 void ggrd_find_spherical_vel_from_rigid_cart_rot(double *,
 						 double *,
