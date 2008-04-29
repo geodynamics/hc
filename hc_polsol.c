@@ -340,6 +340,7 @@ void hc_polsol(struct hcs *hc, 	/*
     //    APPEND A FINAL RVISC_LOCAL = 1.0 TO PREVENT OUT OF BOUNDS
     //    
     hc->rvisc[hc->nvis] = 1.0;
+
     //    
     //    INITIALIZE INDEX,IVIS,NIH
     //
@@ -360,7 +361,9 @@ void hc_polsol(struct hcs *hc, 	/*
 	    <HC_EPS_PREC)){
 	  hit = TRUE;		/* bailout here */
 	}else{
-	  /* normal operation */
+	  /* 
+	     normal operation 
+	  */
 	  hc->pvisc[hc->nprops]  = hc->visc[ivis];
 	  hc->den[hc->nprops]    = 0.0;
 	  hc->qwrite[hc->nprops] = FALSE;	
@@ -415,6 +418,8 @@ void hc_polsol(struct hcs *hc, 	/*
       }
     } /* end of nrad loop */
     hc->den[hc->nprops] = 0.0;
+    hc->pvisc[hc->nprops]  = hc->pvisc[hc->nprops-1]; /* to look nicer */
+
     /* 
 
        number of propagators is now nprops+1
@@ -486,6 +491,8 @@ void hc_polsol(struct hcs *hc, 	/*
     */
   }
   hc->rprops[hc->nprops+1] = 1.0;
+
+
   if(verbose >= 3)
     for(i=0;i < hc->nprops+2;i++)
       fprintf(stderr,"i: %3i nprops: %3i r(i): %11g rho: %11g\n",

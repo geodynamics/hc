@@ -28,7 +28,7 @@ utility program, here for historical reasons
 //#define VELFACTOR  (6371009.0/1.0e6*1.0e2) 
 //#define PIOVERONEEIGHTY_TIMES_VELFACTOR (PIOVERONEEIGHTY*VELFACTOR) 
 #define PIOVERONEEIGHTY_TIMES_VELFACTOR 11.1195083724191
-FILE *myopen(const char *,const char *);
+FILE *rv_myopen(const char *,const char *);
 
 
 int main(int argc, char *argv[])
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
   for(i=0;i<CODED_PLATES;i++)
     assigned[i]=0;
 
-  vel=myopen(argv[1],"r");
+  vel=rv_myopen(argv[1],"r");
 
   rotvel=(double *)malloc(sizeof(double)*3*CODED_PLATES);
   stats=(int *)calloc(CODED_PLATES,sizeof(int));
@@ -275,7 +275,7 @@ int main(int argc, char *argv[])
   fprintf(stderr,"%s: done\n",argv[0]);
   return 0;
 }
-FILE *myopen(const char *name,const char *modus)
+FILE *rv_myopen(const char *name,const char *modus)
 {
   FILE *tmp;
   if( (tmp = (FILE *)fopen(name,modus)) == NULL)

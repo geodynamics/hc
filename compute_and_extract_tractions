@@ -1,0 +1,52 @@
+#!/bin/bash
+
+#
+# simple example on how to compute radial tractions and extract them from the hc solution 
+#
+# data dir
+ddir=$HOME/progs/src/seatree/py-drivers/py-hc/example_data/
+#
+# viscosity structure 
+vfile=$ddir/viscosity/visc.C
+#
+# density model
+dfile=$ddir/tomography/smean.31.m.ab
+dformat="-dshs" 		# short SH format as in Becker & Boschi
+dscale=0.25			# dln rho/dln v_S factor
+# 
+# plate velocities
+pfile=$ddir/pvelocity/nnr_nuvel1a.smoothed.sh.dat 
+
+# verbosity 
+verbose="-vvv"
+
+# options: tractions, and no geoid outut
+opt="-rtrac -ng"
+
+# free slip 
+hc $verbose -dens $dfile $dformat -ds $dscale -vf $vfile $opt
+mv rtrac.sol.bin trac.fs.sol	
+
+# plates 
+hc $verbose -dens $dfile $dformat -ds $dscale -vf $vfile -pvel $pfile $opt
+mv rtrac.sol.bin trac.p.sol
+
+# extract 
+layer=36
+for t in p fs;do
+    hc_extract_sh_layer trac.$t.sol -2 4   > tmp.$$
+    z=`gawk '{if(NR==l)print($2)}' l=$layer tmp.$$`
+    rm tmp.$$
+    echo solution trac.$t.sol layer $layer depth $z
+    # radial
+    hc_extract_sh_layer trac.$t.sol $layer 1 | sh_syn 0 0 > tmp.$$.r
+    # theta phi
+    hc_extract_sh_layer trac.$t.sol $layer 2 | sh_syn 0 1 > tmp.$$.tp
+
+    # combine to lon lat srr srt srp format
+    echo $0: writing tractions to trac.$t.$z.dat
+    paste tmp.$$.r tmp.$$.tp | gawk '{print($1,$2,$3,$6,$7)}' > trac.$t.$z.dat
+
+    rm tmp.$$.r tmp.$$.tp
+done
+

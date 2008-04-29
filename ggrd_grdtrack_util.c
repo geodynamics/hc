@@ -24,6 +24,7 @@ original comments for grdtrack from GMT at bottom of file
 void ggrd_init_master(struct ggrd_master *ggrd)
 {
   ggrd->mat_control = ggrd->mat_control_init = 0;
+  ggrd->ray_control = ggrd->ray_control_init = 0;
   ggrd->vtop_control = ggrd->vtop_control_init = 0;
   ggrd->age_control = ggrd->age_control_init = 0;
   ggrd->nage = 0;ggrd->age_bandlim = 200.;

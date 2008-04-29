@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     sscanf(argv[8],"%lf",&dy);
   else
     dy = dx;
-  if((argc > 8)|| (argc < 0)){
+  if((argc > 9)|| (argc < 0)){
     fprintf(stderr,"usage: %s [short_format, %i] [short_ivec, %i] [w, %g] [e, %g] [s, %g] [n, %g] [dx, %g] [dy, dx] (in that order)\n",
 	    argv[0],short_format,short_format_ivec,w,e,s,n,dx);
     fprintf(stderr,"short_format:\n\t0: expects regular format with long header\n");

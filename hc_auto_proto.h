@@ -130,7 +130,7 @@ void rick_free_module(struct rick_module *, int);
 void rick_plmbar1(float *, float *, int, int, float, struct rick_module *);
 void rick_gauleg(float, float, float *, float *, int);
 /* rotvec2vel.c */
-FILE *myopen(const char *, const char *);
+FILE *rv_myopen(const char *, const char *);
 /* sh_ana.c */
 /* shana_sh.c */
 void shana_compute_allplm(int, int, double *, double *, struct shana_module *);

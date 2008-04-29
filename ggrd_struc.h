@@ -131,15 +131,20 @@ struct ggrd_temp_init{
 struct ggrd_master{		/* master structure */
 
   int mat_control,mat_control_init;
+  int ray_control,ray_control_init;
   int vtop_control,vtop_control_init;
   int age_control,age_control_init;
   
   char mat_file[1000];
+  char ray_file[1000];
   char vtop_dir[1000];
   char age_file[1000];
   
   /* grid structures */
   struct ggrd_gt *mat;		/* material grids */
+  /* rayleigh number grids */
+  struct ggrd_gt *ray;
+
   /* surface velocity */
   struct ggrd_gt *svp,*svt;	/* phi/theta surface velocities */
   /* age stuff */
