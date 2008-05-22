@@ -945,11 +945,11 @@ void sh_compute_spatial_basis(struct sh_lms *exp, FILE *out,
     }else{			/* write to file */
       if(!use_3d){
 	/* write in lon lat format */
-	fprintf(out,"%g %g\n",PHI2LON(xp[HC_PHI]),
+	fprintf(out,"%14.7f %14.7f\n",PHI2LON(xp[HC_PHI]),
 		THETA2LAT(xp[HC_THETA]));
       }else{
 	/* write in lon lat z format */
-	fprintf(out,"%g %g %g\n",PHI2LON(xp[HC_PHI]),
+	fprintf(out,"%14.7f %14.7f %g\n",PHI2LON(xp[HC_PHI]),
 		THETA2LAT(xp[HC_THETA]),z);
       }
     }
@@ -1219,6 +1219,40 @@ void sh_compute_spatial_reg(struct sh_lms *exp, int ivec,
     break;
   }
 }
+void sh_compute_spatial_irreg(struct sh_lms *exp, int ivec,
+			      float *theta, float *phi,int npoints,
+			      float *data, hc_boolean verbose)
+{
+  if((!exp[0].spectral_init)||(ivec && !exp[1].spectral_init)){
+    fprintf(stderr,"sh_compute_spatial_irreg: coefficients set not initialized, ivec: %i\n",
+	    ivec);
+    exit(-1);
+  }
+  switch(exp->type){
+#ifdef HC_USE_HEALPIX
+  case SH_HEALPIX:
+    HC_ERROR("sh_compute_spatial_irreg","healpix: not implemented yet");
+#endif
+  case SH_RICK:
+#ifdef NO_RICK_FORTRAN
+    rick_shc2d_irreg(exp[0].alm,exp[1].alm,exp[0].lmax,ivec,
+		   data,(data+npoints),&exp->rick,
+		   theta,phi,npoints);
+#else
+    HC_ERROR("sh_compute_spatial_irreg","Rick fortran not implemented");
+#endif
+    break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    HC_ERROR("sh_compute_spatial_irreg","Spherepack not implemented");
+    break;
+#endif
+  default:
+    sh_exp_type_error("sh_compute_spatial",exp);
+    break;
+  }
+}
 
 /* 
    
@@ -1247,7 +1281,7 @@ void sh_print_plm(SH_RICK_PREC *plm, int n_plm, int ivec, int type,
     jlim=(ivec)?(3):(1);
     for(i=0;i < n_plm;i++){	/* number of points loop */
       for(j=0;j < jlim;j++)	/* scalar or scalar + pol? */
-	fprintf(out,"%12.5e ",plm[j*n_plm+i]);
+	fprintf(out,"%16.7e ",plm[j*n_plm+i]);
       fprintf(out,"\n");
     }
     break;
@@ -1256,7 +1290,7 @@ void sh_print_plm(SH_RICK_PREC *plm, int n_plm, int ivec, int type,
     jlim=(ivec)?(2):(1);
     for(i=0;i < n_plm;i++){	/* number of points loop */
       for(j=0;j < jlim;j++)	/* scalar or scalar + pol? */
-	fprintf(out,"%12.5e ",plm[j*n_plm+i]);
+	fprintf(out,"%16.7e ",plm[j*n_plm+i]);
       fprintf(out,"\n");
     }
     break;
@@ -1337,13 +1371,13 @@ void sh_print_spatial_data_to_file(struct sh_lms *exp, int shps,
     /* print coordinates */
     if(!use_3d){
       /* print lon lat  */
-      fprintf(out,"%11g %11g\t",lon,lat);
+      fprintf(out,"%14.7f %14.7f\t",lon,lat);
     }else{
       /* print lon lat z[i] */
-      fprintf(out,"%11g %11g %11g\t",lon,lat,z);
+      fprintf(out,"%14.7f %14.7f %14.7f\t",lon,lat,z);
     }
     for(k=0;k < shps;k++)		/* loop through all scalars */
-      fprintf(out,"%11g ",data[j+exp[0].npoints*k]);
+      fprintf(out,"%14.7e ",data[j+exp[0].npoints*k]);
     fprintf(out,"\n");
   }	/* end points in lateral space loop */
 }
@@ -1373,20 +1407,20 @@ void sh_print_reg_spatial_data_to_file(struct sh_lms *exp, int shps,
     break;		
 #endif
   case SH_RICK:
-    for(i=l=00;i<ntheta;i++){
+    for(i=l=0;i<ntheta;i++){
       lat = THETA2LAT(theta[i]);
       for(j=0;j<nphi;j++,l++){
 	lon = PHI2LON(phi[j]);
 	/* print coordinates */
 	if(!use_3d){
 	  /* print lon lat  */
-	  fprintf(out,"%11g %11g\t",lon,lat);
+	  fprintf(out,"%14.7f %14.7f\t",lon,lat);
 	}else{
 	  /* print lon lat z[i] */
-	  fprintf(out,"%11g %11g %11g\t",lon,lat,z);
+	  fprintf(out,"%14.7f %14.7f %14.7f\t",lon,lat,z);
 	}
 	for(k=0;k<shps;k++)		/* loop through all scalars */
-	  fprintf(out,"%11g ",data[l+npoints*k]);
+	  fprintf(out,"%14.7e ",data[l+npoints*k]);
 	fprintf(out,"\n");
       }
     }
@@ -1396,6 +1430,55 @@ void sh_print_reg_spatial_data_to_file(struct sh_lms *exp, int shps,
   case SH_SPHEREPACK_GAUSS:
   case SH_SPHEREPACK_EVEN:
     HC_ERROR("sh_print_reg_spatial_data_to_file","spherepack not implemented");
+    break;
+#endif
+  default:
+      sh_exp_type_error("sh_print_spatial_data",exp);
+      break;
+  }	/* end type branch */
+}
+/* 
+
+irregular, arbitrary version
+
+*/
+void sh_print_irreg_spatial_data_to_file(struct sh_lms *exp, int shps, 
+				       float *data, hc_boolean use_3d,
+				       float z, float *theta,float *phi,int npoints,
+				       FILE *out)
+{
+  int i,k;
+  float lon,lat;
+  /* 
+     get coordinates
+  */
+  switch(exp->type){
+#ifdef HC_USE_HEALPIX
+  case SH_HEALPIX:
+    HC_ERROR("sh_print_irreg_spatial_data_to_file","healpix not implemented");
+    break;		
+#endif
+  case SH_RICK:
+    for(i=0;i<npoints;i++){
+      lat = THETA2LAT(theta[i]);
+      lon = PHI2LON(phi[i]);
+      /* print coordinates */
+      if(!use_3d){
+	/* print lon lat  */
+	fprintf(out,"%14.7f %14.7f\t",lon,lat);
+      }else{
+	/* print lon lat z[i] */
+	fprintf(out,"%14.7f %14.7f %14.7f\t",lon,lat,z);
+      }
+      for(k=0;k < shps;k++)		/* loop through all scalars */
+	fprintf(out,"%14.7e ",data[i+npoints*k]);
+      fprintf(out,"\n");
+    }
+    break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    HC_ERROR("sh_print_irreg_spatial_data_to_file","spherepack not implemented");
     break;
 #endif
   default:

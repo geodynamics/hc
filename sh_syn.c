@@ -134,13 +134,13 @@ int main(int argc, char **argv)
       hc_svecalloc(&data,npoints * shps,"sh_shsyn data");
       /* compute the expansion */
       sh_compute_spatial_reg(exp,ivec,FALSE,&dummy,
-			       theta,ntheta,phi,nphi,data,
-			       verbose,FALSE);
+			     theta,ntheta,phi,nphi,data,
+			     verbose,FALSE);
       /* output */
       sh_print_reg_spatial_data_to_file(exp,shps,data,
-					  (nset>1)?(TRUE):(FALSE),
-					  zlabel, theta,ntheta,
-					  phi,nphi,stdout);
+					(nset>1)?(TRUE):(FALSE),
+					zlabel, theta,ntheta,
+					phi,nphi,stdout);
     }else if(regular_basis == -1){
       /* output on locations input lon lat file */
       if(verbose)
@@ -163,11 +163,11 @@ int main(int argc, char **argv)
       if(verbose)
 	fprintf(stderr,"sh_syn: read %i locations lon lat from tmp.lonlat for expansion\n",npoints);
       fclose(in);
-      fprintf(stderr,"ERROR: not implemented yet\n");
-      exit(-1);
-
-      
-    }else{			/* use the built in spatial basis (Gaussian) */
+      hc_svecalloc(&data,npoints * shps,"sh_shsyn data");
+      sh_compute_spatial_irreg(exp,ivec,theta,phi,npoints,data,verbose);
+      sh_print_irreg_spatial_data_to_file(exp,shps,data,(nset>1)?(TRUE):(FALSE),
+					  zlabel,theta,phi,npoints,stdout);
+     }else{			/* use the built in spatial basis (Gaussian) */
       /* expansion */
       hc_svecalloc(&data,exp[0].npoints * shps,"sh_syn");
       sh_compute_spatial(exp,ivec,FALSE,&dummy,data,verbose);

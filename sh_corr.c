@@ -20,6 +20,10 @@ for correlation per degree
 
 cat geoid.ab itg-hc-geoid.ab | sh_corr -1 0 1
 
+for correlation between l = 4 and 9
+
+cat geoid.ab itg-hc-geoid.ab | sh_corr 9 0 0 4  
+
 
 Thorsten Becker (twb@usc.edu)
 
@@ -28,14 +32,15 @@ Thorsten Becker (twb@usc.edu)
 
 int main(int argc, char **argv)
 {
-  int type,lmax[2],llim,shps,ilayer,nset,ivec,i,l;
+  int type,lmax[2],llim,shps,ilayer,nset,ivec,i,l,lmin;
   /* 
      switches 
   */
   hc_boolean verbose = TRUE, short_format = FALSE , binary = FALSE, per_degree = FALSE;
   struct sh_lms *exp1,*exp2;
   HC_PREC zlabel,fac[3] = {1.,1.,1.};
-  llim = -1;
+  llim = -1;			/* max l */
+  lmin = 1;			/* min l */
   if(argc > 1){
     if((strcmp(argv[1],"-h")==0)||(strcmp(argv[1],"--help")==0)||(strcmp(argv[1],"-help")==0))
       argc = -1000;
@@ -57,15 +62,18 @@ int main(int argc, char **argv)
     if(i)
       per_degree = TRUE;
   }
-  if((argc > 4)|| (argc < 0)){
-    fprintf(stderr,"usage: cat sh.1 sh.2 | %s [llim, %i] [short_format, %i] [per_degree, %i]\n",
-	    argv[0],llim,short_format,per_degree);
+  if(argc > 4)
+    sscanf(argv[4],"%i",&lmin);
+    if((argc > 5)|| (argc < 0)){
+    fprintf(stderr,"usage: cat sh.1 sh.2 | %s [llim, %i] [short_format, %i] [per_degree, %i] [lmin, %i]\n",
+	    argv[0],llim,short_format,per_degree,lmin);
     fprintf(stderr,"reads two spherical harmonic expansions from stdin and computes\n");
     fprintf(stderr,"linear correlation coefficients for L=min(L1,L2) if llim == -1\n");
     fprintf(stderr,"if llim > 0, will limit the maximum degree to min(llim,L1,L2)\n");
     fprintf(stderr,"short_format:\n\t0: expects regular format with long header\n");
     fprintf(stderr,"\t1: expects short format with only llim in header\n");
     fprintf(stderr,"per_degree: if set, will print out per degree, if not total correlation\n\n");
+    fprintf(stderr,"lmin: will compute total correlation starting at lmin\n");
     exit(-1);
   }
   if(verbose)
@@ -100,21 +108,28 @@ int main(int argc, char **argv)
 	    argv[0]);
     exit(-1);
   }
+  /* check bounds */
   if(llim < 0){
     llim = (lmax[0] < lmax[1])?(lmax[0]):(lmax[1]);
   }else{
     llim = (llim < lmax[0])?(llim):(lmax[0]);
     llim = (llim < lmax[1])?(llim):(lmax[1]);
   }
+  if(lmin>llim){
+    fprintf(stderr,"%s: error: lmin (%i) needs to be <=  llim (%i)\n",
+	    argv[0],lmin,llim);
+    exit(-1);
+  }
+  /*  */
   if(per_degree){
     if(verbose)
-      fprintf(stderr,"%s: computing linear correlation per degree\n",argv[0]);
-    for(l=1;l<=llim;l++)
+      fprintf(stderr,"%s: computing linear correlation per degree from %i to %i \n",argv[0],lmin,llim);
+    for(l=lmin;l<=llim;l++)
       fprintf(stdout,"%5i %14.7e\n",l,sh_correlation_per_degree(exp1,exp2,l,l));
   }else{
     if(verbose)
-      fprintf(stderr,"%s: computing linear correlation up to %i\n",argv[0],llim);
-    fprintf(stdout,"%14.7e\n",sh_correlation(exp1,exp2,llim));
+      fprintf(stderr,"%s: computing total linear correlation from %i to %i\n",argv[0],lmin,llim);
+    fprintf(stdout,"%14.7e\n",sh_correlation_per_degree(exp1,exp2,lmin,llim));
   }
 
   

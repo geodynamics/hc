@@ -431,7 +431,7 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
   float dz1,dz2;
   struct GRD_HEADER ogrd;
   int i,one_or_zero,nx,ny,mx,my,nn;
-  char filename[BUFSIZ*2],**cdummy;
+  char filename[BUFSIZ*2],*cdummy;
   static int gmt_init = FALSE;
   /* 
      deal with edgeinfo 
@@ -542,7 +542,7 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
     fprintf(stderr,"ggrd_grdtrack_init: mem alloc ok\n");
 #ifdef USE_GMT4  
   /* init the header */
-  GMT_grd_init (*grd,0,cdummy,FALSE);
+  GMT_grd_init (*grd,0,&cdummy,FALSE);
 #endif
   if(*nz == 1){
     if(verbose >= 2)

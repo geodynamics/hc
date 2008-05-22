@@ -146,12 +146,12 @@ void rick_shc2d_reg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
   if(ivec)
     hc_svecalloc(&dplm,ntheta*rick->lmsize,"rick_shc2d_reg: mem 2");
   //
-  // compute the Plm first
+  // compute the Plm first for all theta values
   rick_compute_allplm_reg(lmax,ivec,plm,dplm,rick,theta,ntheta);
   //
   // call the precomputed subroutine
   rick_shc2d_pre_reg(cslm,dslm,lmax,plm,dplm,ivec,rdatax,rdatay,rick,theta,ntheta,
-		       phi,nphi,save_sincos_fac);
+		     phi,nphi,save_sincos_fac);
 
   /* free legendre functions if not needed */
   free(plm);
@@ -308,16 +308,18 @@ void rick_shc2d_pre(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
   
 }
 
-/* //
+/* 
 
-regular version
+regularly spaced version, data are requested on a ntheta by nphi grid,
+with nphi values in each column, located at phi[], and ntheta values
+in each row at theta[]
 
-// */
+*/
 void rick_shc2d_pre_reg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
 			int lmax,SH_RICK_PREC *plm, SH_RICK_PREC *dplm,
 			int ivec,float *rdatax,float *rdatay, 
-			struct rick_module *rick, float *theta, int ntheta,
-			float *phi,int nphi,
+			struct rick_module *rick, float *theta, 
+			int ntheta,float *phi,int nphi,
 			my_boolean save_sincos_fac)
 {
   /* //
@@ -330,9 +332,7 @@ void rick_shc2d_pre_reg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
     fprintf(stderr,"rick_shc2d_pre_reg: error: initialize modules first\n");
     exit(-1);
   }
-
   lmaxp1 = lmax + 1;               
-
   if(ivec){
     if(!rick->vector_sh_fac_init){
       fprintf(stderr,"rick_shc2d_pre_reg: error: vector harmonics factors not initialized\n");
@@ -369,7 +369,7 @@ void rick_shc2d_pre_reg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
     */
     hc_svecrealloc(&loc_plma,ntheta*rick->lmsize,"rick_shc2d_pre_reg 3");
     hc_svecrealloc(&loc_plmb,ntheta*rick->lmsize,"rick_shc2d_pre_reg 4");
-    for(i=ios1=0;i < ntheta;i++){
+    for(i=ios1=0;i < ntheta;i++){ /* theta dependent array */
       for(k=k2=0;k < rick->lmsize;k++,k2+=2,ios1++){
 	loc_plma[ios1] =  cslm[k2  ] * plm[ios1];
 	loc_plmb[ios1] =  cslm[k2+1] * plm[ios1];
@@ -387,7 +387,8 @@ void rick_shc2d_pre_reg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
 	    m=0;l++;
 	  }
 	  rdatax[idata] += loc_plma[ios2+k] * rick->cfac[ios3+m];
-	  rdatax[idata] += loc_plmb[ios2+k] * rick->sfac[ios3+m];
+	  if(m != 0)
+	    rdatax[idata] += loc_plmb[ios2+k] * rick->sfac[ios3+m];
 	}
       }
     }
@@ -452,6 +453,119 @@ void rick_shc2d_pre_reg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
     hc_svecrealloc(&rick->sfac,1,"");
     hc_svecrealloc(&rick->cfac,1,"");
   }
+}
+/* completely irregular output */
+void rick_shc2d_irreg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
+		      int lmax,int ivec,float *rdatax,float *rdatay, 
+		      struct rick_module *rick, float *theta,
+		      float *phi,int npoints)
+{
+  /* //
+  // Legendre functions are precomputed
+  // */
+  double  dpdt,dpdp,mphi,sin_theta,sfac,cfac;
+  float *loc_plma=NULL,*loc_plmb=NULL,*plm=NULL,*dplm=NULL;
+  int  i,j,k,k2,m,l,lmaxp1,lm1;
+  if(!rick->initialized){
+    fprintf(stderr,"rick_shc2d_pre_reg: error: initialize modules first\n");
+    exit(-1);
+  }
+  lmaxp1 = lmax + 1;               
+  if((lmax+1)*(lmax+2)/2 > rick->lmsize){
+    fprintf(stderr,"rick_shc2d_pre_reg: error: lmax %i out of bounds\n",lmax);
+      exit(-1);
+  }
+  if(ivec == 0){
+    /* 
+
+    scalar
+
+    */
+    hc_svecrealloc(&plm,rick->lmsize,"rick_shc2d_irreg: mem 1");
+    for(i=0;i < npoints;i++){
+      /* get legendre function values */
+      rick_plmbar1(plm,dplm,ivec,lmax,cos(theta[i]),rick); 
+      /* m = 0 , l = 0*/
+      l=0;m=0;
+      rdatax[i] = cslm[0] * plm[0];
+      for (k=1,k2=2; k < rick->lmsize; k++,k2+=2) { 
+	m++;
+	if (m > l) {
+	  m=0;l++;
+	}
+	//fprintf(stderr,"%5i %5i %11g %11g\n",l,m,cslm[k2],cslm[k2+1]);
+	if(m != 0){
+	  mphi = (double)m*(double)phi[i];
+	  rdatax[i] += cslm[k2]   * plm[k] * cos(mphi);
+	  rdatax[i] += cslm[k2+1] * plm[k] * sin(mphi);
+	}else{
+	  rdatax[i] += cslm[k2]   * plm[k] ;
+	}
+      }
+    } /* end data loop */
+    
+    free(plm);
+    /* end scalar part */
+  } else {
+    /* 
+       vector harmonics
+    */
+    hc_svecrealloc(&plm,rick->lmsize,"rick_shc2d_irreg: mem 1");
+    hc_svecrealloc(&dplm,rick->lmsize,"rick_shc2d_irreg: mem 2");
+    for(i=0;i < npoints;i++){
+      /* get legendre function values */
+      rick_plmbar1(plm,dplm,ivec,lmax,cos(theta[i]),rick); 
+      sin_theta = sin(theta[i]);
+
+      rdatax[i] = rdatay[i] = 0.0;
+      l = 0;m = 0;
+      /* start at l = 1 */
+      for (k=1,k2=2; k < rick->lmsize; k++,k2+=2) { 
+	/* loop through l,m */
+	m++;
+	if (m > l) {
+	  m=0;l++;
+	}
+	lm1 = l - 1;
+	//	  fprintf(stderr,"%5i %5i\t %11g %11g\tPA: %11g  PB: %11g\tTA: %11g TB:%11g\n",
+	//	  l,m,rick->ell_factor[lm1],plm[ios2+k], 
+	//	  SH_RICK_FACTOR(l, m) * cslm[k2] ,SH_RICK_FACTOR(l, m) *cslm[k2+1],
+	//	  SH_RICK_FACTOR(l, m) * dslm[k2], SH_RICK_FACTOR(l, m) *dslm[k2+1]);
+	dpdt = dplm[k] * rick->ell_factor[lm1]; /* d_theta(P_lm) factor */
+	dpdp  = ((SH_RICK_PREC)m) * plm[k]/ sin_theta;
+	dpdp *= (SH_RICK_PREC)rick->ell_factor[lm1]; /* d_phi (P_lm) factor */
+
+	if(m){
+	  mphi = (double)m*(double)phi[i];
+	  sfac = (float)sin(mphi);
+	  cfac = (float)cos(mphi);
+	}else{
+	  mphi = sfac = 0.0;
+	  cfac = 1.0;
+	}
+	/* 
+	   
+	   add up contributions from all l,m 
+	   
+	   u_theta
+	   
+	*/
+	rdatax[i] +=   /* cos term */
+	  (cslm[k2]   * dpdt + dslm[k2+1] * dpdp) * cfac;
+	rdatax[i] +=   /* sin term */
+	  (cslm[k2+1] * dpdt - dslm[k2]   * dpdp) * sfac;
+	/* 
+	   u_phi
+	*/
+	rdatay[i] +=  // cos term
+	  (cslm[k2+1] * dpdp  - dslm[k2]   * dpdt) * cfac;
+	rdatay[i] +=   // sin term
+	  (- cslm[k2] * dpdp  - dslm[k2+1] * dpdt) * sfac;
+      }
+    }	/* end phi loop */
+
+    free(plm);free(dplm);
+  }	/* end vector part */
 }
 
 void rick_shd2c(SH_RICK_PREC *rdatax,SH_RICK_PREC *rdatay,

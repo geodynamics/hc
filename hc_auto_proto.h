@@ -123,6 +123,7 @@ void rick_shc2d(float *, float *, int, int, float *, float *, struct rick_module
 void rick_shc2d_reg(float *, float *, int, int, float *, float *, struct rick_module *, float *, int, float *, int, unsigned short);
 void rick_shc2d_pre(float *, float *, int, float *, float *, int, float *, float *, struct rick_module *);
 void rick_shc2d_pre_reg(float *, float *, int, float *, float *, int, float *, float *, struct rick_module *, float *, int, float *, int, unsigned short);
+void rick_shc2d_irreg(float *, float *, int, int, float *, float *, struct rick_module *, float *, float *, int);
 void rick_shd2c(float *, float *, int, int, float *, float *, struct rick_module *);
 void rick_shd2c_pre(float *, float *, int, float *, float *, int, float *, float *, struct rick_module *);
 void rick_init(int, int, int *, int *, int *, struct rick_module *, unsigned short);
@@ -164,10 +165,12 @@ void sh_compute_spatial_basis(struct sh_lms *, FILE *, unsigned short, float, fl
 void sh_compute_spectral(float *, int, unsigned short, float **, struct sh_lms *, unsigned short);
 void sh_compute_spatial(struct sh_lms *, int, unsigned short, float **, float *, unsigned short);
 void sh_compute_spatial_reg(struct sh_lms *, int, unsigned short, float **, float *, int, float *, int, float *, unsigned short, unsigned short);
+void sh_compute_spatial_irreg(struct sh_lms *, int, float *, float *, int, float *, unsigned short);
 void sh_exp_type_error(char *, struct sh_lms *);
 void sh_print_plm(float *, int, int, int, FILE *);
 void sh_print_spatial_data_to_file(struct sh_lms *, int, float *, unsigned short, float, FILE *);
 void sh_print_reg_spatial_data_to_file(struct sh_lms *, int, float *, unsigned short, float, float *, int, float *, int, FILE *);
+void sh_print_irreg_spatial_data_to_file(struct sh_lms *, int, float *, unsigned short, float, float *, float *, int, FILE *);
 void sh_compute_plm(struct sh_lms *, int, float **, unsigned short);
 void sh_compute_plm_reg(struct sh_lms *, int, float **, unsigned short, float *, int);
 void sh_get_coeff(struct sh_lms *, int, int, int, unsigned short, double *);

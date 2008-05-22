@@ -237,6 +237,16 @@ USING THE SPHERICAL HARMONICS TOOLS AS STANDALONE
       cat etopo5.ab | sh_syn > etopo5.127.dat
 
 
+Note that sh_syn and sh_ana are only example implementations of the
+subroutines, there's very limited actual functionality. For a more
+useful spherical harmonics package, see shansyn at 
+
+http://geodynamics.usc.edu/~becker/sdata.html
+
+
+That being said, also note helper programs sh_corr and sh_power.
+
+
 SEATREE
 
 HC is a module of the Solid Earth Teaching and Research Environment
