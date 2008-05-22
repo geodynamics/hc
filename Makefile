@@ -132,7 +132,7 @@ LIBS = $(HC_LIBS) $(GGRD_LIBS) $(HEAL_LIBS) $(RICK_LIB)
 
 
 all: dirs libs hc  hc_extract_sh_layer \
-	sh_syn sh_ana sh_power rotvec2vel
+	sh_syn sh_corr sh_ana sh_power rotvec2vel
 
 libs: dirs hc_lib  $(HEAL_LIBS) $(RICK_LIB)
 
@@ -158,6 +158,9 @@ sh_test: $(LIBS) $(INCS) $(ODIR)/sh_test.o
 sh_syn: $(LIBS) $(INCS) $(ODIR)/sh_syn.o
 	$(CC) $(LIB_FLAGS) $(ODIR)/sh_syn.o \
 		-o $(BDIR)/sh_syn -lhc -lrick $(HEAL_LIBS_LINKLINE) $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS)
+sh_corr: $(LIBS) $(INCS) $(ODIR)/sh_corr.o
+	$(CC) $(LIB_FLAGS) $(ODIR)/sh_corr.o \
+		-o $(BDIR)/sh_corr -lhc -lrick $(HEAL_LIBS_LINKLINE) $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS)
 
 sh_power: $(LIBS) $(INCS) $(ODIR)/sh_power.o
 	$(CC) $(LIB_FLAGS) $(ODIR)/sh_power.o \

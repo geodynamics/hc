@@ -21,12 +21,13 @@ int main(int argc, char **argv)
   /* 
      switches 
   */
-  hc_boolean verbose = TRUE, short_format = FALSE ,short_format_ivec = FALSE ,binary = FALSE,
-    regular_basis = FALSE;
+  hc_boolean verbose = TRUE, short_format = FALSE ,short_format_ivec = FALSE ,binary = FALSE;
+  int regular_basis = 0;
   double w,e,s,n,dx,dy;
   /*  */
+  FILE *in;
   float *data,*theta,*phi;
-  /* spacing for irregular output */
+  /* spacing for reg_ular output */
   double dphi,x,y,dtheta;
   HC_PREC fac[3] = {1.,1.,1.},zlabel;
   SH_RICK_PREC *dummy;
@@ -49,7 +50,10 @@ int main(int argc, char **argv)
   }
   if(argc > 3){
     sscanf(argv[3],"%lf",&w);
-    regular_basis = TRUE;
+    if(w == 999)
+      regular_basis = -1;
+    else
+      regular_basis = 1;
   }
   if(argc > 4)
     sscanf(argv[4],"%lf",&e);
@@ -71,7 +75,8 @@ int main(int argc, char **argv)
     fprintf(stderr,"short_ivec:\n\t0: for short format, expect AB for scalar expansion\n");
     fprintf(stderr,"\t1: for short format, expect poloidal toroidal AP BP AT BT for vector expansion\n\n");
     fprintf(stderr,"w,e,...\n\tif none of those are set, will use Gauss latitudes and FFT divided longitudes dependening on lmax\n");
-    fprintf(stderr,"\tif set, will switch to regular spaced output with -Rw/e/s/n -Idx/dy type output\n\n");
+    fprintf(stderr,"\tif w is set to anything but 999, will switch to regular spaced output with -Rw/e/s/n -Idx/dy type output\n");
+    fprintf(stderr,"\tif w is set to 999, will read lon lat in deg from \"tmp.lonlat\", and expand on those locations\n\n");
     fprintf(stderr,"The output format will depend on the type of SH input.\n");
     fprintf(stderr,"\tfor scalara: lon lat scalar if a single SH is read in, else lon lat zlabel scalar.\n");
     fprintf(stderr,"\tfor vectors: lon lat v_theta v_phi if a single SH is read in, else lon lat zlabel v_theta v_phi.\n\n\n");
@@ -92,11 +97,11 @@ int main(int argc, char **argv)
 	      argv[0],lmax,ivec,zlabel);
 
     /* input and init */
-    sh_allocate_and_init(&exp,shps,lmax,type,ivec,verbose,((regular_basis)?(1):(0)));
+    sh_allocate_and_init(&exp,shps,lmax,type,ivec,verbose,((regular_basis != 0)?(1):(0)));
     sh_read_coefficients_from_file(exp,shps,-1,stdin,binary,fac,verbose);
-    if(regular_basis){
+    if(regular_basis == 1){
       /* 
-	 irregular basis output 
+	 regular basis output on regular grid
       */
       if(verbose)
 	fprintf(stderr,"sh_syn: using regular spaced grid with -R%g/%g/%g/%g -I%g/%g spacing\n",
@@ -128,17 +133,40 @@ int main(int argc, char **argv)
 	theta[j] = y;
       hc_svecalloc(&data,npoints * shps,"sh_shsyn data");
       /* compute the expansion */
-      sh_compute_spatial_irreg(exp,ivec,FALSE,&dummy,
+      sh_compute_spatial_reg(exp,ivec,FALSE,&dummy,
 			       theta,ntheta,phi,nphi,data,
 			       verbose,FALSE);
       /* output */
-      sh_print_irreg_spatial_data_to_file(exp,shps,data,
+      sh_print_reg_spatial_data_to_file(exp,shps,data,
 					  (nset>1)?(TRUE):(FALSE),
 					  zlabel, theta,ntheta,
 					  phi,nphi,stdout);
-      
-      
+    }else if(regular_basis == -1){
+      /* output on locations input lon lat file */
+      if(verbose)
+	fprintf(stderr,"sh_syn: reading locations lon lat from stdin for expansion\n");
+      npoints = 0;
+      hc_svecalloc(&phi,1,"sh_syn");
+      hc_svecalloc(&theta,1,"sh_syn");
+      in = fopen("tmp.lonlat","r");
+      if(!in){
+	fprintf(stderr,"sh_syn: error, could not open tmp.lonlat for reading lon lat locations\n");
+	exit(-1);
+      }
+      while(fscanf(in,"%lf %lf",&dphi,&dtheta)==2){
+	phi[npoints] = LON2PHI(dphi);
+	theta[npoints] = LAT2THETA(dtheta);
+	npoints++;
+	hc_svecrealloc(&phi,npoints+1,"sh_syn");
+	hc_svecrealloc(&theta,npoints+1,"sh_syn");
+      }
+      if(verbose)
+	fprintf(stderr,"sh_syn: read %i locations lon lat from tmp.lonlat for expansion\n",npoints);
+      fclose(in);
+      fprintf(stderr,"ERROR: not implemented yet\n");
+      exit(-1);
 
+      
     }else{			/* use the built in spatial basis (Gaussian) */
       /* expansion */
       hc_svecalloc(&data,exp[0].npoints * shps,"sh_syn");
@@ -148,8 +176,6 @@ int main(int argc, char **argv)
 				    (nset>1)?(TRUE):(FALSE),
 				    zlabel,stdout);
     }
-
-
     free(exp);free(data);
   }
 

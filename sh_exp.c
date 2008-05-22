@@ -263,6 +263,57 @@ void sh_compute_power_per_degree(struct sh_lms *exp,
     power[l] /= 2.0*((HC_CPREC)l)+1.0;
   } /* end l loop */
 }
+/* compute total correlation up to llim */
+HC_PREC sh_correlation(struct sh_lms *exp1, struct sh_lms *exp2, int llim)
+{
+  HC_PREC corr;
+  return sh_correlation_per_degree(exp1,exp2,1,llim);
+}
+
+
+HC_PREC sh_correlation_per_degree(struct sh_lms *exp1, struct sh_lms *exp2, int lmin,int lmax)
+{
+  int l,m;
+  HC_CPREC sum[3],tmp,atmp,btmp,ctmp,dtmp,value1[2],value2[2];
+  hc_boolean need_b;
+
+  sum[0]=sum[1]=sum[2]=0.0;
+
+  if((lmax > exp1->lmax)||(lmax > exp2->lmax)||(lmax < 1)||(lmin < 1)){
+    fprintf(stderr,"sh_compute_correlation_per_degree: error: L1 %i L2 %i lmin %i lmax %i\n",
+	    exp1->lmax,exp2->lmax,lmin,lmax);
+    exit(-1);
+  }
+  for(l=lmin;l <= lmax;l++){
+
+    for(m=0;m<=l;m++){
+
+      need_b = (hc_boolean) ((m == 0) ? (0) : (2));
+      sh_get_coeff(exp1,l,m,need_b,TRUE,value1); /* convert to DT normalization  */
+      sh_get_coeff(exp2,l,m,need_b,TRUE,value2); /* convert to DT normalization  */
+
+      atmp = value1[0];
+      ctmp = value2[0];
+      sum[0] += atmp * ctmp;
+      sum[1] += atmp * atmp;
+      sum[2] += ctmp * ctmp;
+
+      if(need_b){
+	btmp = value1[1];
+	dtmp = value2[1];
+	sum[0] += btmp* dtmp;
+	sum[1] += btmp * btmp;
+	sum[2] += dtmp * dtmp;
+      }
+    } /* end m loop */
+    
+  } /* end l loop */
+  tmp = sqrt(sum[1]*sum[2]);
+  return sum[0]/tmp;
+}
+
+
+
 
 /* 
 
@@ -1107,13 +1158,13 @@ void sh_compute_spatial(struct sh_lms *exp, int ivec,
 
 /* 
 
-compute a spatial expansion on an irregular grid given in theta and
+compute a spatial expansion on an regular grid given in theta and
 phi arrays of npoints length
 
 cos(theta) and phi are cos(colatitude) and longitude in radians
 
 */
-void sh_compute_spatial_irreg(struct sh_lms *exp, int ivec,
+void sh_compute_spatial_reg(struct sh_lms *exp, int ivec,
 			      hc_boolean save_plm,SH_RICK_PREC **plm,
 			      float *theta, int ntheta, float *phi,int nphi,
 			      float *data, hc_boolean verbose, 
@@ -1122,7 +1173,7 @@ void sh_compute_spatial_irreg(struct sh_lms *exp, int ivec,
   int npoints;
   npoints = nphi * ntheta;
   if((!exp[0].spectral_init)||(ivec && !exp[1].spectral_init)){
-    fprintf(stderr,"sh_compute_spatial_irreg: coefficients set not initialized, ivec: %i\n",
+    fprintf(stderr,"sh_compute_spatial_reg: coefficients set not initialized, ivec: %i\n",
 	    ivec);
     exit(-1);
   }
@@ -1134,33 +1185,33 @@ void sh_compute_spatial_irreg(struct sh_lms *exp, int ivec,
        this routine will only compute the plm once and performs 
        some sanity checks
     */
-    sh_compute_plm_irreg(exp,ivec,plm,verbose,theta,ntheta); 
+    sh_compute_plm_reg(exp,ivec,plm,verbose,theta,ntheta); 
   }
   switch(exp->type){
 #ifdef HC_USE_HEALPIX
   case SH_HEALPIX:
-    HC_ERROR("sh_compute_spatial_irreg","healpix: not implemented yet");
+    HC_ERROR("sh_compute_spatial_reg","healpix: not implemented yet");
 #endif
   case SH_RICK:
 #ifdef NO_RICK_FORTRAN
     if(save_plm)
-      rick_shc2d_pre_irreg(exp[0].alm,exp[1].alm,exp[0].lmax,
+      rick_shc2d_pre_reg(exp[0].alm,exp[1].alm,exp[0].lmax,
 			   *plm,(*plm+exp->n_plm),
 			   ivec,data,(data+npoints),
 			   &exp->rick,theta,ntheta,phi,nphi,
 			   save_sincos_fac);
     else
-      rick_shc2d_irreg(exp[0].alm,exp[1].alm,exp[0].lmax,ivec,
+      rick_shc2d_reg(exp[0].alm,exp[1].alm,exp[0].lmax,ivec,
 		       data,(data+npoints),&exp->rick,
 		       theta,ntheta,phi,nphi,save_sincos_fac);
 #else
-    HC_ERROR("sh_compute_spatial_irreg","Rick fortran not implemented");
+    HC_ERROR("sh_compute_spatial_reg","Rick fortran not implemented");
 #endif
     break;
 #ifdef HC_USE_SPHEREPACK
   case SH_SPHEREPACK_GAUSS:
   case SH_SPHEREPACK_EVEN:
-    HC_ERROR("sh_compute_spatial_irreg","Spherepack not implemented");
+    HC_ERROR("sh_compute_spatial_reg","Spherepack not implemented");
     break;
 #endif
   default:
@@ -1299,14 +1350,14 @@ void sh_print_spatial_data_to_file(struct sh_lms *exp, int shps,
 
 /* 
 
-irregular version
+regular grid version
 
- */
-void sh_print_irreg_spatial_data_to_file(struct sh_lms *exp, int shps, 
-					 float *data, hc_boolean use_3d,
-					 float z, float *theta,int ntheta,
-					 float *phi,int nphi,
-					 FILE *out)
+*/
+void sh_print_reg_spatial_data_to_file(struct sh_lms *exp, int shps, 
+				       float *data, hc_boolean use_3d,
+				       float z, float *theta,int ntheta,
+				       float *phi,int nphi,
+				       FILE *out)
 {
   int i,j,k,l,npoints;
   float lon,lat;
@@ -1318,7 +1369,7 @@ void sh_print_irreg_spatial_data_to_file(struct sh_lms *exp, int shps,
 #ifdef HC_USE_HEALPIX
     
   case SH_HEALPIX:
-    HC_ERROR("sh_print_irreg_spatial_data_to_file","healpix not implemented");
+    HC_ERROR("sh_print_reg_spatial_data_to_file","healpix not implemented");
     break;		
 #endif
   case SH_RICK:
@@ -1344,7 +1395,7 @@ void sh_print_irreg_spatial_data_to_file(struct sh_lms *exp, int shps,
 #ifdef HC_USE_SPHEREPACK
   case SH_SPHEREPACK_GAUSS:
   case SH_SPHEREPACK_EVEN:
-    HC_ERROR("sh_print_irreg_spatial_data_to_file","spherepack not implemented");
+    HC_ERROR("sh_print_reg_spatial_data_to_file","spherepack not implemented");
     break;
 #endif
   default:
@@ -1447,7 +1498,7 @@ void sh_compute_plm(struct sh_lms *exp,int ivec,SH_RICK_PREC **plm,
 /* 
 
 compute the associated Legendre functions for all (l,m) at all
-latidutinal lcoations once and only once for all irregularly placed latitudes in theya
+latidutinal lcoations once and only once for all regularly placed latitudes in theya
 
 input:
 exp: holds the expansion parameters
@@ -1458,7 +1509,7 @@ output:
 plm: will be re-allocated, has to be passed at least as NULL
 
 */
-void sh_compute_plm_irreg(struct sh_lms *exp,int ivec,SH_RICK_PREC **plm,
+void sh_compute_plm_reg(struct sh_lms *exp,int ivec,SH_RICK_PREC **plm,
 			  hc_boolean verbose, float *theta, int npoints)
 {
   /*  */
@@ -1466,8 +1517,8 @@ void sh_compute_plm_irreg(struct sh_lms *exp,int ivec,SH_RICK_PREC **plm,
 
   if((!exp->plm_computed_irr)||(exp->tn_plm_irr != exp->old_tnplm_irr)){
     if((!exp->lmax)||(!exp->n_plm)||(!exp->tn_plm)){
-      fprintf(stderr,"sh_compute_plm_irreg: error, expansion not initialized?\n");
-      fprintf(stderr,"sh_compute_plm_irreg: lmax: %i n_plm: %i tn_plm: %i\n",
+      fprintf(stderr,"sh_compute_plm_reg: error, expansion not initialized?\n");
+      fprintf(stderr,"sh_compute_plm_reg: lmax: %i n_plm: %i tn_plm: %i\n",
 	      exp->lmax,exp->n_plm,exp->tn_plm);
       exit(-1);
     }
@@ -1475,30 +1526,30 @@ void sh_compute_plm_irreg(struct sh_lms *exp,int ivec,SH_RICK_PREC **plm,
        allocate 
     */
     exp->old_tnplm_irr =  exp->tn_plm_irr;
-    hc_svecrealloc(plm,exp->old_tnplm_irr,"sh_compute_plm_irreg");
+    hc_svecrealloc(plm,exp->old_tnplm_irr,"sh_compute_plm_reg");
     /* 
        compute the Legendre polynomials 
     */
     switch(exp->type){
 #ifdef HC_USE_HEALPIX
-      HC_ERROR("compute_plm_irreg","healpix not implemented");
+      HC_ERROR("compute_plm_reg","healpix not implemented");
       break;
 #endif
     case SH_RICK:
       if(verbose)
-	fprintf(stderr,"sh_compute_plm_irreg: Rick: computing all Plm for lmax %i and %i points\n",
+	fprintf(stderr,"sh_compute_plm_reg: Rick: computing all Plm for lmax %i and %i points\n",
 		exp->lmax,npoints);
 #ifdef NO_RICK_FORTRAN
-      rick_compute_allplm_irreg(exp->lmax,ivec,*plm,(*plm+exp->old_tnplm_irr),&exp->rick,
+      rick_compute_allplm_reg(exp->lmax,ivec,*plm,(*plm+exp->old_tnplm_irr),&exp->rick,
 				theta,npoints);
 #else
-      HC_ERROR("compute_plm_irreg","rick fortran not implemented");
+      HC_ERROR("compute_plm_reg","rick fortran not implemented");
 #endif
       break;
 #ifdef HC_USE_SPHEREPACK
   case SH_SPHEREPACK_GAUSS:
   case SH_SPHEREPACK_EVEN:
-      HC_ERROR("compute_plm_irreg","spherepack implemented");
+      HC_ERROR("compute_plm_reg","spherepack implemented");
     break;
 #endif
     default:
@@ -1515,14 +1566,14 @@ void sh_compute_plm_irreg(struct sh_lms *exp,int ivec,SH_RICK_PREC **plm,
        first lmax
     */
     if(exp->old_lmax_irr != exp->lmax){
-      fprintf(stderr,"sh_compute_plm_irreg: error: lmax initially %i, now %i\n",
+      fprintf(stderr,"sh_compute_plm_reg: error: lmax initially %i, now %i\n",
 	      exp->old_lmax_irr,exp->lmax);
       exit(-1);
     }
     /* check if ivec was initialized if ever used  */
     if(ivec > exp->old_ivec_irr){
-      fprintf(stderr,"sh_compute_plm_irreg: error: plm are to be saved but routine was initialized\n");
-      fprintf(stderr,"sh_compute_plm_irreg: error: with ivec: %i and now we want vectors, ivec: %i\n",
+      fprintf(stderr,"sh_compute_plm_reg: error: plm are to be saved but routine was initialized\n");
+      fprintf(stderr,"sh_compute_plm_reg: error: with ivec: %i and now we want vectors, ivec: %i\n",
 	      exp->old_ivec_irr,ivec);
       exit(-1);
     }
