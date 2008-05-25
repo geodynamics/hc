@@ -151,11 +151,21 @@ struct hc_parameters{
   hc_boolean sol_binary_out;	/* binary or ASCII output of SH expansion */
   hc_boolean print_spatial;	/* print the spatial solution */
   hc_boolean compute_geoid; 	/* compute and print the geoid */
+  hc_boolean compute_geoid_correlations; 	/* compute correlations only */
   int solution_mode;	/* velocity or stress */
+
+  hc_boolean solver_mode;	
+  hc_boolean visc_init_mode;
+  HC_PREC elayer[4];
 
   hc_boolean read_short_dens_sh; /* short SH format for density
 				    files? */
-  hc_boolean read_dens_scale_from_file; /* read the density/velocity scaling from file? */
+  hc_boolean dd_dens_scale; /* read the density/velocity scaling from file? */
+  HC_PREC *rdf,*sdf;
+  int ndf;
+  struct sh_lms *ref_geoid;
+  HC_PREC rlayer[3];		/* for four layer approaches (first
+				   layer radius is CMB radius) */
 
   hc_boolean print_pt_sol;	/* output of p[6] and t[2] vectors */
   char visc_filename[HC_CHAR_LENGTH];	/* name of viscosity profile file */
@@ -163,6 +173,7 @@ struct hc_parameters{
   char dens_filename[HC_CHAR_LENGTH];	/* name of density model file */
   char prem_model_filename[HC_CHAR_LENGTH];	/* PREM model filename */
   char dens_scaling_filename[HC_CHAR_LENGTH];	/*  */
+  char ref_geoid_file[HC_CHAR_LENGTH]; /* reference geoid */
 };
 
 /* 
@@ -209,6 +220,7 @@ struct hcs{
 			       need to call with
 			       dens_fac_changed == TRUE)
 			    */
+  struct sh_lms *dens_anom_orig;
   HC_PREC dens_scale;		/* scale for density file */
 
  
@@ -262,6 +274,7 @@ struct hcs{
 			  toroidal solution
 		       */
   hc_boolean initialized,const_init,visc_init,dens_init,pvel_init;	/* logic flags */
+  hc_boolean orig_danom_saved;
   /* sqrt(l(l+1)) and 1/lfac factors */
   HC_PREC *lfac,*ilfac;
   int lfac_init;
@@ -310,8 +323,19 @@ solution modes
 init and assignment modes
 
 */
-#define HC_INIT_FROM_FILE 0
+#define HC_INIT_E_FROM_FILE 0	/* viscosity */
+#define HC_INIT_E_FOUR_LAYERS 1
 
+#define HC_INIT_D_FROM_FILE 0	/* density */
+#define HC_RESCALE_D 1
+
+#define HC_INIT_DD_FROM_FILE 0	/* depth dependent density scaling */
+#define HC_INIT_DD_FOUR_LAYERS 1	/*  */
+
+#define HC_INIT_P_FROM_FILE 0	/* plates */
+
+#define HC_SOLVER_MODE_DEFAULT 0
+#define HC_SOLVER_MODE_VISC_SCAN 1
 
 /* 
    

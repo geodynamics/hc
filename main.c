@@ -52,12 +52,14 @@ int main(int argc, char **argv)
   struct hcs *model;		/* main structure, make sure to initialize with 
 				   zeroes */
   struct sh_lms *sol_spectral=NULL, *geoid = NULL;		/* solution expansions */
-  int nsol,lmax;
+  int nsol,lmax,solved;
   FILE *out;
   struct hc_parameters p[1]; /* parameters */
   char filename[HC_CHAR_LENGTH],file_prefix[10];
   float *sol_spatial = NULL;	/* spatial solution,
 				   e.g. velocities */
+  HC_PREC corr[2];			/* correlations */
+  HC_PREC vl[3][3],v1,v2,v3;			/*  for viscosity scans */
   /* 
      
   
@@ -91,7 +93,7 @@ int main(int argc, char **argv)
     fprintf(stderr,"%s: starting version compiled on %s\n",argv[0],__TIMESTAMP__);
 #else
   if(p->verbose)
-    fprintf(stderr,"%s: starting\n",argv[0]);
+    fprintf(stderr,"%s: starting main program\n",argv[0]);
 #endif
   /* 
 
@@ -135,75 +137,121 @@ int main(int argc, char **argv)
     /* make room for geoid solution */
     sh_allocate_and_init(&geoid,1,model->dens_anom[0].lmax,
 			 model->sh_type,0,p->verbose,FALSE);
-  
-  /* 
-     solve poloidal and toroidal part and sum
-  */
-  hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
-	   TRUE,TRUE,TRUE,p->print_pt_sol,p->compute_geoid,geoid,
-	   p->verbose);
-  /* 
-
-  OUTPUT PART
-  
-  */
-  /* 
-     output of spherical harmonics solution
-  */
-  switch(p->solution_mode){
-  case HC_VEL:
-    sprintf(file_prefix,"vel");break;
-  case HC_RTRACTIONS:
-    sprintf(file_prefix,"rtrac");break;
-  case HC_HTRACTIONS:
-    sprintf(file_prefix,"htrac");break;
-  default:
-    HC_ERROR(argv[0],"solution mode undefined");break;
-  }
-  if(p->sol_binary_out)
-    sprintf(filename,"%s.%s",file_prefix,HC_SOLOUT_FILE_BINARY);
-  else
-    sprintf(filename,"%s.%s",file_prefix,HC_SOLOUT_FILE_ASCII);
-  if(p->verbose)
-    fprintf(stderr,"%s: writing spherical harmonics solution to %s\n",
-	    argv[0],filename);
-  out = ggrd_open(filename,"w","main");
-  hc_print_spectral_solution(model,sol_spectral,out,
-			     p->solution_mode,
-			     p->sol_binary_out,p->verbose);
-  fclose(out);
-  if(p->compute_geoid){
+  switch(p->solver_mode){
+  case HC_SOLVER_MODE_DEFAULT:
     /* 
-       print geoid solution 
+       solve poloidal and toroidal part and sum
     */
-    sprintf(filename,"%s",HC_GEOID_FILE);
+    hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
+	     TRUE,TRUE,TRUE,p->print_pt_sol,p->compute_geoid,geoid,
+	     p->verbose);
+    /* 
+       
+       OUTPUT PART
+       
+    */
+    /* 
+       output of spherical harmonics solution
+    */
+    switch(p->solution_mode){
+    case HC_VEL:
+      sprintf(file_prefix,"vel");break;
+    case HC_RTRACTIONS:
+      sprintf(file_prefix,"rtrac");break;
+    case HC_HTRACTIONS:
+      sprintf(file_prefix,"htrac");break;
+    default:
+      HC_ERROR(argv[0],"solution mode undefined");break;
+    }
+    if(p->sol_binary_out)
+      sprintf(filename,"%s.%s",file_prefix,HC_SOLOUT_FILE_BINARY);
+    else
+      sprintf(filename,"%s.%s",file_prefix,HC_SOLOUT_FILE_ASCII);
     if(p->verbose)
-      fprintf(stderr,"%s: writing geoid to %s\n",argv[0],filename);
+      fprintf(stderr,"%s: writing spherical harmonics solution to %s\n",
+	      argv[0],filename);
     out = ggrd_open(filename,"w","main");
-    hc_print_sh_scalar_field(geoid,out,FALSE,FALSE,p->verbose);
+    hc_print_spectral_solution(model,sol_spectral,out,
+			       p->solution_mode,
+			       p->sol_binary_out,p->verbose);
     fclose(out);
+    if(p->compute_geoid){
+      if(p->compute_geoid_correlations){
+	if(p->verbose)
+	  fprintf(stderr,"%s: correlation for geoid with %s\n",argv[0],
+		  p->ref_geoid_file);
+	hc_compute_correlation(geoid,p->ref_geoid,corr,1,p->verbose);
+	fprintf(stdout,"%10.7f %10.7f\n",corr[0],corr[1]);
+      }else{
+	/* 
+	   print geoid solution 
+	*/
+	sprintf(filename,"%s",HC_GEOID_FILE);
+	if(p->verbose)
+	  fprintf(stderr,"%s: writing geoid to %s\n",argv[0],filename);
+	out = ggrd_open(filename,"w","main");
+	hc_print_sh_scalar_field(geoid,out,FALSE,FALSE,p->verbose);
+	fclose(out);
+      }
+    }
+    if(p->print_spatial){
+      /* 
+	 we wish to use the spatial solution
+	 
+	 expand velocities to spatial base, compute spatial
+	 representation
+	 
+      */
+      hc_compute_sol_spatial(model,sol_spectral,&sol_spatial,
+			     p->verbose);
+      /* 
+	 output of spatial solution
+      */
+      sprintf(filename,"%s.%s",file_prefix,HC_SPATIAL_SOLOUT_FILE);
+      /* print lon lat z v_r v_theta v_phi */
+      hc_print_spatial_solution(model,sol_spectral,sol_spatial,
+				filename,HC_LAYER_OUT_FILE,
+				p->solution_mode,p->sol_binary_out,
+				p->verbose);
+    }
+    break;			/* end default mode */
+  case HC_SOLVER_MODE_VISC_SCAN: /* scan through viscosities for a
+				    four layer problem */
+ 
+    /* log bounds */
+    vl[0][0]=  -3;vl[0][1]=5+1e-5;vl[0][2]=.1; /*   0..100 layer log bounds and spacing */
+    vl[1][0]=  -3;vl[1][1]=5+1e-5;vl[1][2]=.1; /* 100..410 */
+    vl[2][0]=  -3;vl[2][1]=5+1e-5;vl[2][2]=.1; /* 660 ... 2871 */
+    /* linear, in units of reference */
+    p->elayer[1] = 1.0;			     /* 410..660 reference, remains unchanged */
+    /*  */
+    solved=0;
+    for(v1=vl[0][0];v1 <= vl[0][1];v1 += vl[0][2])
+      for(v2=vl[1][0];v2 <= vl[1][1];v2 += vl[1][2])
+	for(v3=vl[2][0];v3 <= vl[2][1];v3 += vl[2][2]){
+	  /* layer viscosity structure */
+	  p->elayer[0] = pow(10,v3);p->elayer[2] = pow(10,v2);p->elayer[3]=pow(10,v1);
+	  hc_assign_viscosity(model,HC_INIT_E_FOUR_LAYERS,p->elayer,p);
+	  /* print viscosities of 0...100, 100...410, and 660...2871  layer */
+	  fprintf(stdout,"%14.7e %14.7e %14.7e\t",p->elayer[3],p->elayer[2],p->elayer[0]);
+	  /* compute solution */
+	  hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
+		   (solved)?(FALSE):(TRUE), /* density changed? */
+		   (solved)?(FALSE):(TRUE), /* plate velocity changed? */
+		   TRUE,			/* viscosity changed */
+		   FALSE,p->compute_geoid,geoid,
+		   p->verbose);
+	  /* only output are the geoid correlations, for now */
+	  hc_compute_correlation(geoid,p->ref_geoid,corr,1,p->verbose);
+	  fprintf(stdout,"%10.7f %10.7f ",corr[0],corr[1]);
+	  fprintf(stdout,"\n");
+	  solved++;
+	}
+    break;
+  default:
+    HC_ERROR("hc","solver mode undefined");
   }
-
-  if(p->print_spatial){
-    /* 
-       we wish to use the spatial solution
-
-       expand velocities to spatial base, compute spatial
-       representation
-
-    */
-    hc_compute_sol_spatial(model,sol_spectral,&sol_spatial,
-			   p->verbose);
-    /* 
-       output of spatial solution
-    */
-    sprintf(filename,"%s.%s",file_prefix,HC_SPATIAL_SOLOUT_FILE);
-    /* print lon lat z v_r v_theta v_phi */
-    hc_print_spatial_solution(model,sol_spectral,sol_spatial,
-			      filename,HC_LAYER_OUT_FILE,
-			      p->solution_mode,p->sol_binary_out,
-			      p->verbose);
-  }
+   
   /* 
      
   free memory

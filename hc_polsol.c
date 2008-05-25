@@ -522,7 +522,7 @@ void hc_polsol(struct hcs *hc, 	/*
     
     */
     el = (HC_PREC)l;
-    if((!save_prop_mats) || (!hc->psp.prop_mats_init)){
+    if((!save_prop_mats) || (!hc->psp.prop_mats_init)|| (viscosity_or_layer_changed)){
       //    
       // get all propagators now, as they only depend on l
       //    

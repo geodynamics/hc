@@ -464,8 +464,8 @@ void rick_shc2d_irreg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
   // Legendre functions are precomputed
   // */
   double  dpdt,dpdp,mphi,sin_theta,sfac,cfac;
-  float *loc_plma=NULL,*loc_plmb=NULL,*plm=NULL,*dplm=NULL;
-  int  i,j,k,k2,m,l,lmaxp1,lm1;
+  float *plm=NULL,*dplm=NULL;
+  int  i,k,k2,m,l,lmaxp1,lm1;
   if(!rick->initialized){
     fprintf(stderr,"rick_shc2d_pre_reg: error: initialize modules first\n");
     exit(-1);

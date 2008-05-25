@@ -194,3 +194,26 @@ void hc_advance_argument(int *i,int argc, char **argv)
   }
   *i += 1;
 }
+
+void hc_compute_correlation(struct sh_lms *g1,struct sh_lms *g2,
+			    HC_PREC *c,int mode,hc_boolean verbose)
+{
+  int lmaxg;
+  lmaxg = MIN(g1->lmax,g1->lmax);
+  lmaxg = MIN(20,lmaxg);
+  switch(mode){
+  case 0:
+    if(verbose)
+      fprintf(stderr,"hc_compute_correlation: computing 1...%i\n",lmaxg);
+    c[0] = sh_correlation_per_degree(g1,g2,1,lmaxg);    
+  case 1:			/* 1...20 and 4..9 correlations */
+    if(verbose)
+      fprintf(stderr,"hc_compute_correlation: computing 1...%i and 4..9 correlations\n",lmaxg);
+    c[0] = sh_correlation_per_degree(g1,g2,1,lmaxg);
+    c[1] = sh_correlation_per_degree(g1,g2,4,9);
+    break;
+  default:
+    fprintf(stderr,"sh_compute_correlation: mode %i undefined\n",mode);
+    exit(-1);
+  }
+}

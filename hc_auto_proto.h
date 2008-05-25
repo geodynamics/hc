@@ -40,14 +40,16 @@ void hc_init_polsol_struct(struct hc_ps *);
 void hc_init_main(struct hcs *, int, struct hc_parameters *);
 void hc_init_constants(struct hcs *, double, char *, unsigned short);
 void hc_handle_command_line(int, char **, struct hc_parameters *);
-void hc_assign_viscosity(struct hcs *, int, char [300], unsigned short);
-void hc_assign_density(struct hcs *, unsigned short, int, char *, int, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, char *);
+void hc_assign_viscosity(struct hcs *, int, double [4], struct hc_parameters *);
+void hc_assign_density(struct hcs *, unsigned short, int, char *, int, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, int, double *, double *, unsigned short);
 double hc_find_dens_scale(double, double, unsigned short, double *, double *, int);
 void hc_init_phase_boundaries(struct hcs *, int, unsigned short);
 void hc_assign_plate_velocities(struct hcs *, int, char *, unsigned short, int, unsigned short, unsigned short);
 void hc_init_l_factors(struct hcs *, int);
 void hc_get_blank_expansions(struct sh_lms **, int, int, char *);
 void hc_struc_free(struct hcs **);
+void hc_assign_dd_scaling(int, double [4], struct hc_parameters *, double);
+void hc_read_geoid(struct hc_parameters *);
 /* hc_input.c */
 void hc_read_sh_solution(struct hcs *, struct sh_lms **, FILE *, unsigned short, unsigned short);
 /* hc_matrix.c */
@@ -73,6 +75,7 @@ void hc_get_flt_frmt_string(char *, int, unsigned short);
 char *hc_name_boolean(unsigned short);
 unsigned short hc_toggle_boolean(unsigned short *);
 void hc_advance_argument(int *, int, char **);
+void hc_compute_correlation(struct sh_lms *, struct sh_lms *, double *, int, unsigned short);
 /* hc_output.c */
 void hc_print_spectral_solution(struct hcs *, struct sh_lms *, FILE *, int, unsigned short, unsigned short);
 void hc_print_sh_scalar_field(struct sh_lms *, FILE *, unsigned short, unsigned short, unsigned short);

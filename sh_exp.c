@@ -266,7 +266,6 @@ void sh_compute_power_per_degree(struct sh_lms *exp,
 /* compute total correlation up to llim */
 HC_PREC sh_correlation(struct sh_lms *exp1, struct sh_lms *exp2, int llim)
 {
-  HC_PREC corr;
   return sh_correlation_per_degree(exp1,exp2,1,llim);
 }
 
