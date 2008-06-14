@@ -28,9 +28,9 @@ void hc_init_parameters(struct hc_parameters *p)
   p->compute_geoid_correlations = FALSE;	/* compute the geoid
 						   correlation with
 						   refernece only   */
-  p->dens_anom_scale = 0.2;	/* default density anomaly scaling to
-				   go from PREM percent traveltime
-				   anomalies to density anomalies */
+  p->dens_anom_scale = HC_D_LOG_V_D_LOG_D ;	/* default density anomaly scaling to
+						   go from PREM percent traveltime
+						   anomalies to density anomalies */
   p->read_short_dens_sh = FALSE; /* read the density anomaly file in
 				    the short format of Becker &
 				    Boschi (2002)?  */
@@ -252,9 +252,9 @@ void hc_init_constants(struct hcs *hc, HC_PREC dens_anom_scale,
      constants
   */
   hc->timesc = HC_TIMESCALE_YR;		/* timescale [yr], like 1e6 yrs */
-  hc->visnor = 1e21;		/* normalizing viscosity [Pas]*/
-  hc->gacc = 10.0e2; 		/* gravitational acceleration [cm/s2]*/
-  hc->g = 6.6742e-11;		/* gravitational constant [Nm2/kg2]*/
+  hc->visnor = HC_VISNOR;		/* normalizing viscosity [Pas]*/
+  hc->gacc =  HC_GACC; 		/* gravitational acceleration [cm/s2]*/
+  hc->g =  HC_CAPITAL_G;		/* gravitational constant [Nm2/kg2]*/
 
   /*  
 
@@ -264,12 +264,14 @@ void hc_init_constants(struct hcs *hc, HC_PREC dens_anom_scale,
   hc->re = hc->prem->r0;
   if(fabs(hc->re - (HC_RE_KM * 1e3)) > 1e-7)
     HC_ERROR("hc_init_constants","Earth radius mismatch")
-  hc->secyr = 3.1556926e7;	/* seconds/year  */
+
+  hc->secyr = HC_SECYR;	/* seconds/year  */
+
   /* 
      those are in g/cm^3
   */
-  hc->avg_den_mantle = 4.4488;
-  hc->avg_den_core = 11.60101;
+  hc->avg_den_mantle =  HC_AVG_DEN_MANTLE;
+  hc->avg_den_core = HC_AVG_DEN_CORE;
 
   /* 
      take the CMB radius from the Earth model 
@@ -288,7 +290,7 @@ void hc_init_constants(struct hcs *hc, HC_PREC dens_anom_scale,
   velocity scale if input is in [cm/yr], works out to be ~0.11 
 
   */
-  hc->vel_scale = hc->re*PIOVERONEEIGHTY/hc->timesc*100;
+  hc->vel_scale = hc->re*PIOVERONEEIGHTY/hc->timesc/HC_VEL_IO_SCALE;
   /* 
   
   stress scaling, will later be divided by non-dim radius, to go 
@@ -296,7 +298,7 @@ void hc_init_constants(struct hcs *hc, HC_PREC dens_anom_scale,
   
   */
   hc->stress_scale = (PIOVERONEEIGHTY * hc->visnor / hc->secyr)/
-    (hc->timesc * 1e6);
+    (hc->timesc * HC_TIMESCALE_YR);
   
 
   hc->const_init = TRUE;
@@ -468,10 +470,18 @@ void hc_assign_viscosity(struct hcs *hc,int mode,
      */
     hc_vecrealloc(&hc->rvisc,4,"hc_assign_viscosity");
     hc_vecrealloc(&hc->visc,4,"hc_assign_viscosity");
+    /* number of layers */
     hc->nvis = 4;
-    hc->rvisc[0] = hc->r_cmb;hc->rvisc[1] = p->rlayer[0];hc->rvisc[2] = p->rlayer[1];hc->rvisc[3] = p->rlayer[2];
-    for(i=0;i < hc->nvis;i++)
+    /* radii */
+    hc->rvisc[0] = hc->r_cmb;
+    hc->rvisc[1] = p->rlayer[0];
+    hc->rvisc[2] = p->rlayer[1];
+    hc->rvisc[3] = p->rlayer[2];
+
+    for(i=0;i < hc->nvis;i++){
       hc->visc[i] = elayer[i];
+      //fprintf(stderr,"%11g %11g\n",hc->rvisc[i],hc->visc[i]);
+    }
     if(p->verbose)
       fprintf(stderr,"hc_assign_viscosity: assigned four layer viscosity: %.2e %.2e %.2e %.2e\n",
 	      hc->visc[0],hc->visc[1],hc->visc[2],hc->visc[3]);

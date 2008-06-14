@@ -25,7 +25,7 @@ ODIR = ../hc/objects/$(ARCH)/
 BDIR = ../hc/bin/$(ARCH)/
 
 # include files
-OINCS = hc.h hc_filenames.h sh.h 
+OINCS = hc.h hc_filenames.h sh.h hc_constants.h
 #
 # Healpix stuff, comment out all if not wanted
 #

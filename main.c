@@ -59,7 +59,7 @@ int main(int argc, char **argv)
   float *sol_spatial = NULL;	/* spatial solution,
 				   e.g. velocities */
   HC_PREC corr[2];			/* correlations */
-  HC_PREC vl[3][3],v1,v2,v3;			/*  for viscosity scans */
+  HC_PREC vl[4][3],v[4],dv;			/*  for viscosity scans */
   /* 
      
   
@@ -218,35 +218,53 @@ int main(int argc, char **argv)
   case HC_SOLVER_MODE_VISC_SCAN: /* scan through viscosities for a
 				    four layer problem */
  
-    /* log bounds */
-    vl[0][0]=  -3;vl[0][1]=5+1e-5;vl[0][2]=.1; /*   0..100 layer log bounds and spacing */
-    vl[1][0]=  -3;vl[1][1]=5+1e-5;vl[1][2]=.1; /* 100..410 */
-    vl[2][0]=  -3;vl[2][1]=5+1e-5;vl[2][2]=.1; /* 660 ... 2871 */
-    /* linear, in units of reference */
-    p->elayer[1] = 1.0;			     /* 410..660 reference, remains unchanged */
+    
+    /* parameter space log bounds */
+
+    dv = .1;			/* spacing */
+
+    vl[0][0]=  -3;vl[0][1]=3+1e-5;vl[0][2]=dv; /*   0..100 layer log bounds and spacing */
+    vl[1][0]=  -3;vl[1][1]=3+1e-5;vl[1][2]=dv; /* 100..410 */
+    if(p->free_slip){
+      vl[2][0]=  0;vl[2][1]=0+1e-5;vl[2][2]=dv; /* for free slip,
+						   only relative
+						   viscosisites
+						   matter for
+						   correlation */
+    }else{
+      vl[2][0]=  -3;vl[2][1]=3+1e-5;vl[2][2]=dv; /* need to actually
+						    loop 410 .660 */
+    }
+    vl[3][0]=  -3;vl[3][1]=3+1e-5;vl[3][2]=dv; /* 660 ... 2871 */
+    
+
     /*  */
     solved=0;
-    for(v1=vl[0][0];v1 <= vl[0][1];v1 += vl[0][2])
-      for(v2=vl[1][0];v2 <= vl[1][1];v2 += vl[1][2])
-	for(v3=vl[2][0];v3 <= vl[2][1];v3 += vl[2][2]){
-	  /* layer viscosity structure */
-	  p->elayer[0] = pow(10,v3);p->elayer[2] = pow(10,v2);p->elayer[3]=pow(10,v1);
-	  hc_assign_viscosity(model,HC_INIT_E_FOUR_LAYERS,p->elayer,p);
-	  /* print viscosities of 0...100, 100...410, and 660...2871  layer */
-	  fprintf(stdout,"%14.7e %14.7e %14.7e\t",p->elayer[3],p->elayer[2],p->elayer[0]);
-	  /* compute solution */
-	  hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
-		   (solved)?(FALSE):(TRUE), /* density changed? */
-		   (solved)?(FALSE):(TRUE), /* plate velocity changed? */
-		   TRUE,			/* viscosity changed */
-		   FALSE,p->compute_geoid,geoid,
-		   p->verbose);
-	  /* only output are the geoid correlations, for now */
-	  hc_compute_correlation(geoid,p->ref_geoid,corr,1,p->verbose);
-	  fprintf(stdout,"%10.7f %10.7f ",corr[0],corr[1]);
-	  fprintf(stdout,"\n");
-	  solved++;
-	}
+    for(v[0]=vl[0][0];v[0] <= vl[0][1];v[0] += vl[0][2])
+      for(v[1]=vl[1][0];v[1] <= vl[1][1];v[1] += vl[1][2])
+	for(v[2]=vl[2][0];v[2] <= vl[2][1];v[2] += vl[2][2])
+	  for(v[3]=vl[3][0];v[3] <= vl[3][1];v[3] += vl[3][2]){
+	    /* layer viscosity structure */
+	    p->elayer[0] = pow(10,v[3]); /* bottom */
+	    p->elayer[1] = pow(10,v[2]); /* 660..410 */
+	    p->elayer[2] = pow(10,v[1]); /* 410..100 */
+	    p->elayer[3] = pow(10,v[0]); /* 100..0  */
+	    hc_assign_viscosity(model,HC_INIT_E_FOUR_LAYERS,p->elayer,p);
+	    /* print viscosities of 0...100, 100...410, 410 ... 660 and 660...2871  layer */
+	    fprintf(stdout,"%14.7e %14.7e %14.7e %14.7e\t",p->elayer[3],p->elayer[2],p->elayer[1],p->elayer[0]);
+	    /* compute solution */
+	    hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
+		     (solved)?(FALSE):(TRUE), /* density changed? */
+		     (solved)?(FALSE):(TRUE), /* plate velocity changed? */
+		     TRUE,			/* viscosity changed */
+		     FALSE,p->compute_geoid,geoid,
+		     p->verbose);
+	    /* only output are the geoid correlations, for now */
+	    hc_compute_correlation(geoid,p->ref_geoid,corr,1,p->verbose);
+	    fprintf(stdout,"%10.7f %10.7f ",corr[0],corr[1]);
+	    fprintf(stdout,"\n");
+	    solved++;
+	  }
     break;
   default:
     HC_ERROR("hc","solver mode undefined");

@@ -68,6 +68,12 @@ PREM
 */
 #include "prem.h"
 
+/* 
+
+Other Earth model, and modeling constants
+
+*/
+#include "hc_constants.h"
 
 
 /* 
@@ -429,16 +435,8 @@ macro defintions
 #endif
 /* 
 
-other constants
 
 */
-// now taken from earth model
-#define HC_RE_KM 6371.0		/* radius(Earth) in [km] */
-
-//#define HC_RCMB_ND 0.546225    /* non-dim radius, ~10km above
-//				  CMB  */
-
-#define HC_TIMESCALE_YR 1e6	/* timescale [yr] */
 /* 
    convert depth (>0) in km to non-dimensionalizd radius
 */
@@ -447,14 +445,6 @@ other constants
    the other way around
 */
 #define HC_Z_DEPTH(x) ((HC_RE_KM * (1.0-(x))))
-
-/* 
-
-default constant scaling for input density file, use 0.01 for % 
-
-*/
-
-#define HC_DENSITY_SCALING 0.01
 
 
 #define __HC_READ_HEADER_FILE__
