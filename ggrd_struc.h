@@ -69,6 +69,7 @@ struct ggrd_gt{
   
   float *z;			/* depth levels */
   int nz;
+
   unsigned char zlevels_are_negative;
 
   unsigned char init,
@@ -129,7 +130,7 @@ struct ggrd_temp_init{
 };
 
 struct ggrd_master{		/* master structure */
-
+  /* citcom use flags */
   int mat_control,mat_control_init;
   int ray_control,ray_control_init;
   int vtop_control,vtop_control_init;

@@ -84,7 +84,7 @@ int ggrd_grdtrack_init_general(ggrd_boolean is_three,
   int pad[4];
   ggrd_boolean geographic_in;	/* this is set by grdtrack_init */
   int i,j;
-  float zavg;
+  float zavg,tmp;
   /* clear all entries */
   g->east = g->west = g->south = g->north = 0.0;
   g->is_three = is_three;
@@ -99,21 +99,23 @@ int ggrd_grdtrack_init_general(ggrd_boolean is_three,
     return 2;
   /* 
 
-  check bandlimited maximum
+  check bandlimited maximum with positivity constraint
 
   */
   g->fmaxlim = (float *)malloc(sizeof(float)*g->nz);
   for(i=0;i < g->nz;i++){	/* loop through layers */
-    g->fmaxlim[i] = g->grd[i].z_min;
-    for(j=0;j<g->mm;j++)	/* loop trough entries */
-      if((g->f[i*g->mm+j] < g->bandlim) &&
-	 (g->f[i*g->mm+j] > g->fmaxlim[i]))
-	g->fmaxlim[i] = g->f[i*g->mm+j];
+    //g->fmaxlim[i] = g->grd[i].z_min;
+    g->fmaxlim[i] = 0.0;
+    for(j=0;j<g->mm;j++){	/* loop trough entries */
+      tmp = fabs(g->f[i*g->mm+j]);
+	//if((g->f[i*g->mm+j] < g->bandlim) &&(g->f[i*g->mm+j] > g->fmaxlim[i]))
+      if((tmp < g->bandlim) && tmp > g->fmaxlim[i])
+	g->fmaxlim[i] = tmp;
+    }
     /* min: g->grd[i].z_min
        max: g->grd[i].z_max,
        bandlim_max: g->fmaxlim[i] */
-    //fprintf(stderr,"%g %g %g %g\n", g->grd[i].z_min,
-    //    g->grd[i].z_max,g->bandlim,g->fmaxlim[i]);
+    //fprintf(stderr,"%g %g %g %g\n", g->grd[i].z_min,g->grd[i].z_max,g->bandlim,g->fmaxlim[i]);
   }
   if(is_three){
     /* 

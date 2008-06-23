@@ -5,7 +5,8 @@ Earth model constants
 
 */
 // now taken from earth model
-#define HC_RE_KM 6371.0		/* radius(Earth) in [km] */
+#define HC_RE_KM 6371.0		/* radius(Earth) in [km] (equivalent
+				   volume radius of std ellipsoid) */
 
 
 #define HC_TIMESCALE_YR 1e6	/* timescale [yr] */
@@ -17,7 +18,9 @@ Earth model constants
 
 #define HC_SECYR  3.1556926e7	/* seconds/year  */
 
+/* average mantle density */
 #define HC_AVG_DEN_MANTLE 4.4488 /* in g/cm^3 */
+/* average core density */
 #define HC_AVG_DEN_CORE 11.60101
 
 
@@ -28,10 +31,11 @@ other modeling constants or initial values
 */
 /* 
 
-default constant scaling for input density file, use 0.01 for % 
+default constant scaling for input density file, e.g. use 0.01 for
+seismic tomography models which are given in terms of % variation from
+PREM
 
 */
-
 #define HC_DENSITY_SCALING 0.01
 
 /* default dln v_s/dln rho density scaling */

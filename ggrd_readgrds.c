@@ -50,7 +50,7 @@ void ggrd_init_vstruc(struct ggrd_master *ggrd)
   ggrd->v.read_gmt = TRUE;		/* read GMT by default */
   ggrd->v.init = FALSE;
   ggrd->v.history = FALSE;
-  
+
   ggrd->v.vr = ggrd->v.vt = ggrd->v.vp = NULL;
   ggrd->v.velscale =  1.0; 
   ggrd->v.rcmb = GGRD_RCMB_ND;

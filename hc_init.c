@@ -607,7 +607,7 @@ void hc_assign_density(struct hcs *hc,
 {
   FILE *in;
   int type,lmax,shps,ilayer,nset,ivec,i,j;
-  HC_PREC *dtop,*dbot,zlabel,local_scale,dens_scale[0],rho0;
+  HC_PREC *dtop,*dbot,zlabel,local_scale,dens_scale[1],rho0;
   hc_boolean reported = FALSE,read_on;
   double dtmp[3];
   hc->compressible = compressible;
