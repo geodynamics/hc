@@ -41,7 +41,7 @@ void hc_init_main(struct hcs *, int, struct hc_parameters *);
 void hc_init_constants(struct hcs *, double, char *, unsigned short);
 void hc_handle_command_line(int, char **, struct hc_parameters *);
 void hc_assign_viscosity(struct hcs *, int, double [4], struct hc_parameters *);
-void hc_assign_density(struct hcs *, unsigned short, int, char *, int, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, int, double *, double *, unsigned short);
+void hc_assign_density(struct hcs *, unsigned short, int, char *, int, unsigned short,  unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, int, double *, double *, unsigned short);
 double hc_find_dens_scale(double, double, unsigned short, double *, double *, int);
 void hc_init_phase_boundaries(struct hcs *, int, unsigned short);
 void hc_assign_plate_velocities(struct hcs *, int, char *, unsigned short, int, unsigned short, unsigned short);

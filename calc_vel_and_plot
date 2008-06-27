@@ -27,7 +27,8 @@ tbc=-fs                	# -fs: free slip
 #
 # viscosity file
 #
-vf=example_data/visc.C2			# file name
+#vf=example_data/visc.C2			# file name
+vf=example_data/visc.D			# file name
 #vf=example_data/visc.A			# file name
 #vf=example_data/visc.dat			# file name
 

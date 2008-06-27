@@ -31,6 +31,12 @@ void hc_init_parameters(struct hc_parameters *p)
   p->dens_anom_scale = HC_D_LOG_V_D_LOG_D ;	/* default density anomaly scaling to
 						   go from PREM percent traveltime
 						   anomalies to density anomalies */
+  p->scale_dens_anom_with_prem = TRUE; /* scale the input file
+					  relative density anomalies
+					  with the absolute rho value
+					  of PREM at that layer. if
+					  set to FALSE, will use the
+					  average rho value  */
   p->read_short_dens_sh = FALSE; /* read the density anomaly file in
 				    the short format of Becker &
 				    Boschi (2002)?  */
@@ -168,7 +174,8 @@ void hc_init_main(struct hcs *hc,int sh_type,
        read in the densities first to determine L from the density expansion
     */
     hc_assign_density(hc,p->compressible,HC_INIT_D_FROM_FILE,
-		      p->dens_filename,-1,FALSE,FALSE,p->verbose,p->read_short_dens_sh,
+		      p->dens_filename,-1,FALSE,FALSE,p->scale_dens_anom_with_prem,
+		      p->verbose,p->read_short_dens_sh,
 		      p->dd_dens_scale,p->ndf,p->rdf,p->sdf,
 		      (p->solver_mode == HC_SOLVER_MODE_VISC_SCAN)?(TRUE):(FALSE));
     /* 
@@ -192,7 +199,8 @@ void hc_init_main(struct hcs *hc,int sh_type,
     hc_assign_plate_velocities(hc,HC_INIT_P_FROM_FILE,p->pvel_filename,FALSE,dummy,FALSE,p->verbose);
     /* then read in the density anomalies */
     hc_assign_density(hc,p->compressible,HC_INIT_D_FROM_FILE,p->dens_filename,hc->pvel[0].lmax,
-		      FALSE,FALSE,p->verbose,p->read_short_dens_sh, p->dd_dens_scale,p->ndf,p->rdf,p->sdf,
+		      FALSE,FALSE,p->scale_dens_anom_with_prem,
+		      p->verbose,p->read_short_dens_sh, p->dd_dens_scale,p->ndf,p->rdf,p->sdf,
 		      (p->solver_mode == HC_SOLVER_MODE_VISC_SCAN)?(TRUE):(FALSE));
   }else if(p->free_slip){
     /* 
@@ -206,6 +214,7 @@ void hc_init_main(struct hcs *hc,int sh_type,
       fprintf(stderr,"hc_init: initializing for free-slip\n");
     /* read in the density fields */
     hc_assign_density(hc,p->compressible,HC_INIT_D_FROM_FILE,p->dens_filename,-1,FALSE,FALSE,
+		      p->scale_dens_anom_with_prem,
 		      p->verbose,p->read_short_dens_sh, p->dd_dens_scale,p->ndf,p->rdf,p->sdf,
 		      (p->solver_mode == HC_SOLVER_MODE_VISC_SCAN)?(TRUE):(FALSE));
   }else{
@@ -331,7 +340,7 @@ void hc_handle_command_line(int argc, char **argv,
       fprintf(stderr,"density anomaly options:\n");
       fprintf(stderr,"-dens\tname\tuse name as a SH density anomaly model (%s)\n",
 	      p->dens_filename);
-      fprintf(stderr,"\t\tAll density anomalies are in units of %g%% of PREM, all SH coefficients in Dahlen & Tromp convention.\n",
+      fprintf(stderr,"\t\tAll density anomalies are in units of %g%% of PREM, all SH coefficients\n\t\tin Dahlen & Tromp convention.\n",
 	      HC_DENSITY_SCALING*100);
       
       fprintf(stderr,"-dshs\t\tuse the short, Becker & Boschi (2002) format for the SH density model (%s)\n",
@@ -339,6 +348,8 @@ void hc_handle_command_line(int argc, char **argv,
 
       fprintf(stderr,"-ds\t\tdensity scaling factor (%g)\n",
 	      p->dens_anom_scale);
+      fprintf(stderr,"-dnp\t\tdo not scale density anomalies with PREM but rather mean density (%s)\n",
+	      hc_name_boolean(!p->scale_dens_anom_with_prem));
       fprintf(stderr,"-dsf\tfile\tread depth dependent density scaling from file\n");
       fprintf(stderr,"\t\t(overrides -ds, %s), use pdens.py to edit\n\n",
 	      hc_name_boolean(p->dd_dens_scale));
@@ -407,6 +418,8 @@ void hc_handle_command_line(int argc, char **argv,
     }else if(strcmp(argv[i],"-prem")==0){ /* PREM filename */
       hc_advance_argument(&i,argc,argv);
       strncpy(p->prem_model_filename,argv[i],HC_CHAR_LENGTH);
+    }else if(strcmp(argv[i],"-dnp")==0){
+      hc_toggle_boolean(&p->scale_dens_anom_with_prem);
     }else if(strcmp(argv[i],"-pvel")==0){ /* velocity filename, this will switch off free slip */
       hc_advance_argument(&i,argc,argv);
       strncpy(p->pvel_filename,argv[i],HC_CHAR_LENGTH);
@@ -599,6 +612,7 @@ void hc_assign_density(struct hcs *hc,
 		       char *filename,int nominal_lmax,	 /* input density file name */
 		       hc_boolean layer_structure_changed,
 		       hc_boolean density_in_binary,
+		       hc_boolean scale_dens_anom_with_prem,
 		       hc_boolean verbose,
 		       hc_boolean use_short_format,
 		       hc_boolean dd_dens_scale, /* depth dependent scaling ? */
@@ -707,15 +721,20 @@ void hc_assign_density(struct hcs *hc,
 	   assign depth, this assumes that we are reading in depths [km]
 	*/
 	hc->rden[hc->inho] = HC_ND_RADIUS((double)zlabel);
+	if(scale_dens_anom_with_prem){
+	  /* 
+	     
+	     get reference density at this level
+	     
+	  */
+	  prem_get_rho(&rho0,hc->rden[hc->inho],hc->prem);
+	  rho0 /= 1000.0;
+	}else{
+	  /* mean value */
+	  rho0 =  hc->avg_den_mantle;
+	}
 	/* 
-	   
-	get reference density at this level
-	
-	*/
-	prem_get_rho(&rho0,hc->rden[hc->inho],hc->prem);
-	rho0 /= 1000.0;
-	/* 
-	   general density 
+	   density anomaly
 	*/
 	/* scaling factor without depth dependence */
 	dens_scale[0] = ((HC_PREC)HC_DENSITY_SCALING ) * rho0;

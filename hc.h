@@ -153,6 +153,9 @@ struct hc_parameters{
   HC_PREC dens_anom_scale;	/* default density anomaly scaling to
 				   go from PREM percent traveltime
 				   anomalies to density anomalies */
+  hc_boolean scale_dens_anom_with_prem; /* scale input anomalies with
+					   PREM, or average mantle
+					   density */
   hc_boolean verbose;		/* debugging output? (0,1,2,3,4...) */
   hc_boolean sol_binary_out;	/* binary or ASCII output of SH expansion */
   hc_boolean print_spatial;	/* print the spatial solution */
