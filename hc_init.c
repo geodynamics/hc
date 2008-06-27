@@ -704,7 +704,7 @@ void hc_assign_density(struct hcs *hc,
 	  }
 	  reported = TRUE;
 	  if(verbose >= 2)
-	    fprintf(stderr,"hc_assign_density: non_dim radius                 %% factor    PREM \\rho                  layer #            depth[km]\n");
+	    fprintf(stderr,"hc_assign_density: non_dim radius                 %% factor    PREM \\rho/mean_rho          layer #            depth[km]\n");
 	}
 
 	/* 
@@ -729,6 +729,9 @@ void hc_assign_density(struct hcs *hc,
 	  */
 	  prem_get_rho(&rho0,hc->rden[hc->inho],hc->prem);
 	  rho0 /= 1000.0;
+	  if(rho0 < 3)
+	    fprintf(stderr,"\nhc_assign_density: WARNING: using small (%g) density from PREM for layer at depth %g\n\n",
+		    rho0*1000,HC_Z_DEPTH(hc->rden[hc->inho]));
 	}else{
 	  /* mean value */
 	  rho0 =  hc->avg_den_mantle;
@@ -742,7 +745,7 @@ void hc_assign_density(struct hcs *hc,
 	  
 	  fprintf(stderr,"hc_assign_density: r: %11g anom scales: %11g x %11g = %11g\t%5i out of %i, z: %11g\n",
 		  hc->rden[hc->inho],
-		  HC_DENSITY_SCALING,rho0,dens_scale[0],hc->inho+1,nset,zlabel);
+		  HC_DENSITY_SCALING,rho0/ hc->avg_den_mantle,dens_scale[0],hc->inho+1,nset,zlabel);
 	}
 	if(hc->inho){	
 	  /* 
