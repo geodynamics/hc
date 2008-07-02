@@ -450,6 +450,17 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
     GMT_make_dnan (GMT_d_NaN);
     GMT_io_init ();/* Init the table i/o structure */
     GMT_grdio_init();
+    if(strcmp(edgeinfo_string,"-fg")==0){
+      GMT_io.in_col_type[GMT_X] = GMT_io.out_col_type[GMT_X] = GMT_IS_LON;
+      GMT_io.in_col_type[GMT_Y] = GMT_io.out_col_type[GMT_Y] = GMT_IS_LAT;
+    }
+    if(strcmp(edgeinfo_string,"-fx")==0){
+      GMT_io.in_col_type[GMT_X] = GMT_io.out_col_type[GMT_X] = GMT_IS_LON;
+    }
+    if(strcmp(edgeinfo_string,"-fy")==0){
+      GMT_io.in_col_type[GMT_Y] = GMT_io.out_col_type[GMT_Y] = GMT_IS_LAT;
+    }
+    
     gmt_init = TRUE;
   }
 
