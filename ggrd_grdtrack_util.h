@@ -37,7 +37,7 @@ int ggrd_grdtrack_init_general(ggrd_boolean ,char *, char *,char *,
 			       ggrd_boolean);
 ggrd_boolean ggrd_grdtrack_interpolate_rtp(double ,double ,double ,
 					    struct ggrd_gt *,double *,
-					    ggrd_boolean);
+					    ggrd_boolean,ggrd_boolean);
 ggrd_boolean ggrd_grdtrack_interpolate_xyz(double ,double ,double ,
 					    struct ggrd_gt *,double *,
 					    ggrd_boolean);
@@ -48,7 +48,7 @@ ggrd_boolean ggrd_grdtrack_interpolate_xy(double ,double ,
 ggrd_boolean ggrd_grdtrack_interpolate_tp(double ,double ,
 					   struct ggrd_gt *,
 					   double *,
-					   ggrd_boolean );
+					   ggrd_boolean ,ggrd_boolean);
 
 void ggrd_grdtrack_free_gstruc(struct ggrd_gt *);
 

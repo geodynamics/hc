@@ -181,9 +181,11 @@ hc: $(LIBS) $(INCS) $(ODIR)/main.o $(PREM_OBJS)
 		 $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS) 
 
 hc.dbg: $(LIBS) $(INCS) $(ODIR)/main.dbg.o $(PREM_OBJS)
-	$(CC) $(LIB_FLAGS) $(ODIR)/main.dbg.o $(PREM_OBJS) \
-	-o $(BDIR)/hc.dbg -lhc.dbg -lrick.dbg -lggrd.dbg -lgmt -lnetcdf \
-	$(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS) 
+	$(CC) $(LIB_FLAGS) $(ODIR)/main.dbg.o -o $(BDIR)/hc.dbg \
+		-lhc.dbg -lrick.dbg $(HEAL_LIBS_LINKLINE) $(PREM_OBJS) \
+		 $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS) 
+
+
 
 test_fft: $(LIBS) $(INCS) $(ODIR)/test_fft.o
 	$(CC) $(LIB_FLAGS) $(ODIR)/test_fft.o -o $(BDIR)/test_fft \

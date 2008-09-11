@@ -82,7 +82,6 @@ int ggrd_grdtrack_init_general(ggrd_boolean is_three,
   static ggrd_boolean bilinear = TRUE; /* bilinear by default */
   
   int pad[4];
-  ggrd_boolean geographic_in;	/* this is set by grdtrack_init */
   int i,j;
   float zavg,tmp;
   /* clear all entries */
@@ -92,7 +91,7 @@ int ggrd_grdtrack_init_general(ggrd_boolean is_three,
 
   if(ggrd_grdtrack_init(&g->west,&g->east,&g->south,&g->north,&g->f,&g->mm,
 			grdfile,&g->grd,&g->edgeinfo,
-			gmt_edgeinfo_string,&geographic_in,
+			gmt_edgeinfo_string,&g->geographic_in,
 			pad,is_three,depth_file,&g->z,&g->nz,
 			bilinear,verbose,change_z_sign,
 			g->loc_bcr))
@@ -190,7 +189,8 @@ for 3-D spherical
 */
 ggrd_boolean ggrd_grdtrack_interpolate_rtp(double r,double t,double p,
 					   struct ggrd_gt *g,double *value,
-					   ggrd_boolean verbose)
+					   ggrd_boolean verbose,
+					   ggrd_boolean shift_to_pos_lon)
 {
   double x[3];
   ggrd_boolean result;
@@ -206,11 +206,13 @@ ggrd_boolean ggrd_grdtrack_interpolate_rtp(double r,double t,double p,
      convert coordinates to lon / lat / z
   */
   x[0] = p * ONEEIGHTYOVERPI; /* lon */
-  /* make sure we are in 0 ... 360 system */
-  if(x[0]<0)
-    x[0]+=360.0;
-  if(x[0]>=360)
-    x[0]-=360.0;
+  if(shift_to_pos_lon){
+    /* make sure we are in 0 ... 360 system ? */
+    if(x[0]<0)
+      x[0]+=360.0;
+    if(x[0]>=360)
+      x[0]-=360.0;
+  }
   x[1] = 90.0 - t * ONEEIGHTYOVERPI; /* lat */
   x[2] = (1.0-r) * 6371.0;	/* depth in [km] */
   if(g->zlevels_are_negative)	/* adjust for depth */
@@ -269,9 +271,10 @@ undefined and FALSE else
 
 */
 ggrd_boolean ggrd_grdtrack_interpolate_tp(double t,double p,
-					   struct ggrd_gt *g,
-					   double *value,
-					   ggrd_boolean verbose)
+					  struct ggrd_gt *g,
+					  double *value,
+					  ggrd_boolean verbose,
+					  ggrd_boolean shift_to_pos_lon)
 {
   double x[3];
   ggrd_boolean result;
@@ -287,10 +290,12 @@ ggrd_boolean ggrd_grdtrack_interpolate_tp(double t,double p,
      convert coordinates
   */
   x[0] = p * ONEEIGHTYOVERPI; /* lon */
-  if(x[0] < 0)
-    x[0] += 360.0;
-  if(x[0] >= 360.0)
-    x[0]-=360.0;
+  if(shift_to_pos_lon){
+    if(x[0] < 0)
+      x[0] += 360.0;
+    if(x[0] >= 360.0)
+      x[0]-=360.0;
+  }
   x[1] = 90.0 - t * ONEEIGHTYOVERPI; /* lat */
   x[2] = 1.0;
   result = ggrd_grdtrack_interpolate(x,FALSE,g->grd,g->f,
@@ -432,7 +437,7 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
   FILE *din;
   float dz1,dz2;
   struct GRD_HEADER ogrd;
-  int i,one_or_zero,nx,ny,mx,my,nn;
+  int i,j,one_or_zero,nx,ny,mx,my,nn;
   char filename[BUFSIZ*2],*cdummy;
   static int gmt_init = FALSE;
   /* 
@@ -473,12 +478,14 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
   if (strlen(edgeinfo_string)>2){ /* the boundary flag was set */
     /* parse */
     GMT_boundcond_parse (*edgeinfo, (edgeinfo_string+2));
-    if ((*edgeinfo)->gn) 
-      *geographic_in = TRUE;
+    if ((*edgeinfo)->gn)
+      *geographic_in = 1;
+    else if((*edgeinfo)->nxp == -1)
+      *geographic_in = 2;
     else
-      *geographic_in = FALSE;
+      *geographic_in = 0;
   }else{
-    *geographic_in = FALSE;
+    *geographic_in = 0;
   }
   if(verbose >= 2)
     if(*geographic_in)
@@ -568,7 +575,7 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
       return 4;
     }
    
-#else  /* 4.1.2 */
+#else  /* >=4.1.2 */
     if(verbose >= 2)
       fprintf(stderr,"ggrd_grdtrack_init: opening single file %s, GMT4 mode\n",grdfile);
     if(GMT_read_grd_info (grdfile,*grd)){
@@ -635,8 +642,8 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
   if(verbose > 2)
     fprintf(stderr,"ggrd_grdtrack_init: read %i headers OK, grids appear to be same size\n",*nz);
   if (fabs(*west - (*east)) < 5e-7) {	/* No subset asked for , west same as east*/
-    *west = (*grd)[0].x_min;
-    *east = (*grd)[0].x_max;
+    *west =  (*grd)[0].x_min;
+    *east =  (*grd)[0].x_max;
     *south = (*grd)[0].y_min;
     *north = (*grd)[0].y_max;
   }
@@ -1163,6 +1170,7 @@ int interpolate_seafloor_ages(GGRD_CPREC xt, GGRD_CPREC xp,
   int left, right,i;
   GGRD_CPREC f1,f2;
   double a1,a2;
+  static ggrd_boolean shift_to_pos_lon = FALSE;
 
   if(!ggrd->sf_init){
     /* 
@@ -1216,14 +1224,14 @@ int interpolate_seafloor_ages(GGRD_CPREC xt, GGRD_CPREC xp,
     f1 = ggrd->sf_old_f1;f2 = ggrd->sf_old_f2;
   }
   if(!ggrd_grdtrack_interpolate_tp((double)xt,(double)xp,
-				   (ggrd->ages+left),&a1,FALSE)){
+				   (ggrd->ages+left),&a1,FALSE,shift_to_pos_lon)){
     fprintf(stderr,"interpolate_seafloor_ages: interpolation error left\n");
     return -6;
   }
   if(a1 > ggrd->ages[left].fmaxlim[0]) /* limit to bandlim */
     a1 = ggrd->ages[left].bandlim;
   if(!ggrd_grdtrack_interpolate_tp((double)xt,(double)xp,
-				   (ggrd->ages+right),&a2,FALSE)){
+				   (ggrd->ages+right),&a2,FALSE,shift_to_pos_lon)){
     fprintf(stderr,"interpolate_seafloor_ages: interpolation error right\n");
     return -6;
   }

@@ -8,6 +8,7 @@ plots=${2-"1 2 3"}		# plot output modes
                                 # 1: geoid
                                 # 2: plate velocities
                                 # 3: tractions
+                                # 4: extract all velocities into grids
 
 #
 # options
@@ -21,8 +22,8 @@ dm=example_data/smean.31.m.ab   # density model, needs to be specified
 #
 # boundary conditions
 #
-tbc=-fs                	# -fs: free slip
-#tbc="-pvel example_data/pvel.sh.dat"         # empty: plates, or specific plate velocity file
+#tbc=-fs                	# -fs: free slip
+tbc="-pvel example_data/pvel.sh.dat"         # empty: plates, or specific plate velocity file
 
 #
 # viscosity file

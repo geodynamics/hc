@@ -816,7 +816,7 @@ void sh_read_spatial_data(struct sh_lms *exp, FILE *in, struct ggrd_gt *ggrd,my_
 	 interpolate from grd 
       */
       for(k=0;k < shps;k++){
-	if(!ggrd_grdtrack_interpolate_tp((double)xp[HC_THETA],(double)xp[HC_PHI],(ggrd+k),&dvalue,FALSE)){
+	if(!ggrd_grdtrack_interpolate_tp((double)xp[HC_THETA],(double)xp[HC_PHI],(ggrd+k),&dvalue,FALSE,FALSE)){
 	  fprintf(stderr,"sh_read_spatial_data: interpolation error grd %i, lon %g lat %g\n",
 		  k+1,PHI2LON(xp[HC_PHI]),THETA2LAT(xp[HC_THETA]));
 	  exit(-1);

@@ -72,7 +72,7 @@ struct ggrd_gt{
 
   unsigned char zlevels_are_negative;
 
-  unsigned char init,
+  unsigned char init,geographic_in,
     is_three;			/* is it a 3-D set? */
 
   double west,east,south,north;
