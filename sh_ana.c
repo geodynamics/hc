@@ -86,7 +86,7 @@ int main(int argc, char **argv)
       failed = ggrd_grdtrack_init_general(FALSE,argv[2],&cdummy,"-Lg",ggrd,TRUE,FALSE);
 #endif
       if(failed){
-	fprintf(stderr,"%s: error opening netcdf grd file\n",argv[0]);
+	fprintf(stderr,"%s: error opening netcdf grd %s file\n",argv[0],argv[2]);
 	exit(-1);
       }
       if(strcmp(argv[2],"vec_t.grd")==0){ /* vectors */
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
     sscanf(argv[4],"%i",&i);
     short_format = (hc_boolean)i;
   }
-  if((argc > 4)||(argc<=1)){
+  if((argc > 5)||(argc<=1)){
     fprintf(stderr,"usage: %s l_max [ivec, %i] [type, %i] [short_format, %i]\n",
 	    argv[0],ivec,type,short_format);
     fprintf(stderr,"        l_max: max order of expansion. if negative, will print out the spatial\n");
