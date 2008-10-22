@@ -161,10 +161,12 @@ struct ggrd_master{		/* master structure */
 
   struct ggrd_vel v;	/* 3D velocity grid structure */
 
-  /* time histtory */
+  /* time history */
   struct ggrd_t time_hist;	/* time history structure */
   /* temperature init */
-  struct ggrd_temp_init temp_init;
+  struct ggrd_temp_init temp;int use_temp;
+  /* composition init  */
+  struct ggrd_temp_init comp;int use_comp;
 };
 
 

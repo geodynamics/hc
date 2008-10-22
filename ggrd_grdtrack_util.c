@@ -30,7 +30,8 @@ void ggrd_init_master(struct ggrd_master *ggrd)
   ggrd->nage = 0;ggrd->age_bandlim = 200.;
   ggrd->sf_init = 0;
   ggrd->time_hist.init = 0;
-  ggrd->temp_init.init = 0;
+  ggrd->temp.init = 0;ggrd->use_temp = 0;
+  ggrd->comp.init = 0;ggrd->use_comp = 0;
   ggrd->time_hist.vstage_transition = 0.1; /* in Ma, transition */
   /* 3-D velocity settings  */
   ggrd_init_vstruc(ggrd);
