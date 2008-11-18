@@ -15,10 +15,8 @@ print the spherical harmonics version of a solution set
 
 
 */
-void hc_print_spectral_solution(struct hcs *hc,struct sh_lms *sol,
-				FILE *out,int sol_mode, 
-				hc_boolean binary, 
-				hc_boolean verbose)
+void hc_print_spectral_solution(struct hcs *hc,struct sh_lms *sol,FILE *out,int sol_mode, 
+				hc_boolean binary, hc_boolean verbose)
 {
   int i,os;
   static int ntype = 3;			/* three sets of solutions, r/pol/tor */

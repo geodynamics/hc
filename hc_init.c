@@ -24,10 +24,12 @@ void hc_init_parameters(struct hc_parameters *p)
   p->free_slip = TRUE;		/* free slip? */
   p->no_slip = FALSE;		/* no slip boundary condition? */
   p->platebc = FALSE;		/* plate velocities? */
-  p->compute_geoid = TRUE;	/* compute the geoid?  */
+  p->compute_geoid = 1;	/* compute the geoid? 1: surface 2: all layers */
   p->compute_geoid_correlations = FALSE;	/* compute the geoid
 						   correlation with
-						   refernece only   */
+						   refernece only
+						   (only works for
+						   surface) */
   p->dens_anom_scale = HC_D_LOG_V_D_LOG_D ;	/* default density anomaly scaling to
 						   go from PREM percent traveltime
 						   anomalies to density anomalies */
@@ -368,9 +370,10 @@ void hc_handle_command_line(int argc, char **argv,
       fprintf(stderr,"\t\tThe file (e.g. %s) is based on a DT expansion of cm/yr velocity fields.\n\n",HC_PVEL_FILE);
 
       fprintf(stderr,"solution procedure and I/O options:\n");
-      fprintf(stderr,"-ng\t\tdo not compute and print the geoid (%s)\n",
-	      hc_name_boolean(!p->compute_geoid));
-      fprintf(stderr,"-rg\tname\tcompute correlation of computed geoid with that in file \"name\",\n");
+      fprintf(stderr,"-ng\t\tdo not compute and print the geoid (%i)\n",
+	      p->compute_geoid);
+      fprintf(stderr,"-ag\t\tcompute geoid at all layer depths, as opposed to the surface only\n");
+      fprintf(stderr,"-rg\tname\tcompute correlation of surface geoid with that in file \"name\",\n");
       fprintf(stderr,"\t\tthis will not print out the geoid file, but only correlations (%s)\n",
 	      hc_name_boolean(p->compute_geoid_correlations));
       fprintf(stderr,"-pptsol\t\tprint pol[6] and tor[2] solution vectors (%s)\n",
@@ -400,7 +403,9 @@ void hc_handle_command_line(int argc, char **argv,
 						   parameters */
       hc_toggle_boolean(&p->print_pt_sol);
     }else if(strcmp(argv[i],"-ng")==0){	/* do not compute geoid */
-      hc_toggle_boolean(&p->compute_geoid);
+      p->compute_geoid = 0;
+    }else if(strcmp(argv[i],"-ag")==0){	/* compute geoid at all layers */
+      p->compute_geoid = 2;		
     }else if(strcmp(argv[i],"-rg")==0){	/* compute geoid correlations */
       hc_toggle_boolean(&p->compute_geoid_correlations);
       p->compute_geoid = TRUE;

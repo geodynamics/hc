@@ -438,7 +438,7 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
   FILE *din;
   float dz1,dz2;
   struct GRD_HEADER ogrd;
-  int i,j,one_or_zero,nx,ny,mx,my,nn;
+  int i,one_or_zero,nx,ny,mx,my,nn;
   char filename[BUFSIZ*2],*cdummy;
   static int gmt_init = FALSE;
   /* 

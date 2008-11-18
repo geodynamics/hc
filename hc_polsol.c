@@ -190,7 +190,7 @@ void hc_polsol(struct hcs *hc, 	/*
   //       SUBROUTINE EVPPOT (L,RATIO,PPOT):  OBTAINS PROPAGATOR FOR
   //          NON-EQUILIBRIUM POTENTIAL AND DERIVATIVE (RATIO IS R(I)/
   //          R(I+1), FOR PROPAGATION FROM R(I) TO R(I+1) AT L),
-  int i,i2,i3,i6,j,l,m,nih,nxtv,ivis,os,pos1,pos2,
+  int i,i2,i3,i6,j,l,m,nih,nxtv,ivis,os,pos1,pos2,gi,g1,g2,gic,
     prop_s1,prop_s2,nvisp1,nzero,n6,ninho,nl=0,ip1;
   int newprp,newpot,jpb,inho2,ibv,indx[3],a_or_b,ilayer,lmax,
     nprops_max;
@@ -809,10 +809,10 @@ void hc_polsol(struct hcs *hc, 	/*
   if(verbose)
     fprintf(stderr,"hc_polsol: assigned nl: %i nprop: %i nrad: %i layers\n",
 	    nl,hc->nprops,nrad);
-  if(nl != nrad+2){
+  if(nl != hc->nradp2){
     HC_ERROR("hc_polsol","nl not equal to nrad+2 at end of solution loop");
   }
-  if (compute_geoid){
+  if(compute_geoid){
     //
     //    Calculating geoid coefficients. The factor gf comes from
     //    * u(5) is in units of r0 * pi/180 / Ma (about 111 km/Ma) 
@@ -820,34 +820,54 @@ void hc_polsol(struct hcs *hc, 	/*
     //    * geoid is in units of meters
     //    
     if(verbose > 1)
-      fprintf(stderr,"hc_polsol: evaluating geoid\n");
+      fprintf(stderr,"hc_polsol: evaluating geoid%s\n",
+	      (compute_geoid == 1)?(" at surface"):(", all layers"));
+    /* 
+       select geoid solution 
+    */
     n6 = 4;
     //n6 = -iformat-1;
 
     /* first coefficients are zero  */
     clm[0] = clm[1] = 0.0;
-    sh_write_coeff(geoid,0,0,0,FALSE,clm); /* 0,0 */
-    sh_write_coeff(geoid,1,0,0,FALSE,clm); /* 1,0 */
-    sh_write_coeff(geoid,1,1,2,FALSE,clm); /* 1,1 */
+    switch(compute_geoid){
+    case 1:
+      g1 = hc->nrad+1;g2=hc->nradp2;	/* only surface */
+      break;
+    case 2:
+      g1 = 0;g2=hc->nradp2;		/* all layers */
+      break;
+    default:
+      fprintf(stderr,"hc_polsol: error, geoid = %i undefined\n",compute_geoid);
+      exit(-1);
+    }
+    for(gic=0,gi=g1;gi < g2;gi++,gic++){			  /* depth loop */
+      /* 
+	 first coefficients 
+      */
+      sh_write_coeff((geoid+gic),0,0,0,FALSE,clm); /* 0,0 */
+      sh_write_coeff((geoid+gic),1,0,0,FALSE,clm); /* 1,0 */
+      sh_write_coeff((geoid+gic),1,1,2,FALSE,clm); /* 1,1 */
 
-    os = (nrad+1) * 6 + n6;	/* select component */
-    for(l=2;l <= pol_sol[0].lmax;l++){
-      for(m=0;m <= l;m++){
-	if (m != 0){
-	  sh_get_coeff((pol_sol+os),l,m,2,FALSE,clm); /* internal convention */
-	  clm[0] *= hc->psp.geoid_factor;
-	  clm[1] *= hc->psp.geoid_factor;
-	  sh_write_coeff(geoid,l,m,2,FALSE,clm);
-	}else{			/* m == 0 */
-	  sh_get_coeff((pol_sol+os),l,m,0,FALSE,clm);
-	  clm[0] *= hc->psp.geoid_factor;
-	  sh_write_coeff(geoid,l,m,0,FALSE,clm);
+      os = gi * 6 + n6;	/* select component */
+      for(l=2;l <= pol_sol[0].lmax;l++){
+	for(m=0;m <= l;m++){
+	  if (m != 0){
+	    sh_get_coeff((pol_sol+os),l,m,2,FALSE,clm); /* internal convention */
+	    clm[0] *= hc->psp.geoid_factor;
+	    clm[1] *= hc->psp.geoid_factor;
+	    sh_write_coeff((geoid+gic),l,m,2,FALSE,clm);
+	  }else{			/* m == 0 */
+	    sh_get_coeff((pol_sol+os),l,m,0,FALSE,clm);
+	    clm[0] *= hc->psp.geoid_factor;
+	    sh_write_coeff((geoid+gic),l,m,0,FALSE,clm);
+	  }
 	}
       }
     }
     if(verbose > 1)
       fprintf(stderr,"hc_polsol: assigned geoid\n");
-  }
+  } /* end geoid */
   /* 
      free the local arrays 
   */

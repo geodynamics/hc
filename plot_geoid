@@ -1,0 +1,33 @@
+#!/bin/bash
+#
+# simple geoid plotting tester
+#
+
+makecpt -T-200/200/10 -Chaxby > geoid.cpt
+inc=-I1				# default res of sh_sysn
+reg=-Rg
+proj=-JQ180/7			# projection
+ann=-Ba60f30WeSn
+#
+# surface geoid
+hc 
+# expand on regular grid 
+cat geoid.ab | sh_syn 0 0 0 | xyz2grd $reg $inc -Gtop1.grd
+
+#
+# geoid all layers 
+#
+hc -ag 
+
+# bottom
+sh_extract_layer geoid.ab 1  | sh_syn 0 0 0 | xyz2grd $reg $inc -Gbot.grd
+# top
+sh_extract_layer geoid.ab -1 | sh_syn 0 0 0 | xyz2grd $reg $inc -Gtop2.grd
+
+
+for g in top1 top2 bot ;do
+    grdimage $reg -Cgeoid.cpt $g.grd  $proj $ann -P -K > $g.ps
+    pscoast -Dc -A50000 $reg $proj -O -K -W5 >> $g.ps
+    psscale -D3.5/-.5/3/.2h -Cgeoid.cpt -B50/:"[m]": -O >> $g.ps
+    echo $0: plotted to $g.ps
+done

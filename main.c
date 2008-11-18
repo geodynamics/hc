@@ -52,7 +52,7 @@ int main(int argc, char **argv)
   struct hcs *model;		/* main structure, make sure to initialize with 
 				   zeroes */
   struct sh_lms *sol_spectral=NULL, *geoid = NULL;		/* solution expansions */
-  int nsol,lmax,solved;
+  int nsol,lmax,solved,i;
   FILE *out;
   struct hc_parameters p[1]; /* parameters */
   char filename[HC_CHAR_LENGTH],file_prefix[10];
@@ -60,6 +60,8 @@ int main(int argc, char **argv)
 				   e.g. velocities */
   HC_PREC corr[2];			/* correlations */
   HC_PREC vl[4][3],v[4],dv;			/*  for viscosity scans */
+  static hc_boolean geoid_binary = FALSE;	/* type of geoid output */
+  static HC_CPREC unitya[1] = {1.0};
   /* 
      
   
@@ -110,7 +112,17 @@ int main(int argc, char **argv)
 
   */
   hc_init_main(model,SH_RICK,p);
-  nsol = (model->nrad+2) * 3;	/* number of solution (r,pol,tor)*(nlayer+2) */
+  nsol = (model->nradp2) * 3;	/* 
+				   number of solutions (r,pol,tor) * (nlayer+2) 
+
+				   total number of layers is nlayer +2, 
+
+				   because CMB and surface are added
+				   to intermediate layers which are
+				   determined by the spacing of the
+				   density model
+
+				*/
   if(p->free_slip)		/* maximum degree is determined by the
 				   density expansion  */
     lmax = model->dens_anom[0].lmax;
@@ -131,12 +143,16 @@ int main(int argc, char **argv)
   /* 
      make room for the spectral solution on irregular grid
   */
-  sh_allocate_and_init(&sol_spectral,nsol,lmax,model->sh_type,1,
+  sh_allocate_and_init(&sol_spectral,nsol,lmax,model->sh_type,HC_VECTOR,
 		       p->verbose,FALSE);
-  if(p->compute_geoid)	
-    /* make room for geoid solution */
+  if(p->compute_geoid == 1)
+    /* make room for geoid solution at surface */
     sh_allocate_and_init(&geoid,1,model->dens_anom[0].lmax,
-			 model->sh_type,0,p->verbose,FALSE);
+			 model->sh_type,HC_SCALAR,p->verbose,FALSE);
+  else if(p->compute_geoid == 2) /* all layers */
+    sh_allocate_and_init(&geoid,model->nradp2,model->dens_anom[0].lmax,
+			 model->sh_type,HC_SCALAR,p->verbose,FALSE);
+  
   switch(p->solver_mode){
   case HC_SOLVER_MODE_DEFAULT:
     /* 
@@ -177,6 +193,11 @@ int main(int argc, char **argv)
     fclose(out);
     if(p->compute_geoid){
       if(p->compute_geoid_correlations){
+	if(p->compute_geoid == 2){ /* check if all geoids were computed */
+	  fprintf(stderr,"%s: can only compute correlation for surface geoid, geoid = %i\n",
+		  argv[0],p->compute_geoid);
+	  exit(-1);
+	}
 	if(p->verbose)
 	  fprintf(stderr,"%s: correlation for geoid with %s\n",argv[0],
 		  p->ref_geoid_file);
@@ -188,9 +209,18 @@ int main(int argc, char **argv)
 	*/
 	sprintf(filename,"%s",HC_GEOID_FILE);
 	if(p->verbose)
-	  fprintf(stderr,"%s: writing geoid to %s\n",argv[0],filename);
-	out = ggrd_open(filename,"w","main");
-	hc_print_sh_scalar_field(geoid,out,FALSE,FALSE,p->verbose);
+	  fprintf(stderr,"%s: writing geoid to %s, %s\n",
+		  argv[0],filename,(p->compute_geoid == 1)?("at surface"):("all layers"));
+	out = ggrd_open(filename,"w","main");	
+	if(p->compute_geoid == 1) /* surface layer */
+	  hc_print_sh_scalar_field(geoid,out,FALSE,geoid_binary,p->verbose);
+	else{			/* all layers */
+	  for(i=0;i < model->nradp2;i++){
+	    sh_print_parameters_to_file((geoid+i),1,i,model->nradp2,
+					HC_Z_DEPTH(model->r[i]),out,FALSE,geoid_binary,p->verbose); 
+	    sh_print_coefficients_to_file((geoid+i),1,out,unitya,geoid_binary,p->verbose); 
+  	  }
+	}
 	fclose(out);
       }
     }
@@ -276,9 +306,10 @@ int main(int argc, char **argv)
 
   */
   sh_free_expansion(sol_spectral,nsol);
-  if(p->compute_geoid)
+  if(p->compute_geoid == 1)	/* only one layer */
     sh_free_expansion(geoid,1);
-
+  else if(p->compute_geoid == 2) /* all layers */
+    sh_free_expansion(geoid,model->nradp2);
   free(sol_spatial);
   if(p->verbose)
     fprintf(stderr,"%s: done\n",argv[0]);

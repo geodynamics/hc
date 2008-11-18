@@ -61,6 +61,10 @@ struct hc_dcmplx{			/* double precision */
 
 #define HC_PI M_PI
 
+
+#define HC_SCALAR 0
+#define HC_VECTOR 1
+
 /* 
 
 PREM
