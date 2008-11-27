@@ -1,0 +1,31 @@
+#!/bin/bash
+
+
+#out=orig/
+out=test/
+
+idir=$HOME/progs/src/seatree/python/data/hc/
+dfile=$idir/tomography/smean.31.m.ab
+vfile=$idir/viscosity/visc.sh08
+
+options="-dens $dfile -dshs -vf $vfile -ag"
+
+
+for i in 1 2 3 4;do
+    # free slip vel
+    hc $options -dsf scale.$i.dat
+    mv vel.sol.bin $out/vel.sol.$i.bin
+    mv geoid.ab $out/geoid.$i.ab
+    
+    # tractions 
+    hc $options -dsf scale.$i.dat -rtrac
+    mv rtrac.sol.bin $out/rtrac.sol.$i.bin
+
+
+    # plates 
+
+    hc $options -dsf scale.$i.dat -pvel $idir/pvelocity/nnr_nuvel1a.sh.dat
+    mv vel.sol.bin $out/pvel.sol.$i.bin
+    mv geoid.ab $out/pgeoid.$i.ab
+    
+done

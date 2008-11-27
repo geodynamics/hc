@@ -20,24 +20,28 @@ $Id: hc_matrix.c,v 1.10 2006/03/20 05:32:48 becker Exp $
 */
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
 #define HC_PREC double
 #define FALSE 0
 #define HC_EPS_PREC 5e-15
-void hc_ludcmp_3x3(HC_PREC [3][3],int *);
-void hc_lubksb_3x3(HC_PREC [3][3],int *,HC_PREC *);
-void main(void){
+void hc_ludcmp_3x3(HC_PREC [3][3],int,int *);
+void hc_lubksb_3x3(HC_PREC [3][3],int,int *,HC_PREC *);
+int main(void){
   HC_PREC amat[3][3],bvec[3];int i,j,indx[3];
   char fstring[10];
   /* read in A from stdin */
-  for(i=0;i<3;i++)
-    for(j=0;j<3;j++)
+  int n =2;
+
+  for(i=0;i<n;i++)
+    for(j=0;j<n;j++)
     fscanf(stdin,"%lf",&amat[i][j]);
   /* read in x from stdin */
-  for(i=0;i<3;i++)
+  for(i=0;i<n;i++)
     fscanf(stdin,"%lf",&bvec[i]);
   /* solve A x = b, where b will be modified  */
-  hc_ludcmp_3x3(amat,indx);hc_lubksb_3x3(amat,indx,bvec);
-  for(i=0;i<3;i++)fprintf(stdout,"%g\n",bvec[i]);
+  hc_ludcmp_3x3(amat,n,indx);hc_lubksb_3x3(amat,n,indx,bvec);
+  for(i=0;i<n;i++)fprintf(stdout,"%g\n",bvec[i]);
+  return 0;
 }
 #else
 /* 
@@ -49,29 +53,36 @@ void main(void){
 #endif
 
 #define NR_TINY 1.0e-20;
+/* 
 
-void hc_ludcmp_3x3(HC_PREC a[3][3],int *indx)
+   matrix is always 3 x 3 , solution is for full system for n == 3,
+   for upper 2 x 2 only for n = 2
+
+ */
+void hc_ludcmp_3x3(HC_PREC a[3][3],int n,int *indx)
 {
   int i,imax=0,j,k;
   HC_PREC big,dum,sum,temp;
   HC_PREC vv[3];
   
-  for (i=0;i < 3;i++) {
+  for (i=0;i < n;i++) {
     big=0.0;
-    for (j=0;j < 3;j++)
+    for (j=0;j < n;j++)
       if ((temp = fabs(a[i][j])) > big) 
 	big=temp;
     if (fabs(big) < HC_EPS_PREC) {
       fprintf(stderr,"hc_ludcmp_3x3: singular matrix in routine, big: %g\n",
 	      big);
-      //hc_print_3x3(a,stderr);
-      for(j=0;j<3;j++)
-	fprintf(stderr,"%g %g %g\n",a[j][0],a[j][1],a[j][2]);
+      for(j=0;j <n;j++){
+	for(k=0;k<n;k++)
+	  fprintf(stderr,"%g ",a[j][k]);
+	fprintf(stderr,"\n");
+      }
       exit(-1);
     }
     vv[i]=1.0/big;
   }
-  for (j=0;j < 3;j++) {
+  for (j=0;j < n;j++) {
     for (i=0;i < j;i++) {
       sum = a[i][j];
       for (k=0;k < i;k++) 
@@ -79,7 +90,7 @@ void hc_ludcmp_3x3(HC_PREC a[3][3],int *indx)
       a[i][j]=sum;
     }
     big=0.0;
-    for (i=j;i < 3;i++) {
+    for (i=j;i < n;i++) {
       sum=a[i][j];
       for (k=0;k < j;k++)
 	sum -= a[i][k] * a[k][j];
@@ -90,7 +101,7 @@ void hc_ludcmp_3x3(HC_PREC a[3][3],int *indx)
       }
     }
     if (j != imax) {
-      for (k=0;k < 3;k++) {
+      for (k=0;k < n;k++) {
 	dum = a[imax][k];
 	a[imax][k]=a[j][k];
 	a[j][k]=dum;
@@ -102,17 +113,20 @@ void hc_ludcmp_3x3(HC_PREC a[3][3],int *indx)
       a[j][j] = NR_TINY;
     if (j != 2) {
       dum=1.0/(a[j][j]);
-      for (i=j+1;i < 3;i++) 
+      for (i=j+1;i < n;i++) 
 	a[i][j] *= dum;
     }
   }
 }
+
 #undef NR_TINY
-void hc_lubksb_3x3(HC_PREC a[3][3], int *indx, HC_PREC *b)
+void hc_lubksb_3x3(HC_PREC a[3][3], int n,int *indx, HC_PREC *b)
 {
   int i,ii=0,ip,j;
   HC_PREC sum;
-  for (i=0;i < 3;i++) {
+  int nm1;
+  nm1 = n - 1;
+  for (i=0;i < n;i++) {
     ip = indx[i];
     sum = b[ip];
     b[ip]=b[i];
@@ -123,9 +137,9 @@ void hc_lubksb_3x3(HC_PREC a[3][3], int *indx, HC_PREC *b)
       ii = i+1;
     b[i]=sum;
   }
-  for (i=2;i>=0;i--) {
+  for (i=nm1;i>=0;i--) {
     sum=b[i];
-    for (j=i+1;j < 3;j++) 
+    for (j=i+1;j < n;j++) 
       sum -= a[i][j]*b[j];
     b[i] = sum/a[i][i];
   }

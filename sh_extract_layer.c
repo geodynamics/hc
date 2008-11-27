@@ -13,7 +13,9 @@ int main(int argc, char **argv)
   FILE *in;
   struct sh_lms *exp=NULL;
   HC_PREC unitya[3] = {1.0,1.0,1.0},*zdepth;
-  hc_boolean binary = FALSE, verbose = TRUE, short_format = FALSE;
+  hc_boolean binary = FALSE, verbose = TRUE, 
+    short_format = FALSE,
+    short_format_output = FALSE;
   /* 
      deal with parameters
   */
@@ -23,12 +25,20 @@ int main(int argc, char **argv)
   case 3:
     sscanf(argv[2],"%i",&ilayer);
     break;
+  case 4:
+    sscanf(argv[2],"%i",&ilayer);
+    sscanf(argv[3],"%i",&i);
+    if(i)
+      short_format_output = TRUE;
+    break;
+
   default:
-    fprintf(stderr,"%s: usage\n\n%s value.ab layer\n\n",argv[0],argv[0]);
+    fprintf(stderr,"%s: usage\n\n%s value.ab layer [short_format, %i]\n\n",argv[0],argv[0],short_format_output);
     fprintf(stderr,"extracts one SH layer (e.g. for use in sh_syn) from a (long format, hc) spherical harmonic file value.ab\n");
     fprintf(stderr,"layer: 1...nset\n");
     fprintf(stderr,"\tif ilayer= 1..nset, will print one layer\n");
     fprintf(stderr,"\t          -1, will select nset\n");
+    fprintf(stderr,"if short_format=1, will use short format output\n");
     exit(-1);
     break;
   }
@@ -70,7 +80,7 @@ int main(int argc, char **argv)
 	 output will remove the layer number information 
       */
       sh_print_parameters_to_file((exp+i),shps,ilayer,1,zdepth[i],
-				  stdout,short_format,FALSE,verbose);
+				  stdout,short_format_output,FALSE,verbose);
       sh_print_coefficients_to_file((exp+i),shps,stdout,unitya,FALSE,verbose);
     }
   }

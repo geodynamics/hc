@@ -193,7 +193,7 @@ void hc_polsol(struct hcs *hc, 	/*
   int i,i2,i3,i6,j,l,m,nih,nxtv,ivis,os,pos1,pos2,gi,g1,g2,gic,
     prop_s1,prop_s2,nvisp1,nzero,n6,ninho,nl=0,ip1;
   int newprp,newpot,jpb,inho2,ibv,indx[3],a_or_b,ilayer,lmax,
-    nprops_max;
+    nprops_max,jsol;
   HC_PREC *xprem;
   double *b,du1,du2,el,rnext,drho,dadd;
   double amat[3][3],bvec[3],u[4],poten[2],unew[4],potnew[2],clm[2];
@@ -768,17 +768,22 @@ void hc_polsol(struct hcs *hc, 	/*
 	/* 
 	   solve A x = b, where b will be modified  
 	*/
-	hc_ludcmp_3x3(amat,indx);
-	hc_lubksb_3x3(amat,indx,bvec);
-
+	if(l == 1){
+	  jsol = 2;		/* 2x2 solution */
+	}else{
+	  jsol = 3;		/* 3x3 solution */
+	}
+	hc_ludcmp_3x3(amat,jsol,indx);
+	hc_lubksb_3x3(amat,jsol,indx,bvec);
 	/* 
 	   assign solution 
 	*/
 	for(os=ilayer=0;ilayer < nl;ilayer++,os+=6){
 	  for(i6=0;i6 < 6;i6++){
 	    /* sum up contributions from vector solution */
-	    for(i2=1,j=0;j < 3;j++,i2++)
+	    for(i2=1,j=0;j < jsol;j++,i2++){
 	      u3[ilayer].u[i6][0] -= bvec[j]*u3[ilayer].u[i6][i2];
+	    }
 	    //fprintf(stderr,"%i %i %i %i %g\n",l,m,ilayer,i6, u3[ilayer].u[i6][0]);
 	    /* 
 	       adding vector components to spherical harmonic solution 
@@ -788,6 +793,14 @@ void hc_polsol(struct hcs *hc, 	/*
 			   &u3[ilayer].u[i6][0]);
 	  }
  	} /* end layer loop */
+
+	/* 
+
+	   chemical layering (e.g. phase boundaries) go here
+
+	*/
+	
+
 	if((!a_or_b) && (m != 0))
 	  //    IF S(LM) IS REQUIRED, GO BACK AND CALCULATE IT
 	  a_or_b = 1;

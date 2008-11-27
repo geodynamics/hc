@@ -53,8 +53,8 @@ void hc_read_geoid(struct hc_parameters *);
 /* hc_input.c */
 void hc_read_sh_solution(struct hcs *, struct sh_lms **, FILE *, unsigned short, unsigned short);
 /* hc_matrix.c */
-void hc_ludcmp_3x3(double [3][3], int *);
-void hc_lubksb_3x3(double [3][3], int *, double *);
+void hc_ludcmp_3x3(double [3][3], int, int *);
+void hc_lubksb_3x3(double [3][3], int, int *, double *);
 /* hc_misc.c */
 void hc_dvecalloc(double **, int, char *);
 void hc_svecalloc(float **, int, char *);
