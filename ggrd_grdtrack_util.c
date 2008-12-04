@@ -446,7 +446,10 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
   */
   *edgeinfo = (struct GMT_EDGEINFO *)
     GMT_memory (VNULL, (size_t)1, sizeof(struct GMT_EDGEINFO), "ggrd_grdtrack_init");
-
+  /* init with nonsense to avoid compiler warning */
+  ogrd.x_min = ogrd.y_min =ogrd.x_max = ogrd.y_max = -100;
+  ogrd.x_inc = ogrd.y_inc = -1;
+  ogrd.node_offset = 0;ogrd.nx = ogrd.ny = -1;
 #ifdef USE_GMT4
 
   if(!gmt_init){
