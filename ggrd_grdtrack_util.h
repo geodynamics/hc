@@ -19,7 +19,7 @@ void GMT_grdio_init (void);
 #include <string.h>
 #include <math.h>
 
-#ifdef USE_GMT4
+#ifndef USE_GMT3
 #define GGRD_GMT_GLOBAL_STRING "-fg"
 #define GGRD_GMT_XPERIODIC_STRING "-fx"
 #else
@@ -67,8 +67,8 @@ void ggrd_init_master(struct ggrd_master *);
 int ggrd_init_thist_from_file(struct ggrd_t *,char *,ggrd_boolean ,ggrd_boolean);
 int ggrd_read_vel_grids(struct ggrd_master *, double, unsigned short, unsigned short, char *);
 
-#ifdef USE_GMT4
-/* GMT4.1.2 */
+#ifndef USE_GMT3
+/* GMT >4.1.2 */
 ggrd_boolean ggrd_grdtrack_interpolate(double *, ggrd_boolean , struct GRD_HEADER *, float *,
 					struct GMT_EDGEINFO *, int, float *, int ,	double *,ggrd_boolean,
 					struct GMT_BCR *);

@@ -1,8 +1,8 @@
 INSTALLATION
 
 The code should compile on any basic UNIX/Linux system with the GMT
-tools and libraries installed. See the Makefile for comments and what
-to modify. 
+tools (by default, version > 4.2.1) and libraries installed. See the
+Makefile for comments and what to modify.
 
 
 What is described below is the hc Hager & O'Connell (1981) forward
@@ -33,12 +33,10 @@ e.g.
 Also, the Makefile uses the commonly defined compiler variables CC,
 F77, CFLAGS, LD, and LDFLAGS.
 
-One common problem is the interface of the ggrd_ subroutines with
-GMT. By default, the Makefile is set up for the old syntac of GMT
-version 3.4.5. The other alternative is to use 4.1.2 and upward (note
-that there were changes between 4.0 and 4.1.2). If you have GMT newer
-or equal to 4.1.2, uncomment the two corresponding lines in the
-Makefile.
+By default, the Makefile is set up for the new syntax of GMT version
+4.1.2 and higher. The alternative is to use GMT3, which can be done by
+defining -DUSE_GMT3 and modifying the two corresponding lines in the
+Makefile.include.
 
 With all things set up, you should be able to type 
 

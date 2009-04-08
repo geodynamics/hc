@@ -77,7 +77,7 @@ struct ggrd_gt{
 
   double west,east,south,north;
 
-#ifdef USE_GMT4
+#ifndef USE_GMT3
   struct GMT_BCR loc_bcr[1];
 #else
   struct BCR loc_bcr[1];

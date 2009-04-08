@@ -399,7 +399,7 @@ void ggrd_find_spherical_vel_from_rigid_cart_rot(double *vr,
 initialize
 
 */
-#ifdef USE_GMT4
+#ifndef USE_GMT3
 int ggrd_grdtrack_init(double *west, double *east,double *south, double *north, 
 			/* geographic bounds,
 			   set all to zero to 
@@ -450,7 +450,7 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
   ogrd.x_min = ogrd.y_min =ogrd.x_max = ogrd.y_max = -100;
   ogrd.x_inc = ogrd.y_inc = -1;
   ogrd.node_offset = 0;ogrd.nx = ogrd.ny = -1;
-#ifdef USE_GMT4
+#ifndef USE_GMT3
 
   if(!gmt_init){
     /* this should be OK as is. init only once globally */
@@ -564,14 +564,14 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
     GMT_memory (*edgeinfo, (size_t)(*nz), sizeof(struct GMT_EDGEINFO), "ggrd_grdtrack_init");
   if(verbose >= 2)
     fprintf(stderr,"ggrd_grdtrack_init: mem alloc ok\n");
-#ifdef USE_GMT4  
+#ifndef USE_GMT3  
   /* init the header */
   GMT_grd_init (*grd,0,&cdummy,FALSE);
 #endif
   if(*nz == 1){
     if(verbose >= 2)
       
-#ifndef USE_GMT4		/* old */
+#ifdef USE_GMT3		/* old */
       fprintf(stderr,"ggrd_grdtrack_init: opening single file %s, GMT3 mode\n",grdfile);
     if (GMT_cdf_read_grd_info (grdfile,(*grd))) {
       fprintf (stderr, "%s: error opening file %s\n", 
@@ -592,7 +592,7 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
     /* loop through headers for testing purposess */
     for(i=0;i<(*nz);i++){
       sprintf(filename,"%s.%i.grd",grdfile,i+1);
-#ifndef USE_GMT4
+#ifdef USE_GMT3
       if (GMT_cdf_read_grd_info (filename, (*grd+i))) {
 	fprintf (stderr, "%s: error opening file %s (-D option was used)\n", 
 		 "ggrd_grdtrack_init", filename);
@@ -697,7 +697,7 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
     /* 
        read the grd files
     */
-#ifdef USE_GMT4
+#ifndef USE_GMT3
     /* GMT 4 */
     if (GMT_read_grd (filename,(*grd+i), (*f+i* (*mm)), 
 		      *west, *east, *south, *north, 
@@ -726,7 +726,7 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
 	 all grids as long as they have the same dimensions
 
       */
-#ifdef USE_GMT4
+#ifndef USE_GMT3
       GMT_bcr_init ((*grd+i), pad, bilinear,1.0,loc_bcr);
 #else
       my_GMT_bcr_init ((*grd+i), pad, bilinear,loc_bcr);
@@ -775,7 +775,7 @@ void ggrd_print_layer_avg(float *x,float *z,int nx, int ny, int m,FILE *out,int 
 interpolate value 
 
  */
-#ifdef USE_GMT4
+#ifndef USE_GMT3
 ggrd_boolean ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degrees/km */
 					ggrd_boolean three_d, /* use 3-D inetrpolation or 2-D? */
 					struct GRD_HEADER *grd, /* grd information */
@@ -847,7 +847,7 @@ ggrd_boolean ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degrees
        
        
     */
-#ifdef USE_GMT4
+#ifndef USE_GMT3
     val1 = GMT_get_bcr_z((grd+i1), in[0], in[1], (f+i1*mm), (edgeinfo+i1),loc_bcr);
     val2 = GMT_get_bcr_z((grd+i2), in[0], in[1], (f+i2*mm), (edgeinfo+i2),loc_bcr);
 #else
@@ -863,7 +863,7 @@ ggrd_boolean ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degrees
     *value += fac2 * val2;
   }else{
     /* single layer */
-#ifdef USE_GMT4
+#ifndef USE_GMT3
     *value = GMT_get_bcr_z(grd, in[0], in[1], f, edgeinfo,loc_bcr);
 #else
     ggrd_global_bcr_assign(loc_bcr);
@@ -1456,7 +1456,7 @@ float ggrd_gt_mean(float *x,int n)
     mean += x[i];
   return mean/(float)n;
 }
-#ifndef USE_GMT4
+#ifdef USE_GMT3
 /* 
 
 this is aweful, but works?

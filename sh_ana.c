@@ -80,7 +80,7 @@ int main(int argc, char **argv)
       sscanf(argv[2],"%i",&ivec);
     else{
       /* GMT grd file input */
-#ifdef USE_GMT4      
+#ifndef USE_GMT3      
       failed = ggrd_grdtrack_init_general(FALSE,argv[2],&cdummy,"-fg",ggrd,TRUE,FALSE);
 #else
       failed = ggrd_grdtrack_init_general(FALSE,argv[2],&cdummy,"-Lg",ggrd,TRUE,FALSE);
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
 	exit(-1);
       }
       if(strcmp(argv[2],"vec_t.grd")==0){ /* vectors */
-#ifdef USE_GMT4      
+#ifndef USE_GMT3      
 	failed = ggrd_grdtrack_init_general(FALSE,"vec_p.grd",&cdummy,"-fg",(ggrd+1),TRUE,FALSE);
 #else
 	failed = ggrd_grdtrack_init_general(FALSE,"vec_p.grd",&cdummy,"-Lg",(ggrd+1),TRUE,FALSE);

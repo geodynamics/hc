@@ -2,7 +2,7 @@
 #
 # create a tar file 
 #
-ver=${1-0.1.6}
+ver=${1-1.0}
 date=`date '+%m%d%y'`
 
 tf=$HOME/tmp/hc-$ver.$date.tgz 
