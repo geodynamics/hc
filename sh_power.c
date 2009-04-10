@@ -40,12 +40,31 @@ int main(int argc, char **argv)
   HC_PREC fac[3] = {1.,1.,1.},zlabel;
   struct sh_lms *exp;
   if(argc>1){
-    sscanf(argv[1],"%i",&i);
-    if(i)
-      short_format = TRUE;
+    if((strcmp(argv[1],"-h")==0)||(strcmp(argv[1],"--help")==0)||(strcmp(argv[1],"-help")==0)){
+      fprintf(stderr,"usage: cat ab.sh_ana | %s [short_format, 0]\n", argv[0]);
+      fprintf(stderr,"read in a spherical harmonic expansion in  Dahlen and Tromp normalization\n");
+      fprintf(stderr, "and computer power per degree and unit area\n\n");
+      fprintf(stderr,"if short format is 0, will expect\n");
+      fprintf(stderr,"  type lmax shps ilayer nset zlabel ivec\n");
+      fprintf(stderr,"  A-00 B-00\n");
+      fprintf(stderr,"  A-10 B-10\n");
+      fprintf(stderr,"  ...\n");
+      fprintf(stderr,"format.\n\n");
+      fprintf(stderr,"if short format is set, will expect\n");
+      fprintf(stderr,"  lmax\n");
+      fprintf(stderr,"  A-00 B-00\n");
+      fprintf(stderr,"  A-10 B-10\n");
+      fprintf(stderr,"  ...\n");
+      fprintf(stderr,"format.\n");
+      exit(-1);
+    }else{
+      sscanf(argv[1],"%i",&i);
+      if(i)
+        short_format = TRUE;
+    }
   }
-  fprintf(stderr,"%s: awaiting spherical harmonics expansion (%s) from stdin\n",
-	  argv[0],short_format ? "short format" : "long format");
+  fprintf(stderr,"%s: awaiting spherical harmonics expansion (%s) from stdin (use %s -h for help)\n",
+	  argv[0],short_format ? "short format" : "long format",argv[0]);
   while(sh_read_parameters_from_file(&type,&lmax,&shps,&ilayer,&nset,
 				     &zlabel,&ivec,stdin,short_format,
 				     binary,verbose)){
