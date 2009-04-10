@@ -14,24 +14,39 @@ the README there.
 The Makefile assumes that the following environment variables are
 predefined: 
 
-1) ARCH: should be the architecture you are compiling on, e.g. set with
-
-		setenv ARCH `uname -m | gawk '{print(tolower($1))}'`
-
-      for example, i686 for Intel
-
-
-2) GMTHOME: needs to point to the base directory of the GMT installation,
+1) GMTHOME: needs to point to the base directory of the GMT installation,
 e.g.
 	/usr/local/src/GMTdev/GMT3.4.5/
-	
 
-3) NETCDFHOME: for the netcdf libraries, should be e.g.
+if you installed GMT yourself, or
+
+        /usr/lib/gmt
+
+if you installed GMT with a package manager.
+
+2) NETCDFHOME: for the netcdf libraries.  This could be e.g.
 
    /usr/local/src/netcdf-3.5.0/
 
+or
+
+   /usr
+
+3) ARCH: If you like, you can put the binaries in different
+   directories depending on your architecture.  This may be useful is
+   your directories are NFS mounted on different machines.  One way is
+   to use the output of uname
+
+     setenv ARCH `uname -m | gawk '{print(tolower($1))}'`      # sh/tcsh
+     export ARCH=`uname -m | gawk '{print(tolower($1))}'`      # bash
+
+   On a 32 bit Intel machine, this will put the binaries in bin/i686.
+
+   If ARCH is not set, then the binaries will go in bin/.
+
 Also, the Makefile uses the commonly defined compiler variables CC,
-F77, CFLAGS, LD, and LDFLAGS.
+F90, CFLAGS, LD, and LDFLAGS.  So to make static executables, set
+LDFLAGS="-static"
 
 By default, the Makefile is set up for the new syntax of GMT version
 4.1.2 and higher. The alternative is to use GMT3, which can be done by
