@@ -63,10 +63,8 @@ to compile the programs.
 
 HC CODE usage
 
-Described in the help page that is displayed for "hc -h" as below. See
-also the benchmark scripts in cig_bench.tgz. This tar file will expand
-into a cig subdirectory particularly "run_benchmark" there shows how
-to run all CIG benchmark tests.
+Described in the help page that is displayed for "hc -h" as below. 
+
 
 
 >>>
