@@ -2,13 +2,21 @@
 #
 # create a directory with the binaries.  It invokes make, so it needs
 # NETCDFHOME and GMTHOME set.  ARCH should not be set.
+#
+# On Linux and cygwin, invoke as
+#
+#   LDFLAGS=-static ./make_binary_package
+#
+# On the Mac, you need to delete the dynamic libraries in
+# ~/netcdf/lib/.  This forces the linker to use the static libraries.
+# Then you can build static libraries with "./make_binary_package"
 
-ver=${1-1.0}
-date=`date '+%m%d%y'`
+ver=1.0
 
-dest=../hc-$ver.$date
+dest=../hc-$ver
 
-CFLAGS="-O2" LDFLAGS="-static" make all
+make clean
+CFLAGS="-O2" make all
 strip bin/*
 
 mkdir "$dest"
