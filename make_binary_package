@@ -14,7 +14,7 @@ strip bin/*
 mkdir "$dest"
 cp README.TXT calc_vel_and_plot "$dest"
 mkdir "$dest/example_data" "$dest/prem" "$dest/bin"
-cp bin/* "$dest"
+cp bin/* "$dest/bin"
 cp example_data/* "$dest/example_data"
 cp prem/* "$dest/prem"
 mkdir "$dest/hcplates"
