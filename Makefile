@@ -112,13 +112,12 @@ HC_OBJS_DBG = $(ODIR)/sh_exp.dbg.o $(ODIR)/sh_model.dbg.o $(ODIR)/hc_input.dbg.o
 HC_LIBS = $(ODIR)/libhc.a 
 HC_LIBS_DEBUG =  $(ODIR)/libhc.dbg.a
 
-LIB_FLAGS = -L$(HOME)/progs/lib/$(ARCH)/ \
-	$(HEAL_LIB_FLAGS) $(RICK_LIB_FLAGS) \
+LIB_FLAGS = $(HEAL_LIB_FLAGS) $(RICK_LIB_FLAGS) \
 	$(GGRD_LIB_FLAGS) \
 	-L$(ODIR)/
 
 #
-INC_FLAGS = -I$(HOME)/progs/include/  $(HEAL_INC_FLAGS) \
+INC_FLAGS =  $(HEAL_INC_FLAGS) \
 	$(RICK_INC_FLAGS) $(GGRD_INC_FLAGS) 
 #
 # includes 

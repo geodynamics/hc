@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # create a directory with the binaries.  It invokes make, so it needs
-# NETCDFHOME and GMTHOME set.
+# NETCDFHOME and GMTHOME set.  ARCH should not be set.
 
 ver=${1-1.0}
 date=`date '+%m%d%y'`
@@ -9,12 +9,12 @@ date=`date '+%m%d%y'`
 dest=../hc-$ver.$date
 
 CFLAGS="-O2" LDFLAGS="-static" make all
-strip bin/* bin/*/*
+strip bin/*
 
 mkdir "$dest"
 cp README.TXT calc_vel_and_plot "$dest"
-mkdir "$dest/example_data" "$dest/prem"
-cp -a bin/ "$dest"
+mkdir "$dest/example_data" "$dest/prem" "$dest/bin"
+cp bin/* "$dest"
 cp example_data/* "$dest/example_data"
 cp prem/* "$dest/prem"
 mkdir "$dest/hcplates"
