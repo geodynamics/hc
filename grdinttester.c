@@ -12,7 +12,7 @@ int main(int argc, char **argv)
 {
   struct ggrd_gt g1[1],g2[1];
   char char_dummy;
-  float x,y,x1,y1,dx,dy,rad,rad_km;
+  float x,y,x1,y1,dx,dy,rad_km;
   int n;
   double *z1,*z2;
   z1=(double *)malloc(sizeof(double));
