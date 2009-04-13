@@ -18,11 +18,11 @@ include Makefile.include
 #
 #
 # object file directory
-ODIR = ../hc/objects/$(ARCH)/
+ODIR = objects/$(ARCH)/
 #
 #
 # binary directory
-BDIR = ../hc/bin/$(ARCH)/
+BDIR = bin/$(ARCH)/
 
 # include files
 OINCS = hc.h hc_filenames.h sh.h hc_constants.h
@@ -223,20 +223,17 @@ hc_auto_proto.h:
 	grep -v "int main(" > hc_auto_proto.h
 
 dirs:
-	if [ ! -s ../hc/ ]; then\
-		mkdir ../hc/;\
+	if [ ! -s objects/ ]; then\
+		mkdir objects;\
 	fi;
-	if [ ! -s ../hc/objects/ ]; then\
-		mkdir ../hc/objects;\
+	if [ ! -s objects/$(ARCH)/ ]; then\
+		mkdir objects/$(ARCH);\
 	fi;
-	if [ ! -s ../hc/objects/$(ARCH)/ ]; then\
-		mkdir ../hc/objects/$(ARCH);\
-	fi;
-	if [ ! -s ../hc/bin/ ];then\
-		mkdir ../hc/bin;\
+	if [ ! -s bin/ ];then\
+		mkdir bin;\
 	fi;\
-	if [ ! -s ../hc/bin/$(ARCH) ];then\
-		mkdir ../hc/bin/$(ARCH);\
+	if [ ! -s bin/$(ARCH) ];then\
+		mkdir bin/$(ARCH);\
 	fi
 
 clean:

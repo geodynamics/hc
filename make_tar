@@ -13,7 +13,7 @@ mkdir $HOME/tmp/hc/example_data
 mkdir $HOME/tmp/hc/prem/
 mkdir $HOME/tmp/hc/hcplates/
 
-cp  *.c *.h Makefile Makefile.include  README.TXT INSTALLATION.TXT calc_vel_and_plot \
+cp  *.c *.h Makefile Makefile.include  README.TXT calc_vel_and_plot \
      $HOME/tmp/hc
 cp example_data/* $HOME/tmp/hc/example_data/
 cp prem/prem* $HOME/tmp/hc/prem/

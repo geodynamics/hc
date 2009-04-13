@@ -1,0 +1,22 @@
+#!/bin/bash
+#
+# create a directory with the binaries.  It invokes make, so it needs
+# NETCDFHOME and GMTHOME set.
+
+ver=${1-1.0}
+date=`date '+%m%d%y'`
+
+dest=../hc-$ver.$date
+
+CFLAGS="-O2" LDFLAGS="-static" make all
+strip bin/* bin/*/*
+
+mkdir "$dest"
+cp README.TXT calc_vel_and_plot "$dest"
+mkdir "$dest/example_data" "$dest/prem"
+cp -a bin/ "$dest"
+cp example_data/* "$dest/example_data"
+cp prem/* "$dest/prem"
+mkdir "$dest/hcplates"
+cp hcplates/data hcplates/enes hcplates/parameter_file.default hcplates/plates_ids.ixz hcplates/point.j hcplates/README hcplates/run_example.mk "$dest/hcplates"
+
