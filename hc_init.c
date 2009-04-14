@@ -339,6 +339,14 @@ void hc_handle_command_line(int argc, char **argv,
       fprintf(stderr,"Based on code by Brad Hager, Richard O'Connell, and Bernhard Steinberger.\n");
       fprintf(stderr,"This version by Thorsten Becker and Craig O'Neill\n\n");
       
+      fprintf(stderr,"usage example:\n\n");
+      fprintf(stderr,"bin/hc -vf visc.D -vvv\n\n");
+      fprintf(stderr,"compute mantle flow solution for default settings (e.g. density input), viscosity profile visc.D, and\n");
+      fprintf(stderr,"provide lots of output. Default setting is quiet operation\n\n");
+      fprintf(stderr,"See README.TXT in the installation directory for example for how to plot output, and\n");
+      fprintf(stderr,"http://geosys.usc.edu/projects/seatree/ for a graphical user interface.\n\n");
+
+
       fprintf(stderr,"density anomaly options:\n");
       fprintf(stderr,"-dens\tname\tuse name as a SH density anomaly model (%s)\n",
 	      p->dens_filename);

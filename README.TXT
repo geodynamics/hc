@@ -10,7 +10,6 @@ flow and geoid computation. For plate velocity inversions following
 the Ricard & Vigny (1989) method, see the hcplates subdirectory and
 the README there.
 
-
 The Makefile assumes that the following environment variables are
 predefined: 
 
@@ -64,13 +63,12 @@ to compile the programs.
 HC CODE usage
 
 Described in the help page that is displayed for "hc -h" as below. 
-
-
+Also see http://geosys.usc.edu/projects/seatree/ for a graphical user
+interface, and example plotting scripts as provided below.
 
 >>>
 
-> hc -help
-hc - perform Hager & O'Connell flow computation
+bin/hc - perform Hager & O'Connell flow computation
 
 This code can compute velocities, tractions, and geoid for simple density distributions
 and plate velocities using the semi-analytical approach of Hager & O'Connell (1981).
@@ -78,32 +76,50 @@ This particular implementation illustrates one possible way to combine the HC so
 Based on code by Brad Hager, Richard O'Connell, and Bernhard Steinberger.
 This version by Thorsten Becker and Craig O'Neill
 
+usage example:
+
+bin/hc -vf visc.D -vvv
+
+compute mantle flow solution for default settings (e.g. density input), viscosity profile visc.D, and
+provide lots of output. Default setting is quiet operation
+
+See README.TXT in the installation directory for example for how to plot output, and
+http://geosys.usc.edu/projects/seatree/ for a graphical user interface.
+
 density anomaly options:
--dens   name    use name as a SH density anomaly model (dens.sh.dat)
-                All density anomalies are in units of 1% of PREM, all SH coefficients in Dahlen & Tromp convention.
--dshs           use the short, Becker & Boschi (2002) format for the SH density model (OFF)
--ds             density scaling factor (0.2)
--dsf    file    read depth dependent density scaling from file
-                (overrides -ds, OFF), use pdens.py to edit
+-dens	name	use name as a SH density anomaly model (dens.sh.dat)
+		All density anomalies are in units of 1% of PREM, all SH coefficients
+		in Dahlen & Tromp convention.
+-dshs		use the short, Becker & Boschi (2002) format for the SH density model (OFF)
+-ds		density scaling factor (0.2)
+-dnp		do not scale density anomalies with PREM but rather mean density (OFF)
+-dsf	file	read depth dependent density scaling from file
+		(overrides -ds, OFF), use pdens.py to edit
 
 Earth model options:
--prem   name    set Earth model to name (/home/walter/becker/progs/src/hc-svn/prem/prem.dat)
--vf     name    viscosity structure filename (visc.dat), use pvisc.py to edit
-                This file is in non_dim_radius viscosity[Pas] format
+-prem	name	set Earth model to name (prem/prem.dat)
+-vf	name	viscosity structure filename (visc.dat), use pvisc.py to edit
+		This file is in non_dim_radius viscosity[Pas] format
+		if name is "visc_scan", will loop through a four layer viscosity scan
 
 boundary condition options:
--fs             perform free slip computation (ON)
--ns             perform no slip computation (OFF)
--pvel   name    set prescribed surface velocities from file name (OFF)
-                The file (e.g. pvel.sh.dat) is based on a DT expansion of cm/yr velocity fields.
+-fs		perform free slip computation (ON)
+-ns		perform no slip computation (OFF)
+-pvel	name	set prescribed surface velocities from file name (OFF)
+		The file (e.g. pvel.sh.dat) is based on a DT expansion of cm/yr velocity fields.
 
 solution procedure and I/O options:
--ng             do not compute and print the geoid (OFF)
--pptsol         print pol[6] and tor[2] solution vectors (OFF)
--px             print the spatial solution to file (OFF)
--rtrac          compute srr,srt,srp tractions [MPa] instead of velocities [cm/yr] (default: vel)
--htrac          compute stt,stp,spp tractions [MPa] instead of velocities [cm/yr] (default: vel)
--v      -vv     -vvv: verbosity levels (0)
+-ng		do not compute and print the geoid (1)
+-ag		compute geoid at all layer depths, as opposed to the surface only
+-rg	name	compute correlation of surface geoid with that in file "name",
+		this will not print out the geoid file, but only correlations (OFF)
+-pptsol		print pol[6] and tor[2] solution vectors (OFF)
+-px		print the spatial solution to file (OFF)
+-rtrac		compute srr,srt,srp tractions [MPa] instead of velocities [cm/yr] (default: vel)
+-htrac		compute stt,stp,spp tractions [MPa] instead of velocities [cm/yr] (default: vel)
+-v	-vv	-vvv: verbosity levels (0)
+
+
 
 
 <<<
