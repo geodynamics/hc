@@ -63,7 +63,7 @@ RICK_LIB = $(ODIR)/librick.a $(ODIR)/librick.dbg.a
 PREM_SRCS = prem_util.c
 PREM_OBJS = $(ODIR)/prem_util.o
 # default PREM model file
-PREM_DEFINES = -DPREM_MODEL_FILE=\"$(PWD)/prem/prem.dat\"
+PREM_DEFINES = -DPREM_MODEL_FILE=\"prem/prem.dat\"
 PREM_INCS = prem.h
 #
 # GMT grd handling, now includes PREM stuff
