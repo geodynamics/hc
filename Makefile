@@ -17,12 +17,17 @@ include Makefile.include
 #
 #
 #
+ifdef ARCH
+suffix="/$(ARCH)"
+endif
+ifdef HC_HOME
+prefix="$(HC_HOME)/"
+endif
 # object file directory
-ODIR = objects/$(ARCH)/
-#
+ODIR = "$(prefix)objects$(suffix)"
 #
 # binary directory
-BDIR = bin/$(ARCH)/
+BDIR = "$(prefix)bin$(suffix)"
 
 # include files
 OINCS = hc.h hc_filenames.h sh.h hc_constants.h
@@ -222,21 +227,15 @@ hc_auto_proto.h:
 	grep -v "int main(" > hc_auto_proto.h
 
 dirs:
-	if [ ! -s objects/ ]; then\
-		mkdir objects;\
+	if [ ! -s $(ODIR) ]; then\
+		mkdir -p "$(ODIR)";\
 	fi;
-	if [ ! -s objects/$(ARCH)/ ]; then\
-		mkdir objects/$(ARCH);\
+	if [ ! -s $(BDIR) ]; then\
+		mkdir -p "$(BDIR)";\
 	fi;
-	if [ ! -s bin/ ];then\
-		mkdir bin;\
-	fi;\
-	if [ ! -s bin/$(ARCH) ];then\
-		mkdir bin/$(ARCH);\
-	fi
 
 clean:
-	rm $(ODIR)/*.o  $(ODIR)/*.a
+	rm -f $(ODIR)/*.o  $(ODIR)/*.a
 
 #
 # library

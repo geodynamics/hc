@@ -31,17 +31,20 @@ or
 
    /usr
 
-3) ARCH: If you like, you can put the binaries in different
-   directories depending on your architecture.  This may be useful is
-   your directories are NFS mounted on different machines.  One way is
-   to use the output of uname
+3) HC_HOME: By default, the object files and binaries will be
+   installed in the "objects/" and "bin/" directories in the current
+   directory.  If HC_HOME is set (e.g. /usr/local/), then they will
+   be installed in $HC_HOME/objects and $HC_HOME/bin.
+
+4) ARCH: If you like, you can put the object files and binaries in
+   different directories depending on your architecture.  This may be
+   useful if your directories are NFS mounted on different machines.
+   One way is to use the output of uname
 
      setenv ARCH `uname -m | gawk '{print(tolower($1))}'`      # sh/tcsh
      export ARCH=`uname -m | gawk '{print(tolower($1))}'`      # bash
 
    On a 32 bit Intel machine, this will put the binaries in bin/i686.
-
-   If ARCH is not set, then the binaries will go in bin/.
 
 Also, the Makefile uses the commonly defined compiler variables CC,
 F90, CFLAGS, LD, and LDFLAGS.  So to make static executables, set
@@ -192,7 +195,6 @@ Unformatted list of radii (radius of layer/Earth radius) and viscosity
 (in Pas) values, reads until end of file. Values determine each layer
 viscosity upward until the next entry. Use the graphical tool
 pvisc.py to edit such files.
-
 2) Depth dependent density scaling file 
 
 r_i d_i
