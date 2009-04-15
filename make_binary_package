@@ -19,7 +19,7 @@ rm -rf bin objects
 CFLAGS="-O2" make all
 
 mkdir "$dest"
-cp README.TXT calc_vel_and_plot dens.sh.dat "$dest"
+cp README.TXT calc_vel_and_plot dens.sh.dat visc.dat "$dest"
 mkdir "$dest/example_data" "$dest/prem" "$dest/bin"
 cp bin/$ARCH/* "$dest/bin"
 strip "$dest/bin/"*
