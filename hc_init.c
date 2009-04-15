@@ -340,9 +340,12 @@ void hc_handle_command_line(int argc, char **argv,
       fprintf(stderr,"This version by Thorsten Becker and Craig O'Neill\n\n");
       
       fprintf(stderr,"usage example:\n\n");
-      fprintf(stderr,"bin/hc -vf visc.D -vvv\n\n");
-      fprintf(stderr,"compute mantle flow solution for default settings (e.g. density input), viscosity profile visc.D, and\n");
-      fprintf(stderr,"provide lots of output. Default setting is quiet operation\n\n");
+      fprintf(stderr,"bin/hc -vvv\n\n");
+      fprintf(stderr,"Compute mantle flow solution using the default input files:\n");
+      fprintf(stderr,"  viscosity profile visc.dat\n");
+      fprintf(stderr,"  density profile   dens.sh.dat\n");
+      fprintf(stderr,"  earth model       prem/prem.dat\n");
+      fprintf(stderr,"and provide lots of output. Default setting is quiet operation.\n\n");
       fprintf(stderr,"See README.TXT in the installation directory for example for how to plot output, and\n");
       fprintf(stderr,"http://geosys.usc.edu/projects/seatree/ for a graphical user interface.\n\n");
 

@@ -81,10 +81,13 @@ This version by Thorsten Becker and Craig O'Neill
 
 usage example:
 
-bin/hc -vf visc.D -vvv
+bin/hc -vvv
 
-compute mantle flow solution for default settings (e.g. density input), viscosity profile visc.D, and
-provide lots of output. Default setting is quiet operation
+Compute mantle flow solution using the default input files:
+  viscosity profile visc.dat
+  density profile   dens.sh.dat
+  earth model       prem/prem.dat
+and provide lots of output. Default setting is quiet operation.
 
 See README.TXT in the installation directory for example for how to plot output, and
 http://geosys.usc.edu/projects/seatree/ for a graphical user interface.
