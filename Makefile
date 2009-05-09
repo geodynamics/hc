@@ -136,7 +136,7 @@ LIBS = $(HC_LIBS) $(GGRD_LIBS) $(HEAL_LIBS) $(RICK_LIB)
 
 
 all: dirs libs hc  hc_extract_sh_layer \
-	sh_syn sh_corr sh_ana sh_power sh_extract_layer rotvec2vel
+	sh_syn sh_corr sh_ana sh_power sh_extract_layer rotvec2vel 
 
 libs: dirs hc_lib  $(HEAL_LIBS) $(RICK_LIB)
 
@@ -144,7 +144,8 @@ hc_lib: $(HC_LIBS) $(GGRD_LIBS)
 
 debug_libs: $(HC_LIBS_DEBUG)
 
-really_all: proto all debug_libs hc.dbg hcplates ggrd_test grdinttester
+really_all: proto all debug_libs hc.dbg hcplates ggrd_test grdinttester prem2dsm
+
 
 
 proto: hc_auto_proto.h
@@ -183,6 +184,8 @@ sh_extract_layer: $(LIBS) $(INCS) $(ODIR)/sh_extract_layer.o
 rotvec2vel: rotvec2vel.c
 	$(CC) $(CFLAGS) rotvec2vel.c -o $(BDIR)/rotvec2vel -lm $(LDFLAGS)
 
+prem2dsm: $(ODIR)/prem2dsm.o $(PREM_OBJS)
+	$(CC) $(ODIR)/prem2dsm.o $(PREM_OBJS) -o $(BDIR)/prem2dsm -lm $(LDFLAGS) 
 
 
 hc: $(LIBS) $(INCS) $(ODIR)/main.o $(PREM_OBJS)

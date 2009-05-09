@@ -336,9 +336,12 @@ int prem_read_para_set(double *par, int n, int np,FILE *in)
 }
 /* 
 
-the following comment block holds the prem.dat file
+the following comment block holds the prem.dat file, for clarification
 
 note that radii are given in [m]
+
+this is the transversely isotropic version of PREM with the ocean
+layer
 
 */
 /*
