@@ -1678,7 +1678,7 @@ void sh_get_coeff(struct sh_lms *exp,int l, int m, int use_b,
 		  hc_boolean phys_norm, HC_CPREC *value)
 {
 #ifdef HC_USE_HEALPIX
-  static HC_CPREC sqrt2 = SQRT_TWO;
+  const HC_CPREC sqrt2 = SQRT_TWO;
 #endif
   HC_CPREC s1;
   int index;
@@ -1782,7 +1782,7 @@ void sh_write_coeff(struct sh_lms *exp,int l, int m,
 		    HC_CPREC *value)
 {
 #ifdef HC_USE_HEALPIX
-  static HC_CPREC sqrt2 = SQRT_TWO;
+  const HC_CPREC sqrt2 = SQRT_TWO;
 #endif
   HC_CPREC s1;
   int index;

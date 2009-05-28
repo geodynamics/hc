@@ -278,7 +278,7 @@ void sh_compute_model_spectral(struct sh_lms_model *model,
 			       hc_boolean verbose)
 {
   int i;
-  static int unity = 1,zero = 0;
+  const int unity = 1,zero = 0;
   if(!model->spatial_init)
     HC_ERROR("sh_compute_model_spectral","spatial set not initialized");
   if(((model->ivec)&&(model->shps != 3))||
@@ -319,7 +319,7 @@ void sh_compute_model_spatial(struct sh_lms_model *model,
 			      float **data,hc_boolean verbose)
 {
   int i;
-  static int unity = 1, zero = 0;
+  const int unity = 1, zero = 0;
   /* 
      resize data
   */

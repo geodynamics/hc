@@ -5,13 +5,17 @@ read the PREM model in our format and convert to DSM format
 
  */
 
-void main(void)
+void main(int argc,char **argv)
 {
   int i,j;
   double rlast;
   struct prem_model prem[1];
   char filename[HC_CHAR_LENGTH];
-  strncpy(filename,PREM_MODEL_FILE,HC_CHAR_LENGTH);
+  if(argc>1)
+    strncpy(filename,argv[1],HC_CHAR_LENGTH);
+  else
+    strncpy(filename,PREM_MODEL_FILE,HC_CHAR_LENGTH);
+
   prem_read_model(filename,prem,TRUE);
   //fprintf(stderr,"nl %i np %i\n",prem->n,prem->np);
   printf("%i\tn_structure_zone\n",prem->n);
