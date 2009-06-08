@@ -18,16 +18,16 @@ include Makefile.include
 #
 #
 ifdef ARCH
-suffix="/$(ARCH)"
+suffix=/$(ARCH)
 endif
 ifdef HC_HOME
-prefix="$(HC_HOME)/"
+prefix=$(HC_HOME)/
 endif
 # object file directory
-ODIR = "$(prefix)objects$(suffix)"
+ODIR = $(prefix)objects$(suffix)
 #
 # binary directory
-BDIR = "$(prefix)bin$(suffix)"
+BDIR = $(prefix)bin$(suffix)
 
 # include files
 OINCS = hc.h hc_filenames.h sh.h hc_constants.h
@@ -135,16 +135,16 @@ DEFINES = $(RICK_DEFINES) $(HEAL_DEFINES)  $(GGRD_DEFINES)
 LIBS = $(HC_LIBS) $(GGRD_LIBS) $(HEAL_LIBS) $(RICK_LIB)
 
 
-all: dirs libs hc  hc_extract_sh_layer \
-	sh_syn sh_corr sh_ana sh_power sh_extract_layer rotvec2vel 
+all: $(ODIR) $(BDIR) libs $(BDIR)/hc  $(BDIR)/hc_extract_sh_layer \
+	$(BDIR)/sh_syn $(BDIR)/sh_corr $(BDIR)/sh_ana $(BDIR)/sh_power $(BDIR)/sh_extract_layer $(BDIR)/rotvec2vel 
 
-libs: dirs hc_lib  $(HEAL_LIBS) $(RICK_LIB)
+libs: $(ODIR) $(BDIR) hc_lib  $(HEAL_LIBS) $(RICK_LIB)
 
 hc_lib: $(HC_LIBS) $(GGRD_LIBS)  
 
 debug_libs: $(HC_LIBS_DEBUG)
 
-really_all: proto all debug_libs hc.dbg hcplates ggrd_test grdinttester prem2dsm
+really_all: proto all debug_libs hc.dbg $(BDIR)/hcplates $(BDIR)/ggrd_test $(BDIR)/grdinttester $(BDIR)/prem2dsm
 
 
 
@@ -156,63 +156,63 @@ hcplates:
 	cd ..
 
 
-sh_test: $(LIBS) $(INCS) $(ODIR)/sh_test.o
+$(BDIR)/sh_test: $(LIBS) $(INCS) $(ODIR)/sh_test.o
 	$(CC) $(LIB_FLAGS) $(ODIR)/sh_test.o \
 		-o $(BDIR)/sh_test -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS)
 
-sh_syn: $(LIBS) $(INCS) $(ODIR)/sh_syn.o
+$(BDIR)/sh_syn: $(LIBS) $(INCS) $(ODIR)/sh_syn.o
 	$(CC) $(LIB_FLAGS) $(ODIR)/sh_syn.o \
 		-o $(BDIR)/sh_syn -lhc -lrick $(HEAL_LIBS_LINKLINE) $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS)
-sh_corr: $(LIBS) $(INCS) $(ODIR)/sh_corr.o
+$(BDIR)/sh_corr: $(LIBS) $(INCS) $(ODIR)/sh_corr.o
 	$(CC) $(LIB_FLAGS) $(ODIR)/sh_corr.o \
 		-o $(BDIR)/sh_corr -lhc -lrick $(HEAL_LIBS_LINKLINE) $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS)
 
-sh_power: $(LIBS) $(INCS) $(ODIR)/sh_power.o
+$(BDIR)/sh_power: $(LIBS) $(INCS) $(ODIR)/sh_power.o
 	$(CC) $(LIB_FLAGS) $(ODIR)/sh_power.o \
 		-o $(BDIR)/sh_power -lhc -lrick $(HEAL_LIBS_LINKLINE)  $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS)
 
-sh_ana: $(LIBS) $(INCS) $(ODIR)/sh_ana.o
+$(BDIR)/sh_ana: $(LIBS) $(INCS) $(ODIR)/sh_ana.o
 	$(CC) $(LIB_FLAGS) $(ODIR)/sh_ana.o \
 		-o $(BDIR)/sh_ana -lhc -lrick $(HEAL_LIBS_LINKLINE) $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS)
 
-sh_extract_layer: $(LIBS) $(INCS) $(ODIR)/sh_extract_layer.o
+$(BDIR)/sh_extract_layer: $(LIBS) $(INCS) $(ODIR)/sh_extract_layer.o
 	$(CC) $(LIB_FLAGS) $(ODIR)/sh_extract_layer.o \
 		-o $(BDIR)/sh_extract_layer \
 	-lhc -lrick $(HEAL_LIBS_LINKLINE) $(GGRD_LIBS_LINKLINE) \
 	-lm $(LDFLAGS)
 
-rotvec2vel: rotvec2vel.c
+$(BDIR)/rotvec2vel: rotvec2vel.c
 	$(CC) $(CFLAGS) rotvec2vel.c -o $(BDIR)/rotvec2vel -lm $(LDFLAGS)
 
-prem2dsm: $(ODIR)/prem2dsm.o $(PREM_OBJS)
+$(BDIR)/prem2dsm: $(ODIR)/prem2dsm.o $(PREM_OBJS)
 	$(CC) $(ODIR)/prem2dsm.o $(PREM_OBJS) -o $(BDIR)/prem2dsm -lm $(LDFLAGS) 
 
 
-hc: $(LIBS) $(INCS) $(ODIR)/main.o $(PREM_OBJS)
+$(BDIR)/hc: $(LIBS) $(INCS) $(ODIR)/main.o $(PREM_OBJS)
 	$(CC) $(LIB_FLAGS) $(ODIR)/main.o -o $(BDIR)/hc \
 		-lhc -lrick $(HEAL_LIBS_LINKLINE) $(PREM_OBJS) \
 		 $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS) 
 
-hc.dbg: $(LIBS) $(INCS) $(ODIR)/main.dbg.o $(PREM_OBJS)
+$(BDIR)/hc.dbg: $(LIBS) $(INCS) $(ODIR)/main.dbg.o $(PREM_OBJS)
 	$(CC) $(LIB_FLAGS) $(ODIR)/main.dbg.o -o $(BDIR)/hc.dbg \
 		-lhc.dbg -lrick.dbg $(HEAL_LIBS_LINKLINE) $(PREM_OBJS) \
 		 $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS) 
 
 
 
-test_fft: $(LIBS) $(INCS) $(ODIR)/test_fft.o
+$(BDIR)/test_fft: $(LIBS) $(INCS) $(ODIR)/test_fft.o
 	$(CC) $(LIB_FLAGS) $(ODIR)/test_fft.o -o $(BDIR)/test_fft \
 		-lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS) 
 
-ggrd_test: $(LIBS) $(INCS) $(ODIR)/ggrd_test.o
+$(BDIR)/ggrd_test: $(LIBS) $(INCS) $(ODIR)/ggrd_test.o
 	$(CC) $(LIB_FLAGS) $(ODIR)/ggrd_test.o -o $(BDIR)/ggrd_test \
 		$(GGRD_LIBS_LINKLINE) -lhc -lrick -lm $(LDFLAGS) 
 
-grdinttester: $(LIBS) $(INCS) $(ODIR)/grdinttester.o
+$(BDIR)/grdinttester: $(LIBS) $(INCS) $(ODIR)/grdinttester.o
 	$(CC) $(LIB_FLAGS) $(ODIR)/grdinttester.o -o $(BDIR)/grdinttester \
 		$(GGRD_LIBS_LINKLINE) -lhc -lrick -lm $(LDFLAGS) 
 
-hc_extract_sh_layer: $(LIBS) $(INCS) $(PREM_OBJS) $(ODIR)/hc_extract_sh_layer.o
+$(BDIR)/hc_extract_sh_layer: $(LIBS) $(INCS) $(PREM_OBJS) $(ODIR)/hc_extract_sh_layer.o
 	$(CC) $(LIB_FLAGS) $(ODIR)/hc_extract_sh_layer.o $(PREM_OBJS) \
 		-o $(BDIR)/hc_extract_sh_layer \
 		-lhc -lrick $(HEAL_LIBS_LINKLINE)  $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS) 
@@ -229,13 +229,11 @@ hc_auto_proto.h:
 		grep -v "ggrd_grdtrack_init(" | \
 	grep -v "int main(" > hc_auto_proto.h
 
-dirs:
-	if [ ! -s $(ODIR) ]; then\
-		mkdir -p "$(ODIR)";\
-	fi;
-	if [ ! -s $(BDIR) ]; then\
-		mkdir -p "$(BDIR)";\
-	fi;
+$(ODIR):
+	mkdir -p $(ODIR);
+
+$(BDIR):
+	mkdir -p $(BDIR);
 
 clean:
 	rm -f $(ODIR)/*.o  $(ODIR)/*.a
