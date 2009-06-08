@@ -144,7 +144,8 @@ hc_lib: $(HC_LIBS) $(GGRD_LIBS)
 
 debug_libs: $(HC_LIBS_DEBUG)
 
-really_all: proto all debug_libs hc.dbg $(BDIR)/hcplates $(BDIR)/ggrd_test $(BDIR)/grdinttester $(BDIR)/prem2dsm
+really_all: proto all debug_libs $(BDIR)/hc.dbg \
+	hcplates $(BDIR)/ggrd_test $(BDIR)/grdinttester $(BDIR)/prem2dsm
 
 
 
