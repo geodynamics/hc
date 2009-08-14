@@ -126,6 +126,8 @@ int main(int argc, char **argv)
     fprintf(stderr,"               %i: use Healpix's routines internally (output format DT convection)\n\n",SH_HEALPIX);
     fprintf(stderr,"short_format:  0: use long header files format as in HC\n");
     fprintf(stderr,"               1: use short header file format (only lmax)\n\n");
+    fprintf(stderr,"Note that integration accuracy will depend on the choice of l_max,\n");
+    fprintf(stderr,"because only l_max-1 Gauss points are used.\n\n");
     exit(-1);
   }
   if(print_spatial_base)
