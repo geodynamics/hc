@@ -5,7 +5,7 @@ read the PREM model in our format and convert to DSM format
 
  */
 
-void main(int argc,char **argv)
+int main(int argc,char **argv)
 {
   int i,j;
   double rlast;
@@ -46,4 +46,5 @@ void main(int argc,char **argv)
     
     rlast = prem->rb[i]/1000.;
   }
+  return 0;
 }

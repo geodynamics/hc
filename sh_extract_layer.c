@@ -14,7 +14,7 @@ int main(int argc, char **argv)
   struct sh_lms *exp=NULL;
   HC_PREC unitya[3] = {1.0,1.0,1.0},*zdepth;
   hc_boolean binary = FALSE, verbose = TRUE, 
-    short_format = FALSE,
+    short_format_in = FALSE,
     short_format_output = FALSE;
   /* 
      deal with parameters
@@ -28,17 +28,25 @@ int main(int argc, char **argv)
   case 4:
     sscanf(argv[2],"%i",&ilayer);
     sscanf(argv[3],"%i",&i);
-    if(i)
-      short_format_output = TRUE;
+    short_format_output = (i)?(TRUE):(FALSE);
+    break;
+  case 5:
+    sscanf(argv[2],"%i",&ilayer);
+    sscanf(argv[3],"%i",&i);
+    short_format_output = (i)?(TRUE):(FALSE);
+    sscanf(argv[4],"%i",&i);
+    short_format_in = (i)?(TRUE):(FALSE);
     break;
 
   default:
-    fprintf(stderr,"%s: usage\n\n%s value.ab layer [short_format, %i]\n\n",argv[0],argv[0],short_format_output);
+    fprintf(stderr,"%s: usage\n\n%s value.ab layer [short_format_out, %i] [short_format_in, %i]\n\n",
+	    argv[0],argv[0],short_format_output,short_format_in);
     fprintf(stderr,"extracts one SH layer (e.g. for use in sh_syn) from a (long format, hc) spherical harmonic file value.ab\n");
     fprintf(stderr,"layer: 1...nset\n");
     fprintf(stderr,"\tif ilayer= 1..nset, will print one layer\n");
     fprintf(stderr,"\t          -1, will select nset\n");
-    fprintf(stderr,"if short_format=1, will use short format output\n");
+    fprintf(stderr,"if short_format_out=1, will use short format output, else long\n");
+    fprintf(stderr,"if short_format_in= 1, will use short format input,  else long\n");
     exit(-1);
     break;
   }
@@ -49,7 +57,7 @@ int main(int argc, char **argv)
   /* start loop */
   i = 0;
   sh_read_parameters_from_file(&type,&lmax, &shps,&i,&nset,(zdepth+i),
-			       &ivec,in,short_format,binary,verbose);
+			       &ivec,in,short_format_in,binary,verbose);
   if(verbose)
     fprintf(stderr,"sh_extract_layer: detected %i layers, vec: %i, type %i SH file, shps: %i, layer %i at depth %g\n",
 	    nset,ivec,type,shps,i+1,zdepth[i]);
@@ -69,7 +77,7 @@ int main(int argc, char **argv)
   for(;i<nset;i++){
     if(i != 0)
       sh_read_parameters_from_file(&type,&lmax,&shps,&i,&nset,(zdepth+i),
-				   &ivec,in,short_format,binary,verbose);
+				   &ivec,in,short_format_in,binary,verbose);
     sh_read_coefficients_from_file((exp+i),shps,-1,in,binary,unitya,
 				   verbose);
     if(i == ilayer){		/* output */
