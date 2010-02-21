@@ -236,7 +236,6 @@ for plot in $plots;do
 	    gawk '{print($1,$2,$3)}' $tmpn.dat | xyz2grd  -Gvt.$i.grd $vreg -I$vinc # vx = vphi, tphi
 	    gawk '{print($1,$2,$4)}' $tmpn.dat | xyz2grd -Gvp.$i.grd $vreg -I$vinc # vy = -vtheta,-ttheta
 	    echo $0: extracting layer $i out of $nl
-	    exit
 
 	    ((i=i+1))
 	done
