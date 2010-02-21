@@ -851,8 +851,10 @@ void hc_assign_density(struct hcs *hc,
     hc_vecrealloc(&hc->dvisc,hc->nradp2,"hc_assign_density");
 
     hc->r[0] = hc->r_cmb;	/* CMB  */
-    if(hc->rden[0] <= hc->r[0])
-      HC_ERROR("hc_assign_density","first density layer has to be above internal CMD limit");
+    if(hc->rden[0] <= hc->r[0]){
+      fprintf(stderr,"hc_assign_density: rden[0]: %g r[0]: %g\n",hc->rden[0], hc->r[0]);
+      HC_ERROR("hc_assign_density","first density layer has to be above internal CMB limit");
+    }
     for(i=0;i<hc->nrad;i++)	/* density layers */
       hc->r[i+1] = hc->rden[i];
     if(hc->rden[hc->nrad-1] >= 1.0)

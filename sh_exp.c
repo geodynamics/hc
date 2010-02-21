@@ -1413,10 +1413,10 @@ void sh_print_reg_spatial_data_to_file(struct sh_lms *exp, int shps,
 	/* print coordinates */
 	if(!use_3d){
 	  /* print lon lat  */
-	  fprintf(out,"%14.7f %14.7f\t",lon,lat);
+	  fprintf(out,"%12.3f %12.3f\t",lon,lat);
 	}else{
 	  /* print lon lat z[i] */
-	  fprintf(out,"%14.7f %14.7f %14.7f\t",lon,lat,z);
+	  fprintf(out,"%12.3f %12.3f %14.7f\t",lon,lat,z);
 	}
 	for(k=0;k<shps;k++)		/* loop through all scalars */
 	  fprintf(out,"%14.7e ",data[l+npoints*k]);

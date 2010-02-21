@@ -79,7 +79,7 @@ fac * (par[1]+ par[2]*r^1  + .. par[np-1]*r^(np-2))
 
 */
 double prem_compute_dpval(double *y, double *par, 
-			 int np, double fac)
+			  int np, double fac)
 {
   int i;
   double val;
@@ -106,7 +106,7 @@ double prem_compute_dpval(double *y, double *par,
 
 */
 double prem_vs_voigt(double vsh, double vsv, double vph, double vpv, 
-		    double eta)
+		     double eta)
 {
   double v;
   v = sqrt((1./15.) * ( (1.0-2.0*eta) * vph*vph + vpv*vpv + 

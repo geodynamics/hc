@@ -189,7 +189,8 @@ for 3-D spherical
    undefined and FALSE else
 */
 ggrd_boolean ggrd_grdtrack_interpolate_rtp(double r,double t,double p,
-					   struct ggrd_gt *g,double *value,
+					   struct ggrd_gt *g,
+					   double *value,
 					   ggrd_boolean verbose,
 					   ggrd_boolean shift_to_pos_lon)
 {
@@ -218,6 +219,7 @@ ggrd_boolean ggrd_grdtrack_interpolate_rtp(double r,double t,double p,
   x[2] = (1.0-r) * 6371.0;	/* depth in [km] */
   if(g->zlevels_are_negative)	/* adjust for depth */
     x[2] = -x[2];
+
   result = ggrd_grdtrack_interpolate(x,TRUE,g->grd,g->f,
 				     g->edgeinfo,g->mm,g->z,
 				     g->nz,value,verbose,
@@ -777,25 +779,25 @@ interpolate value
  */
 #ifndef USE_GMT3
 ggrd_boolean ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degrees/km */
-					ggrd_boolean three_d, /* use 3-D inetrpolation or 2-D? */
-					struct GRD_HEADER *grd, /* grd information */
-					float *f,	/* data array */
-					struct GMT_EDGEINFO *edgeinfo, /* edge information */
-					int mm, /* nx * ny */
-					float *z, /* depth layers */
-					int nz,	/* number of depth layers */
+				       ggrd_boolean three_d, /* use 3-D inetrpolation or 2-D? */
+				       struct GRD_HEADER *grd, /* grd information */
+				       float *f,	/* data array */
+				       struct GMT_EDGEINFO *edgeinfo, /* edge information */
+				       int mm, /* nx * ny */
+				       float *z, /* depth layers */
+				       int nz,	/* number of depth layers */
 					double *value, /* output value */
-					ggrd_boolean verbose,
-					struct GMT_BCR *loc_bcr)
+				       ggrd_boolean verbose,
+				       struct GMT_BCR *loc_bcr)
 #else
 ggrd_boolean ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degrees/km */
-					ggrd_boolean three_d, /* use 3-D inetrpolation or 2-D? */
-					struct GRD_HEADER *grd, /* grd information */
-					float *f,	/* data array */
-					struct GMT_EDGEINFO *edgeinfo, /* edge information */
-					int mm, /* nx * ny */
-					float *z, /* depth layers */
-					int nz,	/* number of depth layers */
+				       ggrd_boolean three_d, /* use 3-D inetrpolation or 2-D? */
+				       struct GRD_HEADER *grd, /* grd information */
+				       float *f,	/* data array */
+				       struct GMT_EDGEINFO *edgeinfo, /* edge information */
+				       int mm, /* nx * ny */
+				       float *z, /* depth layers */
+				       int nz,	/* number of depth layers */
 				       double *value, /* output value */
 				       ggrd_boolean verbose,
 				       struct BCR *loc_bcr
