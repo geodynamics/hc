@@ -275,7 +275,7 @@ $(ODIR)/%.o: %.f90 $(INCS)
 
 # debugging objects
 $(ODIR)/%.dbg.o: %.c  $(INCS)
-	$(CC) $(CFLAGS_DEBUG) $(INC_FLAGS) $(DEFINES) -c $< -o $(ODIR)/$*.dbg.o
+	$(CC) $(CFLAGS_DEBUG) -DHC_DEBUG $(INC_FLAGS) $(DEFINES) -c $< -o $(ODIR)/$*.dbg.o
 
 $(ODIR)/%.dbg.o: %.f90 $(INCS)
-	$(F90) $(F90FLAGS_DEBUG) $(DEFINES) -c $< -o $(ODIR)/$*.dbg.o
+	$(F90) $(F90FLAGS_DEBUG) -DHC_DEBUG $(DEFINES) -c $< -o $(ODIR)/$*.dbg.o

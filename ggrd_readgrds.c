@@ -546,7 +546,7 @@ void ggrd_resort_and_check(GGRD_CPREC *a,float *fb,double *db,
     }
   }
   if(set_to_constant){
-#ifdef DEBUG
+#ifdef HC_DEBUG
     fprintf(stderr,"ggrd_resort_and_check: WARNING: setting this field to constant: %g\n",
 	    constant);
 #endif

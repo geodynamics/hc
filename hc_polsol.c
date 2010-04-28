@@ -206,7 +206,7 @@ void hc_polsol(struct hcs *hc, 	/*
       define a few offset and size pointers
   */
 
-#ifdef DEBUG
+#ifdef HC_DEBUG
   if(hc->nradp2 != nrad + 2){
     fprintf(stderr,"hc_polsol: radius number mismatch\n");
     exit(-1);

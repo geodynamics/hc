@@ -242,7 +242,7 @@ int ggrd_find_vel_and_der(GGRD_CPREC *xloc,
     grid[j+i] = igrid[HC_PHI][i] * ggrd->v.dphi;
   
 
-#ifdef DEBUG
+#ifdef HC_DEBUG
   //     
   //     check if all indices are ok
   //     

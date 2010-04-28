@@ -5,8 +5,8 @@ Earth model constants
 
 */
 // now taken from earth model
-#define HC_RE_KM 6371.0		/* radius(Earth) in [km] (equivalent
-				   volume radius of std ellipsoid) */
+#define HC_RE_KM 6371.0087714		/* radius(Earth) in [km] (equivalent
+					   volume radius of std ellipsoid) */
 
 
 #define HC_TIMESCALE_YR 1e6	/* timescale [yr] */

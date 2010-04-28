@@ -52,7 +52,7 @@ void sh_init_expansion(struct sh_lms *exp, int lmax, int type,
   exp->spectral_init = FALSE;
   /* type of expansion, e.g. SH_HEALPIX or SH_RICK, this will be checked later */
   exp->type = type;
-#ifdef DEBUG
+#ifdef HC_DEBUG
   /* 
      l and m bounds 
   */
@@ -1682,7 +1682,7 @@ void sh_get_coeff(struct sh_lms *exp,int l, int m, int use_b,
 #endif
   HC_CPREC s1;
   int index;
-#ifdef DEBUG
+#ifdef HC_DEBUG
   /* do some checks */
   if((m > l)||(l<0)||(m<0)){
     fprintf(stderr,"sh_get_coeff: error: attempting to read l=%i and m=%i\n",
@@ -1786,7 +1786,7 @@ void sh_write_coeff(struct sh_lms *exp,int l, int m,
 #endif
   HC_CPREC s1;
   int index;
-#ifdef DEBUG
+#ifdef HC_DEBUG
   /* do some checks */
   if((m > l)||(l<0)||(m<0)){
     fprintf(stderr,"sh_write_coeff: error: attempting to write l=%i and m=%i\n",
