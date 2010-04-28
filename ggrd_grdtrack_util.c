@@ -82,7 +82,8 @@ int ggrd_grdtrack_init_general(ggrd_boolean is_three,
   /* this is a switch and can be left in */
   static ggrd_boolean bilinear = TRUE; /* bilinear by default */
   
-  int pad[4];
+  //int pad[4];			/* GMT < 4.5.1 */
+  GMT_LONG pad[4];			/* GMT >= 4.5.1 */
   int i,j;
   float zavg,tmp;
   /* clear all entries */
@@ -415,7 +416,9 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
 		       struct GMT_EDGEINFO **edgeinfo, /* pass as empty */
 		       char *edgeinfo_string, /* -fg/ -L type flags from GMT, can be empty */
 		       ggrd_boolean *geographic_in, /* this is normally TRUE */
-		       int *pad,	/* [4] array with padding (output) */
+		       
+		       //int *pad,	/* [4] array with padding (output) GMT<4.5.1*/
+		       GMT_LONG *pad,
 		       ggrd_boolean three_d, char *dfile, 	/* depth file name */
 		       float **z,	/* layers, pass as NULL */
 		       int *nz,		/* number of layers */
@@ -743,7 +746,9 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
   return 0;
 
 }
-void ggrd_print_layer_avg(float *x,float *z,int nx, int ny, int m,FILE *out,int *pad)
+void ggrd_print_layer_avg(float *x,float *z,int nx, int ny, int m,FILE *out,
+			  GMT_LONG *pad) /* >= 4.5.1 */
+			  //int *pad)
 {
   int i,j,k,yl,xl,l,nxny,nxnyr;
   float *tmp;

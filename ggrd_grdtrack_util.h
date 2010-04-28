@@ -72,10 +72,23 @@ int ggrd_read_vel_grids(struct ggrd_master *, double, unsigned short, unsigned s
 ggrd_boolean ggrd_grdtrack_interpolate(double *, ggrd_boolean , struct GRD_HEADER *, float *,
 					struct GMT_EDGEINFO *, int, float *, int ,	double *,ggrd_boolean,
 					struct GMT_BCR *);
-int ggrd_grdtrack_init(double *, double *, double *, double *, float **, int *, char *, struct GRD_HEADER **, struct GMT_EDGEINFO **, char *, ggrd_boolean *, int *, ggrd_boolean, char *, float **, int *, ggrd_boolean, ggrd_boolean, ggrd_boolean, struct GMT_BCR *);
+// GMT < 4.5.1
+//int ggrd_grdtrack_init(double *, double *, double *, double *, float **, int *, char *, struct GRD_HEADER **, struct GMT_EDGEINFO **, char *, ggrd_boolean *, int *, ggrd_boolean, char *, float **, int *, ggrd_boolean, ggrd_boolean, ggrd_boolean, struct GMT_BCR *);
+// GMT >= 4.5.1
+int ggrd_grdtrack_init(double *, double *, double *, double *, float **, int *, char *, 
+		       struct GRD_HEADER **, struct GMT_EDGEINFO **, char *, 
+		       ggrd_boolean *, GMT_LONG *, ggrd_boolean, char *, 
+		       float **, int *, ggrd_boolean, ggrd_boolean, 
+		       ggrd_boolean, struct GMT_BCR *);
+
+/* < 4.5.1 */
+//void ggrd_print_layer_avg(float *,float *,int , int ,int, FILE *,int *);
+/* >= 4.5.1 */
+void ggrd_print_layer_avg(float *,float *,int , int ,int, FILE *,GMT_LONG *);
 
 #else
-/* GMT 3.4.5 */
+void ggrd_print_layer_avg(float *,float *,int , int ,int, FILE *,int *);
+
 ggrd_boolean ggrd_grdtrack_interpolate(double *, ggrd_boolean , struct GRD_HEADER *, float *,
 				       struct GMT_EDGEINFO *, int, 
 				       float *, int ,	
@@ -120,7 +133,6 @@ float ggrd_gt_rms(float *,int );
 float ggrd_gt_mean(float *,int );
 FILE *ggrd_open(char *, char *, char *);
 
-void ggrd_print_layer_avg(float *,float *,int , int ,int, FILE *,int *);
 
 void ggrd_find_spherical_vel_from_rigid_cart_rot(double *,
 						 double *,

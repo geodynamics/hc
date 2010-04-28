@@ -743,6 +743,8 @@ void hc_assign_density(struct hcs *hc,
 	     get reference density at this level
 	     
 	  */
+
+
 	  prem_get_rho(&rho0,hc->rden[hc->inho],hc->prem);
 	  rho0 /= 1000.0;
 	  if(rho0 < 3)

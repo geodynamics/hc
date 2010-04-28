@@ -65,7 +65,8 @@ struct ggrd_gt{
      data 
   */
   float *f,*fmaxlim,bandlim;
-  int mm;
+    
+  int mm;			
   
   float *z;			/* depth levels */
   int nz;

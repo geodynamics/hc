@@ -93,7 +93,11 @@ int ggrd_read_vel_grids(struct ggrd_master *ggrd, /* ggrd master structure
 			)
 {
   FILE *in,*out;
-  int i,j,k,l,level,os,os1,dummy[4]={0,0,0,0},ivt,*index;
+  int i,j,k,l,level,os,os1,ivt,*index;
+
+  //int dummy[4]={0,0,0,0};	/* GMT  < 4.5.1 */
+  GMT_LONG dummy[4]={0,0,0,0};	/* GMT >= 4.5.1 */
+
   hc_boolean 
     init = FALSE,
     wraparound = FALSE,

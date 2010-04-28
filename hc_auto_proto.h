@@ -3,13 +3,13 @@ void ggrd_init_master(struct ggrd_master *);
 void ggrd_grdinfo(char *);
 int ggrd_grdtrack_init_general(unsigned char, char *, char *, char *, struct ggrd_gt *, unsigned char, unsigned char);
 int ggrd_grdtrack_rescale(struct ggrd_gt *, unsigned char, unsigned char, unsigned char, double);
-unsigned char ggrd_grdtrack_interpolate_rtp(double, double, double, struct ggrd_gt *, double *, unsigned char,unsigned char);
+unsigned char ggrd_grdtrack_interpolate_rtp(double, double, double, struct ggrd_gt *, double *, unsigned char, unsigned char);
 unsigned char ggrd_grdtrack_interpolate_xyz(double, double, double, struct ggrd_gt *, double *, unsigned char);
-unsigned char ggrd_grdtrack_interpolate_tp(double, double, struct ggrd_gt *, double *, unsigned char,unsigned char);
+unsigned char ggrd_grdtrack_interpolate_tp(double, double, struct ggrd_gt *, double *, unsigned char, unsigned char);
 unsigned char ggrd_grdtrack_interpolate_xy(double, double, struct ggrd_gt *, double *, unsigned char);
 void ggrd_grdtrack_free_gstruc(struct ggrd_gt *);
 void ggrd_find_spherical_vel_from_rigid_cart_rot(double *, double *, double *, double *, double *);
-void ggrd_print_layer_avg(float *, float *, int, int, int, FILE *, int *);
+void ggrd_print_layer_avg(float *, float *, int, int, int, FILE *, GMT_LONG *);
 int ggrd_init_thist_from_file(struct ggrd_t *, char *, unsigned char, unsigned char);
 void ggrd_gt_interpolate_z(double, float *, int, int *, int *, double *, double *, unsigned char, unsigned char *);
 void ggrd_interpol_time(double, struct ggrd_t *, int *, int *, double *, double *, double);
@@ -41,7 +41,7 @@ void hc_init_main(struct hcs *, int, struct hc_parameters *);
 void hc_init_constants(struct hcs *, double, char *, unsigned short);
 void hc_handle_command_line(int, char **, struct hc_parameters *);
 void hc_assign_viscosity(struct hcs *, int, double [4], struct hc_parameters *);
-void hc_assign_density(struct hcs *, unsigned short, int, char *, int, unsigned short,  unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, int, double *, double *, unsigned short);
+void hc_assign_density(struct hcs *, unsigned short, int, char *, int, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, int, double *, double *, unsigned short);
 double hc_find_dens_scale(double, double, unsigned short, double *, double *, int);
 void hc_init_phase_boundaries(struct hcs *, int, unsigned short);
 void hc_assign_plate_velocities(struct hcs *, int, char *, unsigned short, int, unsigned short, unsigned short);
@@ -102,6 +102,7 @@ void hc_compute_sol_spatial(struct hcs *, struct sh_lms *, float **, unsigned sh
 /* hc_torsol.c */
 void hc_torsol(struct hcs *, int, int, int, double *, double **, double **, struct sh_lms *, struct sh_lms *, double *, unsigned short);
 /* main.c */
+/* prem2dsm.c */
 /* prem_util.c */
 int prem_find_layer_x(double, double, double *, int, int, double *);
 double prem_compute_pval(double *, double *, int, double);
@@ -181,6 +182,7 @@ void sh_write_coeff(struct sh_lms *, int, int, int, unsigned short, double *);
 void sh_aexp_equals_bexp_coeff(struct sh_lms *, struct sh_lms *);
 void sh_scale_expansion_l_factor(struct sh_lms *, double *);
 void sh_scale_expansion(struct sh_lms *, double);
+/* sh_extract_layer.c */
 /* sh_model.c */
 void sh_init_model(struct sh_lms_model *, int, int, int, int, int, int, unsigned short);
 void sh_free_model(struct sh_lms_model *);
