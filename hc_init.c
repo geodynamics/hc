@@ -273,8 +273,10 @@ void hc_init_constants(struct hcs *hc, HC_PREC dens_anom_scale,
 
   */
   hc->re = hc->prem->r0;
-  if(fabs(hc->re - (HC_RE_KM * 1e3)) > 1e-7)
-    HC_ERROR("hc_init_constants","Earth radius mismatch")
+  if(fabs(hc->re - (HC_RE_KM * 1e3)) > 1e-7){
+    fprintf(stderr,"%.7e %.7e\n",HC_RE_KM * 1e3,hc->re);
+    HC_ERROR("hc_init_constants","Earth radius mismatch");
+  }
 
   hc->secyr = HC_SECYR;	/* seconds/year  */
 

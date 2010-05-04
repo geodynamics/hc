@@ -66,7 +66,7 @@ struct prem_model{
    radius of earth in km 
 
 */
-#define PREM_RE_KM 6371.0
+#define PREM_RE_KM 6371.0087714
 
 /* 
 
