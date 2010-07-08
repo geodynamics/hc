@@ -143,13 +143,13 @@ void hc_get_flt_frmt_string(char *string, int n,
 			    hc_boolean append)
 {
   static hc_boolean init=FALSE;	/* that's OK, multiple instances calling are fine */
-  static char type[2];
+  static char type_s[3];
   int i;
   if(!init){
     if(sizeof(HC_PREC) == sizeof(float)){
-      sprintf(type,"f");
+      sprintf(type_s,"f");
     }else if (sizeof(HC_PREC) == sizeof(double)){
-      sprintf(type,"lf");
+      sprintf(type_s,"lf");
     }else{
       fprintf(stderr,"hc_get_flt_frmt_string: assignment error\n");
       exit(-1);
@@ -157,9 +157,9 @@ void hc_get_flt_frmt_string(char *string, int n,
     init=TRUE;
   }
   if(!append)
-    sprintf(string,"%%%s",type);
+    sprintf(string,"%%%s",type_s);
   for(i=1;i<n;i++)
-    sprintf(string,"%s %%%s",string,type);
+    sprintf(string,"%s %%%s",string,type_s);
 }
 //
 // deal with boolean values/switches
