@@ -245,24 +245,35 @@ clean:
 
 $(ODIR)/libhc.a: $(HC_OBJS)
 	$(AR) rv $(ODIR)/libhc.a $(HC_OBJS)
+	ranlib $(ODIR)/libhc.a
+
 
 $(ODIR)/libhc.dbg.a: $(HC_OBJS_DBG)
 	$(AR) rv $(ODIR)/libhc.dbg.a $(HC_OBJS_DBG)
+	ranlib $(ODIR)/libhc.dbg.a
+
 
 $(ODIR)/librick.a: $(RICK_OBJS)
 	$(AR) rv $(ODIR)/librick.a $(RICK_OBJS)
+	ranlib $(ODIR)/librick.a
+
 
 $(ODIR)/librick.dbg.a: $(RICK_OBJS_DBG)
 	$(AR) rv $(ODIR)/librick.dbg.a $(RICK_OBJS_DBG)
+	ranlib $(ODIR)/librick.dbg.a
 
 $(ODIR)/libggrd.a: $(GGRD_OBJS)
 	$(AR) rv $(ODIR)/libggrd.a $(GGRD_OBJS)
+	ranlib $(ODIR)/libggrd.a
 
 $(ODIR)/libggrd.dfast.a: $(GGRD_OBJS)
 	$(AR) rv $(ODIR)/libggrd.dfast.a $(GGRD_OBJS)
+	ranlib $(ODIR)/libggrd.dfast.a
+
 
 $(ODIR)/libggrd.dbg.a: $(GGRD_OBJS_DBG)
 	$(AR) rv $(ODIR)/libggrd.dbg.a $(GGRD_OBJS_DBG)
+	ranlib $(ODIR)/libggrd.dbg.a 
 
 #
 # object rules
