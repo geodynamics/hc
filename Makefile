@@ -135,8 +135,14 @@ DEFINES = $(RICK_DEFINES) $(HEAL_DEFINES)  $(GGRD_DEFINES)
 LIBS = $(HC_LIBS) $(GGRD_LIBS) $(HEAL_LIBS) $(RICK_LIB)
 
 
-all: $(ODIR) $(BDIR) libs $(BDIR)/hc  $(BDIR)/hc_extract_sh_layer \
-	$(BDIR)/sh_syn $(BDIR)/sh_corr $(BDIR)/sh_ana $(BDIR)/sh_power $(BDIR)/sh_extract_layer $(BDIR)/rotvec2vel 
+all: $(ODIR) $(BDIR) libs sh_tools hc_tools 
+
+sh_tools: 	$(BDIR)/sh_syn $(BDIR)/sh_corr $(BDIR)/sh_ana $(BDIR)/sh_power \
+	 $(BDIR)/sh_extract_layer
+
+hc_tools: $(BDIR)/hc  $(BDIR)/hc_extract_sh_layer  $(BDIR)/rotvec2vel $(BDIR)/print_gauss_lat
+
+
 
 libs: $(ODIR) $(BDIR) hc_lib  $(HEAL_LIBS) $(RICK_LIB)
 
@@ -181,6 +187,10 @@ $(BDIR)/sh_extract_layer: $(LIBS) $(INCS) $(ODIR)/sh_extract_layer.o
 		-o $(BDIR)/sh_extract_layer \
 	-lhc -lrick $(HEAL_LIBS_LINKLINE) $(GGRD_LIBS_LINKLINE) \
 	-lm $(LDFLAGS)
+
+$(BDIR)/print_gauss_lat: print_gauss_lat.c
+	$(CC) $(CFLAGS) print_gauss_lat.c -o $(BDIR)/print_gauss_lat -lm $(INC_FLAGS) \
+	$(LIB_FLAGS)   -lrick -lhc -lggrd -lgmt -lnetcdf $(LDFLAGS)
 
 $(BDIR)/rotvec2vel: rotvec2vel.c
 	$(CC) $(CFLAGS) rotvec2vel.c -o $(BDIR)/rotvec2vel -lm $(LDFLAGS)

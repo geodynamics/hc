@@ -169,13 +169,19 @@ struct hc_parameters{
   hc_boolean compute_geoid_correlations; 	/* compute correlations only */
   int solution_mode;	/* velocity or stress */
 
+  int pvel_mode;		/* plate velocity mode */
+  HC_PREC pvel_time;		/* time to use */
+
   hc_boolean solver_mode;	
   hc_boolean visc_init_mode;
   HC_PREC elayer[4];
 
-  hc_boolean read_short_dens_sh; /* short SH format for density
-				    files? */
-  hc_boolean dd_dens_scale; /* read the density/velocity scaling from file? */
+  hc_boolean read_short_dens_sh, read_short_pvel_sh; /* short SH format for density or plate velocity files
+							files? */
+  int dd_dens_scale; /* 0: constant scaling
+			1: read the density/velocity scaling from file 
+			2: polynomial applies
+		     */
   HC_PREC *rdf,*sdf;
   int ndf;
   struct sh_lms *ref_geoid;
@@ -191,6 +197,12 @@ struct hc_parameters{
   char ref_geoid_file[HC_CHAR_LENGTH]; /* reference geoid */
 };
 
+/* plate velocity structure */
+struct pvels{
+  int n;
+  HC_PREC *t;
+  struct  sh_lms *p;
+};
 /* 
 
 
@@ -255,12 +267,13 @@ struct hcs{
 			    FALSE
 			 */
 
-  struct sh_lms pvel[2]; /* 
-			 
-		      poloidal and toroidal part of plate motions
-		      (only one expansion)
-		      
-		      */
+  struct pvels pvel; /* 
+			   
+			   poloidal and toroidal part of plate motions
+			   
+			   (typically only one set, meaning two expansions)
+			   
+			*/
 
   struct hc_ps psp;
   hc_boolean save_solution; /* memory intensive speedup in poloidal
@@ -344,10 +357,25 @@ init and assignment modes
 #define HC_INIT_D_FROM_FILE 0	/* density */
 #define HC_RESCALE_D 1
 
+/* different depth dependent initialization */
 #define HC_INIT_DD_FROM_FILE 0	/* depth dependent density scaling */
 #define HC_INIT_DD_FOUR_LAYERS 1	/*  */
 
-#define HC_INIT_P_FROM_FILE 0	/* plates */
+/* 
+
+density scaling modes
+
+*/
+
+#define HC_DD_CONSTANT 0
+#define HC_DD_READ_FROM_FILE 1
+#define HC_DD_POLYNOMIAL 2
+
+
+/* plate initialization mode */
+#define HC_INIT_P_FROM_FILE 0	/* single plate expansion */
+#define HC_INIT_P_FROM_DIRECTORY 1 /* directory with a range of
+				      expansions at different times */
 
 #define HC_SOLVER_MODE_DEFAULT 0
 #define HC_SOLVER_MODE_VISC_SCAN 1

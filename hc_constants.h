@@ -23,6 +23,10 @@ Earth model constants
 /* average core density */
 #define HC_AVG_DEN_CORE 11.60101
 
+/* 
+
+ */
+#define HC_PVEL_TSTEPS 140	/* number of timesteps for pvel init from file */
 
 /* 
 

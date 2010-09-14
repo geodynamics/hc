@@ -17,7 +17,7 @@ expansions
 
 input:
 
-model structure (holds all the expansion)
+model structure (holds all the expansions)
 
 input:
 

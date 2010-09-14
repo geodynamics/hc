@@ -7,7 +7,7 @@ computation
 
 
 free_slip: TRUE/FALSE. if false, will either use the plate motions or no-slip,
-           depending on how hc->pvel was initialized
+           depending on how pvel was initialized
 
 solve_mode: solution mode, used for summing the solutions
 
@@ -35,12 +35,15 @@ input/output:
 */
 
 void hc_solve(struct hcs *hc, hc_boolean free_slip, 
-	      int solve_mode,struct sh_lms *sol, 
+	      int solve_mode,
+	      struct sh_lms *sol, 
 	      hc_boolean dens_anom_changed,
 	      hc_boolean plate_vel_changed,
 	      hc_boolean viscosity_or_layer_changed,
 	      hc_boolean print_pt_sol,
 	      hc_boolean compute_geoid,
+	      struct sh_lms *pvel, /* plate velocity expansion */
+	      struct sh_lms *dens_anom,
 	      struct sh_lms *geoid, /* geoid solution, needs to be init */
 	      hc_boolean verbose)
 {
@@ -55,14 +58,14 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
 
   if(!hc->initialized)
     HC_ERROR("hc_solve","hc structure not initialized");
-  if((!free_slip) && (hc->pvel[0].lmax < hc->dens_anom[0].lmax)){
+  if((!free_slip) && (pvel[0].lmax < dens_anom[0].lmax)){
     fprintf(stderr,"hc_solve: error: plate expansion lmax (%i) has to be >= density lmax (%i)\n",
-	    hc->pvel[0].lmax,hc->dens_anom[0].lmax);
+	    pvel[0].lmax,dens_anom[0].lmax);
     exit(-1);
   }
-  if(sol[0].lmax < hc->pvel[0].lmax){
+  if(sol[0].lmax < pvel[0].lmax){
     fprintf(stderr,"hc_solve: error: solution lmax (%i) has to be >= plate velocitiy lmax (%i)\n",
-	    sol[0].lmax,hc->pvel[0].lmax);
+	    sol[0].lmax,pvel[0].lmax);
     exit(-1);
   }
   /* 
@@ -75,7 +78,7 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
   if((!hc->psp.pol_init)||(!hc->save_solution)){
     /* room for pol solution */
     sh_allocate_and_init(&hc->pol_sol,nsh_pol,
-			 hc->dens_anom[0].lmax,hc->sh_type,
+			 dens_anom[0].lmax,hc->sh_type,
 			 0,verbose,FALSE); /* irregular grid */
   }
   if((!hc->save_solution) || (!hc->psp.pol_init) || viscosity_or_layer_changed ||
@@ -90,9 +93,9 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
     */
     hc_polsol(hc,hc->nrad,hc->r,hc->inho,hc->dfact,
 	      viscosity_or_layer_changed,
-	      hc->dens_anom,hc->compressible,
+	      dens_anom,hc->compressible,
 	      hc->npb,hc->rpb,hc->fpb,free_slip,
-	      (hc->pvel+0),hc->pol_sol,
+	      (pvel+0),hc->pol_sol,
 	      compute_geoid,geoid,hc->save_solution,
 	      verbose);
     if(print_pt_sol)		/* print poloidal solution without the
@@ -110,7 +113,7 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
     */
     if((!hc->psp.tor_init)||(!hc->save_solution)){
       nsh_tor = 2 * (hc->nrad+2);
-      sh_allocate_and_init(&hc->tor_sol,nsh_tor,hc->pvel[1].lmax,
+      sh_allocate_and_init(&hc->tor_sol,nsh_tor,pvel[1].lmax,
 			   hc->sh_type,0,verbose,FALSE); /* irregular grid */
     }
     if((!hc->psp.tor_init) || viscosity_or_layer_changed || plate_vel_changed || 
@@ -120,15 +123,15 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
 	 have changed, we need to (re)compute the toroidal solution
       */
       /* make room for solution kernel */
-      hc_vecalloc(&tvec,(hc->nrad+2)*(hc->pvel[1].lmax+1)*2,
+      hc_vecalloc(&tvec,(hc->nrad+2)*(pvel[1].lmax+1)*2,
 		  "hc_solve");
       /* compute kernels, and assign kernel*pvel to tor_sol */
-      hc_torsol(hc,hc->nrad,hc->nvis,hc->pvel[1].lmax,hc->r,
-		&hc->rvisc,&hc->visc,(hc->pvel+1),hc->tor_sol,tvec,
+      hc_torsol(hc,hc->nrad,hc->nvis,pvel[1].lmax,hc->r,
+		&hc->rvisc,&hc->visc,(pvel+1),hc->tor_sol,tvec,
 		verbose);
       if(print_pt_sol)
-	hc_print_toroidal_solution(tvec,hc->pvel[1].lmax,
-				   hc,hc->pvel[1].lmax,HC_TORSOL_FILE,
+	hc_print_toroidal_solution(tvec,pvel[1].lmax,
+				   hc,pvel[1].lmax,HC_TORSOL_FILE,
 				   verbose);
       free(tvec);
     }

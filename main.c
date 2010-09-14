@@ -52,6 +52,7 @@ int main(int argc, char **argv)
   struct hcs *model;		/* main structure, make sure to initialize with 
 				   zeroes */
   struct sh_lms *sol_spectral=NULL, *geoid = NULL;		/* solution expansions */
+  struct sh_lms pvel[2];
   int nsol,lmax,solved,i;
   FILE *out;
   struct hc_parameters p[1]; /* parameters */
@@ -128,7 +129,7 @@ int main(int argc, char **argv)
     lmax = model->dens_anom[0].lmax;
   else				/* max degree is determined by the
 				   plate velocities  */
-    lmax = model->pvel[0].lmax;	/*  shouldn't be larger than that*/
+    lmax = model->pvel.p[0].lmax;	/*  shouldn't be larger than that*/
 
 
   /* init done */
@@ -158,8 +159,10 @@ int main(int argc, char **argv)
     /* 
        solve poloidal and toroidal part and sum
     */
+    hc_select_pvel(p->pvel_time,&model->pvel,pvel,p->verbose);
     hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
-	     TRUE,TRUE,TRUE,p->print_pt_sol,p->compute_geoid,geoid,
+	     TRUE,TRUE,TRUE,p->print_pt_sol,p->compute_geoid,
+	     pvel,model->dens_anom,geoid,
 	     p->verbose);
     /* 
        
@@ -269,6 +272,9 @@ int main(int argc, char **argv)
     
 
     /*  */
+    /* select plate velocity */
+    hc_select_pvel(p->pvel_time,&model->pvel,pvel,p->verbose);
+    
     solved=0;
     for(v[0]=vl[0][0];v[0] <= vl[0][1];v[0] += vl[0][2])
       for(v[1]=vl[1][0];v[1] <= vl[1][1];v[1] += vl[1][2])
@@ -287,7 +293,8 @@ int main(int argc, char **argv)
 		     (solved)?(FALSE):(TRUE), /* density changed? */
 		     (solved)?(FALSE):(TRUE), /* plate velocity changed? */
 		     TRUE,			/* viscosity changed */
-		     FALSE,p->compute_geoid,geoid,
+		     FALSE,p->compute_geoid,
+		     pvel,model->dens_anom,geoid,
 		     p->verbose);
 	    /* only output are the geoid correlations, for now */
 	    hc_compute_correlation(geoid,p->ref_geoid,corr,1,p->verbose);

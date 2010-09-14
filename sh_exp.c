@@ -1869,6 +1869,36 @@ void sh_write_coeff(struct sh_lms *exp,int l, int m,
     break;
   }
 }
+
+/* copy a whole expansion structure */
+void sh_copy_lms(struct sh_lms *a, struct sh_lms *b)
+{
+
+  memcpy(b,a,sizeof(struct sh_lms));
+
+  /* make sure this really gets done, if memory is not contiguous */
+  b->type = a->type;
+  b->lmax = a->lmax;
+  b->spectral_init = a->spectral_init;
+  b->lmaxp1 = a->lmaxp1;
+  b->lmbig = a->lmbig;
+  b->lmsmall2 = a->lmsmall2;
+  b->n_lm = a->n_lm;
+  b->n_plm = a->n_plm;
+  b->tn_plm = a->tn_plm;
+  b->tn_plm_irr = a->tn_plm_irr;;
+  b->npoints = a->npoints;
+  b->plm_computed = a->plm_computed;
+  b->plm_computed_irr = a->plm_computed_irr;
+  b->old_lmax = a->old_lmax;
+  b->old_ivec = a->old_ivec;
+  b->old_tnplm = a->old_tnplm;
+  b->old_tnplm_irr = a->old_tnplm_irr;
+  b->old_lmax_irr  = a->old_lmax_irr;
+  b->old_ivec_irr  = a->old_ivec_irr;
+
+  sh_aexp_equals_bexp_coeff(a,b);
+}
 /* 
    copy the coefficients of one expansion to another 
 

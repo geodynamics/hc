@@ -44,12 +44,14 @@ void hc_assign_viscosity(struct hcs *, int, double [4], struct hc_parameters *);
 void hc_assign_density(struct hcs *, unsigned short, int, char *, int, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, int, double *, double *, unsigned short);
 double hc_find_dens_scale(double, double, unsigned short, double *, double *, int);
 void hc_init_phase_boundaries(struct hcs *, int, unsigned short);
-void hc_assign_plate_velocities(struct hcs *, int, char *, unsigned short, int, unsigned short, unsigned short);
+void hc_assign_plate_velocities(struct hcs *, int, char *, unsigned short, int, unsigned short, unsigned short, unsigned short);
+void hc_init_single_plate_exp(char *, struct hcs *, unsigned short, struct sh_lms *, unsigned short, unsigned short, unsigned short);
 void hc_init_l_factors(struct hcs *, int);
 void hc_get_blank_expansions(struct sh_lms **, int, int, char *);
 void hc_struc_free(struct hcs **);
 void hc_assign_dd_scaling(int, double [4], struct hc_parameters *, double);
 void hc_read_geoid(struct hc_parameters *);
+void hc_select_pvel(double, struct pvels *, struct sh_lms *, unsigned short);
 /* hc_input.c */
 void hc_read_sh_solution(struct hcs *, struct sh_lms **, FILE *, unsigned short, unsigned short);
 /* hc_matrix.c */
@@ -96,7 +98,7 @@ void hc_polsol(struct hcs *, int, double *, int, double *, unsigned short, struc
 void hc_evalpa(int, double, double, double, double *);
 void hc_evppot(int, double, double *);
 /* hc_solve.c */
-void hc_solve(struct hcs *, unsigned short, int, struct sh_lms *, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, struct sh_lms *, unsigned short);
+void hc_solve(struct hcs *, unsigned short, int, struct sh_lms *, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, struct sh_lms *, struct sh_lms *, struct sh_lms *, unsigned short);
 void hc_sum(struct hcs *, int, struct sh_lms *, struct sh_lms *, int, unsigned short, struct sh_lms *, unsigned short);
 void hc_compute_sol_spatial(struct hcs *, struct sh_lms *, float **, unsigned short);
 /* hc_torsol.c */
@@ -179,6 +181,7 @@ void sh_compute_plm(struct sh_lms *, int, float **, unsigned short);
 void sh_compute_plm_reg(struct sh_lms *, int, float **, unsigned short, float *, int);
 void sh_get_coeff(struct sh_lms *, int, int, int, unsigned short, double *);
 void sh_write_coeff(struct sh_lms *, int, int, int, unsigned short, double *);
+void sh_copy_lms(struct sh_lms *, struct sh_lms *);
 void sh_aexp_equals_bexp_coeff(struct sh_lms *, struct sh_lms *);
 void sh_scale_expansion_l_factor(struct sh_lms *, double *);
 void sh_scale_expansion(struct sh_lms *, double);

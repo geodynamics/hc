@@ -69,6 +69,8 @@ Described in the help page that is displayed for "hc -h" as below.
 Also see http://geosys.usc.edu/projects/seatree/ for a graphical user
 interface, and example plotting scripts as provided below.
 
+Example input data is provided in subdirectory example_data/
+
 >>>
 
 bin/hc - perform Hager & O'Connell flow computation
