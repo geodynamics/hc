@@ -31,12 +31,12 @@ int main(int argc, char **argv)
 	  argv[0],argv[1],argv[2],rad_km);
   
   if(ggrd_grdtrack_init_general(FALSE,argv[1],&char_dummy,
-				"-Lx",g1,TRUE,FALSE)){
+				"-Lx",g1,TRUE,FALSE,FALSE)){
     fprintf(stderr,"%s: error reading %s\n",argv[0],argv[1]);
     exit(-1);
   }
   if(ggrd_grdtrack_init_general(FALSE,argv[2],&char_dummy,
-				"-Lx",g2,TRUE,FALSE)){
+				"-Lx",g2,TRUE,FALSE,FALSE)){
     fprintf(stderr,"%s: error reading %s\n",argv[0],argv[2]);
     exit(-1);
   }

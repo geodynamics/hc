@@ -34,7 +34,7 @@ wrappers
 */
 int ggrd_grdtrack_init_general(ggrd_boolean ,char *, char *,char *,
 			       struct ggrd_gt *,ggrd_boolean ,
-			       ggrd_boolean);
+			       ggrd_boolean, ggrd_boolean);
 ggrd_boolean ggrd_grdtrack_interpolate_rtp(double ,double ,double ,
 					    struct ggrd_gt *,double *,
 					    ggrd_boolean,ggrd_boolean);
@@ -65,7 +65,7 @@ moderately external
 void ggrd_init_master(struct ggrd_master *);
 
 int ggrd_init_thist_from_file(struct ggrd_t *,char *,ggrd_boolean ,ggrd_boolean);
-int ggrd_read_vel_grids(struct ggrd_master *, double, unsigned short, unsigned short, char *);
+int ggrd_read_vel_grids(struct ggrd_master *, double, unsigned short, unsigned short, char *,ggrd_boolean);
 
 #ifndef USE_GMT3
 /* GMT >4.1.2 */
@@ -78,7 +78,7 @@ ggrd_boolean ggrd_grdtrack_interpolate(double *, ggrd_boolean , struct GRD_HEADE
 int ggrd_grdtrack_init(double *, double *, double *, double *, float **, int *, char *, 
 		       struct GRD_HEADER **, struct GMT_EDGEINFO **, char *, 
 		       ggrd_boolean *, GMT_LONG *, ggrd_boolean, char *, 
-		       float **, int *, ggrd_boolean, ggrd_boolean, 
+		       float **, int *,GMT_LONG, ggrd_boolean, 
 		       ggrd_boolean, struct GMT_BCR *);
 
 /* < 4.5.1 */

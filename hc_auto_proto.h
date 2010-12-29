@@ -1,7 +1,8 @@
+/* convert_bernhard_dens.c */
 /* ggrd_grdtrack_util.c */
 void ggrd_init_master(struct ggrd_master *);
 void ggrd_grdinfo(char *);
-int ggrd_grdtrack_init_general(unsigned char, char *, char *, char *, struct ggrd_gt *, unsigned char, unsigned char);
+int ggrd_grdtrack_init_general(unsigned char, char *, char *, char *, struct ggrd_gt *, unsigned char, unsigned char, unsigned char);
 int ggrd_grdtrack_rescale(struct ggrd_gt *, unsigned char, unsigned char, unsigned char, double);
 unsigned char ggrd_grdtrack_interpolate_rtp(double, double, double, struct ggrd_gt *, double *, unsigned char, unsigned char);
 unsigned char ggrd_grdtrack_interpolate_xyz(double, double, double, struct ggrd_gt *, double *, unsigned char);
@@ -23,7 +24,7 @@ float ggrd_gt_rms(float *, int);
 float ggrd_gt_mean(float *, int);
 /* ggrd_readgrds.c */
 void ggrd_init_vstruc(struct ggrd_master *);
-int ggrd_read_vel_grids(struct ggrd_master *, double, unsigned short, unsigned short, char *);
+int ggrd_read_vel_grids(struct ggrd_master *, double, unsigned short, unsigned short, char *, unsigned char);
 void ggrd_resort_and_check(double *, float *, double *, int, int, unsigned short, double, unsigned short, unsigned short, double, unsigned char *);
 void ggrd_read_depth_levels(struct ggrd_master *, int **, char *, unsigned short);
 /* ggrd_test.c */
@@ -116,6 +117,7 @@ void prem_get_pressure(double *, double, struct prem_model *);
 void prem_get_values(double *, double *, double *, double *, double *, double *, double *, double *, double *, double *, double, struct prem_model *);
 int prem_read_model(char *, struct prem_model *, unsigned short);
 int prem_read_para_set(double *, int, int, FILE *);
+/* print_gauss_lat.c */
 /* rick_fft_c.c */
 void rick_cs2ab(float *, int);
 void rick_ab2cs(float *, int);
@@ -181,6 +183,7 @@ void sh_compute_plm(struct sh_lms *, int, float **, unsigned short);
 void sh_compute_plm_reg(struct sh_lms *, int, float **, unsigned short, float *, int);
 void sh_get_coeff(struct sh_lms *, int, int, int, unsigned short, double *);
 void sh_write_coeff(struct sh_lms *, int, int, int, unsigned short, double *);
+void sh_add_coeff(struct sh_lms *, int, int, int, unsigned short, double *);
 void sh_copy_lms(struct sh_lms *, struct sh_lms *);
 void sh_aexp_equals_bexp_coeff(struct sh_lms *, struct sh_lms *);
 void sh_scale_expansion_l_factor(struct sh_lms *, double *);

@@ -88,8 +88,9 @@ int ggrd_read_vel_grids(struct ggrd_master *ggrd, /* ggrd master structure
 							bottom layers 
 							radial velocity 
 						     */
-			char *prefix /* start filenames with this
+			char *prefix, /* start filenames with this
 					prefix */
+			ggrd_boolean use_nearneighbor
 			)
 {
   FILE *in,*out;
@@ -175,7 +176,7 @@ int ggrd_read_vel_grids(struct ggrd_master *ggrd, /* ggrd master structure
 	sprintf(tfilename,"%s%i/age.grd",prefix,ivt+1);
 	if(ggrd_grdtrack_init_general(FALSE,tfilename,char_dummy, /* load file */
 				      "-Lx",(ggrd->ages+ivt),verbose,
-				      FALSE)){
+				      FALSE,use_nearneighbor)){
 	  fprintf(stderr,"ggrd_read_vel_grids: file error\n");
 	  return -10;
 	}

@@ -36,9 +36,11 @@ and Tromp
 
 #define SH_RICK_PREC double
 #define rick_vecalloc hc_dvecalloc
+#define SH_RICK_FLT_FMT "%lf"
 #else
 #define SH_RICK_PREC float
 #define rick_vecalloc hc_svecalloc
+#define SH_RICK_FLT_FMT "%f"
 #endif
 
 #ifndef my_boolean

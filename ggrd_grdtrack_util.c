@@ -52,7 +52,7 @@ void ggrd_grdinfo(char *filename)
 {
   struct ggrd_gt g[1];
   char cdummy='c';
-  ggrd_grdtrack_init_general(FALSE,filename,&cdummy,"",g,2,FALSE);
+  ggrd_grdtrack_init_general(FALSE,filename,&cdummy,"",g,2,FALSE,FALSE);
   fprintf(stderr,"ggrd_grdinfo: %s W: %g E: %g S: %g N: %g\n",
 	  filename,g->grd->x_min,g->grd->x_max,g->grd->y_min,g->grd->y_max);
   
@@ -67,9 +67,9 @@ void ggrd_grdinfo(char *filename)
    depth_file: file with depth layers for 3-D
    edge_info_string: as in GMT 
    g: ggrd_gt structure, pass allocated
-
+   use_nearneighbor: FALSE, will use bilinear interpolation TRUE: use nearneighbor
    
-   returns error code
+   returns error code, 0 for regular execution
 
 */
 int ggrd_grdtrack_init_general(ggrd_boolean is_three,
@@ -77,25 +77,37 @@ int ggrd_grdtrack_init_general(ggrd_boolean is_three,
 			       char *gmt_edgeinfo_string,
 			       struct ggrd_gt *g,
 			       ggrd_boolean verbose,
-			       ggrd_boolean change_z_sign)
+			       ggrd_boolean change_z_sign,
+			       ggrd_boolean use_nearneighbor)
 {
   /* this is a switch and can be left in */
-  static ggrd_boolean bilinear = TRUE; /* bilinear by default */
-  
   //int pad[4];			/* GMT < 4.5.1 */
   GMT_LONG pad[4];			/* GMT >= 4.5.1 */
   int i,j;
   float zavg,tmp;
+#ifndef USE_GMT3
+  GMT_LONG interpolant;
+  if(use_nearneighbor)
+    interpolant = BCR_NEARNEIGHBOR; /* no interpolation */
+  else
+    interpolant = BCR_BILINEAR; /* bilinear is default for
+				   interpolation */
+#else  /* GMT 3 */
+  ggrd_boolean interpolant = TRUE;
+  if(use_nearneighbor){
+    fprintf(stderr,"ggrd_grdtrack_init_general: nearneighbor not implemented for GMT3\n");
+    return 3;
+  }
+#endif
   /* clear all entries */
   g->east = g->west = g->south = g->north = 0.0;
   g->is_three = is_three;
   g->init = FALSE;
-
   if(ggrd_grdtrack_init(&g->west,&g->east,&g->south,&g->north,&g->f,&g->mm,
 			grdfile,&g->grd,&g->edgeinfo,
 			gmt_edgeinfo_string,&g->geographic_in,
 			pad,is_three,depth_file,&g->z,&g->nz,
-			bilinear,verbose,change_z_sign,
+			interpolant,verbose,change_z_sign,
 			g->loc_bcr))
     return 2;
   /* 
@@ -422,7 +434,7 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
 		       ggrd_boolean three_d, char *dfile, 	/* depth file name */
 		       float **z,	/* layers, pass as NULL */
 		       int *nz,		/* number of layers */
-		       ggrd_boolean bilinear, /* linear/cubic? */
+		       GMT_LONG interpolant, /* linear/cubic? */
 		       ggrd_boolean verbose,
 		       ggrd_boolean change_depth_sign, /* change the
 							  sign of the
@@ -435,7 +447,7 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
 		       struct GMT_EDGEINFO **edgeinfo,char *edgeinfo_string, 
 		       ggrd_boolean *geographic_in,int *pad,ggrd_boolean three_d, 
 		       char *dfile, float **z,int *nz,		
-		       ggrd_boolean bilinear,ggrd_boolean verbose,
+		       ggrd_boolean interpolant,ggrd_boolean verbose,
 		       ggrd_boolean change_depth_sign,
 		       struct BCR *loc_bcr)
 #endif
@@ -732,9 +744,9 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
 
       */
 #ifndef USE_GMT3
-      GMT_bcr_init ((*grd+i), pad, bilinear,1.0,loc_bcr);
+      GMT_bcr_init ((*grd+i), pad, interpolant,1.0,loc_bcr);
 #else
-      my_GMT_bcr_init ((*grd+i), pad, bilinear,loc_bcr);
+      my_GMT_bcr_init ((*grd+i), pad, interpolant,loc_bcr);
 #endif
      }
     /* Set boundary conditions  */
@@ -806,7 +818,7 @@ ggrd_boolean ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degrees
 				       double *value, /* output value */
 				       ggrd_boolean verbose,
 				       struct BCR *loc_bcr
-					)
+				       )
 #endif
 {
   int i1,i2;
@@ -1478,10 +1490,10 @@ void ggrd_global_bcr_assign(struct BCR *loc_bcr)
 
 
 void my_GMT_bcr_init (struct GRD_HEADER *grd, int *pad, 
-		      int bilinear,struct BCR *loc_bcr)
+		      int interpolant,struct BCR *loc_bcr)
 {
 
-  GMT_bcr_init(grd,pad,bilinear);
+  GMT_bcr_init(grd,pad,interpolant);
   /* assign to local bcr */
   memcpy((void *)loc_bcr,(void *)(&bcr),sizeof(struct BCR));
 }

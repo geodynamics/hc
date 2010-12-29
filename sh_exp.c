@@ -24,7 +24,7 @@ void sh_allocate_and_init(struct sh_lms **exp, int n,int lmax,
   *exp = (struct sh_lms *)calloc(n,sizeof(struct sh_lms));
   if(!(*exp))
     HC_MEMERROR("sh_allocate_and_init");
-  for(i=0;i<n;i++){
+  for(i=0;i < n;i++){
     sh_init_expansion((*exp+i),lmax,type,ivec,verbose,regular);
   }
 }
@@ -537,8 +537,10 @@ hc_boolean sh_read_parameters_from_file(int *type, int *lmax,
    fac[3] scales the coefficients
 
 */
-void sh_print_coefficients_to_file(struct sh_lms *exp, int shps, FILE *out, 
-				   HC_CPREC *fac,hc_boolean binary, 
+void sh_print_coefficients_to_file(struct sh_lms *exp, 
+				   int shps, FILE *out, 
+				   HC_CPREC *fac,
+				   hc_boolean binary, 
 				   hc_boolean verbose)
 {
   int j,l,m;
@@ -547,7 +549,7 @@ void sh_print_coefficients_to_file(struct sh_lms *exp, int shps, FILE *out,
   /* 
      test  other expansions this set 
   */
-  for(j=1;j < shps;j++){ /* check the lmax */
+  for(j=0;j < shps;j++){ /* check the lmax */
     if(exp[j].lmax != exp[0].lmax){
       fprintf(stderr,"sh_print_coefficients: error: lmax(%i):%i != lmax(0):%i\n",
 	      j+1,exp[j].lmax,exp[0].lmax);
@@ -1580,7 +1582,7 @@ void sh_compute_plm(struct sh_lms *exp,int ivec,SH_RICK_PREC **plm,
 /* 
 
 compute the associated Legendre functions for all (l,m) at all
-latidutinal lcoations once and only once for all regularly placed latitudes in theya
+latidutinal lcoations once and only once for all regularly placed latitudes in theta
 
 input:
 exp: holds the expansion parameters
@@ -1866,6 +1868,80 @@ void sh_write_coeff(struct sh_lms *exp,int l, int m,
 #endif
   default:
     sh_exp_type_error("sh_write_coefficients",exp);
+    break;
+  }
+}
+
+void sh_add_coeff(struct sh_lms *exp,int l, int m, 
+		    int use_b,hc_boolean phys_norm, 
+		    HC_CPREC *value)
+{
+#ifdef HC_USE_HEALPIX
+  const HC_CPREC sqrt2 = SQRT_TWO;
+#endif
+  HC_CPREC s1;
+  int index;
+  if((m==0) && (use_b > 0)){
+    fprintf(stderr,"sh_add_coeff: error: can't assign B coefficient for m == 0 (l: %i)\n",
+	    l);
+    exit(-1);
+  }
+  switch(exp->type){
+#ifdef HC_USE_HEALPIX
+  case SH_HEALPIX:
+    /* 
+       healpix is stored in complex number format, convert to real
+       expansion coefficients
+    */
+    index = heal_index(&exp->heal,l,m);
+    if(phys_norm){		/* convert */
+      s1=(m==0)?(1.0):(sqrt2);
+      if(use_b == 0)
+	exp->alm_c[index].dr +=   *value/s1;
+      else if(use_b == 1)
+	exp->alm_c[index].di += -(*value)/s1;
+      else{
+	exp->alm_c[index].dr +=   value[0]/s1;
+	exp->alm_c[index].di += - value[1]/s1;
+      }
+    }else{			/* use as is */
+       if(use_b == 0)
+	 exp->alm_c[index].dr += *value;
+       else if(use_b == 1)
+	 exp->alm_c[index].di += *value;
+      else{
+	exp->alm_c[index].dr += value[0];
+	exp->alm_c[index].di += value[1];
+      }
+    }
+    break;
+#endif
+  case SH_RICK:
+    if(phys_norm){		/* convert */
+      if(use_b < 2){		/* A or B */
+	exp->alm[LM_INDEX(l,m,use_b)] += 
+	  *value / SH_RICK_FACTOR(l,m);
+      }else{			/* both */
+	exp->alm[(index=LM_INDEX(l,m,0))] += 
+	  value[0] / (s1=SH_RICK_FACTOR(l,m));
+	exp->alm[index+1] += value[1] / s1;
+      }
+    }else{			/* as is */
+      if(use_b < 2){		/* A or B */
+	exp->alm[LM_INDEX(l,m,use_b)] += *value;
+      }else{			/* both */
+	exp->alm[(index = LM_INDEX(l,m,0))]   += value[0];
+	exp->alm[index+1] += value[1];
+      }
+    } 
+    break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    break;
+#endif
+  default:
+    sh_exp_type_error("sh_add_coefficients",exp);
     break;
   }
 }

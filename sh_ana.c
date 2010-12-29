@@ -81,9 +81,9 @@ int main(int argc, char **argv)
     else{
       /* GMT grd file input */
 #ifndef USE_GMT3      
-      failed = ggrd_grdtrack_init_general(FALSE,argv[2],&cdummy,"-fg",ggrd,TRUE,FALSE);
+      failed = ggrd_grdtrack_init_general(FALSE,argv[2],&cdummy,"-fg",ggrd,TRUE,FALSE,FALSE);
 #else
-      failed = ggrd_grdtrack_init_general(FALSE,argv[2],&cdummy,"-Lg",ggrd,TRUE,FALSE);
+      failed = ggrd_grdtrack_init_general(FALSE,argv[2],&cdummy,"-Lg",ggrd,TRUE,FALSE,FALSE);
 #endif
       if(failed){
 	fprintf(stderr,"%s: error opening netcdf grd %s file\n",argv[0],argv[2]);
@@ -91,9 +91,9 @@ int main(int argc, char **argv)
       }
       if(strcmp(argv[2],"vec_t.grd")==0){ /* vectors */
 #ifndef USE_GMT3      
-	failed = ggrd_grdtrack_init_general(FALSE,"vec_p.grd",&cdummy,"-fg",(ggrd+1),TRUE,FALSE);
+	failed = ggrd_grdtrack_init_general(FALSE,"vec_p.grd",&cdummy,"-fg",(ggrd+1),TRUE,FALSE,FALSE);
 #else
-	failed = ggrd_grdtrack_init_general(FALSE,"vec_p.grd",&cdummy,"-Lg",(ggrd+1),TRUE,FALSE);
+	failed = ggrd_grdtrack_init_general(FALSE,"vec_p.grd",&cdummy,"-Lg",(ggrd+1),TRUE,FALSE,FALSE);
 #endif
 	if(failed){
 	  fprintf(stderr,"%s: error opening second netcdf grd file %s\n",argv[0],"vec_p.grd");

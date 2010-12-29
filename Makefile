@@ -142,7 +142,7 @@ sh_tools: 	$(BDIR)/sh_syn $(BDIR)/sh_corr $(BDIR)/sh_ana $(BDIR)/sh_power \
 
 hc_tools: $(BDIR)/hc  $(BDIR)/hc_extract_sh_layer  $(BDIR)/rotvec2vel $(BDIR)/print_gauss_lat
 
-
+weird_tools: $(BDIR)/convert_bernhard_dens
 
 libs: $(ODIR) $(BDIR) hc_lib  $(HEAL_LIBS) $(RICK_LIB)
 
@@ -190,6 +190,10 @@ $(BDIR)/sh_extract_layer: $(LIBS) $(INCS) $(ODIR)/sh_extract_layer.o
 
 $(BDIR)/print_gauss_lat: print_gauss_lat.c
 	$(CC) $(CFLAGS) print_gauss_lat.c -o $(BDIR)/print_gauss_lat -lm $(INC_FLAGS) \
+	$(LIB_FLAGS)   -lrick -lhc -lggrd -lgmt -lnetcdf $(LDFLAGS)
+
+$(BDIR)/convert_bernhard_dens: convert_bernhard_dens.c
+	$(CC) $(CFLAGS) convert_bernhard_dens.c -o $(BDIR)/convert_bernhard_dens -lm $(INC_FLAGS) \
 	$(LIB_FLAGS)   -lrick -lhc -lggrd -lgmt -lnetcdf $(LDFLAGS)
 
 $(BDIR)/rotvec2vel: rotvec2vel.c

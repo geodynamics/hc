@@ -104,6 +104,10 @@ double prem_compute_dpval(double *y, double *par,
 
   vs=sqrt(1/15((1-2\eta)vph^2 + vpv^2 +5vsh^2+(6+4\eta)vsv^2))
 
+  a simplified version without information about P and eta 
+  
+  
+  vs = sqrt(1/3 * vsh^2 + 2/3 * vsv^2);
 */
 double prem_vs_voigt(double vsh, double vsv, double vph, double vpv, 
 		     double eta)

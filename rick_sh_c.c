@@ -875,8 +875,9 @@ void rick_init(int lmax,int ivec,int *npoints,int *nplm,
       //
       // theta values of the Gauss quadrature points
       //
-      for(i=0;i < rick->nlat;i++)
+      for(i=0;i < rick->nlat;i++){
 	rick->gauss_theta[i] = acos(rick->gauss_z[i]);
+      }
     }
     //
     // those will be used by plmbar to store some of the factors
@@ -968,7 +969,8 @@ void rick_free_module(struct rick_module *rick, int ivec)
   }
   
 }
-void rick_plmbar1(SH_RICK_PREC  *p,SH_RICK_PREC *dp,int ivec,int lmax,
+void rick_plmbar1(SH_RICK_PREC  *p,SH_RICK_PREC *dp,
+		  int ivec,int lmax,
 		  SH_RICK_PREC z, struct rick_module *rick)
 {
   //
@@ -1019,7 +1021,8 @@ void rick_plmbar1(SH_RICK_PREC  *p,SH_RICK_PREC *dp,int ivec,int lmax,
     exit(-1);
   }
   if ((lmax < 0) || (fabs(z) > 1.0)) {
-    fprintf(stderr,"rick_plmbar1: error: bad arguments\n");
+    fprintf(stderr,"rick_plmbar1: error: bad arguments: lmax: %i z: %g\n",
+	    lmax,z);
     exit(-1);
   }
   if(!rick->computed_legendre) {
