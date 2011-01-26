@@ -486,7 +486,6 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
     if(strcmp(edgeinfo_string,"-fy")==0){
       GMT_io.in_col_type[GMT_Y] = GMT_io.out_col_type[GMT_Y] = GMT_IS_LAT;
     }
-    
     gmt_init = TRUE;
   }
 
