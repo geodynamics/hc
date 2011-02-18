@@ -683,7 +683,7 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
 
   *f = (float *) calloc((*mm) * (*nz) ,sizeof (float));
   if(!(*f)){
-    fprintf(stderr,"ggrd_grdtrack_init: f memory error\n");
+    fprintf(stderr,"ggrd_grdtrack_init: f memory error, mm: %i (%i by %i) by nz: %i \n",*mm,mx,my, *nz);
     return 9;
   }
   if(verbose >= 2){
