@@ -1,3 +1,15 @@
+/* 
+
+
+header files for Anisotropic_viscosity.c, for use with CitcomCU and CitcomS
+
+
+EDIT THE FILES in hc, not the citcom subdirectories
+
+
+
+ */
+
 #ifndef __CITCOM_READ_ANIVISC_HEADER__
 
 #define CITCOM_ANIVISC_ORTHO_MODE 1

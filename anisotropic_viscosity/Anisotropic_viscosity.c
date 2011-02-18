@@ -7,6 +7,11 @@ orthotropic viscosity following Muehlhaus, Moresi, Hobbs and Dufour
 
 tranverse isotropy following Han and Wahr (PEPI, 102, 33, 1997)
 
+
+this set of subroutines for use with both CitcomCU and CitcomS
+
+EDIT THE FILES in hc, not the citcom subdirectories
+
    
 */
 
