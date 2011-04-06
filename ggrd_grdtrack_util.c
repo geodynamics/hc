@@ -52,7 +52,8 @@ void ggrd_grdinfo(char *filename)
 {
   struct ggrd_gt g[1];
   char cdummy='c';
-  ggrd_grdtrack_init_general(FALSE,filename,&cdummy,"",g,2,FALSE,FALSE);
+  ggrd_grdtrack_init_general(FALSE,filename,&cdummy,
+			     "",g,2,FALSE,FALSE);
   fprintf(stderr,"ggrd_grdinfo: %s W: %g E: %g S: %g N: %g\n",
 	  filename,g->grd->x_min,g->grd->x_max,g->grd->y_min,g->grd->y_max);
   
@@ -1315,33 +1316,39 @@ void ggrd_calc_mean_and_stddev(GGRD_CPREC *x, GGRD_CPREC *y,int n,GGRD_CPREC *me
 			       ggrd_boolean hypoth, ggrd_boolean weighted,GGRD_CPREC *weight)
 {
   GGRD_CPREC sum1=0.0,sum2=0.0,tmp,ws;
-  int i;
+  int i,nuse;
   if(n <= 1){
     fprintf(stderr,"ggrd_calc_mean_and_stddev: error: n: %i\n",n);
     exit(-1);
   }
   ws=0.0;
   if(hypoth){// sqrt(x^2+y+2)
-    for(i=0;i<n;i++){
-      if(weighted){
-	tmp = hypot(x[i],y[i]) * weight[i];
-	ws += weight[i];
-      }else{
-	tmp = hypot(x[i],y[i]);
-	ws += 1.0;
+    for(i=nuse=0;i < n;i++){
+      if(finite(x[i])&&finite(y[i])){
+	if(weighted){
+	  tmp = hypot(x[i],y[i]) * weight[i];
+	  ws += weight[i];
+	}else{
+	  tmp = hypot(x[i],y[i]);
+	  ws += 1.0;
+	}
+	sum1 += tmp;sum2 += tmp * tmp;
+	nuse++;
       }
-      sum1 += tmp;sum2 += tmp * tmp;
     }
   }else{
-    for(i=0;i<n;i++){
-      if(weighted){
-	tmp  = x[i] * weight[i];
-	ws += weight[i];
-      }else{
-	tmp = x[i];
-	ws += 1.0;
+    for(i=nuse=0;i < n;i++){
+      if(finite(x[i])){
+	if(weighted){
+	  tmp  = x[i] * weight[i];
+	  ws += weight[i];
+	}else{
+	  tmp = x[i];
+	  ws += 1.0;
+	}
+	sum1 += tmp;sum2 += tmp*tmp;
+	nuse++;
       }
-      sum1 += tmp;sum2 += tmp*tmp;
     }
   }
   // standard deviation
@@ -1459,20 +1466,28 @@ WARNING: those are in accurate and do not take the padding into account!
 /* compute simple RMS */
 float ggrd_gt_rms(float *x,int n)
 {
-  int i;
+  int i,nuse;
   float rms = 0.0;
-  for(i=0;i<n;i++)
-    rms += x[i]*x[i];
-  return sqrt(rms/(float)n);
+  for(i=nuse=0;i<n;i++){
+    if(finite(x[i])){
+      rms += x[i]*x[i];
+      nuse++;
+    }
+  }
+  return sqrt(rms/(float)nuse);
 }
 /* compute simple mean */
 float ggrd_gt_mean(float *x,int n)
 {
-  int i;
+  int i,nuse;
   float mean = 0.0;
-  for(i=0;i<n;i++)
-    mean += x[i];
-  return mean/(float)n;
+  for(i=nuse=0;i<n;i++){
+    if(finite(x[i])){
+      mean += x[i];
+      nuse++;
+    }
+  }
+  return mean/(float)nuse;
 }
 #ifdef USE_GMT3
 /* 
