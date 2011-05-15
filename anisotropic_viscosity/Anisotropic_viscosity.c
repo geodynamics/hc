@@ -389,7 +389,8 @@ void set_anisotropic_viscosity_at_element_level(struct All_variables *E, int ini
 	myerror_s("set_anisotropic_viscosity_at_element_level: need to select layer",E);
       ani_layer = -E->viscosity.anivisc_layer;
 #ifdef CitcomS_global_defs_h	
-      /* CitcomS */
+      /* CitcomS, the zbase_layers are counted 0...1 top down, need to
+	 convert to radius */
       z_bottom = E->sphere.ro-E->viscosity.zbase_layer[ani_layer-1];
       if(ani_layer == 1)
 	z_top = E->sphere.ro;
@@ -397,6 +398,9 @@ void set_anisotropic_viscosity_at_element_level(struct All_variables *E, int ini
 	z_top = E->sphere.ro - E->viscosity.zbase_layer[ani_layer-2];
 #else 
       /* CU */
+      /* in spherical system, for CitcomCU zbase_layer is actually
+	 given as radii. can use same as Cartesian
+      */
       z_bottom = E->viscosity.zbase_layer[ani_layer-1];
       if(ani_layer == 1)
 	z_top = E->segment.zzlayer[E->segment.zlayers-1];
