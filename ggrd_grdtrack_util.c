@@ -104,7 +104,8 @@ int ggrd_grdtrack_init_general(ggrd_boolean is_three,
   g->east = g->west = g->south = g->north = 0.0;
   g->is_three = is_three;
   g->init = FALSE;
-  if(ggrd_grdtrack_init(&g->west,&g->east,&g->south,&g->north,&g->f,&g->mm,
+  if(ggrd_grdtrack_init(&g->west,&g->east,
+			&g->south,&g->north,&g->f,&g->mm,
 			grdfile,&g->grd,&g->edgeinfo,
 			gmt_edgeinfo_string,&g->geographic_in,
 			pad,is_three,depth_file,&g->z,&g->nz,
@@ -120,7 +121,7 @@ int ggrd_grdtrack_init_general(ggrd_boolean is_three,
   for(i=0;i < g->nz;i++){	/* loop through layers */
     //g->fmaxlim[i] = g->grd[i].z_min;
     g->fmaxlim[i] = 0.0;
-    for(j=0;j<g->mm;j++){	/* loop trough entries */
+    for(j=0;j < g->mm;j++){	/* loop trough entries */
       tmp = fabs(g->f[i*g->mm+j]);
 	//if((g->f[i*g->mm+j] < g->bandlim) &&(g->f[i*g->mm+j] > g->fmaxlim[i]))
       if((tmp < g->bandlim) && tmp > g->fmaxlim[i])
@@ -443,12 +444,17 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
 							  levels to go from depth (>0) to z (<0) */
 		       struct GMT_BCR *loc_bcr)
 #else
-int ggrd_grdtrack_init(double *west, double *east,double *south, double *north, 
-		       float **f,int *mm,char *grdfile,struct GRD_HEADER **grd,
-		       struct GMT_EDGEINFO **edgeinfo,char *edgeinfo_string, 
-		       ggrd_boolean *geographic_in,int *pad,ggrd_boolean three_d, 
+int ggrd_grdtrack_init(double *west, double *east,
+		       double *south, double *north, 
+		       float **f,int *mm,char *grdfile,
+		       struct GRD_HEADER **grd,
+		       struct GMT_EDGEINFO **edgeinfo,
+		       char *edgeinfo_string, 
+		       ggrd_boolean *geographic_in,
+		       int *pad,ggrd_boolean three_d, 
 		       char *dfile, float **z,int *nz,		
-		       ggrd_boolean interpolant,ggrd_boolean verbose,
+		       ggrd_boolean interpolant,
+		       ggrd_boolean verbose,
 		       ggrd_boolean change_depth_sign,
 		       struct BCR *loc_bcr)
 #endif
@@ -750,7 +756,8 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
 #endif
      }
     /* Set boundary conditions  */
-    GMT_boundcond_set ((*grd+i), (*edgeinfo+i), pad, (*f+i*(*mm)));
+    GMT_boundcond_set ((*grd+i), (*edgeinfo+i), pad, 
+		       (*f+i*(*mm)));
   } /* end layer loop */
   if(verbose){
     ggrd_print_layer_avg(*f,*z,mx,my,*nz,stderr,pad);
@@ -758,7 +765,9 @@ int ggrd_grdtrack_init(double *west, double *east,double *south, double *north,
   return 0;
 
 }
-void ggrd_print_layer_avg(float *x,float *z,int nx, int ny, int m,FILE *out,
+
+void ggrd_print_layer_avg(float *x,float *z,int nx, int ny, 
+			  int m,FILE *out,
 			  GMT_LONG *pad) /* >= 4.5.1 */
 			  //int *pad)
 {
@@ -768,7 +777,8 @@ void ggrd_print_layer_avg(float *x,float *z,int nx, int ny, int m,FILE *out,
   if(pad[0]+pad[1]+pad[2]+pad[3] == 0){
     for(i=0;i < m;i++){
       fprintf(stderr,"ggrd_grdtrack_init: layer %3i at depth %11g, mean: %11g rms: %11g\n",
-	      i+1,z[i],ggrd_gt_mean((x+i*nxny),nxny),ggrd_gt_rms((x+i*nxny),nxny));
+	      i+1,z[i],ggrd_gt_mean((x+i*nxny),nxny),
+	      ggrd_gt_rms((x+i*nxny),nxny));
     }
   }else{
 
@@ -782,7 +792,8 @@ void ggrd_print_layer_avg(float *x,float *z,int nx, int ny, int m,FILE *out,
 	for(k=pad[0];k < xl;k++,l++)
 	  tmp[l] = x[i*nxny + j * nx + k];
       fprintf(stderr,"ggrd_grdtrack_init: layer %3i at depth %11g, mean: %11g rms: %11g\n",
-	      i+1,z[i],ggrd_gt_mean(tmp,nxnyr),ggrd_gt_rms(tmp,nxnyr));
+	      i+1,z[i],ggrd_gt_mean(tmp,nxnyr),
+	      ggrd_gt_rms(tmp,nxnyr));
     }
     free(tmp);
   }

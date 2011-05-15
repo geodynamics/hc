@@ -378,19 +378,25 @@ void set_anisotropic_viscosity_at_element_level(struct All_variables *E, int ini
       ggrd_read_anivisc_from_file(E);
 #endif
       break;
-    case 6:			/* tapered within layer */
+    case 6:		
+      /* 
+	 tapered within layer 
+      */
       if(E->parallel.me == 0)
 	fprintf(stderr,"set_anisotropic_viscosity_at_element_level: setting orthotropic tapered, vis2 min %g\n",
 		E->viscosity.ani_vis2_factor);
-      if(E->viscosity.anivisc_layer >= 0)myerror_s("set_anisotropic_viscosity_at_element_level: need to select layer",E);
+      if(E->viscosity.anivisc_layer >= 0)
+	myerror_s("set_anisotropic_viscosity_at_element_level: need to select layer",E);
       ani_layer = -E->viscosity.anivisc_layer;
-#ifdef CitcomS_global_defs_h	/* CitcomS */
-      z_bottom = E->viscosity.zbase_layer[ani_layer-1];
+#ifdef CitcomS_global_defs_h	
+      /* CitcomS */
+      z_bottom = E->sphere.ro-E->viscosity.zbase_layer[ani_layer-1];
       if(ani_layer == 1)
 	z_top = E->sphere.ro;
       else
-	z_top = E->viscosity.zbase_layer[ani_layer-2];
-#else  /* CU */
+	z_top = E->sphere.ro - E->viscosity.zbase_layer[ani_layer-2];
+#else 
+      /* CU */
       z_bottom = E->viscosity.zbase_layer[ani_layer-1];
       if(ani_layer == 1)
 	z_top = E->segment.zzlayer[E->segment.zlayers-1];
@@ -405,9 +411,9 @@ void set_anisotropic_viscosity_at_element_level(struct All_variables *E, int ini
 	  elxlz = elx * elz;
 	  for (j=1;j <= elz;j++){
 #ifdef CitcomS_global_defs_h	/* CitcomS */
-	    if(E->mat[m][j] ==  -E->viscosity.anivisc_layer){
+	    if(E->mat[m][j] ==  ani_layer){
 #else
-	    if(E->mat[j] ==  -E->viscosity.anivisc_layer){
+	    if(E->mat[j] ==  ani_layer){
 #endif
 	      for(u=0.,inode=1;inode <= ends;inode++){ /* mean vertical coordinate */
 #ifdef CitcomS_global_defs_h	/* CitcomS */
@@ -422,16 +428,21 @@ void set_anisotropic_viscosity_at_element_level(struct All_variables *E, int ini
 #endif
 	      }
 	      u /= ends;
-	      /* do a log scale decrease of vis2 to ani_vis2_factor from bottom to top of layer */
+	      /* 
+		 do a log scale decrease of vis2 to ani_vis2_factor from bottom to top of layer 
+	      */
 	      vis2 = exp(log(E->viscosity.ani_vis2_factor) * (u-z_bottom)/(z_top-z_bottom));
 	      //fprintf(stderr,"z %g (%g/%g) vis2 %g vis2_o %g frac %g\n",u,z_top,z_bottom,vis2, E->viscosity.ani_vis2_factor,(u-z_bottom)/(z_top-z_bottom));
-	      /* 1-eta_s/eta */
+	      /* 
+		 1-eta_s/eta 
+	      */
 	      vis2 = 1 - vis2;
 	      for (k=1;k <= ely;k++){
 		for (l=1;l <= elx;l++)   {
 		  /* eq.(1) */
 		  el = j + (l-1) * elz + (k-1)*elxlz;
-#ifdef CitcomS_global_defs_h	/* CitcomS */
+#ifdef CitcomS_global_defs_h	
+		  /* CitcomS */
 		  xloc[0] = xloc[1] = xloc[2] = 0.0;
 		  for(inode=1;inode <= ends;inode++){
 		    off = E->ien[m][el].node[inode];
@@ -439,15 +450,21 @@ void set_anisotropic_viscosity_at_element_level(struct All_variables *E, int ini
 		    xloc[0] += rout[0];xloc[1] += rout[1];xloc[2] += rout[2];
 		  }
 		  xloc[0]/=ends;xloc[1]/=ends;xloc[2]/=ends;xyz2rtp(xloc[0],xloc[1],xloc[2],rout); 
-		  calc_cbase_at_tp(rout[1],rout[2],base);convert_pvec_to_cvec(1.,0.,0.,base,rout);
+		  /* r,t,p=(1,0,0) convert to Caretsian */
+		  calc_cbase_at_tp(rout[1],rout[2],base);
+		  convert_pvec_to_cvec(1.,0.,0.,base,rout);
 		  n[0]=rout[0];n[1]=rout[1];n[2]=rout[2];
 		  for(p=1;p <= vpts;p++){ /* assign to all integration points */
 		    off = (el-1)*vpts + p;
 		    E->EVI2[i][m][off] = vis2;
 		    E->EVIn1[i][m][off] = n[0]; E->EVIn2[i][m][off] = n[1];E->EVIn3[i][m][off] = n[2];
+		    //fprintf(stderr,"%g %g %g %g\n",n[0],n[1],n[2],vis2);
 		    E->avmode[i][m][off] = CITCOM_ANIVISC_ORTHO_MODE;
 		  }
-#else  /* CU */
+#else 
+		  /* 
+		     CU 
+		  */
 		  if(E->control.Rsphere){ /* director in r direction */
 		    xloc[0] = xloc[1] = xloc[2] = 0.0;
 		    for(inode=1;inode <= ends;inode++){
