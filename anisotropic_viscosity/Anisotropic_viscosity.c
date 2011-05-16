@@ -492,13 +492,9 @@ void set_anisotropic_viscosity_at_element_level(struct All_variables *E,
 		    rtp2xyz((float)E->sx[m][3][off],(float)E->sx[m][1][off],(float)E->sx[m][2][off],rout);
 		    xloc[0] += rout[0];xloc[1] += rout[1];xloc[2] += rout[2];
 		  }
-		  xloc[0]/=ends;xloc[1]/=ends;xloc[2]/=ends;xyz2rtp(xloc[0],xloc[1],xloc[2],rout); 
-		  /* 
-		     r,t,p=(1,0,0) convert to Caretsian 
-		  */
-		  calc_cbase_at_tp(rout[1],rout[2],base);
-		  convert_pvec_to_cvec(1.,0.,0.,base,rout);
-		  n[0]=rout[0];n[1]=rout[1];n[2]=rout[2];
+		  xloc[0]/=ends;xloc[1]/=ends;xloc[2]/=ends;
+		  xyz2rtp(xloc[0],xloc[1],xloc[2],rout); 
+		  /* got mean location in spherical */
 		  if(read_grd){
 		    /* read in a local vis2 favtors */
 		    if(!ggrd_grdtrack_interpolate_tp(rout[1],rout[2],
@@ -510,6 +506,12 @@ void set_anisotropic_viscosity_at_element_level(struct All_variables *E,
 		    }
 		    vis2 = 1 - exp(log(pow(10.0,log_vis)) * (u-z_bottom)/(z_top-z_bottom));
 		  }
+		  /* 
+		     r,t,p=(1,0,0) convert to Caretsian, reuse rout
+		  */
+		  calc_cbase_at_tp(rout[1],rout[2],base);
+		  convert_pvec_to_cvec(1.,0.,0.,base,rout);
+		  n[0]=rout[0];n[1]=rout[1];n[2]=rout[2];
 		  for(p=1;p <= vpts;p++){ /* assign to all integration points */
 		    off = (el-1)*vpts + p;
 		    E->EVI2[i][m][off] = vis2;
@@ -527,9 +529,8 @@ void set_anisotropic_viscosity_at_element_level(struct All_variables *E,
 		      rtp2xyz((float)E->SX[3][off],(float)E->SX[1][off],(float)E->SX[2][off],rout);
 		      xloc[0] += rout[0];xloc[1] += rout[1];xloc[2] += rout[2];
 		    }
-		    xloc[0]/=ends;xloc[1]/=ends;xloc[2]/=ends;xyz2rtp(xloc[0],xloc[1],xloc[2],rout); 
-		    calc_cbase_at_tp(rout[1],rout[2],base);convert_pvec_to_cvec(1.,0.,0.,base,rout);
-		    n[0]=rout[0];n[1]=rout[1];n[2]=rout[2];
+		    xloc[0]/=ends;xloc[1]/=ends;xloc[2]/=ends;
+		    xyz2rtp(xloc[0],xloc[1],xloc[2],rout); 
 		    if(read_grd){
 		      if(!ggrd_grdtrack_interpolate_tp(rout[1],rout[2],
 						       vis2_grd,&log_vis,FALSE,FALSE)){
@@ -539,6 +540,9 @@ void set_anisotropic_viscosity_at_element_level(struct All_variables *E,
 		      }
 		      vis2 = 1 - exp(log(pow(10.0,log_vis)) * (u-z_bottom)/(z_top-z_bottom));
 		    }
+		    calc_cbase_at_tp(rout[1],rout[2],base);
+		    convert_pvec_to_cvec(1.,0.,0.,base,rout);
+		    n[0]=rout[0];n[1]=rout[1];n[2]=rout[2];
 		  }else{		/* director in z direction */
 		    n[0] = 0.;n[1] = 0.;n[2] = 1.;
 		    if(read_grd){ /* get the vis2 factors */
