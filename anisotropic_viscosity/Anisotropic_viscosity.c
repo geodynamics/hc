@@ -126,9 +126,9 @@ normalize n, if not already normalized
 
 
 */
-								       void get_constitutive_ti_viscosity(double D[6][6], double delta_vis, double gamma_vis,
-													  double n[3], int convert_to_spherical,
-													  double theta, double phi) 
+void get_constitutive_ti_viscosity(double D[6][6], double delta_vis, double gamma_vis,
+				   double n[3], int convert_to_spherical,
+				   double theta, double phi) 
 {
   double nlen,delta_vis2;
   int ani;
@@ -180,9 +180,9 @@ normalize n, if not already normalized
 
 
 								     */
-								       void get_constitutive_orthotropic_viscosity(double D[6][6], double delta_vis,
-														   double n[3], int convert_to_spherical,
-														   double theta, double phi) 
+void get_constitutive_orthotropic_viscosity(double D[6][6], double delta_vis,
+					    double n[3], int convert_to_spherical,
+					    double theta, double phi) 
 {
   double nlen,delta_vis2;
   double delta[3][3][3][3];
@@ -263,11 +263,17 @@ void get_constitutive_isotropic(double D[6][6])
 }
 
 
-void set_anisotropic_viscosity_at_element_level(struct All_variables *E, int init_stage)
+void set_anisotropic_viscosity_at_element_level(struct All_variables *E, 
+						int init_stage)
 {
   int i,j,k,l,m,off,p,nel,elx,ely,elz,inode,elxlz,el,ani_layer;
-  double vis2,n[3],u,v,s,r,xloc[3],z_top,z_bottom;
+  double vis2,n[3],u,v,s,r,xloc[3],z_top,z_bottom,log_vis;
   float base[9],rout[3];
+  char tfilename[1000],gmt_string[50];
+  int read_grd;
+#ifdef USE_GGRD
+  struct ggrd_gt *vis2_grd;
+#endif
   const int vpts = vpoints[E->mesh.nsd];
   const int ends = enodes[E->mesh.nsd];
   int mgmin,mgmax;
@@ -380,11 +386,42 @@ void set_anisotropic_viscosity_at_element_level(struct All_variables *E, int ini
       break;
     case 6:		
       /* 
-	 tapered within layer 
+	 
+	 tapered within layer, if ani_vis2_factor < 0, will read from file
+	 for vis2 base. else, will use constant factor everywhere 
       */
-      if(E->parallel.me == 0)
-	fprintf(stderr,"set_anisotropic_viscosity_at_element_level: setting orthotropic tapered, vis2 min %g\n",
-		E->viscosity.ani_vis2_factor);
+      
+      if(E->viscosity.ani_vis2_factor >= 0){
+	if(E->parallel.me == 0)
+	  fprintf(stderr,"set_anisotropic_viscosity_at_element_level: setting orthotropic tapered, vis2 min %g, global\n",
+		  E->viscosity.ani_vis2_factor);
+	read_grd = 0;
+      }else{
+	/* 
+	   init the base factor from a grid
+	*/
+	read_grd = 1;
+	sprintf(tfilename,"%s/vis2.grd",E->viscosity.anisotropic_init_dir);
+	if(E->parallel.me == 0)
+	  fprintf(stderr,"set_anisotropic_viscosity_at_element_level: setting orthotropic tapered, reading base vis2 from %s\n",
+		  tfilename);
+	vis2_grd = (struct  ggrd_gt *)calloc(1,sizeof(struct ggrd_gt));
+#ifdef CitcomS_global_defs_h	/* CitcomS */
+	if(E->sphere.caps == 12)	
+	  sprintf(gmt_string,GGRD_GMT_GLOBAL_STRING); 
+	else
+	  sprintf(gmt_string,"");
+#else  /* CitcomCU */
+	sprintf(gmt_string,"");
+#endif
+	if(ggrd_grdtrack_init_general(FALSE,tfilename,"",gmt_string,
+				      vis2_grd,(E->parallel.me == 0),FALSE,
+				      FALSE))
+	  myerror_s("ggrd init error for vis2 at layered anisotropic init",E);
+      }
+      /* 
+	 select layer where the scaling applies
+      */
       if(E->viscosity.anivisc_layer >= 0)
 	myerror_s("set_anisotropic_viscosity_at_element_level: need to select layer",E);
       ani_layer = -E->viscosity.anivisc_layer;
@@ -432,15 +469,17 @@ void set_anisotropic_viscosity_at_element_level(struct All_variables *E, int ini
 #endif
 	      }
 	      u /= ends;
-	      /* 
-		 do a log scale decrease of vis2 to ani_vis2_factor from bottom to top of layer 
-	      */
-	      vis2 = exp(log(E->viscosity.ani_vis2_factor) * (u-z_bottom)/(z_top-z_bottom));
-	      //fprintf(stderr,"z %g (%g/%g) vis2 %g vis2_o %g frac %g\n",u,z_top,z_bottom,vis2, E->viscosity.ani_vis2_factor,(u-z_bottom)/(z_top-z_bottom));
-	      /* 
-		 1-eta_s/eta 
-	      */
-	      vis2 = 1 - vis2;
+	      if(!read_grd){
+		/* 
+		   do a log scale decrease of vis2 to ani_vis2_factor from bottom to top of layer 
+		*/
+		vis2 = exp(log(E->viscosity.ani_vis2_factor) * (u-z_bottom)/(z_top-z_bottom));
+		//fprintf(stderr,"z %g (%g/%g) vis2 %g vis2_o %g frac %g\n",u,z_top,z_bottom,vis2, E->viscosity.ani_vis2_factor,(u-z_bottom)/(z_top-z_bottom));
+		/* 
+		   1-eta_s/eta 
+		*/
+		vis2 = 1 - vis2;
+	      }
 	      for (k=1;k <= ely;k++){
 		for (l=1;l <= elx;l++)   {
 		  /* eq.(1) */
@@ -454,15 +493,27 @@ void set_anisotropic_viscosity_at_element_level(struct All_variables *E, int ini
 		    xloc[0] += rout[0];xloc[1] += rout[1];xloc[2] += rout[2];
 		  }
 		  xloc[0]/=ends;xloc[1]/=ends;xloc[2]/=ends;xyz2rtp(xloc[0],xloc[1],xloc[2],rout); 
-		  /* r,t,p=(1,0,0) convert to Caretsian */
+		  /* 
+		     r,t,p=(1,0,0) convert to Caretsian 
+		  */
 		  calc_cbase_at_tp(rout[1],rout[2],base);
 		  convert_pvec_to_cvec(1.,0.,0.,base,rout);
 		  n[0]=rout[0];n[1]=rout[1];n[2]=rout[2];
+		  if(read_grd){
+		    /* read in a local vis2 favtors */
+		    if(!ggrd_grdtrack_interpolate_tp(rout[1],rout[2],
+						     vis2_grd,&log_vis,
+						     FALSE,FALSE)){
+		      fprintf(stderr,"ggrd_read_anivisc_from_file: interpolation error at lon: %g lat: %g\n",
+			      rout[2]*180/M_PI,90-rout[1]*180/M_PI);
+		      parallel_process_termination();
+		    }
+		    vis2 = 1 - exp(log(pow(10.0,log_vis)) * (u-z_bottom)/(z_top-z_bottom));
+		  }
 		  for(p=1;p <= vpts;p++){ /* assign to all integration points */
 		    off = (el-1)*vpts + p;
 		    E->EVI2[i][m][off] = vis2;
 		    E->EVIn1[i][m][off] = n[0]; E->EVIn2[i][m][off] = n[1];E->EVIn3[i][m][off] = n[2];
-		    //fprintf(stderr,"%g %g %g %g\n",n[0],n[1],n[2],vis2);
 		    E->avmode[i][m][off] = CITCOM_ANIVISC_ORTHO_MODE;
 		  }
 #else 
@@ -479,8 +530,32 @@ void set_anisotropic_viscosity_at_element_level(struct All_variables *E, int ini
 		    xloc[0]/=ends;xloc[1]/=ends;xloc[2]/=ends;xyz2rtp(xloc[0],xloc[1],xloc[2],rout); 
 		    calc_cbase_at_tp(rout[1],rout[2],base);convert_pvec_to_cvec(1.,0.,0.,base,rout);
 		    n[0]=rout[0];n[1]=rout[1];n[2]=rout[2];
+		    if(read_grd){
+		      if(!ggrd_grdtrack_interpolate_tp(rout[1],rout[2],
+						       vis2_grd,&log_vis,FALSE,FALSE)){
+			fprintf(stderr,"ggrd_read_anivisc_from_file: interpolation error at lon: %g lat: %g\n",
+				rout[2]*180/M_PI,90-rout[1]*180/M_PI);
+			parallel_process_termination();
+		      }
+		      vis2 = 1 - exp(log(pow(10.0,log_vis)) * (u-z_bottom)/(z_top-z_bottom));
+		    }
 		  }else{		/* director in z direction */
-		    n[0] = 0.;n[1] = 0.;n[2] = 1.;	
+		    n[0] = 0.;n[1] = 0.;n[2] = 1.;
+		    if(read_grd){ /* get the vis2 factors */
+		      rout[0]=rout[1]=rout[2]=0.0;
+		      for(inode=1;inode <= ends;inode++){
+			off = E->ien[el].node[inode];
+			rout[0] += E->X[1][off];rout[1] += E->X[2][off];
+			rout[2] += E->X[3][off];
+		      }
+		      rout[0]/=ends;rout[1]/=ends;rout[2]/=ends;
+		      if(!ggrd_grdtrack_interpolate_xy((double)rout[0],(double)rout[1],vis2_grd,&log_vis,FALSE)){
+			fprintf(stderr,"ggrd_read_anivisc_from_file: interpolation error at x: %g y: %g\n",
+				rout[0],rout[1]);
+			parallel_process_termination();
+		      }
+		      vis2 = 1 - exp(log(pow(10.0,log_vis)) * (u-z_bottom)/(z_top-z_bottom));
+		    }
 		  }
 		  for(p=1;p <= vpts;p++){ /* assign to all integration points */
 		    off = (el-1)*vpts + p;
@@ -511,7 +586,10 @@ void set_anisotropic_viscosity_at_element_level(struct All_variables *E, int ini
 	} /* end m loop */
 #endif
       }	/* end multigrid */
-      break;			/*  */
+	if(read_grd)
+	ggrd_grdtrack_free_gstruc(vis2_grd);
+	
+      break;			/* end of 6 branch */
     default:
       fprintf(stderr,"set_anisotropic_viscosity_at_element_level: anisotropic_init %i undefined\n",
 	      E->viscosity.anisotropic_init);
