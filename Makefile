@@ -95,7 +95,7 @@ GGRD_INCS = $(PREM_INCS)  ggrd_grdtrack_util.h ggrd.h ggrd_struc.h
 #
 HC_SOURCES = sh_exp.c sh_model.c hc_init.c hc_solve.c hc_propagator.c \
 	hc_polsol.c hc_matrix.c hc_torsol.c hc_output.c hc_input.c \
-	hc_misc.c hc_extract_sh_layer.c 
+	hc_misc.c hc_extract_sh_layer.c  hc_extract_spatial.c
 
 # all C sources
 C_SOURCES = $(HC_SOURCES) $(RICK_SRCS) $(GGRD_SRCS)
@@ -140,7 +140,8 @@ all: $(ODIR) $(BDIR) libs sh_tools hc_tools
 sh_tools: 	$(BDIR)/sh_syn $(BDIR)/sh_corr $(BDIR)/sh_ana $(BDIR)/sh_power \
 	 $(BDIR)/sh_extract_layer
 
-hc_tools: $(BDIR)/hc  $(BDIR)/hc_extract_sh_layer  $(BDIR)/rotvec2vel $(BDIR)/print_gauss_lat
+hc_tools: $(BDIR)/hc  $(BDIR)/hc_extract_sh_layer  $(BDIR)/hc_extract_spatial \
+	$(BDIR)/rotvec2vel $(BDIR)/print_gauss_lat
 
 weird_tools: $(BDIR)/convert_bernhard_dens
 
@@ -231,6 +232,12 @@ $(BDIR)/hc_extract_sh_layer: $(LIBS) $(INCS) $(PREM_OBJS) $(ODIR)/hc_extract_sh_
 	$(CC) $(LIB_FLAGS) $(ODIR)/hc_extract_sh_layer.o $(PREM_OBJS) \
 		-o $(BDIR)/hc_extract_sh_layer \
 		-lhc -lrick $(HEAL_LIBS_LINKLINE)  $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS) 
+
+$(BDIR)/hc_extract_spatial: $(LIBS) $(INCS) $(PREM_OBJS) $(ODIR)/hc_extract_spatial.o
+	$(CC) $(LIB_FLAGS) $(ODIR)/hc_extract_spatial.o $(PREM_OBJS) \
+		-o $(BDIR)/hc_extract_spatial \
+		-lhc -lrick $(HEAL_LIBS_LINKLINE)  $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS) 
+
 
 #
 # C function prototyper, strip out GMT version dependent things, 

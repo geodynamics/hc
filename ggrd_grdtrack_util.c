@@ -19,7 +19,7 @@ original comments for grdtrack from GMT at bottom of file
 #endif
 #include <math.h>
 #include <string.h>
-
+#include <math.h>
 
 void ggrd_init_master(struct ggrd_master *ggrd)
 {

@@ -172,8 +172,7 @@ int main(int argc, char **argv)
       hc_svecalloc(&data,exp[0].npoints * shps,"sh_syn");
       sh_compute_spatial(exp,ivec,FALSE,&dummy,data,verbose);
       /* output */
-      sh_print_spatial_data_to_file(exp,shps,data,
-				    (nset>1)?(TRUE):(FALSE),
+      sh_print_spatial_data_to_file(exp,shps,data,(nset>1)?(TRUE):(FALSE),
 				    zlabel,stdout);
     }
     free(exp);free(data);

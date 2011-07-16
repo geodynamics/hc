@@ -34,6 +34,7 @@ void ggrd_get_velocities(double *, double *, double *, int, struct ggrd_master *
 void ggrd_weights(double, double *, int, int, double [(5 +1)][(1 +1)]);
 /* grdinttester.c */
 /* hc_extract_sh_layer.c */
+/* hc_extract_spatial.c */
 /* hc_init.c */
 void hc_init_parameters(struct hc_parameters *);
 void hc_struc_init(struct hcs **);
@@ -79,6 +80,9 @@ char *hc_name_boolean(unsigned short);
 unsigned short hc_toggle_boolean(unsigned short *);
 void hc_advance_argument(int *, int, char **);
 void hc_compute_correlation(struct sh_lms *, struct sh_lms *, double *, int, unsigned short);
+void lonlatpv2cv(float, float, float *, float *);
+void lonlatpv2cv_with_base(float *, double *, float *);
+void calc_polar_base_at_theta_phi(float, float, double *);
 /* hc_output.c */
 void hc_print_spectral_solution(struct hcs *, struct sh_lms *, FILE *, int, unsigned short, unsigned short);
 void hc_print_sh_scalar_field(struct sh_lms *, FILE *, unsigned short, unsigned short, unsigned short);
@@ -93,6 +97,11 @@ void hc_print_vector_row(double *, int, FILE *);
 void hc_compute_solution_scaling_factors(struct hcs *, int, double, double, double *);
 void hc_print_poloidal_solution(struct sh_lms *, struct hcs *, int, char *, unsigned short, unsigned short);
 void hc_print_toroidal_solution(double *, int, struct hcs *, int, char *, unsigned short);
+void hc_print_vtk(FILE *, float *, float *, int, int, unsigned short);
+void hc_print_be_float(float *, int, FILE *, unsigned short);
+unsigned short hc_is_little_endian(void);
+void hc_flip_byte_order(void *, size_t);
+void hc_flipit(void *, void *, size_t);
 /* hc_polsol.c */
 void hc_polsol(struct hcs *, int, double *, int, double *, unsigned short, struct sh_lms *, unsigned short, int, double *, double *, unsigned short, struct sh_lms *, struct sh_lms *, unsigned short, struct sh_lms *, unsigned short, unsigned short);
 /* hc_propagator.c */
@@ -177,6 +186,7 @@ void sh_compute_spatial_irreg(struct sh_lms *, int, float *, float *, int, float
 void sh_exp_type_error(char *, struct sh_lms *);
 void sh_print_plm(float *, int, int, int, FILE *);
 void sh_print_spatial_data_to_file(struct sh_lms *, int, float *, unsigned short, float, FILE *);
+void sh_get_coordinates(struct sh_lms *, int, float *, float *);
 void sh_print_reg_spatial_data_to_file(struct sh_lms *, int, float *, unsigned short, float, float *, int, float *, int, FILE *);
 void sh_print_irreg_spatial_data_to_file(struct sh_lms *, int, float *, unsigned short, float, float *, float *, int, FILE *);
 void sh_compute_plm(struct sh_lms *, int, float **, unsigned short);

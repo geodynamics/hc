@@ -100,25 +100,27 @@ void get_constitutive(double D[6][6],double theta, double phi,
 
 /* 
 
-transversely isotropic viscosity following Han and Wahr
+transversely isotropic viscosity following Han and Wahr (see their eq. 5)
 
 
-\nu_1 = isotropic viscosity, applies for  e_31, e_23
-\nu_2 = weak anisotropy, applies for e_31, e_32
-\eta_1 = normal viscosity, (\eta_1+2\nu_1) control e_11, e_22
-\eta_2 = normal viscosity, (\eta_2+2\nu_2) = 2\eta_1 + 2\nu_1, controls e_33
+\nu_1 = strong (isotropic) viscosity, scales e_31, e_11, e_22
+\nu_2 = weak anisotropy, scales for e_31, e_32
+\eta_1 = normal viscosity, (\eta_1+2\nu_1) scales e_11, e_22
+\eta_2 = normal viscosity, (\eta_2+2\nu_2) = 2\eta_1 + 2\nu_1, scales e_33
 
 we use (for consistency with anisotropic viscosity)
 
-Delta = 1-\nu_2/\nu_1
+\delta = 1-\nu_2/\nu_1
 
 and 
 
 \Gamma, such that \eta_1 = \Gamma \nu_1
 
-\nu_1 is the reference, isotropic viscosity, set to unity here, i.e.
+\nu_1 is the reference, isotropic viscosity, set to unity here, 
 
-\nu_2 = 1 - \Delta ; \eta_1 = \Gamma ; (\eta_2 = 2 (\Gamma-\Delta)); for isotropy \Delta = 0, \Gamma = 0
+for \nu_1 = 1 -->
+
+\nu_2 = 1 - \delta ; \eta_1 = \Gamma ; \eta_2 = 2\eta_1 + 2\nu_1 - 2\nu_2 = 2\Gamma -2 \delta;  isotropy \Delta = 0, \Gamma = 0
 
 n[3] is the cartesian direction into which the weak shear points
 (ie. routine will rotate the 3 axis into the n direction) and will 

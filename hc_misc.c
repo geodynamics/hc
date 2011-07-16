@@ -217,3 +217,52 @@ void hc_compute_correlation(struct sh_lms *g1,struct sh_lms *g2,
     exit(-1);
   }
 }
+
+/* 
+   convert polar vector in r,theta,phi format to cartesian 
+   vector x 
+
+*/
+
+void lonlatpv2cv(float lon, float lat, 
+		 float *polar_vec,float *cart_vec)
+{
+  double polar_base[9];
+  float theta,phi;
+  theta = LAT2THETA((double)lat);
+  phi   = LON2PHI((double)lon);
+  calc_polar_base_at_theta_phi(theta,phi,polar_base);
+  lonlatpv2cv_with_base(polar_vec,polar_base,cart_vec);
+}
+void lonlatpv2cv_with_base(float *polar_vec,
+			   double *polar_base,
+			   float *cart_vec)
+{
+  int i;
+  // convert vector
+  for(i=0;i<3;i++){
+    cart_vec[i]  = polar_base[i]   * polar_vec[0]; /* r,theta,phi */
+    cart_vec[i] += polar_base[3+i] * polar_vec[1];
+    cart_vec[i] += polar_base[6+i] * polar_vec[2];
+  }
+}
+void calc_polar_base_at_theta_phi(float theta, float phi, 
+				  double *polar_base)
+{
+  double cp,sp,ct,st;
+  // base vecs
+  ct=cos((double)theta);cp=cos((double)phi);
+  st=sin((double)theta);sp=sin((double)phi);
+  //
+  polar_base[0]= st * cp;
+  polar_base[1]= st * sp;
+  polar_base[2]= ct;
+  //
+  polar_base[3]= ct * cp;
+  polar_base[4]= ct * sp;
+  polar_base[5]= -st;
+  //
+  polar_base[6]= -sp;
+  polar_base[7]=  cp;
+  polar_base[8]= 0.0;
+}

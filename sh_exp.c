@@ -1325,50 +1325,12 @@ void sh_print_spatial_data_to_file(struct sh_lms *exp, int shps,
 				   float z, FILE *out)
 {
   int j,k;
-  float xp[3],lon,lat;
+  float lon,lat;
   for(j=0;j < exp[0].npoints;j++){
     /* 
        get coordinates
     */
-    switch(exp->type){
-#ifdef HC_USE_HEALPIX
-
-    case SH_HEALPIX:
-      switch(exp[0].heal.ordering){
-      case SH_HEALPIX_RING:  
-	pix2ang_ring((long)exp[0].heal.nside,(long)j,(xp+HC_THETA),(xp+HC_PHI));
-	break;
-      case SH_HEALPIX_NEST:  
-	pix2ang_nest((long)exp[0].heal.nside,(long)j,(xp+HC_THETA),(xp+HC_PHI));
-	break;
-      default:
-	fprintf(stderr,"print_sh_spatial_data: error: ordering %i undefined\n",
-		exp[0].heal.ordering);
-	exit(-1);
-	break;
-      }
-      break;			/* end Healpix branch */
-#endif
-    case SH_RICK:
-      /* compute location */
-#ifdef NO_RICK_FORTRAN
-      rick_pix2ang(j,exp[0].lmax,(xp+HC_THETA),(xp+HC_PHI),
-		   &exp->rick);
-#else
-      rick_f90_pix2ang(&j,&exp[0].lmax,(xp+HC_THETA),(xp+HC_PHI));
-#endif
-      break;
-#ifdef HC_USE_SPHEREPACK
-  case SH_SPHEREPACK_GAUSS:
-  case SH_SPHEREPACK_EVEN:
-    break;
-#endif
-    default:
-      sh_exp_type_error("sh_print_spatial_data",exp);
-      break;
-    }	/* end type branch */
-    lon = PHI2LON(xp[HC_PHI]);
-    lat = THETA2LAT(xp[HC_THETA]);
+    sh_get_coordinates(exp,j,&lon,&lat);
     /* print coordinates */
     if(!use_3d){
       /* print lon lat  */
@@ -1381,6 +1343,53 @@ void sh_print_spatial_data_to_file(struct sh_lms *exp, int shps,
       fprintf(out,"%14.7e ",data[j+exp[0].npoints*k]);
     fprintf(out,"\n");
   }	/* end points in lateral space loop */
+}
+
+void sh_get_coordinates(struct sh_lms *exp,
+		       int i, float *lon, float *lat)
+{
+  float xp[3];
+  switch(exp->type){
+#ifdef HC_USE_HEALPIX
+    
+  case SH_HEALPIX:
+    switch(exp[0].heal.ordering){
+    case SH_HEALPIX_RING:  
+      pix2ang_ring((long)exp[0].heal.nside,
+		   (long)i,(xp+HC_THETA),(xp+HC_PHI));
+      break;
+    case SH_HEALPIX_NEST:  
+      pix2ang_nest((long)exp[0].heal.nside,
+		   (long)i,(xp+HC_THETA),(xp+HC_PHI));
+      break;
+    default:
+      fprintf(stderr,"print_sh_spatial_data: error: ordering %i undefined\n",
+	      exp[0].heal.ordering);
+      exit(-1);
+      break;
+    }
+    break;			/* end Healpix branch */
+#endif
+  case SH_RICK:
+    /* compute location */
+#ifdef NO_RICK_FORTRAN
+    rick_pix2ang(i,exp[0].lmax,(xp+HC_THETA),(xp+HC_PHI),
+		 &exp->rick);
+#else
+    rick_f90_pix2ang(&i,&exp[0].lmax,(xp+HC_THETA),(xp+HC_PHI));
+#endif
+    break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    break;
+#endif
+  default:
+    sh_exp_type_error("sh_print_spatial_data",exp);
+    break;
+  }	/* end type branch */
+  *lon = PHI2LON(xp[HC_PHI]);
+  *lat = THETA2LAT(xp[HC_THETA]);
 }
 
 /* 
