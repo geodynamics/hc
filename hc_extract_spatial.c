@@ -5,7 +5,7 @@
 extract part of a spherical harmonics solution of a HC run
 
 
-$Id: hc_extract_sh_layer.c,v 1.9 2006/01/22 01:11:34 becker Exp becker $
+$Id$
 
 
 */
