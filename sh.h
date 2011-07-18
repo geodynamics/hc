@@ -76,7 +76,8 @@ struct sh_lms{
 
   */
   hc_boolean plm_computed,plm_computed_irr;
-  int  old_lmax,old_ivec,old_tnplm,old_tnplm_irr,old_lmax_irr,old_ivec_irr;
+  int  old_lmax,old_ivec,old_tnplm,old_tnplm_irr,
+    old_lmax_irr,old_ivec_irr;
 
   /*
 

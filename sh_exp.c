@@ -1955,13 +1955,16 @@ void sh_add_coeff(struct sh_lms *exp,int l, int m,
   }
 }
 
-/* copy a whole expansion structure */
+/* 
+   copy a whole expansion structure 
+   a --> b, i.e.
+   b = a
+
+
+*/
 void sh_copy_lms(struct sh_lms *a, struct sh_lms *b)
 {
 
-  memcpy(b,a,sizeof(struct sh_lms));
-
-  /* make sure this really gets done, if memory is not contiguous */
   b->type = a->type;
   b->lmax = a->lmax;
   b->spectral_init = a->spectral_init;
@@ -1981,8 +1984,12 @@ void sh_copy_lms(struct sh_lms *a, struct sh_lms *b)
   b->old_tnplm_irr = a->old_tnplm_irr;
   b->old_lmax_irr  = a->old_lmax_irr;
   b->old_ivec_irr  = a->old_ivec_irr;
-
-  sh_aexp_equals_bexp_coeff(a,b);
+  /* this still needs to be fixed */
+  b->rick.nlat =  a->rick.nlat;
+  b->rick.nlon =  a->rick.nlon;
+  
+  sh_aexp_equals_bexp_coeff(b,a);
+  
 }
 /* 
    copy the coefficients of one expansion to another 
@@ -2033,6 +2040,49 @@ void sh_aexp_equals_bexp_coeff(struct sh_lms *a, struct sh_lms *b)
 #endif
   default:
     sh_exp_type_error("sh_aexp_equals_bexp_coeff",a);
+    break;
+  }
+}
+/* sum two expansions, c = a + b */
+
+void sh_c_is_a_plus_b_coeff(struct sh_lms *c, struct sh_lms *a, struct sh_lms *b)
+{
+  int i;
+  if((a->type != b->type)||(b->type != c->type)){
+    fprintf(stderr,"sh_c_is_a_plus_b_coeff: error: type mix (%i vs. %i vs. %i) not implemented yet\n",
+	    a->type,b->type,c->type);
+    exit(-1);
+  }
+  /* 
+     make sure lmax(b) = lmax(a) = lmax(c)
+
+  */
+  if((a->lmax != b->lmax)||(b->lmax != c->lmax)){
+    fprintf(stderr,"sh_c_is_a_plus_b_coeff: error: a!=b || b != c lmax %i %i %i\n",
+	    a->lmax,b->lmax,c->lmax);
+    exit(-1);
+  }
+  switch(a->type){
+#ifdef HC_USE_HEALPIX
+
+  case SH_HEALPIX:			/* nplm should reflect the lmax */
+    for(i=0;i < b->n_lm;i++){
+      c->alm_c[i].dr = a->alm_c[i].dr + b->alm_c[i].dr;
+      c->alm_c[i].dr = a->alm_c[i].di + b->alm_c[i].di;
+    }
+    break;
+#endif
+  case SH_RICK:
+    for(i=0;i < b->n_lm;i++)
+      c->alm[i] = a->alm[i] + b->alm[i];
+    break;
+#ifdef HC_USE_SPHEREPACK
+  case SH_SPHEREPACK_GAUSS:
+  case SH_SPHEREPACK_EVEN:
+    break;
+#endif
+  default:
+    sh_exp_type_error("sh_c_is_a_plus_b_coeff",a);
     break;
   }
 }

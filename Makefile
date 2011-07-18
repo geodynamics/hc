@@ -1,3 +1,4 @@
+#CFLAGS = -g
 #
 #
 # makefile for experimental Hager & O'Connell routines
@@ -11,7 +12,6 @@
 #
 # EDIT HERE FOR GMT VERSION 
 #
-
 include Makefile.include
 #
 #

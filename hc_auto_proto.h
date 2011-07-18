@@ -55,13 +55,14 @@ void hc_assign_dd_scaling(int, double [4], struct hc_parameters *, double);
 void hc_read_geoid(struct hc_parameters *);
 void hc_select_pvel(double, struct pvels *, struct sh_lms *, unsigned short);
 /* hc_input.c */
-void hc_read_sh_solution(struct hcs *, struct sh_lms **, FILE *, unsigned short, unsigned short);
+int hc_read_sh_solution(struct hcs *, struct sh_lms **, FILE *, unsigned short, unsigned short);
 /* hc_matrix.c */
 void hc_ludcmp_3x3(double [3][3], int, int *);
 void hc_lubksb_3x3(double [3][3], int, int *, double *);
 /* hc_misc.c */
 void hc_dvecalloc(double **, int, char *);
 void hc_svecalloc(float **, int, char *);
+void hc_ivecalloc(int **, int, char *);
 void hc_vecalloc(double **, int, char *);
 void hc_scmplx_vecalloc(struct hc_scmplx **, int, char *);
 void hc_svecrealloc(float **, int, char *);
@@ -83,6 +84,7 @@ void hc_compute_correlation(struct sh_lms *, struct sh_lms *, double *, int, uns
 void lonlatpv2cv(float, float, float *, float *);
 void lonlatpv2cv_with_base(float *, double *, float *);
 void calc_polar_base_at_theta_phi(float, float, double *);
+void hc_linear_interpolate(double *, int, double, int *, int *, double *, double *);
 /* hc_output.c */
 void hc_print_spectral_solution(struct hcs *, struct sh_lms *, FILE *, int, unsigned short, unsigned short);
 void hc_print_sh_scalar_field(struct sh_lms *, FILE *, unsigned short, unsigned short, unsigned short);
@@ -97,11 +99,13 @@ void hc_print_vector_row(double *, int, FILE *);
 void hc_compute_solution_scaling_factors(struct hcs *, int, double, double, double *);
 void hc_print_poloidal_solution(struct sh_lms *, struct hcs *, int, char *, unsigned short, unsigned short);
 void hc_print_toroidal_solution(double *, int, struct hcs *, int, char *, unsigned short);
-void hc_print_vtk(FILE *, float *, float *, int, int, unsigned short);
+void hc_print_vtk(FILE *, float *, float *, int, int, unsigned short, int, float *, int, int);
 void hc_print_be_float(float *, int, FILE *, unsigned short);
+void hc_print_be_int(int *, int, FILE *, unsigned short);
 unsigned short hc_is_little_endian(void);
 void hc_flip_byte_order(void *, size_t);
 void hc_flipit(void *, void *, size_t);
+void hc_print_dens_anom(struct hcs *, FILE *, unsigned short, unsigned short);
 /* hc_polsol.c */
 void hc_polsol(struct hcs *, int, double *, int, double *, unsigned short, struct sh_lms *, unsigned short, int, double *, double *, unsigned short, struct sh_lms *, struct sh_lms *, unsigned short, struct sh_lms *, unsigned short, unsigned short);
 /* hc_propagator.c */
@@ -196,6 +200,7 @@ void sh_write_coeff(struct sh_lms *, int, int, int, unsigned short, double *);
 void sh_add_coeff(struct sh_lms *, int, int, int, unsigned short, double *);
 void sh_copy_lms(struct sh_lms *, struct sh_lms *);
 void sh_aexp_equals_bexp_coeff(struct sh_lms *, struct sh_lms *);
+void sh_c_is_a_plus_b_coeff(struct sh_lms *, struct sh_lms *, struct sh_lms *);
 void sh_scale_expansion_l_factor(struct sh_lms *, double *);
 void sh_scale_expansion(struct sh_lms *, double);
 /* sh_extract_layer.c */

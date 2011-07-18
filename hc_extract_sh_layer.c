@@ -12,12 +12,12 @@ $Id: hc_extract_sh_layer.c,v 1.9 2006/01/22 01:11:34 becker Exp becker $
 
 int main(int argc, char **argv)
 {
-  int ilayer,nsol,i,mode,shps,nset=1,loop,i1,i2;
+  int ilayer,nsol,i,mode,shps=1,nset=1,loop,i1,i2,shps_read;
   FILE *in;
   struct sh_lms *sol=NULL;
   struct hcs *model;
   HC_PREC fac[3] = {1.0,1.0,1.0};
-  hc_boolean binary = TRUE, verbose = FALSE, short_format = FALSE;
+  hc_boolean binary = TRUE, verbose = TRUE, short_format = FALSE;
   hc_struc_init(&model);
   /* 
      deal with parameters
@@ -65,9 +65,9 @@ int main(int argc, char **argv)
      read in solution
   */
   in = ggrd_open(argv[1],"r","hc_extract_sh_layer");
-  hc_read_sh_solution(model,&sol,in,binary,verbose);
+  shps_read = hc_read_sh_solution(model,&sol,in,binary,verbose);
   fclose(in);
-  nsol = model->nradp2 * 3;
+  nsol = model->nradp2 * shps_read;
   /* 
      deal with selection
   */
@@ -90,13 +90,22 @@ int main(int argc, char **argv)
   }else{
     i1=ilayer-1;i2 = i1;
   }
-  /* detect number of expansions */
+  /* 
+     detect number of expansions 
+  */
   if((mode == 1)||(mode == 5)||(mode == 6))
     shps = 1;
   else if(mode == 2)
     shps = 2;
   else if(mode == 3)
     shps = 3;
+
+  if(shps > shps_read){
+    fprintf(stderr,"%s: solution file only had %i expansions, mode %i requests %i\n",
+	    argv[0],shps_read,mode,shps);
+    exit(-1);
+    
+  }
   for(ilayer=i1;ilayer <= i2;ilayer++){
     /* 
        output 
@@ -105,7 +114,7 @@ int main(int argc, char **argv)
       /* SH header */
       if(short_format && loop)
 	fprintf(stdout,"%g\n",HC_Z_DEPTH(model->r[ilayer]));
-      sh_print_parameters_to_file((sol+ilayer*3),shps,
+      sh_print_parameters_to_file((sol+ilayer*shps_read),shps,
 				  ilayer,nset,(HC_PREC)(HC_Z_DEPTH(model->r[ilayer])),
 				  stdout,short_format,FALSE,verbose);
     }
@@ -115,21 +124,21 @@ int main(int argc, char **argv)
       if(verbose)
 	fprintf(stderr,"%s: printing x_r SHE at layer %i (depth: %g)\n",
 		argv[0],ilayer,HC_Z_DEPTH(model->r[ilayer]));
-      sh_print_coefficients_to_file((sol+ilayer*3),shps,stdout,fac,FALSE,verbose);
+      sh_print_coefficients_to_file((sol+ilayer*shps_read),shps,stdout,fac,FALSE,verbose);
       break;
     case 2:
       /*  */
       if(verbose)
 	fprintf(stderr,"%s: printing x_pol x_tor SHE at layer %i (depth: %g)\n",
 		argv[0],ilayer,HC_Z_DEPTH(model->r[ilayer]));
-      sh_print_coefficients_to_file((sol+ilayer*3+1),shps,stdout,fac,FALSE,verbose);
+      sh_print_coefficients_to_file((sol+ilayer*shps_read+1),shps,stdout,fac,FALSE,verbose);
       break;
     case 3:
       /* mode == 3 */
       if(verbose)
 	fprintf(stderr,"%s: printing x_r x_pol x_tor SHE at layer %i (depth: %g)\n",
 		argv[0],ilayer,HC_Z_DEPTH(model->r[ilayer]));
-      sh_print_coefficients_to_file((sol+ilayer*3),shps,stdout,fac,FALSE,verbose);
+      sh_print_coefficients_to_file((sol+ilayer*shps_read),shps,stdout,fac,FALSE,verbose);
       break;
     case 4:
       fprintf(stdout,"%5i %11g\n",ilayer,HC_Z_DEPTH(model->r[ilayer]));
@@ -139,14 +148,14 @@ int main(int argc, char **argv)
       if(verbose)
 	fprintf(stderr,"%s: printing x_pol SHE at layer %i (depth: %g)\n",
 		argv[0],ilayer,HC_Z_DEPTH(model->r[ilayer]));
-      sh_print_coefficients_to_file((sol+ilayer*3+1),shps,stdout,fac,FALSE,verbose);
+      sh_print_coefficients_to_file((sol+ilayer*shps_read+1),shps,stdout,fac,FALSE,verbose);
       break;
     case 6:
       /*  */
       if(verbose)
 	fprintf(stderr,"%s: printing x_tor SHE at layer %i (depth: %g)\n",
 		argv[0],ilayer,HC_Z_DEPTH(model->r[ilayer]));
-      sh_print_coefficients_to_file((sol+ilayer*3+2),shps,stdout,fac,FALSE,verbose);
+      sh_print_coefficients_to_file((sol+ilayer*shps_read+2),shps,stdout,fac,FALSE,verbose);
       break;
  
     default:

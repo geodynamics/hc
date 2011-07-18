@@ -853,8 +853,10 @@ void hc_assign_density(struct hcs *hc,
     break;
   }
   if(save_orig_danom && (!hc->dens_init)){
-    /* make a copy of the original density anomaly before applying
-       depth dependent scaling, only done once per run */
+    /* 
+       make a copy of the original density anomaly before applying
+       depth dependent scaling, only done once per run 
+    */
     hc_get_blank_expansions(&hc->dens_anom_orig,hc->inho+1,hc->inho,
 			    "hc_assign_density");
     for(i=0;i<hc->inho;i++){
@@ -870,7 +872,9 @@ void hc_assign_density(struct hcs *hc,
      
   */
   for(i=0;i < hc->inho;i++){
-    /* depth dependent factor? */
+    /* 
+       depth dependent factor? 
+    */
     local_scale = hc_find_dens_scale(hc->rden[i],hc->dens_scale,dd_dens_scale,rdf,sdf,ndf);
     sh_scale_expansion((hc->dens_anom+i),local_scale);
     if(verbose >= 2){
@@ -950,8 +954,6 @@ void hc_assign_density(struct hcs *hc,
 		sqrt(sh_total_power((hc->dens_anom+i))));
     free(dbot);free(dtop);
   } /* end layer structure part */
-
-  
 
   hc->dens_init = TRUE;
 }
@@ -1335,13 +1337,17 @@ void hc_read_geoid(struct hc_parameters *p)
   
 }
 
-void hc_select_pvel(HC_PREC time, struct pvels *pvel,struct sh_lms *p, hc_boolean verbose)
+void hc_select_pvel(HC_PREC time, struct pvels *pvel,
+		    struct sh_lms *p, hc_boolean verbose)
 {
   if(pvel->n == 1){
     if(verbose){
       fprintf(stderr,"hc_select_pvel: only one plate velocity loadeed, disregarding time argument\n");
     }
-    /* only one plate velocity */
+    /* 
+       only one plate velocity 
+       
+    */
     sh_copy_lms(pvel->p,p);
     sh_copy_lms((pvel->p+1),(p+1));
     

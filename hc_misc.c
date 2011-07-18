@@ -26,6 +26,15 @@ void hc_svecalloc(float **x,int n,char *message)
   if(! (*x))
     HC_MEMERROR(message);
 }
+/* integer  vector allocation */
+void hc_ivecalloc(int **x,int n,char *message)
+{
+  *x = (int *)malloc(sizeof(int)*(size_t)n);
+  if(! (*x))
+    HC_MEMERROR(message);
+}
+
+
 /* general floating point vector allocation */
 void hc_vecalloc(HC_PREC **x,int n,char *message)
 {
@@ -265,4 +274,26 @@ void calc_polar_base_at_theta_phi(float theta, float phi,
   polar_base[6]= -sp;
   polar_base[7]=  cp;
   polar_base[8]= 0.0;
+}
+/* 
+
+   given a sorted vector y (y0<y1<...<yn-1) with n elements, return
+   the weights f1 for element i1 and weight f2 for element i2 such
+   that the interpolation is at y1
+
+ */
+void hc_linear_interpolate(HC_PREC *y, int n, HC_PREC y1,
+			   int *i1, int *i2,
+			   HC_PREC *f1, HC_PREC *f2)
+{
+  int n1;
+  n1 = n-1;
+  *i2 = 0;
+  while((*i2 < n1) && (y[*i2] < y1))
+    *i2 += 1;
+  if(*i2 == 0)
+    *i2 = 1;
+  *i1 = *i2 - 1;
+  *f2 = (y1 - y[*i1])/(y[*i2]-y[*i1]);
+  *f1 = 1.0 - *f2;
 }
