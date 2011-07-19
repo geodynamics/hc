@@ -1,21 +1,48 @@
+README FOR HC
+
+Version 1.0.1
+
+Thorsten Becker - twb@usc.edu
+
+
+
+
+HC is a global mantle circulation solver following Hager & O'Connell
+(1981) which can compute velocities, tractions, and geoid for simple
+density distributions and plate velocities.
+
+This particular implementation illustrates one possible way to combine
+the HC solver routines. 
+
+Based on code by Brad Hager, Richard O'Connell, and Bernhard
+Steinberger, this version is by Thorsten Becker and Craig O'Neill.
+
+Note also that the Solid Earth Teaching and Research Environment
+(SEATREE)
+
+     http://geosys.usc.edu/projects/seatree/
+
+provides a convenient user interface for HC.
+
+
 INSTALLATION
 
 The code should compile on any basic UNIX/Linux system with the GMT
 tools (by default, version > 4.2.1) and libraries installed. See the
 Makefile for comments and what to modify.
 
-
 What is described below is the hc Hager & O'Connell (1981) forward
 flow and geoid computation. For plate velocity inversions following
 the Ricard & Vigny (1989) method, see the hcplates subdirectory and
-the README there.
+the README there. The plate inversion code, due to Craig O'Neill isn't
+quite working yet.
 
 The Makefile assumes that the following environment variables are
 predefined: 
 
 1) GMTHOME: needs to point to the base directory of the GMT installation,
 e.g.
-	/usr/local/src/GMTdev/GMT3.4.5/
+	/usr/local/src/GMTdev/GMT4.5.6/
 
 if you installed GMT yourself, or
 
@@ -65,15 +92,17 @@ to compile the programs.
 
 HC CODE usage
 
-Described in the help page that is displayed for "hc -h" as below. 
-Also see http://geosys.usc.edu/projects/seatree/ for a graphical user
-interface, and example plotting scripts as provided below.
+Described in the help page that is displayed for "hc -h" as below.
+Also see SEATREE (http://geosys.usc.edu/projects/seatree/) for a
+graphical user interface, and example plotting scripts as provided
+below.
 
 Example input data is provided in subdirectory example_data/
 
 >>>
 
-bin/hc - perform Hager & O'Connell flow computation
+becker@walter:~/progs/src/hc-svn                                                                                                                        > hc -help
+hc - perform Hager & O'Connell flow computation
 
 This code can compute velocities, tractions, and geoid for simple density distributions
 and plate velocities using the semi-analytical approach of Hager & O'Connell (1981).
@@ -115,6 +144,10 @@ boundary condition options:
 -ns		perform no slip computation (OFF)
 -pvel	name	set prescribed surface velocities from file name (OFF)
 		The file (e.g. pvel.sh.dat) is based on a DT expansion of cm/yr velocity fields.
+-vshs		use the short format (only lmax in header) for the plate velocities (OFF)
+-vdir		velocities are given in files name/vel.1.ab to vel.140.ab for different times,
+		-140 to -1 Ma before present, where name is from -pvel
+-vtime	time	use this particular time step of the plate velocities (-1)
 
 solution procedure and I/O options:
 -ng		do not compute and print the geoid (1)
@@ -244,6 +277,17 @@ USING THE OUTPUT
       Also see the script calc_vel_and_plot for some suggestions on
       how to convert the output.
 
+   d) convert velocity output and density anomalies into a binary VTK file
+      for paraview
+
+       hc_extract_spatial vel.sol.bin -2 6 dscaled.sol.bin > vel.vtk
+
+
+       Load a view into paraview (pvsm file is included here)
+
+       paraview --state=hc_world.pvsm
+
+       to get the view in hc_world.png.
 
 
 USING THE SPHERICAL HARMONICS TOOLS AS STANDALONE
