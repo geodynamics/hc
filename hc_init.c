@@ -1340,6 +1340,8 @@ void hc_read_geoid(struct hc_parameters *p)
 void hc_select_pvel(HC_PREC time, struct pvels *pvel,
 		    struct sh_lms *p, hc_boolean verbose)
 {
+  int i;
+  hc_boolean hit;
   if(pvel->n == 1){
     if(verbose){
       fprintf(stderr,"hc_select_pvel: only one plate velocity loadeed, disregarding time argument\n");
@@ -1352,8 +1354,20 @@ void hc_select_pvel(HC_PREC time, struct pvels *pvel,
     sh_copy_lms((pvel->p+1),(p+1));
     
   }else{
-
-
+    /* this wasn't implemented fully, a bit odd. i just put in some
+       simple stuff for now */
+    for(hit = FALSE,i=0;i < pvel->n;i++){
+      if(fabs(pvel->t[i]-time) < HC_EPS_PREC){
+	sh_copy_lms(pvel->p+i*2,p);
+	sh_copy_lms((pvel->p+i*2+1),(p+1));
+	hit=TRUE;
+      }
+    }
+    if(!hit){
+      fprintf(stderr,"hc_select_pvel: was searching for time %g amongs ",time);
+      for(i=0;i < pvel->n;i++)fprintf(stderr,"%g ",pvel->t[i]);
+      fprintf(stderr,"\n");
+      HC_ERROR("hc_select_pvel","interpolation not implemented yet");
+    }
   }
-
 }

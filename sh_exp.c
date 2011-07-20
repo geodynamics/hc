@@ -1987,7 +1987,6 @@ void sh_copy_lms(struct sh_lms *a, struct sh_lms *b)
   /* this still needs to be fixed */
   b->rick.nlat =  a->rick.nlat;
   b->rick.nlon =  a->rick.nlon;
-  
   sh_aexp_equals_bexp_coeff(b,a);
   
 }

@@ -52,7 +52,7 @@ int main(int argc, char **argv)
   struct hcs *model;		/* main structure, make sure to initialize with 
 				   zeroes */
   struct sh_lms *sol_spectral=NULL, *geoid = NULL;		/* solution expansions */
-  struct sh_lms pvel[2];
+  struct sh_lms *pvel=NULL;					/* local plate velocity expansion */
   int nsol,lmax,solved,i;
   FILE *out;
   struct hc_parameters p[1]; /* parameters */
@@ -130,6 +130,10 @@ int main(int argc, char **argv)
   else				/* max degree is determined by the
 				   plate velocities  */
     lmax = model->pvel.p[0].lmax;	/*  shouldn't be larger than that*/
+  /* 
+     make sure we have room for the plate velocities 
+  */
+  sh_allocate_and_init(&pvel,2,lmax,model->sh_type,1,p->verbose,FALSE);
 
 
   /* init done */
@@ -331,6 +335,9 @@ int main(int argc, char **argv)
 
   */
   sh_free_expansion(sol_spectral,nsol);
+  /* local copies of plate velocities */
+  sh_free_expansion(pvel,2);
+  /*  */
   if(p->compute_geoid == 1)	/* only one layer */
     sh_free_expansion(geoid,1);
   else if(p->compute_geoid == 2) /* all layers */
