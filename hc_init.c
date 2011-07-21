@@ -1342,7 +1342,10 @@ void hc_select_pvel(HC_PREC time, struct pvels *pvel,
 {
   int i;
   hc_boolean hit;
-  if(pvel->n == 1){
+  if(pvel->n == 0){
+    /* do nothing, if not initialized proper */
+    return;
+  }else if(pvel->n == 1){
     if(verbose){
       fprintf(stderr,"hc_select_pvel: only one plate velocity loadeed, disregarding time argument\n");
     }

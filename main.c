@@ -134,8 +134,7 @@ int main(int argc, char **argv)
      make sure we have room for the plate velocities 
   */
   sh_allocate_and_init(&pvel,2,lmax,model->sh_type,1,p->verbose,FALSE);
-
-
+  
   /* init done */
   /* 
 
@@ -163,7 +162,8 @@ int main(int argc, char **argv)
     /* 
        solve poloidal and toroidal part and sum
     */
-    hc_select_pvel(p->pvel_time,&model->pvel,pvel,p->verbose);
+    if(!p->free_slip)
+      hc_select_pvel(p->pvel_time,&model->pvel,pvel,p->verbose);
     hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
 	     TRUE,TRUE,TRUE,p->print_pt_sol,p->compute_geoid,
 	     pvel,model->dens_anom,geoid,
@@ -295,7 +295,8 @@ int main(int argc, char **argv)
 
     /*  */
     /* select plate velocity */
-    hc_select_pvel(p->pvel_time,&model->pvel,pvel,p->verbose);
+    if(!p->free_slip)
+      hc_select_pvel(p->pvel_time,&model->pvel,pvel,p->verbose);
     
     solved=0;
     for(v[0]=vl[0][0];v[0] <= vl[0][1];v[0] += vl[0][2])
