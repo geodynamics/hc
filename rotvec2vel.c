@@ -18,8 +18,6 @@ utility program, here for historical reasons
 // these are the coded plates as in the lon lat code tripel that is 
 // read from stdin
 //
-#define CODED_PLATES 14
-#define PLATE_CODES "ANT AUS AFR PAC EUR NAM NAZ COC CAR ARA PHI SAM IND JDF "
 
 // some factors
 #define PIOVERONEEIGHTY 0.0174532925199433
@@ -34,23 +32,22 @@ FILE *rv_myopen(const char *,const char *);
 int main(int argc, char *argv[])
 {
   int i,j,k,nplt,nrp,fixed_plate,*stats,minplate,maxplate,normalize=0,unity_vec=0,
-    assigned[CODED_PLATES],hit,name[CODED_PLATES],code,code3;
+    *assigned,hit,*name,code,code3;
   double *rotvel,*points,x,y,z,stheta,cphi,ctheta,sphi,vx,vy,vz,vt,vp,
     redvec[3],length;
-  char allplates[]=PLATE_CODES,pname[4],tmpstring[300];
+  char *allplates,pname[4],tmpstring[300];
   FILE *vel;
-  
-  switch(argc){
-  case 2:{
+  int model_code = 1,coded_plates,code_length;
+  if(argc == 2)
     fixed_plate=DEF_FIXED;
-    break;
-  }
-  case 3:{
+  if(argc > 2)
     sscanf(argv[2],"%i",&fixed_plate);
-    break;
+  if(argc == 4){
+    if(strcmp(argv[3],"bird02")==0)
+      model_code = 2;
   }
-  default:{
-    fprintf(stderr,"%s rotvector_file [fixed_plate]\n",argv[0]);
+  if(argc==1){
+    fprintf(stderr,"%s rotvector_file [fixed_plate] [model, nuvel]\n",argv[0]);
     fprintf(stderr,"\t reads points in (x y plate_code) format from stdin\n");
     fprintf(stderr,"\t and calculates velocities (vp,vt) from rotvector_file\n");
     fprintf(stderr,"\t rotvectorfile is in\n");
@@ -65,16 +62,32 @@ int main(int argc, char *argv[])
     fprintf(stderr,"\t  if set to -5, use 1 deg/Myr w_z vector, rest zero\n");
     fprintf(stderr,"\t  By default set to %i.\n",DEF_FIXED);
     fprintf(stderr,"\t output is in\n\tlon lat v_p v_t\n\tformat in cm/yr\n");
+    fprintf(stderr,"\t model can be nuvel or bird02\n");
     exit(-1);
-    break;
-  }}
-  for(i=0;i<CODED_PLATES;i++)
-    assigned[i]=0;
+  }
+  if(model_code == 1){
+    /* nuvel  */
+    fprintf(stderr,"%s: init for nuvel\n",argv[0]);
+    code_length = 3;
+    coded_plates = 14;
+    allplates = (char *)malloc(sizeof(char)*(coded_plates*(code_length+2)));
+    sprintf(allplates,"%s","ANT AUS AFR PAC EUR NAM NAZ COC CAR ARA PHI SAM IND JDF ");
+  }else{
+    /* bird02 */
+    fprintf(stderr,"%s: init for Bird 2002\n",argv[0]);
+    code_length = 2;
+    coded_plates = 52;
+    allplates = (char *)malloc(sizeof(char)*(coded_plates*(code_length+2)));
+    sprintf(allplates,"%s","AF AM AN AP AR AS AT AU BH BR BS BU CA CL CO CR EA EU FT GP IN JF JZ KE MA MN MO MS NA NB ND NH NI NZ OK ON PA PM PS RI SA SB SC SL SO SS SU SW TI TO WL YA ");
+  }
+  assigned = (int *)calloc(coded_plates,sizeof(int));
+  name = (int *)calloc(coded_plates,sizeof(int));
+  rotvel=(double *)malloc(sizeof(double)*3*coded_plates);
+  stats=(int *)calloc(coded_plates,sizeof(int));
+
+  /*  */
 
   vel=rv_myopen(argv[1],"r");
-
-  rotvel=(double *)malloc(sizeof(double)*3*CODED_PLATES);
-  stats=(int *)calloc(CODED_PLATES,sizeof(int));
 
   fprintf(stderr,"%s: reading from %s, fixed plate: %i\n",argv[0],argv[1],fixed_plate);
   nplt=0;
@@ -82,8 +95,8 @@ int main(int argc, char *argv[])
   while(fscanf(vel,"%[^\n]%*1c",tmpstring)!=EOF){
     if(tmpstring[0]!='#' && tmpstring[0]!=' '){
       if(sscanf(tmpstring,"%s %lf %lf %lf",pname,&vx,&vy,&vz)==4){
-	for(hit=i=0;i<CODED_PLATES;i++)
-	  if(strncmp(pname,(allplates+4*i),3)==0){
+	for(hit=i=0;i < coded_plates;i++)
+	  if(strncmp(pname,(allplates+(code_length+1)*i),code_length)==0){
 	    if(assigned[i]){
 	      fprintf(stderr,"%s: plate %s was assigned already, is it twice in list?\n",
 		      argv[0],pname);
@@ -102,8 +115,8 @@ int main(int argc, char *argv[])
 		  argv[0],pname);
 	  fprintf(stderr,"%s: will ignore this code\n",argv[0]);
 	  fprintf(stderr,"%s: internal codes are:\n",argv[0]);
-	  for(j=0;j<CODED_PLATES;j++){
-	    strncpy(pname,(allplates+j*4),3);
+	  for(j=0;j < coded_plates;j++){
+	    strncpy(pname,(allplates+j*(code_length+1)),code_length);
 	    fprintf(stderr,"%s: plate nr %i, code: %s\n",argv[0],j+1,pname);
 	  }
 	}
@@ -115,27 +128,27 @@ int main(int argc, char *argv[])
   fprintf(stderr,"%s: read in %i poles\n",argv[0],nplt);
 
   // assign zero rotation vectors to all plates we did not find in the list
-  for(i=0,k=0;i<CODED_PLATES;i++,k+=3)
+  for(i=0,k=0;i < coded_plates;i++,k+=3)
     if(!assigned[i])
       for(j=0;j<3;j++)
 	rotvel[k+j]=0.0;
   
-  if(fixed_plate>0){
+  if(fixed_plate > 0){
     fprintf(stderr,"%s: input plate number %i will be fixed\n",argv[0],fixed_plate);
-    if(fixed_plate>nplt){
+    if(fixed_plate > nplt){
       fprintf(stderr,"%s: fixed plate number (%i) greater than plate numbers (1...%i)\n\n",
 	      argv[0],fixed_plate,nplt);
     }
     for(i=0;i<3;i++)
       redvec[i]= *(rotvel+name[fixed_plate-1]*3+i);
   }else{
-    for(i=0;i<3;i++)
+    for(i=0;i < 3;i++)
       redvec[i]=0.0;
     if(fixed_plate==-2){
       normalize=1;
       fprintf(stderr,"%s: normalizing all vectors\n",argv[0]);
     }else if(fixed_plate < -2 && fixed_plate > -6){
-      unity_vec=-fixed_plate-2;
+      unity_vec = -fixed_plate - 2;
       fprintf(stderr,"%s: using unity for %ith component of omega, zero else\n",
 	      argv[0],unity_vec);
     }
@@ -143,11 +156,11 @@ int main(int argc, char *argv[])
   //
   // convert rotation poles
   // 
-  for(k=i=0;i<CODED_PLATES;i++,k+=3){
+  for(k=i=0;i < coded_plates;i++,k+=3){
     if(assigned[i]){
       for(j=0;j<3;j++)
 	*(rotvel+k+j) -= redvec[j];
-      strncpy(pname,(allplates+4*i),3);
+      strncpy(pname,(allplates+(code_length+1)*i),code_length);
       // original vector
       fprintf(stderr,"%s: plate %3i %3s wx: %12g wy: %12g wz: %12g",
 	      argv[0],i+1,pname,*(rotvel+k),*(rotvel+k+1),*(rotvel+k+2));
@@ -183,9 +196,9 @@ int main(int argc, char *argv[])
 
       // rescale the omega vector such that it will yield cm/yr when
       // multiplied with r vector of unit length
-      *(rotvel+k)  *=PIOVERONEEIGHTY_TIMES_VELFACTOR; 
-      *(rotvel+k+1)*=PIOVERONEEIGHTY_TIMES_VELFACTOR; 
-      *(rotvel+k+2)*=PIOVERONEEIGHTY_TIMES_VELFACTOR;
+      *(rotvel+k)  *= PIOVERONEEIGHTY_TIMES_VELFACTOR; 
+      *(rotvel+k+1)*= PIOVERONEEIGHTY_TIMES_VELFACTOR; 
+      *(rotvel+k+2)*= PIOVERONEEIGHTY_TIMES_VELFACTOR;
     }
   }
   minplate=1e6;
@@ -266,9 +279,9 @@ int main(int argc, char *argv[])
       //      90.0-(1.0/PIOVERONEEIGHTY)* *(points+k+1),0.,0.);
     }
   }
-  for(i=0;i<CODED_PLATES;i++)
+  for(i=0;i < coded_plates;i++)
     if(assigned[i]){
-      strncpy(pname,(allplates+4*i),3);
+      strncpy(pname,(allplates+(code_length+1)*i),3);
       fprintf(stderr,"%s: %3s (%3i) was assigned %7i times out of %7i, %15.8f percent\n",
 	      argv[0],pname,i+1,*(stats+i),nrp,(double)(*(stats+i))/(double)nrp*100.0);
     }
