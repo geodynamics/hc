@@ -45,6 +45,8 @@ int main(int argc, char *argv[])
   if(argc == 4){
     if(strcmp(argv[3],"bird02")==0)
       model_code = 2;
+    if(strcmp(argv[3],"morvel")==0)
+      model_code = 3;
   }
   if(argc==1){
     fprintf(stderr,"%s rotvector_file [fixed_plate] [model, nuvel]\n",argv[0]);
@@ -62,7 +64,7 @@ int main(int argc, char *argv[])
     fprintf(stderr,"\t  if set to -5, use 1 deg/Myr w_z vector, rest zero\n");
     fprintf(stderr,"\t  By default set to %i.\n",DEF_FIXED);
     fprintf(stderr,"\t output is in\n\tlon lat v_p v_t\n\tformat in cm/yr\n");
-    fprintf(stderr,"\t model can be nuvel or bird02\n");
+    fprintf(stderr,"\t model can be nuvel, bird02, or morvel\n");
     exit(-1);
   }
   if(model_code == 1){
@@ -72,13 +74,23 @@ int main(int argc, char *argv[])
     coded_plates = 14;
     allplates = (char *)malloc(sizeof(char)*(coded_plates*(code_length+2)));
     sprintf(allplates,"%s","ANT AUS AFR PAC EUR NAM NAZ COC CAR ARA PHI SAM IND JDF ");
-  }else{
+  }else if(model_code ==2){
     /* bird02 */
     fprintf(stderr,"%s: init for Bird 2002\n",argv[0]);
     code_length = 2;
     coded_plates = 52;
     allplates = (char *)malloc(sizeof(char)*(coded_plates*(code_length+2)));
     sprintf(allplates,"%s","AF AM AN AP AR AS AT AU BH BR BS BU CA CL CO CR EA EU FT GP IN JF JZ KE MA MN MO MS NA NB ND NH NI NZ OK ON PA PM PS RI SA SB SC SL SO SS SU SW TI TO WL YA ");
+  }else if(model_code==3){
+    /* morvel */
+    fprintf(stderr,"%s: init for MORVEL-NNR56 (Argus et al., 2011)\n",argv[0]);
+    code_length = 2;
+    coded_plates = 56;
+    allplates = (char *)malloc(sizeof(char)*(coded_plates*(code_length+2)));
+    sprintf(allplates,"%s","am an AP ar AS AT au BH BR BS BU ca CL co cp CR EA eu FT GP in jf JZ KE lw MA MN MO mq MS na nb NB ND NH NI nz OK ON pa PM ps ri sa SB sc SL sm sr SS su sw TI TO WL yz ");
+  }else{
+    fprintf(stderr,"%s: error, model %i not defined\n",argv[0],model_code);
+    exit(-1);
   }
   assigned = (int *)calloc(coded_plates,sizeof(int));
   name = (int *)calloc(coded_plates,sizeof(int));
