@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
     *assigned,hit,*name,code,code3;
   double *rotvel,*points,x,y,z,stheta,cphi,ctheta,sphi,vx,vy,vz,vt,vp,
     redvec[3],length;
-  char *allplates,pname[4],tmpstring[300];
+  char *allplates,pname[4],tmpstring[800];
   FILE *vel;
   int model_code = 1,coded_plates,code_length;
   if(argc == 2)
@@ -47,6 +47,8 @@ int main(int argc, char *argv[])
       model_code = 2;
     if(strcmp(argv[3],"morvel")==0)
       model_code = 3;
+   if(strcmp(argv[3],"geodvel")==0)
+      model_code = 4;
   }
   if(argc==1){
     fprintf(stderr,"%s rotvector_file [fixed_plate] [model, nuvel]\n",argv[0]);
@@ -56,7 +58,8 @@ int main(int argc, char *argv[])
     fprintf(stderr,"\t   platename_1 wx_1 wy_1 wz_1\n");
     fprintf(stderr,"\t   platename_2 wx_2 wy_2 wz_2...\n");
     fprintf(stderr,"\t format, wi_j in input is in [degrees/Myr]\n");
-    fprintf(stderr,"\t fixed_plate is the reference plate number (1,2,...) in the poles list,\n");
+    fprintf(stderr,"\t plate_code is a number from 1...n in the rotvectorfile\n");
+    fprintf(stderr,"\t fixed_plate is the reference plate number (1,2,...,n) in the poles list,\n");
     fprintf(stderr,"\t  if set to -1, no change in motions.\n");
     fprintf(stderr,"\t  if set to -2, normalize all omega vectors to 1 deg/Myr length\n");
     fprintf(stderr,"\t  if set to -3, use 1 deg/Myr w_x vector, rest zero\n");
@@ -64,12 +67,12 @@ int main(int argc, char *argv[])
     fprintf(stderr,"\t  if set to -5, use 1 deg/Myr w_z vector, rest zero\n");
     fprintf(stderr,"\t  By default set to %i.\n",DEF_FIXED);
     fprintf(stderr,"\t output is in\n\tlon lat v_p v_t\n\tformat in cm/yr\n");
-    fprintf(stderr,"\t model can be nuvel, bird02, or morvel\n");
+    fprintf(stderr,"\t model can be nuvel, bird02, morvel, or geodvel\n");
     exit(-1);
   }
   if(model_code == 1){
     /* nuvel  */
-    fprintf(stderr,"%s: init for nuvel\n",argv[0]);
+    fprintf(stderr,"%s: init for NUVEL\n",argv[0]);
     code_length = 3;
     coded_plates = 14;
     allplates = (char *)malloc(sizeof(char)*(coded_plates*(code_length+2)));
@@ -88,6 +91,14 @@ int main(int argc, char *argv[])
     coded_plates = 56;
     allplates = (char *)malloc(sizeof(char)*(coded_plates*(code_length+2)));
     sprintf(allplates,"%s","am an AP ar AS AT au BH BR BS BU ca CL co cp CR EA eu FT GP in jf JZ KE lw MA MN MO mq MS na nb NB ND NH NI nz OK ON pa PM ps ri sa SB sc SL sm sr SS su sw TI TO WL yz ");
+
+  }else if(model_code == 4){
+    /* geodvel  */
+    fprintf(stderr,"%s: init for GEODVEL\n",argv[0]);
+    code_length = 3;
+    coded_plates = 10;
+    allplates = (char *)malloc(sizeof(char)*(coded_plates*(code_length+2)));
+    sprintf(allplates,"%s","ANT ARA AUS IND NAM NAZ NUB PAC SAM SOM ");
   }else{
     fprintf(stderr,"%s: error, model %i not defined\n",argv[0],model_code);
     exit(-1);
@@ -146,7 +157,7 @@ int main(int argc, char *argv[])
 	rotvel[k+j]=0.0;
   
   if(fixed_plate > 0){
-    fprintf(stderr,"%s: input plate number %i will be fixed\n",argv[0],fixed_plate);
+    fprintf(stderr,"%s: input plate number %i(%i) will be fixed\n",argv[0],fixed_plate,name[fixed_plate-1]);
     if(fixed_plate > nplt){
       fprintf(stderr,"%s: fixed plate number (%i) greater than plate numbers (1...%i)\n\n",
 	      argv[0],fixed_plate,nplt);
