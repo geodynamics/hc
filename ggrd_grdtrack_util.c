@@ -1,13 +1,13 @@
 /* 
    
-subroutines for 3-D interpolation of scalar data in GMT grd files
-based on GMT3.4.3 grdtrack
+   subroutines for 3-D interpolation of scalar data in GMT grd
+   filesbased on GMT3.4.3 grdtrack
 
 
-$Id: ggrd_grdtrack_util.c,v 1.6 2006/02/16 02:18:03 twb Exp twb $
+   $Id: ggrd_grdtrack_util.c,v 1.6 2006/02/16 02:18:03 twb Exp twb $
 
 
-original comments for grdtrack from GMT at bottom of file
+   original comments for grdtrack from GMT at bottom of file
  
 */
 

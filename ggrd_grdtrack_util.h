@@ -19,12 +19,14 @@ void GMT_grdio_init (void);
 #include <string.h>
 #include <math.h>
 
-#ifndef USE_GMT3
+#ifndef USE_GMT3		/* new GMT */
 #define GGRD_GMT_GLOBAL_STRING "-fg"
-#define GGRD_GMT_XPERIODIC_STRING "-fx"
-#else
-#define GGRD_GMT_GLOBAL_STRING "-Lg"
+#define GGRD_GMT_GEOGRAPHIC_STRING "-fg"
 #define GGRD_GMT_XPERIODIC_STRING "-Lx"
+#else  /* old GMT */
+#define GGRD_GMT_GLOBAL_STRING "-Lg"
+#define GGRD_GMT_GEOGRAPHIC_STRING ""
+#define GGRD_GMT_XPERIODIC_STRING ""
 #endif
 
 /* 
