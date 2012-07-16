@@ -854,7 +854,8 @@ void sh_read_spatial_data(struct sh_lms *exp, FILE *in, struct ggrd_gt *ggrd,my_
 	fprintf(stderr,"sh_read_model_spatial_data: error: pixel %i coordinate mismatch:\n",
 		(int)j);
 	fprintf(stderr,"sh_read_model_spatial_data: orig: %g, %g file: %g, %g\n",
-		(double)PHI2LON(xp[HC_PHI]),(double)THETA2LAT(xp[HC_THETA]),lon,lat);
+		(double)PHI2LON(xp[HC_PHI]),(double)THETA2LAT(xp[HC_THETA]),
+		(double)lon,(double)lat);
 	exit(-1);
       }
     }

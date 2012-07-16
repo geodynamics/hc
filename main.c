@@ -310,7 +310,9 @@ int main(int argc, char **argv)
 	    p->elayer[3] = pow(10,v[0]); /* 100..0  */
 	    hc_assign_viscosity(model,HC_INIT_E_FOUR_LAYERS,p->elayer,p);
 	    /* print viscosities of 0...100, 100...410, 410 ... 660 and 660...2871  layer */
-	    fprintf(stdout,"%14.7e %14.7e %14.7e %14.7e\t",p->elayer[3],p->elayer[2],p->elayer[1],p->elayer[0]);
+	    fprintf(stdout,"%14.7e %14.7e %14.7e %14.7e\t",
+		    (double)p->elayer[3],(double)p->elayer[2],
+		    (double)p->elayer[1],(double)p->elayer[0]);
 	    /* compute solution */
 	    hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
 		     (solved)?(FALSE):(TRUE), /* density changed? */
@@ -321,7 +323,7 @@ int main(int argc, char **argv)
 		     p->verbose);
 	    /* only output are the geoid correlations, for now */
 	    hc_compute_correlation(geoid,p->ref_geoid,corr,1,p->verbose);
-	    fprintf(stdout,"%10.7f %10.7f ",corr[0],corr[1]);
+	    fprintf(stdout,"%10.7f %10.7f ",(double)corr[0],(double)corr[1]);
 	    fprintf(stdout,"\n");
 	    solved++;
 	  }

@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 			       &ivec,in,short_format_in,binary,verbose);
   if(verbose)
     fprintf(stderr,"sh_extract_layer: detected %i layers, vec: %i, type %i SH file, shps: %i, layer %i at depth %g\n",
-	    nset,ivec,type,shps,i+1,zdepth[i]);
+	    nset,ivec,type,shps,i+1,(double)zdepth[i]);
   sh_allocate_and_init(&exp,nset*shps,lmax,type,ivec,verbose,FALSE);
   hc_vecrealloc(&zdepth,nset,"sh_extract_layer: zdepth mem error");
   /* which layer to select */
@@ -83,7 +83,7 @@ int main(int argc, char **argv)
     if(i == ilayer){		/* output */
       if(verbose)
 	fprintf(stderr,"%s: printing SH from %s at layer %i out of %i to stdout (depth: %g)\n",
-		argv[0],argv[1],i+1,nset,zdepth[i]);
+		argv[0],argv[1],i+1,nset,(double)zdepth[i]);
       /* 
 	 output will remove the layer number information 
       */

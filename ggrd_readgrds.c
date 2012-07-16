@@ -576,7 +576,7 @@ void ggrd_read_depth_levels(struct ggrd_master *ggrd,
   ggrd->v.rlevels=(GGRD_CPREC *)realloc(ggrd->v.rlevels,sizeof(GGRD_CPREC));
   if(!ggrd->v.rlevels)
     HC_MEMERROR("ggrd_read_depth_levels");
-  while(fscanf(in,HC_FLT_FORMAT,(ggrd->v.rlevels + ggrd->v.n[HC_R]))==1){
+  while(fscanf(in,"%lf",(ggrd->v.rlevels + ggrd->v.n[HC_R]))==1){
     if(ggrd->v.n[HC_R] > 1)		/* test, if sorted */
       if(fabs(ggrd->v.rlevels[ggrd->v.n[HC_R]] - ggrd->v.rlevels[ggrd->v.n[HC_R]-1]) < 1e-7)
 	GGRD_PE("ggrd_read_depth_levels: error: two radii are at same level");

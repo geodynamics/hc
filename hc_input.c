@@ -55,12 +55,14 @@ int hc_read_sh_solution(struct hcs *hc,
     if(verbose){
       if(shps == 3)
 	fprintf(stderr,"hc_read_sh_solution: z: %8.3f |r|: %12.5e |pol|: %12.5e |tor|: %12.5e\n",
-		HC_Z_DEPTH(hc->r[ilayer]),
-		sqrt(sh_total_power((*sol+os))),sqrt(sh_total_power((*sol+os+1))),
-		sqrt(sh_total_power((*sol+os+2))));
+		(double)HC_Z_DEPTH(hc->r[ilayer]),
+		(double)sqrt(sh_total_power((*sol+os))),
+		(double)sqrt(sh_total_power((*sol+os+1))),
+		(double)sqrt(sh_total_power((*sol+os+2))));
       else
 	fprintf(stderr,"hc_read_sh_solution: z: %8.3f |scalar|: %12.5e\n",
-		HC_Z_DEPTH(hc->r[ilayer]),sqrt(sh_total_power((*sol+os))));
+		(double)HC_Z_DEPTH(hc->r[ilayer]),
+		(double)sqrt(sh_total_power((*sol+os))));
     }
     n++;
     os += shps;

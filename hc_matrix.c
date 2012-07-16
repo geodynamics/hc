@@ -72,10 +72,10 @@ void hc_ludcmp_3x3(HC_PREC a[3][3],int n,int *indx)
 	big=temp;
     if (fabs(big) < HC_EPS_PREC) {
       fprintf(stderr,"hc_ludcmp_3x3: singular matrix in routine, big: %g\n",
-	      big);
+	      (double)big);
       for(j=0;j <n;j++){
 	for(k=0;k<n;k++)
-	  fprintf(stderr,"%g ",a[j][k]);
+	  fprintf(stderr,"%g ",(double)a[j][k]);
 	fprintf(stderr,"\n");
       }
       exit(-1);

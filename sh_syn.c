@@ -94,7 +94,7 @@ int main(int argc, char **argv)
     }
     if(verbose)
       fprintf(stderr,"%s: converting lmax %i ivec: %i at z: %g\n",
-	      argv[0],lmax,ivec,zlabel);
+	      argv[0],lmax,ivec,(double)zlabel);
 
     /* input and init */
     sh_allocate_and_init(&exp,shps,lmax,type,ivec,verbose,((regular_basis != 0)?(1):(0)));

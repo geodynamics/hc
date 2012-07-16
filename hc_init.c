@@ -165,7 +165,7 @@ void hc_init_main(struct hcs *hc,int sh_type,
     switch(p->dd_dens_scale){
     case HC_DD_CONSTANT:
       fprintf(stderr,"hc_init_main: using constant dln\\rho/dln input density scaling of %g\n",
-	      hc->dens_scale);
+	      (double)hc->dens_scale);
       break;
     case HC_DD_READ_FROM_FILE:
       fprintf(stderr,"hc_init_main: reading density scaling from file\n");
@@ -175,7 +175,8 @@ void hc_init_main(struct hcs *hc,int sh_type,
       exit(-1);
       break;
     default:
-      fprintf(stderr,"hc_init_main: error, dd mode %i undefined\n",p->dd_dens_scale);
+      fprintf(stderr,"hc_init_main: error, dd mode %i undefined\n",
+	      p->dd_dens_scale);
       exit(-1);
     }
   
@@ -294,7 +295,7 @@ void hc_init_constants(struct hcs *hc, HC_PREC dens_anom_scale,
   */
   hc->re = hc->prem->r0;
   if(fabs(hc->re - (HC_RE_KM * 1e3)) > 1e-7){
-    fprintf(stderr,"%.7e %.7e\n",HC_RE_KM * 1e3,hc->re);
+    fprintf(stderr,"%.7e %.7e\n",(double)(HC_RE_KM * 1e3),(double)hc->re);
     HC_ERROR("hc_init_constants","Earth radius mismatch");
   }
 
@@ -382,7 +383,7 @@ void hc_handle_command_line(int argc, char **argv,
 	      hc_name_boolean(p->read_short_dens_sh));
 
       fprintf(stderr,"-ds\t\tdensity scaling factor (%g)\n",
-	      p->dens_anom_scale);
+	      (double)p->dens_anom_scale);
       fprintf(stderr,"-dnp\t\tdo not scale density anomalies with PREM but rather mean density (%s)\n",
 	      hc_name_boolean(!p->scale_dens_anom_with_prem));
       fprintf(stderr,"-dsf\tfile\tread depth dependent density scaling from file\n");
@@ -407,9 +408,9 @@ void hc_handle_command_line(int argc, char **argv,
       fprintf(stderr,"-vshs\t\tuse the short format (only lmax in header) for the plate velocities (%s)\n",
 	      hc_name_boolean(p->read_short_pvel_sh));
       fprintf(stderr,"-vdir\t\tvelocities are given in files name/vel.1.ab to vel.%i.ab for different times,\n\t\t-%g to -1 Ma before present, where name is from -pvel\n",
-	      HC_PVEL_TSTEPS,(HC_PREC)HC_PVEL_TSTEPS);
+	      HC_PVEL_TSTEPS,(double)HC_PVEL_TSTEPS);
       fprintf(stderr,"-vtime\ttime\tuse this particular time step of the plate velocities (%g)\n\n",
-	      p->pvel_time);
+	      (double)p->pvel_time);
 
       fprintf(stderr,"solution procedure and I/O options:\n");
       fprintf(stderr,"-ng\t\tdo not compute and print the geoid (%i)\n",
@@ -554,7 +555,8 @@ void hc_assign_viscosity(struct hcs *hc,int mode,
     }
     if(p->verbose)
       fprintf(stderr,"hc_assign_viscosity: assigned four layer viscosity: %.2e %.2e %.2e %.2e\n",
-	      hc->visc[0],hc->visc[1],hc->visc[2],hc->visc[3]);
+	      (double)hc->visc[0],(double)hc->visc[1],
+	      (double)hc->visc[2],(double)hc->visc[3]);
   break;
   case HC_INIT_E_FROM_FILE:		
     /* 
@@ -584,13 +586,13 @@ void hc_assign_viscosity(struct hcs *hc,int mode,
     while(fscanf(in,HC_TWO_FLT_FORMAT,(hc->rvisc+hc->nvis),(hc->visc+hc->nvis))==2){
       if(hc->visc[hc->nvis] < 1e15)
 	fprintf(stderr,"hc_assign_viscosity: WARNING: expecting viscosities in Pas, read %g at layer %i\n",
-		hc->visc[hc->nvis],hc->nvis);
+		(double)hc->visc[hc->nvis],hc->nvis);
       /* normalize viscosity here */
       hc->visc[hc->nvis] /= hc->visnor;
       if(hc->nvis == 0)
 	if( hc->rvisc[hc->nvis] < hc->r_cmb-0.01){
 	  fprintf(stderr,"hc_assign_viscosity: error: first radius %g is below CMB, %g\n",
-		  hc->rvisc[hc->nvis], hc->r_cmb);
+		  (double)hc->rvisc[hc->nvis], (double)hc->r_cmb);
 	  exit(-1);
 	}
       if(p->verbose){
@@ -604,7 +606,8 @@ void hc_assign_viscosity(struct hcs *hc,int mode,
       if(hc->nvis){
 	if(hc->rvisc[hc->nvis] < hc->rvisc[hc->nvis-1]){
 	  fprintf(stderr,"hc_assign_viscosity: error: radius has to be ascing, entry %i (%g) smaller than last (%g)\n",
-		  hc->nvis+1,hc->rvisc[hc->nvis],hc->rvisc[hc->nvis-1]);
+		  hc->nvis+1,(double)hc->rvisc[hc->nvis],
+		  (double)hc->rvisc[hc->nvis-1]);
 	  exit(-1);
 	}
       }
@@ -615,7 +618,7 @@ void hc_assign_viscosity(struct hcs *hc,int mode,
     fclose(in);
     if(hc->rvisc[hc->nvis-1] > 1.0){
       fprintf(stderr,"hc_assign_viscosity: error: first last %g is above surface, 1.0\n",
-	      hc->rvisc[hc->nvis-1]);
+	      (double)hc->rvisc[hc->nvis-1]);
       exit(-1);
     }
     if(p->verbose){
@@ -629,7 +632,7 @@ void hc_assign_viscosity(struct hcs *hc,int mode,
       fprintf(stderr,"hc_assign_viscosity: read %i layered viscosity[Pas] from %s\n",
 	      hc->nvis,p->visc_filename);
       fprintf(stderr,"hc_assign_viscosity: rough estimate of mean viscosity: %g x %g = %g Pas\n",
-	      mean, hc->visnor, mean*hc->visnor);
+	      (double)mean, (double)hc->visnor, (double)(mean*hc->visnor));
     }
     break;
   default:
@@ -793,7 +796,7 @@ void hc_assign_density(struct hcs *hc,
 	  rho0 /= 1000.0;
 	  if(rho0 < 3)
 	    fprintf(stderr,"\nhc_assign_density: WARNING: using small (%g) density from PREM for layer at depth %g\n\n",
-		    rho0*1000,HC_Z_DEPTH(hc->rden[hc->inho]));
+		    (double)rho0*1000,(double)HC_Z_DEPTH(hc->rden[hc->inho]));
 	}else{
 	  /* mean value */
 	  rho0 =  (double)hc->avg_den_mantle;
@@ -817,7 +820,8 @@ void hc_assign_density(struct hcs *hc,
 	      HC_ERROR("hc_assign_density","lmax changed in file");
 	  if(hc->rden[hc->inho] <= hc->rden[hc->inho-1]){
 	    fprintf(stderr,"hc_assign_density: %i %g %g\n",hc->inho,
-		    hc->rden[hc->inho], hc->rden[hc->inho-1]);
+		    (double)hc->rden[hc->inho], 
+		    (double)hc->rden[hc->inho-1]);
 	    HC_ERROR("hc_assign_density","depth should decrease, radius increase (give z[km])");
 	  }
 	}
@@ -882,7 +886,7 @@ void hc_assign_density(struct hcs *hc,
     if(verbose >= 2){
       fprintf(stderr,"hc_assign_density: r: %11g additional %s d\\rho/dinput: %11g \tlayer %5i out of %i\n",
 	      (double)hc->rden[i],
-	      (dd_dens_scale == HC_DD_READ_FROM_FILE)?("depth-dependent"):((dd_dens_scale==HC_DD_CONSTANT)?("constant"):("polynomial")),local_scale,i,hc->inho);
+	      (dd_dens_scale == HC_DD_READ_FROM_FILE)?("depth-dependent"):((dd_dens_scale==HC_DD_CONSTANT)?("constant"):("polynomial")),(double)local_scale,i,hc->inho);
     }
   }
 
@@ -1120,7 +1124,7 @@ void hc_init_single_plate_exp(char *filename,struct hcs *hc, hc_boolean pvel_in_
   }
   if((nset > 1)||(fabs(zlabel) > 0.01)){
     fprintf(stderr,"hc_init_single_plate_exp: error: expected one layer at surface, but nset: %i z: %g\n",
-	    nset, zlabel);
+	    nset, (double)zlabel);
     exit(-1);
   }
   /* 
@@ -1149,7 +1153,7 @@ void hc_init_single_plate_exp(char *filename,struct hcs *hc, hc_boolean pvel_in_
     sh_get_coeff((pvel+1),1,0,2,TRUE,t11);
     if(fabs(t10[0])+fabs(t11[0])+fabs(t11[1]) > 1.0e-7)
       fprintf(stderr,"\nhc_init_single_plate_exp: WARNING: toroidal A(1,0): %g A(1,1): %g B(1,1): %g\n\n",
-	      t10[0],t11[0],t11[1]);
+	      (double)t10[0],(double)t11[0],(double)t11[1]);
   }
 }
 
@@ -1283,7 +1287,7 @@ void hc_assign_dd_scaling(int mode, HC_PREC dlayer[4],struct hc_parameters *p,
 	}
 	smean /= (HC_PREC)p->ndf;
 	if(p->verbose)
-	  fprintf(stderr,"hc_assign_dd_density: read scaling on %i layers, rough mean: %g\n",p->ndf,smean);
+	  fprintf(stderr,"hc_assign_dd_density: read scaling on %i layers, rough mean: %g\n",p->ndf,(double)smean);
 	break;
     case HC_INIT_DD_FOUR_LAYERS:
       p->ndf = 4;
@@ -1294,7 +1298,10 @@ void hc_assign_dd_scaling(int mode, HC_PREC dlayer[4],struct hc_parameters *p,
 	p->sdf[i] = dlayer[i];
       if(p->verbose)
 	fprintf(stderr,"hc_assign_dd_density: assigned four layer density scaling factors %g %g %g %g\n",
-		p->sdf[0],	p->sdf[1],	p->sdf[2],	p->sdf[3]);
+		(double)p->sdf[0],	
+		(double)p->sdf[1],
+		(double)p->sdf[2],	
+		(double)p->sdf[3]);
       break;
     }
     /* end init */
@@ -1369,8 +1376,9 @@ void hc_select_pvel(HC_PREC time, struct pvels *pvel,
       }
     }
     if(!hit){
-      fprintf(stderr,"hc_select_pvel: was searching for time %g amongs ",time);
-      for(i=0;i < pvel->n;i++)fprintf(stderr,"%g ",pvel->t[i]);
+      fprintf(stderr,"hc_select_pvel: was searching for time %g amongst ",
+	      (double)time);
+      for(i=0;i < pvel->n;i++)fprintf(stderr,"%g ",(double)pvel->t[i]);
       fprintf(stderr,"\n");
       HC_ERROR("hc_select_pvel","interpolation not implemented yet");
     }

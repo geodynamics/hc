@@ -1022,7 +1022,7 @@ void rick_plmbar1(SH_RICK_PREC  *p,SH_RICK_PREC *dp,
   }
   if ((lmax < 0) || (fabs(z) > 1.0)) {
     fprintf(stderr,"rick_plmbar1: error: bad arguments: lmax: %i z: %g\n",
-	    lmax,z);
+	    lmax,(double)z);
     exit(-1);
   }
   if(!rick->computed_legendre) {

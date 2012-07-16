@@ -69,7 +69,7 @@ int main(int argc, char **argv)
 				     &zlabel,&ivec,stdin,short_format,
 				     binary,verbose)){
     fprintf(stderr,"%s: computing power per degree and unit area for lmax %i ivec: %i at z: %g\n",
-	    argv[0],lmax,ivec,zlabel);
+	    argv[0],lmax,ivec,(double)zlabel);
     /* 
        input and init 
     */
@@ -83,7 +83,7 @@ int main(int argc, char **argv)
     for(l=0;l<=exp->lmax;l++){
       fprintf(stdout,"%5i ",l);
       for(i=0;i<shps;i++)
-	fprintf(stdout,"%15.7e",power[l+i*exp->lmaxp1]);
+	fprintf(stdout,"%15.7e",(double)power[l+i*exp->lmaxp1]);
       fprintf(stdout,"\n");
     }
     free(exp);
