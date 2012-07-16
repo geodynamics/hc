@@ -32,15 +32,31 @@ and Tromp
 
 //
 
-#ifdef SH_RICK_DOUBLE_PRECISION
 
+#if SH_RICK_PRECISION == 32
+
+#define SH_RICK_HIGH_PREC long double
+#define SH_RICK_PREC long double
+#define rick_vecalloc hc_vecalloc
+#define rick_vecrealloc hc_vecrealloc
+#define SH_RICK_FLT_FMT "%Lf"
+
+#elif SH_RICK_PRECISION == 16	/* double */
+
+#define SH_RICK_HIGH_PREC double
 #define SH_RICK_PREC double
 #define rick_vecalloc hc_dvecalloc
+#define rick_vecrealloc hc_dvecrealloc
 #define SH_RICK_FLT_FMT "%lf"
-#else
+
+#else  /* single */
+
+#define SH_RICK_HIGH_PREC double
 #define SH_RICK_PREC float
 #define rick_vecalloc hc_svecalloc
+#define rick_vecrealloc hc_svecrealloc
 #define SH_RICK_FLT_FMT "%f"
+
 #endif
 
 #ifndef my_boolean

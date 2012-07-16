@@ -54,7 +54,7 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
 					     (if set to FALSE, can
 					     compare with Benhard's
 					     densub densol output */
-  double *tvec;
+  HC_PREC *tvec;
 
   if(!hc->initialized)
     HC_ERROR("hc_solve","hc structure not initialized");
@@ -287,7 +287,7 @@ sol[nradp2 * 3 ]
 data has to be initialized, eg. as NULL
 */
 void hc_compute_sol_spatial(struct hcs *hc, struct sh_lms *sol_w,
-			    float **sol_x, hc_boolean verbose)
+			    HC_PREC **sol_x, hc_boolean verbose)
 {
   int i,i3,np,np2,np3,os;
   static int ntype = 3;
@@ -298,7 +298,7 @@ void hc_compute_sol_spatial(struct hcs *hc, struct sh_lms *sol_w,
 			   expansions for r, pol, tor
 			*/
   /* allocate space for spatial solution*/
-  hc_svecrealloc(sol_x,np3*hc->nradp2,"sol_x");
+  hc_vecrealloc(sol_x,np3*hc->nradp2,"sol_x");
   /* 
      compute the plm factors 
   */

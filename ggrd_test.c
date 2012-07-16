@@ -3,7 +3,8 @@
 int main(int argc, char **argv)
 {
   struct ggrd_master *ggrd;
-  HC_PREC xloc[3],time,vr[4],vphi[4],vtheta[4],dtrange;
+  double time,vr[4],vphi[4],vtheta[4],dtrange;
+  double xloc[3];
   static int order = 3;
   hc_boolean calc_derivatives ;
   double lon,lat,age;
@@ -54,7 +55,8 @@ int main(int argc, char **argv)
 	/* 
 	   interpolate
 	*/
-	if(ggrd_find_vel_and_der(xloc,time,dtrange,ggrd,order,calc_derivatives,
+	if(ggrd_find_vel_and_der(xloc,time,dtrange,ggrd,
+				 order,calc_derivatives,
 				 TRUE,vr,vtheta,vphi))
 	  exit(-1);
 	if(interpolate_seafloor_ages(xloc[HC_THETA], 

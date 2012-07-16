@@ -2,7 +2,6 @@
 #include <math.h>
 
 
-void hc_dvecalloc(double **,int, char *);
 #define vshd2c vshd2c_
 #define gauleg gauleg_
 
@@ -54,10 +53,4 @@ void main(void)
 	    0.,0.,-cpol[i*2],-cpol[i*2+1],-ctor[i*2],-ctor[i*2+1]);
 }
 
-void hc_dvecalloc(double **x,int n,char *message)
-{
-  *x = (double *)malloc(sizeof(double)*(size_t)n);
-  if(! (*x)){
-    fprintf(stderr,"%s: memory error\n",message);
-  }
-}
+

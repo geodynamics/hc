@@ -57,7 +57,7 @@ int main(int argc, char **argv)
   FILE *out;
   struct hc_parameters p[1]; /* parameters */
   char filename[HC_CHAR_LENGTH],file_prefix[10];
-  float *sol_spatial = NULL;	/* spatial solution,
+  HC_PREC *sol_spatial = NULL;	/* spatial solution,
 				   e.g. velocities */
   HC_PREC corr[2];			/* correlations */
   HC_PREC vl[4][3],v[4],dv;			/*  for viscosity scans */
@@ -227,7 +227,7 @@ int main(int argc, char **argv)
 	  fprintf(stderr,"%s: correlation for geoid with %s\n",argv[0],
 		  p->ref_geoid_file);
 	hc_compute_correlation(geoid,p->ref_geoid,corr,1,p->verbose);
-	fprintf(stdout,"%10.7f %10.7f\n",corr[0],corr[1]);
+	fprintf(stdout,"%10.7f %10.7f\n",(double)corr[0],(double)corr[1]);
       }else{
 	/* 
 	   print geoid solution 

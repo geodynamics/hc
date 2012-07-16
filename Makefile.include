@@ -6,5 +6,6 @@
 #
 # for GMT version >= 4.1.2, uncomment the next two lines
 #
+#ADD_FLAGS = -Werror
 GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include 
 GGRD_LIBS_LINKLINE = -lggrd -lgmt -lpsl -lnetcdf 

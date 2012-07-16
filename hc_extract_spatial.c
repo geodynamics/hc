@@ -17,9 +17,9 @@ int main(int argc, char **argv)
   struct hcs *model;
   HC_PREC zlabel;
   hc_boolean binary_in = TRUE, verbose = FALSE,read_dsol=FALSE;
-  float *data,*plm=NULL,*xpos,*xvec,lon,lat,theta,phi,xtmp[3],pvec[3],
+  HC_PREC *data,*plm=NULL,*xpos,*xvec,lon,lat,theta,phi,xtmp[3],pvec[3],
     *xscalar;
-  double polar_base[9];
+  HC_PREC polar_base[9];
   hc_struc_init(&model);
   /* 
      deal with parameters
@@ -132,9 +132,9 @@ int main(int argc, char **argv)
   ndata_all = npoints * (shps + shps_read_d);
 
   if((mode == 5)||(mode==6)){			/* save all layers */
-    hc_svecalloc(&data,model->nradp2 * ndata_all,"hc_extract_spatial");
+    hc_vecalloc(&data,model->nradp2 * ndata_all,"hc_extract_spatial");
   }else
-    hc_svecalloc(&data, ndata_all,"hc_extract_spatial");
+    hc_vecalloc(&data, ndata_all,"hc_extract_spatial");
   for(lc=0,ilayer=i1;ilayer <= i2;ilayer++,lc++){
     /* 
        output 
@@ -195,10 +195,10 @@ int main(int argc, char **argv)
     */
     if(shps != 3)HC_ERROR("hc_extract_spatial","shps has to be 3 for mode 5 and 6");
     /* convert */
-    hc_svecalloc(&xpos,model->nradp2 * ndata,"hc_extract_spatial"); 
-    hc_svecalloc(&xvec,model->nradp2 * ndata,"hc_extract_spatial");
+    hc_vecalloc(&xpos,model->nradp2 * ndata,"hc_extract_spatial"); 
+    hc_vecalloc(&xvec,model->nradp2 * ndata,"hc_extract_spatial");
     if(read_dsol)
-      hc_svecalloc(&xscalar,model->nradp2 * ndata_d,"hc_extract_spatial");
+      hc_vecalloc(&xscalar,model->nradp2 * ndata_d,"hc_extract_spatial");
     for(i=0;i < npoints;i++){	/* loop through all points */
       /* lon lat coordinates */
       sh_get_coordinates((vsol+i1*3),i,&lon,&lat);

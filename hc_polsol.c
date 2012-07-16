@@ -194,9 +194,10 @@ void hc_polsol(struct hcs *hc, 	/*
     prop_s1,prop_s2,nvisp1,nzero,n6,ninho,nl=0,ip1;
   int newprp,newpot,jpb,inho2,ibv,indx[3],a_or_b,ilayer,lmax,
     nprops_max,jsol;
-  HC_PREC *xprem;
-  double *b,du1,du2,el,rnext,drho,dadd;
-  double amat[3][3],bvec[3],u[4],poten[2],unew[4],potnew[2],clm[2];
+  double *xprem;
+  HC_HIGH_PREC *b,du1,du2,el,rnext,drho,dadd;
+  HC_HIGH_PREC amat[3][3],bvec[3],u[4],poten[2],
+    unew[4],potnew[2],clm[2];
   /* 
      structures which hold u[6][4] type arrays 
   */
@@ -260,15 +261,15 @@ void hc_polsol(struct hcs *hc, 	/*
       
       
       */
-      hc_dvecalloc(&hc->props,prop_s1 * lmax,"hc_polsol");
-      hc_dvecalloc(&hc->ppots,prop_s2 * lmax,"hc_polsol");
+      hc_hvecalloc(&hc->props,prop_s1 * lmax,"hc_polsol");
+      hc_hvecalloc(&hc->ppots,prop_s2 * lmax,"hc_polsol");
     }
   }else{
     /* 
        propagator recomputed and reallocated each time
     */
-    hc_dvecalloc(&hc->props,prop_s1,"hc_polsol");
-    hc_dvecalloc(&hc->ppots,prop_s2,"hc_polsol");
+    hc_hvecalloc(&hc->props,prop_s1,"hc_polsol");
+    hc_hvecalloc(&hc->ppots,prop_s2,"hc_polsol");
   }
   if(!hc->psp.abg_init){
     //
@@ -280,7 +281,7 @@ void hc_polsol(struct hcs *hc, 	/*
     hc->psp.beta   = -4.0 * HC_PI * (hc->g*1e3) * (hc->re*1e2) / hc->gacc;
     if(verbose)
       fprintf(stderr,"hc_polsol: alpha: %.8f beta: %.8f\n",
-	      hc->psp.alpha,hc->psp.beta);
+	      (double)hc->psp.alpha,(double)hc->psp.beta);
     
     /* 
        geoid scaling factor hc->gacc shoud be grav[nprops] for
@@ -315,9 +316,9 @@ void hc_polsol(struct hcs *hc, 	/*
 	 arrays that go with nprops
 	 
       */
-      hc_dvecalloc(&hc->rprops,nprops_max,"hc_polsol: rprop");
-      hc_dvecalloc(&hc->pvisc,nprops_max,"hc_polsol");
-      hc_dvecalloc(&hc->den,nprops_max,"hc_polsol");
+      hc_hvecalloc(&hc->rprops,nprops_max,"hc_polsol: rprop");
+      hc_hvecalloc(&hc->pvisc,nprops_max,"hc_polsol");
+      hc_hvecalloc(&hc->den,nprops_max,"hc_polsol");
       /* initialize qwrite with zeroes! */
       hc->qwrite = (hc_boolean *)calloc(nprops_max,sizeof(hc_boolean));
       if(!hc->qwrite)
@@ -433,8 +434,8 @@ void hc_polsol(struct hcs *hc, 	/*
 	if(fabs(hc->den[i]) > HC_EPS_PREC)
 	  i2++;
 	fprintf(stderr,"hc_polsol: prop: i: %3i(%3i) r: %8.5f v: %8.3f den: %12g ninho: %3i/%3i\n",
-		i+1,hc->nprops,hc->rprops[i],
-		hc->pvisc[i],hc->den[i],i2,inho);
+		i+1,hc->nprops,(double)hc->rprops[i],
+		(double)hc->pvisc[i],(double)hc->den[i],i2,inho);
       }
     }
     if(!hc->psp.rho_init){
@@ -456,10 +457,11 @@ void hc_polsol(struct hcs *hc, 	/*
 	*/
 	if(!hc->prem_init)
 	  HC_ERROR("hc_polsol","PREM wasn't initialized for compressible");
-	hc_vecalloc(&xprem,hc->prem->np,"hc_polsol: rho");
+	hc_dvecalloc(&xprem,hc->prem->np,"hc_polsol: rho");
 	for(i=0;i < hc->nprops+1;i++){
-	  ilayer = prem_find_layer_x(hc->rprops[i],1.0,
-				     hc->prem->r,10,hc->prem->np, 
+	  ilayer = prem_find_layer_x((double)hc->rprops[i],1.0,
+				     hc->prem->r,
+				     10,hc->prem->np, 
 				     xprem);
 	  hc->rho_zero[i] = prem_compute_pval(xprem,
 					      (hc->prem->crho+ilayer*hc->prem->np),
@@ -496,7 +498,7 @@ void hc_polsol(struct hcs *hc, 	/*
   if(verbose >= 3)
     for(i=0;i < hc->nprops+2;i++)
       fprintf(stderr,"i: %3i nprops: %3i r(i): %11g rho: %11g\n",
-	      i,hc->nprops,hc->rprops[i],hc->rho_zero[i]);
+	      i,hc->nprops,(double)hc->rprops[i],(double)hc->rho_zero[i]);
   
   //
   //    begin l loop

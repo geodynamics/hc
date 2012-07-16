@@ -68,11 +68,11 @@ THIS ROUTINE TAKES NUMERICAL RECIPES 1...n,. SO CALL WITH (data-1)
 void rick_realft_nr(SH_RICK_PREC *rdata, int n, int isign)
 {
   SH_RICK_PREC c1,c2,h1r,h1i,h2r,h2i;
-  double theta,wi,wpi,wpr,wr,wtemp;
+  SH_RICK_HIGH_PREC theta,wi,wpi,wpr,wr,wtemp;
   int i,n2p3,ilim,i1,i2,i3,i4,n2;
   static int negunity = -1,unity = 1;
 
-  theta = RICK_PI/(double)(n); 
+  theta = RICK_PI/(SH_RICK_HIGH_PREC)(n); 
   
   wr = 1.0;
   wi = 0.0;
@@ -145,9 +145,9 @@ void rick_four1_nr(SH_RICK_PREC *rdata,int nn,int isign)
   //	+-NN/2 to -1 in the standard fashion.
   //
   // local
-  double  tempr,tempi;
-  // this should be double precision locally, regardless
-  double  wr,wi,wpr,wpi,wtemp,theta,temp2;
+  SH_RICK_HIGH_PREC  tempr,tempi;
+  // this should be SH_RICK_HIGH_PREC precision locally, regardless
+  SH_RICK_HIGH_PREC  wr,wi,wpr,wpi,wtemp,theta,temp2;
   
   int n,m,i,j,mmax,istep;
     

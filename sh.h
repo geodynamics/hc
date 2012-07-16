@@ -12,6 +12,8 @@
 same for Rick's spherical harmonic routines
 
 */
+#define SH_RICK_PRECISION  HC_PRECISION
+
 #include "sh_rick.h"
 /* 
 
@@ -116,7 +118,7 @@ struct sh_lms_model{
   */
   my_boolean save_plm;
   /* layer indicators if nset != 1 */
-  float *z;
+  HC_PREC *z;
   /* scalar only? ivec=0 or velocities? ivec=1 */
   int ivec;
   /* number of expansions per set */
@@ -132,7 +134,7 @@ struct sh_lms_model{
   */
   int tnpoints;			/* number of the total datapoints */
   /* data structure */
-  float *data;
+  HC_PREC *data;
   my_boolean spatial_init, initialized; 
 };
 /* 

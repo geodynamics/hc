@@ -119,11 +119,8 @@ void sh_init_expansion(struct sh_lms *exp, int lmax, int type,
     /* 
        use single precision vector 
     */
-#ifdef SH_RICK_DOUBLE_PRECISION
-    hc_dvecalloc(&exp->alm,exp->n_lm,"sh_init_expansion");
-#else
-    hc_svecalloc(&exp->alm,exp->n_lm,"sh_init_expansion");
-#endif
+    rick_vecalloc(&exp->alm,exp->n_lm,"sh_init_expansion");
+
     sh_clear_alm(exp);
     /* 
        
@@ -227,10 +224,10 @@ kindof RMS^2
 */
 HC_CPREC sh_total_power(struct sh_lms *exp)
 {
-  float *power;
+  HC_PREC *power;
   double sum;
   int l;
-  hc_svecalloc(&power,exp->lmaxp1,"sh_total_power");
+  hc_vecalloc(&power,exp->lmaxp1,"sh_total_power");
   sh_compute_power_per_degree(exp,power);
   for(sum=0.0,l=0;l<=exp->lmax;l++)
     sum += (double)(2.0*(HC_CPREC)l+1.0) * (double)power[l];
@@ -245,7 +242,7 @@ power[lmaxp1]
 
 */
 void sh_compute_power_per_degree(struct sh_lms *exp, 
-				 float *power)
+				 HC_PREC *power)
 {
   int l,m;
   HC_CPREC value[2];
@@ -273,7 +270,8 @@ HC_PREC sh_correlation(struct sh_lms *exp1, struct sh_lms *exp2, int llim)
 HC_PREC sh_correlation_per_degree(struct sh_lms *exp1, struct sh_lms *exp2, int lmin,int lmax)
 {
   int l,m;
-  HC_CPREC sum[3],tmp,atmp,btmp,ctmp,dtmp,value1[2],value2[2];
+  HC_CPREC sum[3],tmp,atmp,btmp,ctmp,value1[2],value2[2];
+  double dtmp;
   hc_boolean need_b;
 
   sum[0]=sum[1]=sum[2]=0.0;
@@ -337,7 +335,7 @@ void sh_print_parameters_to_file(struct sh_lms *exp, int shps,
 				 FILE *out, hc_boolean short_format,
 				 hc_boolean binary,hc_boolean verbose)
 {
-  HC_BIN_PREC fz;
+  HC_PREC fz;
   /* 
      print
      
@@ -345,11 +343,11 @@ void sh_print_parameters_to_file(struct sh_lms *exp, int shps,
      
   */
   if(binary){
-    fz = (HC_BIN_PREC)zlabel;
+    fz = (HC_PREC)zlabel;
     fwrite(&exp[0].lmax,sizeof(int),1,out);
     if(!short_format){
       fwrite(&ilayer,sizeof(int),1,out);
-      fwrite(&fz,sizeof(HC_BIN_PREC),1,out);
+      hc_print_float(&fz,1,out);
       fwrite(&nset,sizeof(int),1,out);
       fwrite(&shps,sizeof(int),1,out);
       fwrite(&exp[0].type,sizeof(int),1,out);
@@ -357,7 +355,8 @@ void sh_print_parameters_to_file(struct sh_lms *exp, int shps,
   }else{
     if(!short_format)
       fprintf(out,"%6i %6i %.8e %6i %2i %2i ",
-	      exp[0].lmax,ilayer,zlabel,nset,
+	      exp[0].lmax,ilayer,
+	      (double)zlabel,nset,
 	      shps,exp[0].type);
     else
       fprintf(out,"%6i ",
@@ -424,7 +423,7 @@ hc_boolean sh_read_parameters_from_file(int *type, int *lmax,
 					hc_boolean verbose)
 {
   int input1[2],input2[3];
-  HC_BIN_PREC fz;
+  HC_PREC fz;
   double dtmp;
   /* 
      read
@@ -439,7 +438,7 @@ hc_boolean sh_read_parameters_from_file(int *type, int *lmax,
       *lmax = input1[0]; 
     }else{
       if(fread(input1,sizeof(int),2,in)+
-	 fread(&fz,   sizeof(HC_BIN_PREC),1,in) +
+	 hc_read_float(&fz,1,in) +
 	 fread(input2,sizeof(int),3,in) != 6)
 	return FALSE;
       *lmax = input1[0];    
@@ -459,7 +458,7 @@ hc_boolean sh_read_parameters_from_file(int *type, int *lmax,
 		lmax,ilayer,&dtmp,nset,shps,type)!=6){
 	return FALSE;
       }
-      *zlabel = (HC_CPREC)dtmp;
+      *zlabel = (HC_PREC)dtmp;
     }
   }
   if(short_format){
@@ -544,8 +543,8 @@ void sh_print_coefficients_to_file(struct sh_lms *exp,
 				   hc_boolean verbose)
 {
   int j,l,m;
-  HC_CPREC value[2];
-  HC_BIN_PREC fvalue[2];
+  HC_PREC value[2];
+  HC_PREC fvalue[2];
   /* 
      test  other expansions this set 
   */
@@ -570,9 +569,9 @@ void sh_print_coefficients_to_file(struct sh_lms *exp,
 	     we are using internally
 	  */
 	  sh_get_coeff((exp+j),l,m,2,TRUE,value);
-	  fvalue[0] = (HC_BIN_PREC)value[0]*fac[j];
-	  fvalue[1] = (HC_BIN_PREC)value[1]*fac[j];
-	  fwrite(fvalue,  sizeof(HC_BIN_PREC), 2, out);
+	  fvalue[0] = value[0]*fac[j];
+	  fvalue[1] = value[1]*fac[j];
+	  hc_print_float(fvalue, 2, out);
 	}
   }else{
     for(l=0;l <= exp[0].lmax;l++){
@@ -582,7 +581,8 @@ void sh_print_coefficients_to_file(struct sh_lms *exp,
 	     convention */
 	  sh_get_coeff((exp+j),l,m,2,TRUE,value);
 	  fprintf(out,"%15.7e %15.7e\t",
-		  value[0]*fac[j],value[1]*fac[j]);
+		  (double)(value[0]*fac[j]),
+		  (double)(value[1]*fac[j]));
 	}
 	fprintf(out,"\n");
       } /* end m loop */
@@ -611,7 +611,7 @@ void sh_read_coefficients_from_file(struct sh_lms *exp, int shps, int lmax,
 {
   int j,k,l,m,lmax_loc;
   HC_CPREC value[2]={0,0};
-  HC_BIN_PREC fvalue[2]={0,0};
+  HC_PREC fvalue[2]={0,0};
   if(lmax < 0)
     lmax_loc = exp[0].lmax;
   else
@@ -635,7 +635,7 @@ void sh_read_coefficients_from_file(struct sh_lms *exp, int shps, int lmax,
     for(l=0;l <= lmax_loc;l++)
       for(m=0;m <= l;m++)
 	for(j=0;j < shps;j++){
-	  if(fread(fvalue, sizeof(HC_BIN_PREC),2,in)!=2){
+	  if(hc_read_float(fvalue,2,in)!=2){
 	    fprintf(stderr,"sh_read_coefficients_from_file: read error: set %i l %i m %i\n",
 		    j+1,l,m);
 	    exit(-1);
@@ -650,9 +650,9 @@ void sh_read_coefficients_from_file(struct sh_lms *exp, int shps, int lmax,
     for(l=0;l <= lmax_loc;l++)
       for(m=0;m <= l;m++)
 	for(j=0;j < shps;j++){
-	  if(fscanf(in,"%lf %lf",value,(value+1))!=2){
+	  if(fscanf(in,HC_TWO_FLT_FORMAT,value,(value+1))!=2){
 	    fprintf(stderr,"sh_read_coefficients_from_file: read error: set %i l %i m %i, last val: %g %g\n",
-		    j+1,l,m,value[0],value[1]);
+		    j+1,l,m,(double)value[0],(double)value[1]);
 	    exit(-1);
 	  }
 	  /* read in real, Dahlen & Tromp normalized coefficients and
@@ -688,7 +688,8 @@ void sh_print_nonzero_coeff(struct sh_lms *exp,FILE *out)
     for(m=0;m <= l;m++){
       sh_get_coeff(exp,l,m,2,FALSE,value);
       if(fabs(value[0])+fabs(value[1]) > 1e-8)
-	fprintf(out,"%5i %5i %15.7e %15.7e\n",l,m,value[0],value[1]);
+	fprintf(out,"%5i %5i %15.7e %15.7e\n",l,m,
+		(double)value[0],(double)value[1]);
     }
   }
 }
@@ -714,7 +715,8 @@ instead
 */
 void sh_read_spatial_data_from_file(struct sh_lms *exp, FILE *in, 
 				    my_boolean use_3d, 
-				    int shps, float *data, float *z)
+				    int shps, HC_PREC *data, 
+				    HC_PREC *z)
 {
   struct ggrd_gt *gdummy=(struct ggrd_gt *)NULL;
   sh_read_spatial_data(exp,in,gdummy,FALSE,use_3d,shps,data,z);
@@ -722,7 +724,8 @@ void sh_read_spatial_data_from_file(struct sh_lms *exp, FILE *in,
 /* similar for grd files */
 void sh_read_spatial_data_from_grd(struct sh_lms *exp, struct ggrd_gt *ggrd,
 				   my_boolean use_3d,
-				   int shps, float *data, float *z)
+				   int shps, HC_PREC *data, 
+				   HC_PREC *z)
 {
   FILE *fdummy=NULL;
   sh_read_spatial_data(exp,fdummy,ggrd,TRUE,use_3d,shps,data,z);
@@ -733,10 +736,11 @@ generic function
 
 */
 void sh_read_spatial_data(struct sh_lms *exp, FILE *in, struct ggrd_gt *ggrd,my_boolean use_grd,
-			  my_boolean use_3d, int shps, float *data, float *z)
+			  my_boolean use_3d, int shps, 
+			  HC_PREC *data, HC_PREC *z)
 
 {
-  float lon,lat,xp[3];
+  HC_PREC lon,lat,xp[3];
   int j,k;
   double dvalue;
   /* 
@@ -772,7 +776,8 @@ void sh_read_spatial_data(struct sh_lms *exp, FILE *in, struct ggrd_gt *ggrd,my_
       rick_pix2ang(j,exp->lmax,(xp+HC_THETA),(xp+HC_PHI),
 		   &exp->rick);
 #else
-      rick_f90_pix2ang(&j,&exp->lmax,(xp+HC_THETA),(xp+HC_PHI));
+      rick_f90_pix2ang(&j,&exp->lmax,(SH_RICK_PREC)(xp+HC_THETA),
+		       (SH_RICK_PREC)(xp+HC_PHI));
 #endif
       break;
 #ifdef HC_USE_SPHEREPACK
@@ -792,7 +797,7 @@ void sh_read_spatial_data(struct sh_lms *exp, FILE *in, struct ggrd_gt *ggrd,my_
 	/* 
 	   read in lon lat  
 	*/
-	if(fscanf(in,"%f %f",&lon,&lat) != 2){
+	if(fscanf(in,HC_TWO_FLT_FORMAT,&lon,&lat) != 2){
 	  fprintf(stderr,"sh_read_spatial_data: error: lon lat format: pixel %i: read error\n",
 		  (int)j);
 	  exit(-1);
@@ -803,7 +808,7 @@ void sh_read_spatial_data(struct sh_lms *exp, FILE *in, struct ggrd_gt *ggrd,my_
 	/* 
 	   read in lon lat z[i] 
 	*/
-	if(fscanf(in,"%f %f %f",&lon,&lat,z) != 3){
+	if(fscanf(in,HC_THREE_FLT_FORMAT,&lon,&lat,z) != 3){
 	  fprintf(stderr,"sh_read_spatial_data: error: lon lat z format: pixel %i: read error\n",
 		  (int)j);
 	  exit(-1);
@@ -820,7 +825,7 @@ void sh_read_spatial_data(struct sh_lms *exp, FILE *in, struct ggrd_gt *ggrd,my_
       for(k=0;k < shps;k++){
 	if(!ggrd_grdtrack_interpolate_tp((double)xp[HC_THETA],(double)xp[HC_PHI],(ggrd+k),&dvalue,FALSE,FALSE)){
 	  fprintf(stderr,"sh_read_spatial_data: interpolation error grd %i, lon %g lat %g\n",
-		  k+1,PHI2LON(xp[HC_PHI]),THETA2LAT(xp[HC_THETA]));
+		  k+1,(double)PHI2LON(xp[HC_PHI]),(double)THETA2LAT(xp[HC_THETA]));
 	  exit(-1);
 	}
 	data[k*exp[0].npoints+j] = dvalue;
@@ -830,7 +835,7 @@ void sh_read_spatial_data(struct sh_lms *exp, FILE *in, struct ggrd_gt *ggrd,my_
 	 read data 
       */
       for(k=0;k < shps;k++){
-	if(fscanf(in,"%f",(data+k*exp[0].npoints+j))!=1){
+	if(fscanf(in,HC_FLT_FORMAT,(data+k*exp[0].npoints+j))!=1){
 	  fprintf(stderr,"sh_read_spatial_data: error: scalar format: pixel %i: read error\n",
 		  (int)j);
 	  exit(-1);
@@ -849,7 +854,7 @@ void sh_read_spatial_data(struct sh_lms *exp, FILE *in, struct ggrd_gt *ggrd,my_
 	fprintf(stderr,"sh_read_model_spatial_data: error: pixel %i coordinate mismatch:\n",
 		(int)j);
 	fprintf(stderr,"sh_read_model_spatial_data: orig: %g, %g file: %g, %g\n",
-		PHI2LON(xp[HC_PHI]),THETA2LAT(xp[HC_THETA]),lon,lat);
+		(double)PHI2LON(xp[HC_PHI]),(double)THETA2LAT(xp[HC_THETA]),lon,lat);
 	exit(-1);
       }
     }
@@ -880,14 +885,14 @@ void sh_read_spatial_data(struct sh_lms *exp, FILE *in, struct ggrd_gt *ggrd,my_
 */
 void sh_compute_spatial_basis(struct sh_lms *exp, FILE *out, 
 			      hc_boolean use_3d,
-			      float z, float **x,
+			      HC_PREC z, HC_PREC **x,
 			      int out_mode, /* 0: file 1: store */
 			      hc_boolean verbose)
 {
   int j,os,inc;
-  float xp[3];
+  HC_PREC xp[3];
   if(out_mode)			/* make room for storing x,y,z */
-    hc_svecrealloc(x,exp->npoints*(2+((use_3d)?(1):(0))),"sh_compute_spatial_basis");
+    hc_vecrealloc(x,exp->npoints*(2+((use_3d)?(1):(0))),"sh_compute_spatial_basis");
   inc = (use_3d)?(3):(2);
   for(j=os=0;j < exp->npoints;j++,os+=inc){
     /* 
@@ -935,23 +940,23 @@ void sh_compute_spatial_basis(struct sh_lms *exp, FILE *out,
     if(out_mode){		/* save */
      if(!use_3d){
        /* save in lon lat format */
-       *(*x+os)   = (float) PHI2LON(xp[HC_PHI]);
-       *(*x+os+1) = (float) THETA2LAT(xp[HC_THETA]);
+       *(*x+os)   = (HC_PREC) PHI2LON(xp[HC_PHI]);
+       *(*x+os+1) = (HC_PREC) THETA2LAT(xp[HC_THETA]);
      }else{
        /* save in lon lat z format */
-       *(*x+os)   = (float) PHI2LON(xp[HC_PHI]);
-       *(*x+os+1) = (float) THETA2LAT(xp[HC_THETA]);
-       *(*x+os+2) = (float) z;
+       *(*x+os)   = (HC_PREC) PHI2LON(xp[HC_PHI]);
+       *(*x+os+1) = (HC_PREC) THETA2LAT(xp[HC_THETA]);
+       *(*x+os+2) = (HC_PREC) z;
      }
     }else{			/* write to file */
       if(!use_3d){
 	/* write in lon lat format */
-	fprintf(out,"%14.7f %14.7f\n",PHI2LON(xp[HC_PHI]),
-		THETA2LAT(xp[HC_THETA]));
+	fprintf(out,"%14.7f %14.7f\n",(double)PHI2LON(xp[HC_PHI]),
+		(double)THETA2LAT(xp[HC_THETA]));
       }else{
 	/* write in lon lat z format */
-	fprintf(out,"%14.7f %14.7f %g\n",PHI2LON(xp[HC_PHI]),
-		THETA2LAT(xp[HC_THETA]),z);
+	fprintf(out,"%14.7f %14.7f %g\n",(double)PHI2LON(xp[HC_PHI]),
+		(double)THETA2LAT(xp[HC_THETA]),(double)z);
       }
     }
   }
@@ -990,8 +995,8 @@ input/output:
 	     IVEC = 1
 
 */
-void sh_compute_spectral(float *data, int ivec,
-			 hc_boolean save_plm,float **plm,
+void sh_compute_spectral(HC_PREC *data, int ivec,
+			 hc_boolean save_plm,HC_PREC **plm,
 			 struct sh_lms *exp, hc_boolean verbose)
 {
   if(save_plm){
@@ -1089,7 +1094,7 @@ the DATA array has to be exp->npoints * (1 + ivec) = exp->tnpoints
 */
 void sh_compute_spatial(struct sh_lms *exp, int ivec,
 			hc_boolean save_plm,SH_RICK_PREC **plm,
-			float *data, hc_boolean verbose)
+			HC_PREC *data, hc_boolean verbose)
 {
   if((!exp[0].spectral_init)||(ivec && !exp[1].spectral_init)){
     fprintf(stderr,"sh_compute_spatial: coefficients set not initialized, ivec: %i\n",
@@ -1166,10 +1171,11 @@ cos(theta) and phi are cos(colatitude) and longitude in radians
 
 */
 void sh_compute_spatial_reg(struct sh_lms *exp, int ivec,
-			      hc_boolean save_plm,SH_RICK_PREC **plm,
-			      float *theta, int ntheta, float *phi,int nphi,
-			      float *data, hc_boolean verbose, 
-			      hc_boolean save_sincos_fac)
+			    hc_boolean save_plm,SH_RICK_PREC **plm,
+			    HC_PREC *theta, int ntheta, 
+			    HC_PREC *phi,int nphi,
+			    HC_PREC *data, hc_boolean verbose, 
+			    hc_boolean save_sincos_fac)
 {
   int npoints;
   npoints = nphi * ntheta;
@@ -1221,8 +1227,8 @@ void sh_compute_spatial_reg(struct sh_lms *exp, int ivec,
   }
 }
 void sh_compute_spatial_irreg(struct sh_lms *exp, int ivec,
-			      float *theta, float *phi,int npoints,
-			      float *data, hc_boolean verbose)
+			      HC_PREC *theta, HC_PREC *phi,int npoints,
+			      HC_PREC *data, hc_boolean verbose)
 {
   if((!exp[0].spectral_init)||(ivec && !exp[1].spectral_init)){
     fprintf(stderr,"sh_compute_spatial_irreg: coefficients set not initialized, ivec: %i\n",
@@ -1282,7 +1288,7 @@ void sh_print_plm(SH_RICK_PREC *plm, int n_plm, int ivec, int type,
     jlim=(ivec)?(3):(1);
     for(i=0;i < n_plm;i++){	/* number of points loop */
       for(j=0;j < jlim;j++)	/* scalar or scalar + pol? */
-	fprintf(out,"%16.7e ",plm[j*n_plm+i]);
+	fprintf(out,"%16.7e ",(double)plm[j*n_plm+i]);
       fprintf(out,"\n");
     }
     break;
@@ -1291,7 +1297,7 @@ void sh_print_plm(SH_RICK_PREC *plm, int n_plm, int ivec, int type,
     jlim=(ivec)?(2):(1);
     for(i=0;i < n_plm;i++){	/* number of points loop */
       for(j=0;j < jlim;j++)	/* scalar or scalar + pol? */
-	fprintf(out,"%16.7e ",plm[j*n_plm+i]);
+	fprintf(out,"%16.7e ",(double)plm[j*n_plm+i]);
       fprintf(out,"\n");
     }
     break;
@@ -1321,11 +1327,11 @@ shps is the number of scalars that are passed in the data[shps * npoints] array
 
 */
 void sh_print_spatial_data_to_file(struct sh_lms *exp, int shps, 
-				   float *data, hc_boolean use_3d,
-				   float z, FILE *out)
+				   HC_PREC *data, hc_boolean use_3d,
+				   HC_PREC z, FILE *out)
 {
   int j,k;
-  float lon,lat;
+  HC_PREC lon,lat;
   for(j=0;j < exp[0].npoints;j++){
     /* 
        get coordinates
@@ -1334,21 +1340,21 @@ void sh_print_spatial_data_to_file(struct sh_lms *exp, int shps,
     /* print coordinates */
     if(!use_3d){
       /* print lon lat  */
-      fprintf(out,"%14.7f %14.7f\t",lon,lat);
+      fprintf(out,"%14.7f %14.7f\t",(double)lon,(double)lat);
     }else{
       /* print lon lat z[i] */
-      fprintf(out,"%14.7f %14.7f %14.7f\t",lon,lat,z);
+      fprintf(out,"%14.7f %14.7f %14.7f\t",(double)lon,(double)lat,(double)z);
     }
     for(k=0;k < shps;k++)		/* loop through all scalars */
-      fprintf(out,"%14.7e ",data[j+exp[0].npoints*k]);
+      fprintf(out,"%14.7e ",(double)data[j+exp[0].npoints*k]);
     fprintf(out,"\n");
   }	/* end points in lateral space loop */
 }
 
 void sh_get_coordinates(struct sh_lms *exp,
-		       int i, float *lon, float *lat)
+		       int i, HC_PREC *lon, HC_PREC *lat)
 {
-  float xp[3];
+  HC_PREC xp[3];
   switch(exp->type){
 #ifdef HC_USE_HEALPIX
     
@@ -1398,13 +1404,13 @@ regular grid version
 
 */
 void sh_print_reg_spatial_data_to_file(struct sh_lms *exp, int shps, 
-				       float *data, hc_boolean use_3d,
-				       float z, float *theta,int ntheta,
-				       float *phi,int nphi,
+				       HC_PREC *data, hc_boolean use_3d,
+				       HC_PREC z, HC_PREC *theta,int ntheta,
+				       HC_PREC *phi,int nphi,
 				       FILE *out)
 {
   int i,j,k,l,npoints;
-  float lon,lat;
+  HC_PREC lon,lat;
   npoints = nphi * ntheta;
   /* 
      get coordinates
@@ -1424,13 +1430,13 @@ void sh_print_reg_spatial_data_to_file(struct sh_lms *exp, int shps,
 	/* print coordinates */
 	if(!use_3d){
 	  /* print lon lat  */
-	  fprintf(out,"%12.3f %12.3f\t",lon,lat);
+	  fprintf(out,"%12.3f %12.3f\t",(double)lon,(double)lat);
 	}else{
 	  /* print lon lat z[i] */
-	  fprintf(out,"%12.3f %12.3f %14.7f\t",lon,lat,z);
+	  fprintf(out,"%12.3f %12.3f %14.7f\t",(double)lon,(double)lat,(double)z);
 	}
 	for(k=0;k<shps;k++)		/* loop through all scalars */
-	  fprintf(out,"%14.7e ",data[l+npoints*k]);
+	  fprintf(out,"%14.7e ",(double)data[l+npoints*k]);
 	fprintf(out,"\n");
       }
     }
@@ -1453,12 +1459,12 @@ irregular, arbitrary version
 
 */
 void sh_print_irreg_spatial_data_to_file(struct sh_lms *exp, int shps, 
-				       float *data, hc_boolean use_3d,
-				       float z, float *theta,float *phi,int npoints,
+				       HC_PREC *data, hc_boolean use_3d,
+				       HC_PREC z, HC_PREC *theta,HC_PREC *phi,int npoints,
 				       FILE *out)
 {
   int i,k;
-  float lon,lat;
+  HC_PREC lon,lat;
   /* 
      get coordinates
   */
@@ -1475,13 +1481,13 @@ void sh_print_irreg_spatial_data_to_file(struct sh_lms *exp, int shps,
       /* print coordinates */
       if(!use_3d){
 	/* print lon lat  */
-	fprintf(out,"%14.7f %14.7f\t",lon,lat);
+	fprintf(out,"%14.7f %14.7f\t",(double)lon,(double)lat);
       }else{
 	/* print lon lat z[i] */
-	fprintf(out,"%14.7f %14.7f %14.7f\t",lon,lat,z);
+	fprintf(out,"%14.7f %14.7f %14.7f\t",(double)lon,(double)lat,(double)z);
       }
       for(k=0;k < shps;k++)		/* loop through all scalars */
-	fprintf(out,"%14.7e ",data[i+npoints*k]);
+	fprintf(out,"%14.7e ",(double)data[i+npoints*k]);
       fprintf(out,"\n");
     }
     break;
@@ -1510,7 +1516,8 @@ output:
 plm: will be re-allocated, has to be passed at least as NULL
 
 */
-void sh_compute_plm(struct sh_lms *exp,int ivec,SH_RICK_PREC **plm,
+void sh_compute_plm(struct sh_lms *exp,int ivec,
+		    SH_RICK_PREC **plm,
 		    hc_boolean verbose)
 {
   if(!exp->plm_computed){
@@ -1523,7 +1530,7 @@ void sh_compute_plm(struct sh_lms *exp,int ivec,SH_RICK_PREC **plm,
     /* 
        allocate 
     */
-    hc_svecrealloc(plm,exp->tn_plm,"sh_compute_plm");
+    rick_vecalloc(plm,exp->tn_plm,"sh_compute_plm");
     /* 
        compute the Legendre polynomials 
     */
@@ -1602,8 +1609,10 @@ output:
 plm: will be re-allocated, has to be passed at least as NULL
 
 */
-void sh_compute_plm_reg(struct sh_lms *exp,int ivec,SH_RICK_PREC **plm,
-			  hc_boolean verbose, float *theta, int npoints)
+void sh_compute_plm_reg(struct sh_lms *exp,int ivec,
+			SH_RICK_PREC **plm,
+			hc_boolean verbose, 
+			HC_PREC *theta, int npoints)
 {
   /*  */
   exp->tn_plm_irr = (1+ivec) * exp->lmsmall2 * npoints;
@@ -1619,7 +1628,7 @@ void sh_compute_plm_reg(struct sh_lms *exp,int ivec,SH_RICK_PREC **plm,
        allocate 
     */
     exp->old_tnplm_irr =  exp->tn_plm_irr;
-    hc_svecrealloc(plm,exp->old_tnplm_irr,"sh_compute_plm_reg");
+    rick_vecrealloc(plm,exp->old_tnplm_irr,"sh_compute_plm_reg");
     /* 
        compute the Legendre polynomials 
     */

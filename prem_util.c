@@ -147,7 +147,8 @@ void prem_get_rhodrho(double *rho, double *drhodr,
 /* 
    get density in SI units [kg/m^3] at non-dim radius rnd
 */
-void prem_get_rho(double *rho,double rnd, struct prem_model *prem)
+void prem_get_rho(double *rho,double rnd, 
+		  struct prem_model *prem)
 {
   int ilayer,os;
   double *x;

@@ -51,7 +51,7 @@
 void hc_torsol(struct hcs *hc,
 	       int nrad,int nvis,int lmax,HC_PREC *r,
 	       HC_PREC **rv,HC_PREC **visc, struct sh_lms *pvel_tor,
-	       struct sh_lms *tor_sol,double *tvec,
+	       struct sh_lms *tor_sol,HC_HIGH_PREC *tvec,
 	       hc_boolean verbose)
 {
   //    
@@ -61,8 +61,8 @@ void hc_torsol(struct hcs *hc,
   //     * FIRST ELEMENT AT THE SURFACE IS 1.0.                         *
   //     ****************************************************************
   //
-  double coef,*vecnor,hold,rlast,rnext,tloc[2],*tvec1,*tvec2;
-  double exp_fac[2],p[2][2],diflog,el,elp2,elm1,efdiff;
+  HC_HIGH_PREC coef,*vecnor,hold,rlast,rnext,tloc[2],*tvec1,*tvec2;
+  HC_HIGH_PREC exp_fac[2],p[2][2],diflog,el,elp2,elm1,efdiff;
   int l,jvisp1,jvis,i,j,nvisp1,lmaxp1,os;
   hc_boolean qvis;
   //
@@ -228,7 +228,7 @@ void hc_torsol(struct hcs *hc,
   //     set tvec(l,nradp2-1,0) = 1.0 and normalize all vectors to
   //     this
   //
-  hc_dvecalloc(&vecnor,lmaxp1,"hc_torsol: vecnor");
+  hc_hvecalloc(&vecnor,lmaxp1,"hc_torsol: vecnor");
   os = (hc->nradp2-1) * lmaxp1;
   vecnor[0] = 1.0;
   for(l=1;l < lmaxp1;l++)

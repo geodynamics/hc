@@ -407,7 +407,7 @@ void hc_handle_command_line(int argc, char **argv,
       fprintf(stderr,"-vshs\t\tuse the short format (only lmax in header) for the plate velocities (%s)\n",
 	      hc_name_boolean(p->read_short_pvel_sh));
       fprintf(stderr,"-vdir\t\tvelocities are given in files name/vel.1.ab to vel.%i.ab for different times,\n\t\t-%g to -1 Ma before present, where name is from -pvel\n",
-	      HC_PVEL_TSTEPS,(double)HC_PVEL_TSTEPS);
+	      HC_PVEL_TSTEPS,(HC_PREC)HC_PVEL_TSTEPS);
       fprintf(stderr,"-vtime\ttime\tuse this particular time step of the plate velocities (%g)\n\n",
 	      p->pvel_time);
 
@@ -581,7 +581,7 @@ void hc_assign_viscosity(struct hcs *hc,int mode,
     hc_get_flt_frmt_string(fstring,2,FALSE);
     rold = hc->r_cmb;
     /* start read loop  */
-    while(fscanf(in,"%lf %lf",(hc->rvisc+hc->nvis),(hc->visc+hc->nvis))==2){
+    while(fscanf(in,HC_TWO_FLT_FORMAT,(hc->rvisc+hc->nvis),(hc->visc+hc->nvis))==2){
       if(hc->visc[hc->nvis] < 1e15)
 	fprintf(stderr,"hc_assign_viscosity: WARNING: expecting viscosities in Pas, read %g at layer %i\n",
 		hc->visc[hc->nvis],hc->nvis);
@@ -678,9 +678,10 @@ void hc_assign_density(struct hcs *hc,
 {
   FILE *in;
   int type,lmax,shps,ilayer,nset,ivec,i,j;
-  HC_PREC *dtop,*dbot,zlabel,local_scale,dens_scale[1],rho0;
+  HC_PREC *dtop,*dbot,zlabel,local_scale,dens_scale[1];
+  double rho0;
   hc_boolean reported = FALSE,read_on;
-  double dtmp[3];
+  HC_PREC dtmp[3];
   hc->compressible = compressible;
   hc->inho = 0;
   if(hc->dens_init)			/* clear old expansions, if 
@@ -737,7 +738,7 @@ void hc_assign_density(struct hcs *hc,
     while(read_on){
       if(use_short_format){
 	/* short format I/O */
-	i  = fscanf(in,"%lf",dtmp);zlabel = (HC_PREC)dtmp[0];
+	i  = fscanf(in,HC_FLT_FORMAT,dtmp);zlabel = (HC_PREC)dtmp[0];
 	i += fscanf(in,"%i",&lmax);
 	read_on = (i == 2)?(TRUE):(FALSE);
 	ivec = 0;shps = 1;type = HC_DEFAULT_INTERNAL_FORMAT;
@@ -777,7 +778,7 @@ void hc_assign_density(struct hcs *hc,
 	/* 
 	   assign depth, this assumes that we are reading in depths [km]
 	*/
-	hc->rden[hc->inho] = HC_ND_RADIUS((double)zlabel);
+	hc->rden[hc->inho] = HC_ND_RADIUS((HC_PREC)zlabel);
 	if(scale_dens_anom_with_prem){
 	  /* 
 	     
@@ -786,25 +787,26 @@ void hc_assign_density(struct hcs *hc,
 	  */
 
 
-	  prem_get_rho(&rho0,hc->rden[hc->inho],hc->prem);
+	  prem_get_rho(&rho0,(double)(hc->rden[hc->inho]),
+		       hc->prem);
+
 	  rho0 /= 1000.0;
 	  if(rho0 < 3)
 	    fprintf(stderr,"\nhc_assign_density: WARNING: using small (%g) density from PREM for layer at depth %g\n\n",
 		    rho0*1000,HC_Z_DEPTH(hc->rden[hc->inho]));
 	}else{
 	  /* mean value */
-	  rho0 =  hc->avg_den_mantle;
+	  rho0 =  (double)hc->avg_den_mantle;
 	}
 	/* 
 	   density anomaly
 	*/
 	/* scaling factor without depth dependence */
-	dens_scale[0] = ((HC_PREC)HC_DENSITY_SCALING ) * rho0;
+	dens_scale[0] = HC_DENSITY_SCALING  * (HC_PREC)rho0;
 	if(verbose >= 2){
-	  
 	  fprintf(stderr,"hc_assign_density: r: %11g anom scales: %11g x %11g = %11g\t%5i out of %i, z: %11g\n",
-		  hc->rden[hc->inho],
-		  HC_DENSITY_SCALING,rho0/ hc->avg_den_mantle,dens_scale[0],hc->inho+1,nset,zlabel);
+		  (double)hc->rden[hc->inho],
+		  HC_DENSITY_SCALING,rho0/ (double)hc->avg_den_mantle,(double)dens_scale[0],hc->inho+1,nset,(double)zlabel);
 	}
 	if(hc->inho){	
 	  /* 
@@ -879,7 +881,7 @@ void hc_assign_density(struct hcs *hc,
     sh_scale_expansion((hc->dens_anom+i),local_scale);
     if(verbose >= 2){
       fprintf(stderr,"hc_assign_density: r: %11g additional %s d\\rho/dinput: %11g \tlayer %5i out of %i\n",
-	      hc->rden[i],
+	      (double)hc->rden[i],
 	      (dd_dens_scale == HC_DD_READ_FROM_FILE)?("depth-dependent"):((dd_dens_scale==HC_DD_CONSTANT)?("constant"):("polynomial")),local_scale,i,hc->inho);
     }
   }
@@ -900,7 +902,7 @@ void hc_assign_density(struct hcs *hc,
 
     hc->r[0] = hc->r_cmb;	/* CMB  */
     if(hc->rden[0] <= hc->r[0]){
-      fprintf(stderr,"hc_assign_density: rden[0]: %g r[0]: %g\n",hc->rden[0], hc->r[0]);
+      fprintf(stderr,"hc_assign_density: rden[0]: %g r[0]: %g\n",(double)hc->rden[0],(double) hc->r[0]);
       HC_ERROR("hc_assign_density","first density layer has to be above internal CMB limit");
     }
     for(i=0;i<hc->nrad;i++)	/* density layers */
@@ -950,8 +952,8 @@ void hc_assign_density(struct hcs *hc,
     if(verbose)
       for(i=0;i < hc->nrad;i++)
 	fprintf(stderr,"hc_assign_density: dens %3i: r: %8.6f df: %8.6f |rho|: %8.4f\n",
-		i+1,hc->rden[i],hc->dfact[i],
-		sqrt(sh_total_power((hc->dens_anom+i))));
+		i+1,(double)hc->rden[i],(double)hc->dfact[i],
+		(double)sqrt(sh_total_power((hc->dens_anom+i))));
     free(dbot);free(dtop);
   } /* end layer structure part */
 
@@ -1248,7 +1250,7 @@ void hc_assign_dd_scaling(int mode, HC_PREC dlayer[4],struct hc_parameters *p,
 			  HC_PREC rcmb)
 {
   HC_PREC smean;
-  double dtmp[2];
+  HC_PREC dtmp[2];
   int i;
   FILE *in;
   if(p->dd_dens_scale == HC_DD_READ_FROM_FILE){
@@ -1266,7 +1268,7 @@ void hc_assign_dd_scaling(int mode, HC_PREC dlayer[4],struct hc_parameters *p,
 		  p->dens_scaling_filename);
 	p->ndf=0;smean = 0.0;
 	in = ggrd_open(p->dens_scaling_filename,"r","hc_assign_dd_scaling");
-	while(fscanf(in,"%lf %lf",dtmp,(dtmp+1)) == 2){
+	while(fscanf(in,HC_TWO_FLT_FORMAT,dtmp,(dtmp+1)) == 2){
 	  hc_vecrealloc(&p->rdf,(1+p->ndf),"hc_assign_dd_scaling");
 	  hc_vecrealloc(&p->sdf,(1+p->ndf),"hc_assign_dd_scaling");
 	  p->rdf[p->ndf] = dtmp[0];p->sdf[p->ndf] = dtmp[1];
@@ -1307,7 +1309,7 @@ void hc_assign_dd_scaling(int mode, HC_PREC dlayer[4],struct hc_parameters *p,
 void hc_read_geoid(struct hc_parameters *p)
 {
   int type,lmax,shps,ilayer,nset,ivec;
-  double zlabel;
+  HC_PREC zlabel;
   FILE *in;
   HC_PREC fac[3]={1,1,1};
   

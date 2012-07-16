@@ -34,10 +34,10 @@ int main(void){
 
   for(i=0;i<n;i++)
     for(j=0;j<n;j++)
-    fscanf(stdin,"%lf",&amat[i][j]);
+    fscanf(stdin,HC_FLT_FORMAT,&amat[i][j]);
   /* read in x from stdin */
   for(i=0;i<n;i++)
-    fscanf(stdin,"%lf",&bvec[i]);
+    fscanf(stdin,HC_FLT_FORMAT,&bvec[i]);
   /* solve A x = b, where b will be modified  */
   hc_ludcmp_3x3(amat,n,indx);hc_lubksb_3x3(amat,n,indx,bvec);
   for(i=0;i<n;i++)fprintf(stdout,"%g\n",bvec[i]);

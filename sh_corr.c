@@ -125,11 +125,11 @@ int main(int argc, char **argv)
     if(verbose)
       fprintf(stderr,"%s: computing linear correlation per degree from %i to %i \n",argv[0],lmin,llim);
     for(l=lmin;l<=llim;l++)
-      fprintf(stdout,"%5i %14.7e\n",l,sh_correlation_per_degree(exp1,exp2,l,l));
+      fprintf(stdout,"%5i %14.7e\n",l,(double)sh_correlation_per_degree(exp1,exp2,l,l));
   }else{
     if(verbose)
       fprintf(stderr,"%s: computing total linear correlation from %i to %i\n",argv[0],lmin,llim);
-    fprintf(stdout,"%14.7e\n",sh_correlation_per_degree(exp1,exp2,lmin,llim));
+    fprintf(stdout,"%14.7e\n",(double)sh_correlation_per_degree(exp1,exp2,lmin,llim));
   }
 
   

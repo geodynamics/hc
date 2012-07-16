@@ -12,7 +12,14 @@ $Id: hc_misc.c,v 1.5  2004/12/20 05:18:12 becker Exp becker $
 
 
 
-/* double vector allocation */
+/* high precision vector allocation */
+void hc_hvecalloc(HC_HIGH_PREC **x,int n,char *message)
+{
+  *x = (HC_HIGH_PREC *)malloc(sizeof(HC_HIGH_PREC)*(size_t)n);
+  if(! (*x))
+    HC_MEMERROR(message);
+}
+/* double */
 void hc_dvecalloc(double **x,int n,char *message)
 {
   *x = (double *)malloc(sizeof(double)*(size_t)n);
@@ -26,7 +33,7 @@ void hc_svecalloc(float **x,int n,char *message)
   if(! (*x))
     HC_MEMERROR(message);
 }
-/* integer  vector allocation */
+/* integer vector allocation */
 void hc_ivecalloc(int **x,int n,char *message)
 {
   *x = (int *)malloc(sizeof(int)*(size_t)n);
@@ -56,10 +63,10 @@ void hc_svecrealloc(float **x,int n,char *message)
   if(!(*x))
     HC_MEMERROR(message);
 }
-/* double vector reallocation */
-void hc_dvecrealloc(double **x,int n,char *message)
+/* HC_HIGH_PREC vector reallocation */
+void hc_dvecrealloc(HC_HIGH_PREC **x,int n,char *message)
 {
-  *x = (double *)realloc(*x,sizeof(double)*(size_t)n);
+  *x = (HC_HIGH_PREC *)realloc(*x,sizeof(HC_HIGH_PREC)*(size_t)n);
   if(!(*x))
     HC_MEMERROR(message);
 }
@@ -73,20 +80,20 @@ void hc_vecrealloc(HC_PREC **x,int n,char *message)
 /* 
    sqrt(sum(squared diff)) between [n] vectors a and b
 */
-float hc_svec_rms_diff(float *a,float *b,int n)
+float hc_vec_rms_diff(HC_PREC *a,HC_PREC *b,int n)
 {
   int i;
-  float sum=0.0,tmp;
+  HC_PREC sum=0.0,tmp;
   for(i=0;i<n;i++){
     tmp = a[i] - b[i];
     sum += tmp*tmp;
   }
   return sqrt(sum/n);
 }
-float hc_svec_rms(float *a,int n)
+float hc_vec_rms(HC_PREC *a,int n)
 {
   int i;
-  float sum=0.0;
+  HC_PREC sum=0.0;
   for(i=0;i<n;i++){
     sum += a[i] * a[i];
   }
@@ -125,8 +132,8 @@ HC_PREC hc_mean_vec(HC_PREC *x,int n)
   return sum;
 }
 
-/* zero a double precision vector */
-void hc_zero_dvector(double *x, int n)
+/* zero a HC_HIGH_PREC precision vector */
+void hc_zero_dvector(HC_HIGH_PREC *x, int n)
 {
   int i;
   for(i=0;i<n;i++)
@@ -158,6 +165,8 @@ void hc_get_flt_frmt_string(char *string, int n,
     if(sizeof(HC_PREC) == sizeof(float)){
       sprintf(type_s,"f");
     }else if (sizeof(HC_PREC) == sizeof(double)){
+      sprintf(type_s,"lf");
+    }else if (sizeof(HC_PREC) == sizeof(long double)){
       sprintf(type_s,"lf");
     }else{
       fprintf(stderr,"hc_get_flt_frmt_string: assignment error\n");
@@ -233,19 +242,19 @@ void hc_compute_correlation(struct sh_lms *g1,struct sh_lms *g2,
 
 */
 
-void lonlatpv2cv(float lon, float lat, 
-		 float *polar_vec,float *cart_vec)
+void lonlatpv2cv(HC_PREC lon, float lat, 
+		 HC_PREC *polar_vec,HC_PREC *cart_vec)
 {
-  double polar_base[9];
-  float theta,phi;
-  theta = LAT2THETA((double)lat);
-  phi   = LON2PHI((double)lon);
+  HC_HIGH_PREC polar_base[9];
+  HC_PREC theta,phi;
+  theta = LAT2THETA((HC_HIGH_PREC)lat);
+  phi   = LON2PHI((HC_HIGH_PREC)lon);
   calc_polar_base_at_theta_phi(theta,phi,polar_base);
   lonlatpv2cv_with_base(polar_vec,polar_base,cart_vec);
 }
-void lonlatpv2cv_with_base(float *polar_vec,
-			   double *polar_base,
-			   float *cart_vec)
+void lonlatpv2cv_with_base(HC_PREC *polar_vec,
+			   HC_HIGH_PREC *polar_base,
+			   HC_PREC *cart_vec)
 {
   int i;
   // convert vector
@@ -255,13 +264,13 @@ void lonlatpv2cv_with_base(float *polar_vec,
     cart_vec[i] += polar_base[6+i] * polar_vec[2];
   }
 }
-void calc_polar_base_at_theta_phi(float theta, float phi, 
-				  double *polar_base)
+void calc_polar_base_at_theta_phi(HC_PREC theta, HC_PREC phi, 
+				  HC_HIGH_PREC *polar_base)
 {
-  double cp,sp,ct,st;
+  HC_HIGH_PREC cp,sp,ct,st;
   // base vecs
-  ct=cos((double)theta);cp=cos((double)phi);
-  st=sin((double)theta);sp=sin((double)phi);
+  ct=cos((HC_HIGH_PREC)theta);cp=cos((HC_HIGH_PREC)phi);
+  st=sin((HC_HIGH_PREC)theta);sp=sin((HC_HIGH_PREC)phi);
   //
   polar_base[0]= st * cp;
   polar_base[1]= st * sp;

@@ -23,12 +23,12 @@ int main(int argc, char **argv)
   */
   hc_boolean verbose = TRUE, short_format = FALSE ,short_format_ivec = FALSE ,binary = FALSE;
   int regular_basis = 0;
-  double w,e,s,n,dx,dy;
+  HC_PREC w,e,s,n,dx,dy;
   /*  */
   FILE *in;
-  float *data,*theta,*phi;
+  HC_PREC *data,*theta,*phi;
   /* spacing for reg_ular output */
-  double dphi,x,y,dtheta;
+  HC_PREC dphi,x,y,dtheta;
   HC_PREC fac[3] = {1.,1.,1.},zlabel;
   SH_RICK_PREC *dummy;
   struct sh_lms *exp;
@@ -49,27 +49,27 @@ int main(int argc, char **argv)
       short_format_ivec = TRUE;
   }
   if(argc > 3){
-    sscanf(argv[3],"%lf",&w);
+    sscanf(argv[3],HC_FLT_FORMAT,&w);
     if(w == 999)
       regular_basis = -1;
     else
       regular_basis = 1;
   }
   if(argc > 4)
-    sscanf(argv[4],"%lf",&e);
+    sscanf(argv[4],HC_FLT_FORMAT,&e);
   if(argc > 5)
-    sscanf(argv[5],"%lf",&s);
+    sscanf(argv[5],HC_FLT_FORMAT,&s);
   if(argc > 6)
-    sscanf(argv[6],"%lf",&n);
+    sscanf(argv[6],HC_FLT_FORMAT,&n);
    if(argc > 7)
-    sscanf(argv[7],"%lf",&dx);
+    sscanf(argv[7],HC_FLT_FORMAT,&dx);
   if(argc > 8)
-    sscanf(argv[8],"%lf",&dy);
+    sscanf(argv[8],HC_FLT_FORMAT,&dy);
   else
     dy = dx;
   if((argc > 9)|| (argc < 0)){
     fprintf(stderr,"usage: %s [short_format, %i] [short_ivec, %i] [w, %g] [e, %g] [s, %g] [n, %g] [dx, %g] [dy, dx] (in that order)\n",
-	    argv[0],short_format,short_format_ivec,w,e,s,n,dx);
+	    argv[0],short_format,short_format_ivec,(double)w,(double)e,(double)s,(double)n,(double)dx);
     fprintf(stderr,"short_format:\n\t0: expects regular format with long header\n");
     fprintf(stderr,"\t1: expects short format with only lmax in header\n\n");
     fprintf(stderr,"short_ivec:\n\t0: for short format, expect AB for scalar expansion\n");
@@ -105,7 +105,7 @@ int main(int argc, char **argv)
       */
       if(verbose)
 	fprintf(stderr,"sh_syn: using regular spaced grid with -R%g/%g/%g/%g -I%g/%g spacing\n",
-		w,e,s,n,dx,dy);
+		(double)w,(double)e,(double)s,(double)n,(double)dx,(double)dy);
       if((w > e)||(s>n)||(s<-90)||(s>90)||(n<-90)||(n>90)){
 	fprintf(stderr,"%s: range error\n",argv[0]);
 	exit(-1);
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
 	s += dy/2;
 	n -= dy/2;
 	fprintf(stderr,"sh_syn: vector fields: adjusting to -R%g/%g/%g/%g\n",
-		w,e,s,n);
+		(double)w,(double)e,(double)s,(double)n);
       }
       /*  */
       dphi = DEG2RAD(dx);
@@ -125,13 +125,13 @@ int main(int argc, char **argv)
       npoints = nphi * ntheta;
 
       /*  */
-      hc_svecalloc(&phi,nphi,"sh_shsyn");
-      hc_svecalloc(&theta,ntheta,"sh_shsyn");
+      hc_vecalloc(&phi,nphi,"sh_shsyn");
+      hc_vecalloc(&theta,ntheta,"sh_shsyn");
       for(x=LON2PHI(w),i=0;i < nphi;i++,x += dphi)
 	phi[i] = x;
       for(y = LAT2THETA(n),j=0;j < ntheta;y += dtheta,j++)
 	theta[j] = y;
-      hc_svecalloc(&data,npoints * shps,"sh_shsyn data");
+      hc_vecalloc(&data,npoints * shps,"sh_shsyn data");
       /* compute the expansion */
       sh_compute_spatial_reg(exp,ivec,FALSE,&dummy,
 			     theta,ntheta,phi,nphi,data,
@@ -146,30 +146,30 @@ int main(int argc, char **argv)
       if(verbose)
 	fprintf(stderr,"sh_syn: reading locations lon lat from stdin for expansion\n");
       npoints = 0;
-      hc_svecalloc(&phi,1,"sh_syn");
-      hc_svecalloc(&theta,1,"sh_syn");
+      hc_vecalloc(&phi,1,"sh_syn");
+      hc_vecalloc(&theta,1,"sh_syn");
       in = fopen("tmp.lonlat","r");
       if(!in){
 	fprintf(stderr,"sh_syn: error, could not open tmp.lonlat for reading lon lat locations\n");
 	exit(-1);
       }
-      while(fscanf(in,"%lf %lf",&dphi,&dtheta)==2){
+      while(fscanf(in,HC_TWO_FLT_FORMAT,&dphi,&dtheta)==2){
 	phi[npoints] = LON2PHI(dphi);
 	theta[npoints] = LAT2THETA(dtheta);
 	npoints++;
-	hc_svecrealloc(&phi,npoints+1,"sh_syn");
-	hc_svecrealloc(&theta,npoints+1,"sh_syn");
+	hc_vecrealloc(&phi,npoints+1,"sh_syn");
+	hc_vecrealloc(&theta,npoints+1,"sh_syn");
       }
       if(verbose)
 	fprintf(stderr,"sh_syn: read %i locations lon lat from tmp.lonlat for expansion\n",npoints);
       fclose(in);
-      hc_svecalloc(&data,npoints * shps,"sh_shsyn data");
+      hc_vecalloc(&data,npoints * shps,"sh_shsyn data");
       sh_compute_spatial_irreg(exp,ivec,theta,phi,npoints,data,verbose);
       sh_print_irreg_spatial_data_to_file(exp,shps,data,(nset>1)?(TRUE):(FALSE),
 					  zlabel,theta,phi,npoints,stdout);
      }else{			/* use the built in spatial basis (Gaussian) */
       /* expansion */
-      hc_svecalloc(&data,exp[0].npoints * shps,"sh_syn");
+      hc_vecalloc(&data,exp[0].npoints * shps,"sh_syn");
       sh_compute_spatial(exp,ivec,FALSE,&dummy,data,verbose);
       /* output */
       sh_print_spatial_data_to_file(exp,shps,data,(nset>1)?(TRUE):(FALSE),

@@ -15,11 +15,13 @@ print the spherical harmonics version of a solution set
 
 
 */
-void hc_print_spectral_solution(struct hcs *hc,struct sh_lms *sol,FILE *out,int sol_mode, 
-				hc_boolean binary, hc_boolean verbose)
+void hc_print_spectral_solution(struct hcs *hc,struct sh_lms *sol,
+				FILE *out,int sol_mode, 
+				hc_boolean binary, 
+				hc_boolean verbose)
 {
   int i,os;
-  static int ntype = 3;			/* three sets of solutions, r/pol/tor */
+  const int ntype = 3;			/* three sets of solutions, r/pol/tor */
   HC_PREC fac[3];
   if(!hc->spectral_solution_computed)
     HC_ERROR("hc_print_spectral_solution","spectral solution not computed");
@@ -32,7 +34,8 @@ void hc_print_spectral_solution(struct hcs *hc,struct sh_lms *sol,FILE *out,int 
     scale to cm/yr, or MPa  for stress solutions
     
     */
-    hc_compute_solution_scaling_factors(hc,sol_mode,hc->r[i],hc->dvisc[i],fac);
+    hc_compute_solution_scaling_factors(hc,sol_mode,
+					hc->r[i],hc->dvisc[i],fac);
     /* 
        write parameters, convert radius to depth in [km]  
     */
@@ -50,24 +53,27 @@ void hc_print_spectral_solution(struct hcs *hc,struct sh_lms *sol,FILE *out,int 
       switch(sol_mode){
       case HC_VEL:
 	fprintf(stderr,"hc_print_spectral_solution: z: %8.3f vel: |r|: %11.3e |pol|: %11.3e |tor|: %11.3e (scale: %g cm/yr)\n",
-		HC_Z_DEPTH(hc->r[i]),sqrt(sh_total_power((sol+os))),
-		sqrt(sh_total_power((sol+os+1))),
-		sqrt(sh_total_power((sol+os+2))),
-		fac[0]/11.1194926644559);
+		(double)HC_Z_DEPTH(hc->r[i]),
+		(double)sqrt(sh_total_power((sol+os))),
+		(double)sqrt(sh_total_power((sol+os+1))),
+		(double)sqrt(sh_total_power((sol+os+2))),
+		(double)(fac[0]/11.1194926644559));
 	break;
       case HC_RTRACTIONS:
 	fprintf(stderr,"hc_print_spectral_solution: z: %8.3f rtrac: |r|: %11.3e |pol|: %11.3e |tor|: %11.3e (scale: %g MPa)\n",
-		HC_Z_DEPTH(hc->r[i]),sqrt(sh_total_power((sol+os))),
-		sqrt(sh_total_power((sol+os+1))),
-		sqrt(sh_total_power((sol+os+2))),
-		fac[0]/(0.553073278428428/hc->r[i]));
+		(double)HC_Z_DEPTH(hc->r[i]),
+		(double)sqrt(sh_total_power((sol+os))),
+		(double)sqrt(sh_total_power((sol+os+1))),
+		(double)sqrt(sh_total_power((sol+os+2))),
+		(double)(fac[0]/(0.553073278428428/hc->r[i])));
 	break;
       case HC_HTRACTIONS:
 	fprintf(stderr,"hc_print_spectral_solution: z: %8.3f htrac: |r|: %11.3e |pol|: %11.3e |tor|: %11.3e (scale: %g MPa)\n",
-		HC_Z_DEPTH(hc->r[i]),sqrt(sh_total_power((sol+os))),
-		sqrt(sh_total_power((sol+os+1))),
-		sqrt(sh_total_power((sol+os+2))),
-		fac[0]/(0.553073278428428/hc->r[i]));
+		(double)HC_Z_DEPTH(hc->r[i]),
+		(double)sqrt(sh_total_power((sol+os))),
+		(double)sqrt(sh_total_power((sol+os+1))),
+		(double)sqrt(sh_total_power((sol+os+2))),
+		(double)(fac[0]/(0.553073278428428/hc->r[i])));
 	break;
       default:
 	fprintf(stderr,"hc_print_spectral_solution: sol mode %i undefined\n",sol_mode);
@@ -87,11 +93,14 @@ print a single scalar field to file
 
 */
 
-void hc_print_sh_scalar_field(struct sh_lms *sh, FILE *out, hc_boolean short_format,
-			      hc_boolean binary, hc_boolean verbose)
+void hc_print_sh_scalar_field(struct sh_lms *sh, FILE *out, 
+			      hc_boolean short_format,
+			      hc_boolean binary, 
+			      hc_boolean verbose)
 {
   HC_CPREC fac[1] = {1.0};
-  sh_print_parameters_to_file(sh,1,0,1,0.0,out,short_format,binary,verbose); /* parameters in long format */
+  sh_print_parameters_to_file(sh,1,0,1,0.0,out,
+			      short_format,binary,verbose); /* parameters in long format */
   sh_print_coefficients_to_file(sh,1,out,fac,binary,verbose); /* coefficients */
 }
 
@@ -110,14 +119,14 @@ will also write the corresponding depth layers to dfilename
 */
 void hc_print_spatial_solution(struct hcs *hc, 
 			       struct sh_lms *sol,
-			       float *sol_x, char *name, 
+			       HC_PREC *sol_x, char *name, 
 			       char *dfilename, 
 			       int sol_mode, hc_boolean binary, 
 			       hc_boolean verbose)
 {
   int i,j,k,os[3],los,np,np2,np3;
   FILE *file_dummy=NULL,*out,*dout;
-  float flt_dummy=0,*xy=NULL,value[3];
+  HC_PREC flt_dummy=0,*xy=NULL,value[3];
   HC_PREC fac[3];
   char filename[300];
   if(!hc->spatial_solution_computed)
@@ -152,7 +161,7 @@ void hc_print_spatial_solution(struct hcs *hc,
 					hc->dvisc[i],fac);
 
     /* write depth in [km] to dout file */
-    fprintf(dout,"%g\n",HC_Z_DEPTH(hc->r[i]));
+    fprintf(dout,"%g\n",(double)HC_Z_DEPTH(hc->r[i]));
     for(k=0;k < 3;k++)		/* pointers */
       os[k] = i * np3 + k*np;
     /* 
@@ -172,10 +181,10 @@ void hc_print_spatial_solution(struct hcs *hc,
       sprintf(filename,"%s.%i.bin",name,i+1);
       out = ggrd_open(filename,"w","hc_print_spatial_solution");
       for(j=los=0;j < np;j++,los+=2){ /* loop through all points in layer */
-	fwrite((xy+los),sizeof(float),2,out);
+	hc_print_float((xy+los),2,out);
 	for(k=0;k<3;k++)
 	  value[k] = sol_x[os[k]] * fac[k];
-	fwrite(value,sizeof(float),3,out);
+	hc_print_float(value,3,out);
 	os[0]++;os[1]++;os[2]++;
       }     
       fclose(out);
@@ -187,15 +196,19 @@ void hc_print_spatial_solution(struct hcs *hc,
 	for(k=0;k<3;k++)
 	  value[k] = sol_x[os[k]] * fac[k];
 	fprintf(out,"%11g %11g\t%12.5e %12.5e %12.5e\n",
-		xy[los],xy[los+1],value[0],value[1],value[2]);
+		(double)xy[los],
+		(double)xy[los+1],
+		(double)value[0],
+		(double)value[1],(double)value[2]);
 	os[0]++;os[1]++;os[2]++;
       }
       fclose(out);
     }
     if(verbose >= 2)
       fprintf(stderr,"hc_print_spatial_solution: layer %3i: RMS: r: %12.5e t: %12.5e p: %12.5e file: %s\n",
-	      i+1,hc_svec_rms((sol_x+i*np3),np),hc_svec_rms((sol_x+i*np3+np),np),
-	      hc_svec_rms((sol_x+i*np3+np2),np),
+	      i+1,	(double)hc_vec_rms((sol_x+i*np3),np),
+	      (double)hc_vec_rms((sol_x+i*np3+np),np),
+	      (double)hc_vec_rms((sol_x+i*np3+np2),np),
 	      filename);
   }
   fclose(dout);
@@ -216,7 +229,7 @@ void hc_print_depth_layers(struct hcs *hc, FILE *out,
   int i;
   /* number of solution sets of ntype solutions */
   for(i=0;i < hc->nradp2;i++)
-    fprintf(out,"%g\n",HC_Z_DEPTH(hc->r[i]));
+    fprintf(out,"%g\n",(double)HC_Z_DEPTH(hc->r[i]));
 }
 
 
@@ -230,7 +243,7 @@ void hc_print_3x3(HC_PREC a[3][3], FILE *out)
   int i,j;
   for(i=0;i<3;i++){
     for(j=0;j<3;j++)
-      fprintf(out,"%11.4e ",a[i][j]);
+      fprintf(out,"%11.4e ",(double)a[i][j]);
     fprintf(out,"\n");
   }
 }
@@ -244,7 +257,7 @@ void hc_print_sm(HC_PREC a[6][4], FILE *out)
   int i,j;
   for(i=0;i < 6;i++){
     for(j=0;j<4;j++)
-      fprintf(out,"%11.4e ",a[i][j]);
+      fprintf(out,"%11.4e ",(double)a[i][j]);
     fprintf(out,"\n");
   }
 }
@@ -253,7 +266,7 @@ void hc_print_vector(HC_PREC *a, int n,FILE *out)
 {
   int i;
   for(i=0;i<n;i++)
-    fprintf(out,"%11.4e ",a[i]);
+    fprintf(out,"%11.4e ",(double)a[i]);
   fprintf(out,"\n");
 }
 void hc_print_vector_label(HC_PREC *a, int n,FILE *out,
@@ -262,7 +275,7 @@ void hc_print_vector_label(HC_PREC *a, int n,FILE *out,
   int i;
   fprintf(out,"%s: ",label);
   for(i=0;i<n;i++)
-    fprintf(out,"%11.4e ",a[i]);
+    fprintf(out,"%11.4e ",(double)a[i]);
   fprintf(out,"\n");
 }
 void hc_print_matrix_label(HC_PREC *a, int m,
@@ -272,7 +285,7 @@ void hc_print_matrix_label(HC_PREC *a, int m,
   for(j=0;j<m;j++){
     fprintf(out,"%s: ",label);
     for(i=0;i<n;i++)
-      fprintf(out,"%11.4e ",a[j*n+i]);
+      fprintf(out,"%11.4e ",(double)a[j*n+i]);
     fprintf(out,"\n");
   }
 }
@@ -282,7 +295,7 @@ void hc_print_vector_row(HC_PREC *a, int n,FILE *out)
 {
   int i;
   for(i=0;i<n;i++)
-    fprintf(out,"%11.4e\n",a[i]);
+    fprintf(out,"%11.4e\n",(double)a[i]);
 }
 
 /* 
@@ -345,10 +358,12 @@ void hc_print_poloidal_solution(struct sh_lms *pol_sol,
       alim = (m==0)?(1):(2);
       for(a_or_b=0;a_or_b < alim;a_or_b++){
 	for(i=os=0;i < nl;i++,os+=6){
-	  fprintf(out,"%3i %3i %1i %3i %8.5f ",l,m,a_or_b,i+1,hc->r[i]);
+	  fprintf(out,"%3i %3i %1i %3i %8.5f ",
+		  l,m,a_or_b,i+1,(double)hc->r[i]);
 	  for(j=0;j < 6;j++){
-	    sh_get_coeff((pol_sol+os+j),l,m,a_or_b,convert_to_dt,value);
-	    fprintf(out,"%11.4e ",value[0]);
+	    sh_get_coeff((pol_sol+os+j),l,m,
+			 a_or_b,convert_to_dt,value);
+	    fprintf(out,"%11.4e ",(double)value[0]);
 	  } /* end u_1 .. u_4 nu_1 nu_2 loop */
 	  fprintf(out,"\n");
 	} /* end layer loop */
@@ -361,7 +376,7 @@ void hc_print_poloidal_solution(struct sh_lms *pol_sol,
 /* 
    print toroidal solution vector (kernel), not expansion
 */
-void hc_print_toroidal_solution(double *tvec,int lmax,
+void hc_print_toroidal_solution(HC_PREC *tvec,int lmax,
 				struct hcs *hc,int l_max_out, 
 				char *filename,
 				hc_boolean verbose)
@@ -382,7 +397,8 @@ void hc_print_toroidal_solution(double *tvec,int lmax,
   for(l=1;l <= ll;l++){
     for(os=i=0;i < nl;i++,os+=lmaxp1)
       fprintf(out,"%3i %16.7e %16.7e %16.7e\n",
-	      l,hc->r[i],tvec[os+l],tvec[os2+os+l]);
+	      l,(double)hc->r[i],(double)tvec[os+l],
+	      (double)tvec[os2+os+l]);
     fprintf(out,"\n");
   }
   fclose(out);
@@ -395,10 +411,10 @@ print a simple VTK file given already expanded input
 
 */
 
-void hc_print_vtk(FILE *out,float *xloc,float *xvec,
+void hc_print_vtk(FILE *out,HC_PREC *xloc,HC_PREC *xvec,
 		  int npoints_orig,int nlay,
 		  hc_boolean binary,int shps_d,
-		  float *xscalar,int nlon, int nlat)
+		  HC_PREC *xscalar,int nlon, int nlat)
 {
   int i,ilay,ndata,poff,j,ndata_d,nele_lay,nele_x,nele_y,
     npe,npe1,ncon[12],k,nleft,nlon_m1,npoints,
@@ -406,7 +422,7 @@ void hc_print_vtk(FILE *out,float *xloc,float *xvec,
     nele_brick = 8,nele_tri = 6;
   
   hc_boolean little_endian;
-  float xtmp[3],r,spole[3],npole[3];
+  HC_PREC xtmp[3],r,spole[3],npole[3];
   /* determine machine type */
   little_endian = hc_is_little_endian();
   /*  */
@@ -434,7 +450,7 @@ void hc_print_vtk(FILE *out,float *xloc,float *xvec,
 	hc_print_be_float((xloc+poff),3,out,little_endian);
       else
 	fprintf(out,"%.6e %.6e %.6e\n",
-		xloc[poff],xloc[poff+1],xloc[poff+2]);
+		(double)xloc[poff],(double)xloc[poff+1],(double)xloc[poff+2]);
     }
     /* 
        south and north poles, add two, to go to npoints per layer 
@@ -448,13 +464,13 @@ void hc_print_vtk(FILE *out,float *xloc,float *xvec,
     if(binary)
       hc_print_be_float((xtmp),3,out,little_endian);
     else 
-      fprintf(out,"%.6e %.6e %.6e\n",xtmp[0],xtmp[1],xtmp[2]);
+      fprintf(out,"%.6e %.6e %.6e\n",(double)xtmp[0],(double)xtmp[1],(double)xtmp[2]);
     /* north pole */
     xtmp[2] = r;		
     if(binary)
       hc_print_be_float((xtmp),3,out,little_endian);
     else 
-      fprintf(out,"%.6e %.6e %.6e\n",xtmp[0],xtmp[1],xtmp[2]);
+      fprintf(out,"%.6e %.6e %.6e\n",(double)xtmp[0],(double)xtmp[1],(double)xtmp[2]);
   }
   /*  */
   nele_x = nlon;nlon_m1=nlon-1; /* elements in longitude */
@@ -577,7 +593,7 @@ void hc_print_vtk(FILE *out,float *xloc,float *xvec,
 	  if(binary)
 	    hc_print_be_float((xscalar+poff),1,out,little_endian);
 	  else{
-	    fprintf(out,"%.6e ",xscalar[poff]);
+	    fprintf(out,"%.6e ",(double)xscalar[poff]);
 	    if(i%20 == 0)fprintf(out,"\n");
 	  }
 	  if(i < nlon)
@@ -585,11 +601,11 @@ void hc_print_vtk(FILE *out,float *xloc,float *xvec,
 	  if((i >= tl) && (i < tr))
 	    npole[0] += xscalar[poff];
 	}
-	spole[0] /= (float)nlon;
-	npole[0] /= (float)nlon;
+	spole[0] /= (HC_PREC)nlon;
+	npole[0] /= (HC_PREC)nlon;
 	if(!binary){		/* ascii */
 	  fprintf(out,"\n");
-	  fprintf(out,"%.6e %.6e\n",spole[0],npole[0]);
+	  fprintf(out,"%.6e %.6e\n",(double)spole[0],(double)npole[0]);
 	}else{			/* binary */
 	  hc_print_be_float(spole,1,out,little_endian);
 	  hc_print_be_float(npole,1,out,little_endian);
@@ -614,12 +630,12 @@ void hc_print_vtk(FILE *out,float *xloc,float *xvec,
       if(binary)		/* binary */
 	hc_print_be_float((xvec+poff),3,out,little_endian);
       else			/* ascii */
-	fprintf(out,"%.6e %.6e %.6e\n",xvec[poff],xvec[poff+1],
-		xvec[poff+2]);
+	fprintf(out,"%.6e %.6e %.6e\n",(double)xvec[poff],(double)xvec[poff+1],
+		(double)xvec[poff+2]);
     }
     for(k=0;k<3;k++){
-      spole[k] /= (float)nlon;
-      npole[k] /= (float)nlon;
+      spole[k] /= (HC_PREC)nlon;
+      npole[k] /= (HC_PREC)nlon;
     }
     if(binary){
       /* binary */
@@ -627,40 +643,72 @@ void hc_print_vtk(FILE *out,float *xloc,float *xvec,
       hc_print_be_float(npole,3,out,little_endian);  
     }else{
       /* ascii */
-      fprintf(out,"%.6e %.6e %.6e\n",spole[0],spole[1],spole[2]);
-      fprintf(out,"%.6e %.6e %.6e\n",npole[0],npole[1],npole[2]);
+      fprintf(out,"%.6e %.6e %.6e\n",(double)spole[0],(double)spole[1],(double)spole[2]);
+      fprintf(out,"%.6e %.6e %.6e\n",(double)npole[0],(double)npole[1],(double)npole[2]);
     }
   }
   
 }
 /* 
    print big endian binary to file, no matter what hardware
-
+   in HC_BIN_PREC precision
 */
-void hc_print_be_float(float *x, int n, FILE *out, 
+int hc_print_be_float(HC_PREC *x, int n, FILE *out, 
 		       hc_boolean little_endian)
 {
-  int i;
-  float *xcopy;
-  static size_t len = sizeof(float);
+  int i,ret;
+  HC_BIN_PREC *xcopy;
+  const size_t len = sizeof(HC_BIN_PREC);
+  hc_svecalloc(&xcopy,n,"hc_print_be_float");
+  for(i=0;i<n;i++)		/* have to make copy */
+    xcopy[i] = (HC_BIN_PREC)x[i];
+  
   if(little_endian){
     /* need to flip the byte order */
-    hc_svecalloc(&xcopy,n,"hc_print_be_float");
-    memcpy(xcopy,x,len*n);
     for(i=0;i < n;i++)
       hc_flip_byte_order((void *)(xcopy+i),len);
-    fwrite(xcopy,len,n,out);
-    free(xcopy);
+    ret= fwrite(xcopy,len,n,out);
   }else{
     /* can write as is */
-    fwrite(x,len,n,out);
+    ret = fwrite(xcopy,len,n,out);
   }
+  free(xcopy);
+  return ret;
 }
+
+/* print binary to file */
+int hc_print_float(HC_PREC *x, int n, FILE *out)
+{
+  int i,ret;
+  HC_BIN_PREC *xcopy;
+  const size_t len = sizeof(HC_BIN_PREC);
+  hc_svecalloc(&xcopy,n,"hc_print_float");
+  for(i=0;i<n;i++)		/* have to make copy */
+    xcopy[i] = (HC_BIN_PREC)x[i];
+  ret = fwrite(xcopy,len,n,out);
+  free(xcopy);
+  return ret;
+}
+/* read binary from file */
+int hc_read_float(HC_PREC *x, int n, FILE *in)
+{
+  int i,ret;
+  HC_BIN_PREC *xcopy;
+  const size_t len = sizeof(HC_BIN_PREC);
+  hc_svecalloc(&xcopy,n,"hc_read_float");
+  ret = fread(xcopy,len,n,in);
+  for(i=0;i<ret;i++)		/* have to make copy */
+    x[i] = (HC_PREC)xcopy[i];
+  free(xcopy);
+  return ret;
+}
+
+
 void hc_print_be_int(int *x, int n, FILE *out, 
 		     hc_boolean little_endian)
 {
   int i, *xcopy;
-  static size_t len = sizeof(int);
+  const size_t len = sizeof(int);
   if(little_endian){
     /* need to flip the byte order */
     hc_ivecalloc(&xcopy,n,"hc_print_be_int");
@@ -736,9 +784,11 @@ void hc_print_dens_anom(struct hcs *hc,
     sh_print_parameters_to_file((exp+2),1,i,hc->nradp2,HC_Z_DEPTH(hc->r[i]),out,FALSE,binary,verbose);
     sh_print_coefficients_to_file((exp+2),1,out,fac,binary,verbose);
     if(verbose>2)fprintf(stderr,"hc_print_dens_anom: z: %8.3f (f1: %6.3f f2: %6.3f) %3i/%3i pow: %10.3e %10.3e %10.3e\n",
-			 HC_Z_DEPTH(hc->r[i]),f1,f2,i+1,hc->nradp2,
-			 sqrt(sh_total_power((hc->dens_anom+i1))),sqrt(sh_total_power((hc->dens_anom+i2))),
-			 sqrt(sh_total_power((exp+2))));
+			 (double)HC_Z_DEPTH(hc->r[i]),
+			 (double)f1,(double)f2,i+1,hc->nradp2,
+			 (double)sqrt(sh_total_power((hc->dens_anom+i1))),
+			 (double)sqrt(sh_total_power((hc->dens_anom+i2))),
+			 (double)sqrt(sh_total_power((exp+2))));
   }
   
   sh_free_expansion(exp,3);

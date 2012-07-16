@@ -122,7 +122,7 @@ LIB_FLAGS = $(HEAL_LIB_FLAGS) $(RICK_LIB_FLAGS) \
 	-L$(ODIR)/
 
 #
-INC_FLAGS =  $(HEAL_INC_FLAGS) \
+INC_FLAGS =  $(HEAL_INC_FLAGS) $(ADD_FLAGS) \
 	$(RICK_INC_FLAGS) $(GGRD_INC_FLAGS) 
 #
 # includes 
@@ -258,7 +258,7 @@ $(BDIR):
 	mkdir -p $(BDIR);
 
 clean:
-	rm -f $(ODIR)/*.o  $(ODIR)/*.a
+	rm -f $(ODIR)/*.o  $(ODIR)/*.a $(BDIR)/*
 
 #
 # library

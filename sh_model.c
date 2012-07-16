@@ -96,7 +96,7 @@ void sh_init_model(struct sh_lms_model *model,int lmax,int type,
   /* 
      layer indicator attributes 
   */
-  model->z = (float *)calloc(model->nset,sizeof(float));
+  model->z = (HC_PREC *)calloc(model->nset,sizeof(HC_PREC));
   if(!model->z)
     HC_MEMERROR("sh_init_model: z");
   /* 
@@ -196,7 +196,7 @@ void sh_print_model_spatial_basis(struct sh_lms_model *model,
 				  hc_boolean verbose)
 {
   int i;
-  float **flt_dummy=NULL;
+  HC_PREC **flt_dummy=NULL;
   if(verbose)
     fprintf(stderr,"sh_print_model_spatial_basis: printing spatial basis for nset %i expansions\n",
 	    model->nset);
@@ -229,7 +229,7 @@ void sh_print_model_spatial_basis(struct sh_lms_model *model,
    
 */
 void sh_read_model_spatial_data(struct sh_lms_model *model, 
-				float **data,FILE *in,
+				HC_PREC **data,FILE *in,
 				hc_boolean verbose)
 {
   int i,j;
@@ -242,8 +242,8 @@ void sh_read_model_spatial_data(struct sh_lms_model *model,
   /* 
      allocate space for all the data points
   */
-  hc_svecrealloc(data, model->tnpoints,
-		 "sh_read_model_spatial_data");
+  hc_vecrealloc(data, model->tnpoints,
+		"sh_read_model_spatial_data");
   /* 
      check all sets, number of points have to be the same for each
      expansion
@@ -261,7 +261,8 @@ void sh_read_model_spatial_data(struct sh_lms_model *model,
     }
   for(i=0;i < model->nset;i++)
     /* read in the data for this layer */
-    sh_read_spatial_data_from_file((model->exp+i*model->shps),in,(model->nset!=1)?(TRUE):(FALSE),
+    sh_read_spatial_data_from_file((model->exp+i*model->shps),
+				   in,(model->nset!=1)?(TRUE):(FALSE),
 				   model->shps,
 				   (*data+model->shps*model->exp[i*model->shps].npoints),
 				   (model->z+i));
@@ -274,7 +275,7 @@ void sh_read_model_spatial_data(struct sh_lms_model *model,
    
 */
 void sh_compute_model_spectral(struct sh_lms_model *model,
-			       float *data,
+			       HC_PREC *data,
 			       hc_boolean verbose)
 {
   int i;
@@ -316,7 +317,7 @@ pass data initialized at least at NULL
 
 */
 void sh_compute_model_spatial(struct sh_lms_model *model,
-			      float **data,hc_boolean verbose)
+			      HC_PREC **data,hc_boolean verbose)
 {
   int i;
   const int unity = 1, zero = 0;
@@ -329,7 +330,7 @@ void sh_compute_model_spatial(struct sh_lms_model *model,
   /* 
      make room for data 
   */
-  hc_svecrealloc(data,model->tnpoints,"sh_compute_model_spatial");
+  hc_vecrealloc(data,model->tnpoints,"sh_compute_model_spatial");
   if(((model->ivec)&&(model->shps != 3))||
      ((!model->ivec)&&(model->shps != 1))){
     fprintf(stderr,"sh_compute_model_spatial: error: ivec: %i nshp: %i\n",
@@ -364,7 +365,7 @@ print a whole model of spatial data with different levels
 
 */
 void sh_print_model_spatial_data(struct sh_lms_model *model,
-				 float *data, FILE *out,
+				 HC_PREC *data, FILE *out,
 				 hc_boolean verbose)
 {
   int i,j,os;

@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 {
   int type,lmax,shps,ilayer,nset,ivec,i,l;
   hc_boolean verbose = TRUE, short_format = FALSE ,binary = FALSE;
-  float *power = NULL;
+  HC_PREC *power = NULL;
   HC_PREC fac[3] = {1.,1.,1.},zlabel;
   struct sh_lms *exp;
   if(argc>1){
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
     sh_allocate_and_init(&exp,shps,lmax, type,ivec,verbose,FALSE);
     sh_read_coefficients_from_file(exp,shps,-1,stdin,binary,fac,verbose);
     /* get space */
-    hc_svecrealloc(&power,exp->lmaxp1 * shps,"sh_power");
+    hc_vecrealloc(&power,exp->lmaxp1 * shps,"sh_power");
     /* compute the powers */
     for(i=0;i<shps;i++)
       sh_compute_power_per_degree((exp+i),(power+i*exp->lmaxp1));

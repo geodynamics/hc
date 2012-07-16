@@ -26,22 +26,60 @@ general variable type defines
 #ifndef hc_boolean
 #define hc_boolean unsigned short
 #endif
-#ifndef HC_PREC			/* 
-				   precision for most C functions
-				*/
+
+#ifndef HC_PRECISION			/* not defined */
+/* 
+   default precision for most C functions
+*/
+#define HC_PRECISION 16		/* 8,16, or 32 denoting float, double,
+				   or quad only for the purposes of
+				   switching */
+#endif
+
+#ifndef __HC_PREC_DEFINED__
+
+#if HC_PRECISION == 32	/* quad prec */
+
+#define HC_PREC long double
+#define HC_HIGH_PREC long double
+#define HC_FLT_FORMAT "%Lf"
+#define HC_TWO_FLT_FORMAT "%Lf %Lf"
+#define HC_THREE_FLT_FORMAT "%Lf %Lf %Lf"
+#define HC_EPS_PREC 3e-25
+
+#elif HC_PRECISION == 16		/* double prec */
+
 #define HC_PREC double
+#define HC_HIGH_PREC double	/* some computations at higher prec */
 #define HC_FLT_FORMAT "%lf"
 #define HC_TWO_FLT_FORMAT "%lf %lf"
-#define HC_EPS_PREC 5e-15
+#define HC_THREE_FLT_FORMAT "%lf %lf %lf"
+#define HC_EPS_PREC 3e-16
+
+#else  /* single prec */
+
+#define HC_PREC float
+#define HC_HIGH_PREC double
+#define HC_FLT_FORMAT "%f"
+#define HC_TWO_FLT_FORMAT "%f %f"
+#define HC_THREE_FLT_FORMAT "%f %f %f"
+#define HC_EPS_PREC 3e-7
+
 #endif
+
+#define HC_BIN_PREC float	/* precision for binary I/O */
 
 #ifndef HC_CPREC
 #define HC_CPREC HC_PREC
 #endif
+#define __HC_PREC_DEFINED__
+
+#endif
+
 
 #define HC_CHAR_LENGTH 300		/* length of char arrays */
 
-#define HC_BIN_PREC float	/* precision for binary I/O */
+
 
 
 #ifndef __HC_DEF_COMPLEX__
@@ -130,8 +168,8 @@ struct hc_sm{
 struct hc_ps{
   /* scaling factors will only be computed once */
   int ncalled;
-  double rho_scale;
-  double alpha, beta, geoid_factor;
+  HC_HIGH_PREC rho_scale;
+  HC_HIGH_PREC alpha, beta, geoid_factor;
   hc_boolean rho_init, 
     prop_params_init, 	/* parameters for propagator computation */
     abg_init  ,		/* alpha, beta factors */
@@ -288,10 +326,10 @@ struct hcs{
   */
   /* poloidal solution */
   struct sh_lms *pol_sol;
-  double *rho,*rho_zero;	/* 
+  HC_PREC *rho,*rho_zero;	/* 
 				   density factors 
 				*/
-  double *rprops,*pvisc,*props,*ppots, /* propagator related */
+  HC_HIGH_PREC *rprops,*pvisc,*props,*ppots, /* propagator related */
     *den;
   /* 
      propagator related factors as well 
