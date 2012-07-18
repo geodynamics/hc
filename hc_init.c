@@ -60,7 +60,7 @@ void hc_init_parameters(struct hc_parameters *p)
   p->elayer[0] = 50.; p->elayer[1] = 1.; p->elayer[2] = 0.1; p->elayer[3] = 50.;
   p->visc_init_mode = HC_INIT_E_FROM_FILE; /* by default, read viscosity from file */
   
-
+  p->solver_kludge_l = INT_MAX;	/* default: no solver tricks */
   /* 
      depth dependent scaling of density files?
   */
@@ -117,6 +117,9 @@ void hc_init_polsol_struct(struct hc_ps *psp)
   psp->abg_init = FALSE;		/* alpha, beta factors */
   psp->prop_mats_init = FALSE;	/* will be true only if save_prop_mats is  */
   psp->tor_init = psp->pol_init = FALSE;
+  psp->solver_kludge_l = INT_MAX;  /* every l > psp->solver_kludge_l will
+				      have modified core boundary
+				      conditions */
 }
 /* 
 
@@ -243,7 +246,12 @@ void hc_init_main(struct hcs *hc,int sh_type,
   }else{
     HC_ERROR("hc_init","boundary condition logic error");
   }
-
+  /* solver tricks */
+  hc->psp.solver_kludge_l = p->solver_kludge_l;
+  if(hc->psp.solver_kludge_l != INT_MAX)
+    if(p->verbose)
+      fprintf(stderr,"hc_init_main: WARNING: applying solver CMB kludge for l > %i\n",hc->psp.solver_kludge_l);
+  
   /* 
      phase boundaries, if any 
   */
@@ -413,6 +421,8 @@ void hc_handle_command_line(int argc, char **argv,
 	      (double)p->pvel_time);
 
       fprintf(stderr,"solution procedure and I/O options:\n");
+      fprintf(stderr,"-cbckl\tval\twill modify CMB boundary condition for all l > val with solver kludge (%i)\n",
+	      p->solver_kludge_l);
       fprintf(stderr,"-ng\t\tdo not compute and print the geoid (%i)\n",
 	      p->compute_geoid);
       fprintf(stderr,"-ag\t\tcompute geoid at all layer depths, as opposed to the surface only\n");
@@ -432,6 +442,9 @@ void hc_handle_command_line(int argc, char **argv,
     }else if(strcmp(argv[i],"-ds")==0){	/* density anomaly scaling factor */
       hc_advance_argument(&i,argc,argv);
       sscanf(argv[i],HC_FLT_FORMAT,&p->dens_anom_scale);
+    }else if(strcmp(argv[i],"-cbckl")==0){	/* solver kludge */
+      hc_advance_argument(&i,argc,argv);
+      sscanf(argv[i],"%i",&p->solver_kludge_l);
     }else if(strcmp(argv[i],"-vtime")==0){	/* */
       hc_advance_argument(&i,argc,argv);
       sscanf(argv[i],HC_FLT_FORMAT,&p->pvel_time);

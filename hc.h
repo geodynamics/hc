@@ -175,6 +175,8 @@ struct hc_ps{
     abg_init  ,		/* alpha, beta factors */
     prop_mats_init;	/* will be true only if save_prop_mats is 
 			   requested  */
+  int solver_kludge_l;		/* for treating higher orders
+				   differently  */
   /* for solve */
   hc_boolean tor_init, pol_init;
 };
@@ -209,6 +211,8 @@ struct hc_parameters{
 
   int pvel_mode;		/* plate velocity mode */
   HC_PREC pvel_time;		/* time to use */
+
+  int solver_kludge_l;		/* for CMB BC tricks */
 
   hc_boolean solver_mode;	
   hc_boolean visc_init_mode;

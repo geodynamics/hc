@@ -258,7 +258,7 @@ $(BDIR):
 	mkdir -p $(BDIR);
 
 clean:
-	rm -f $(ODIR)/*.o  $(ODIR)/*.a $(BDIR)/*
+	rm -f hc_auto_proto.h $(ODIR)/*.o  $(ODIR)/*.a $(BDIR)/*
 
 #
 # library

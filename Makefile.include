@@ -6,6 +6,9 @@
 #
 # for GMT version >= 4.1.2, uncomment the next two lines
 #
-#ADD_FLAGS = -Werror
+# quad precision
+ADD_FLAGS = -DHC_PRECISION=32 -O2 
+#ADD_FLAGS = -O2 
+
 GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include 
 GGRD_LIBS_LINKLINE = -lggrd -lgmt -lpsl -lnetcdf 

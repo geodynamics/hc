@@ -196,13 +196,14 @@ void hc_polsol(struct hcs *hc, 	/*
     nprops_max,jsol;
   double *xprem;
   HC_HIGH_PREC *b,du1,du2,el,rnext,drho,dadd;
+  HC_PREC rbound_kludge;
   HC_HIGH_PREC amat[3][3],bvec[3],u[4],poten[2],
     unew[4],potnew[2],clm[2];
   /* 
      structures which hold u[6][4] type arrays 
   */
   struct hc_sm cmb, *u3;
-  hc_boolean qvis,qinho,hit;
+  hc_boolean qvis,qinho,hit,kludge_warned;
   /*  
       define a few offset and size pointers
   */
@@ -524,6 +525,19 @@ void hc_polsol(struct hcs *hc, 	/*
     
     */
     el = (HC_PREC)l;
+
+    /* 
+       this will normally be a very small number so that all
+       propagators will be computed above the regular CMB 
+
+       if solver_kludge_l is set to within the [0;L] domain, the depth
+       of the bottom will depend on l
+       
+       (rprops(i).ge.(1.-(1.-0.5448)*50./l))
+    */
+    rbound_kludge = (1. - (1.-hc->r_cmb)*(HC_PREC)hc->psp.solver_kludge_l/el);
+    kludge_warned = FALSE;
+
     if((!save_prop_mats) || (!hc->psp.prop_mats_init)|| (viscosity_or_layer_changed)){
       //    
       // get all propagators now, as they only depend on l
@@ -592,11 +606,24 @@ void hc_polsol(struct hcs *hc, 	/*
 	  for(ibv=0;ibv < 4;ibv++)
 	    cmb.u[i6][ibv] = 0.0;
 
-	cmb.u[1][1] = 1.0;	/* set this to zero for no-slip,
+	if(l > hc->psp.solver_kludge_l){
+	  /* 
+	     solver trick to ensure stabilty following Steinberger &
+	     Torsvik, doi:10.1029/2011GC003808
+
+	     ucmb(4,1)=1.d0
+	  */
+	  cmb.u[3][1] = 1.0;	/* make core fixed */
+	}else{
+	  /* regular operation */
+	  /*  ucmb(2,1)=1.d0 */
+	  cmb.u[1][1] = 1.0;	/* set this to zero for no-slip,
 				   in general CMB is free slip */
-	cmb.u[2][2] = 1.0;
-	cmb.u[4][3] = 1.0;
-	cmb.u[5][3] = el;
+	}
+
+	cmb.u[2][2] = 1.0;	/* ucmb(3,2)=1.d0 */
+	cmb.u[4][3] = 1.0;	/* ucmb(5,3)=1.d0 */
+	cmb.u[5][3] = el;	/* ucmb(6,3)=float(l) */
 
 	for(ibv=0;ibv < 4;ibv++){
 	  /* 
@@ -637,67 +664,79 @@ void hc_polsol(struct hcs *hc, 	/*
 	    I NPROPS LOOP
 
 	    */
+	    
 
-	    //    
-	    //
-	    //    PROPAGATE U TO NEXT RADIUS IN RPROPS
-	    //    
-	    for(os=pos1 + i*16,i2=0;i2 < 4;i2++,os += 4){
-	      unew[i2] = 0.0;
-	      for(i3=0;i3 < 4;i3++){
-		unew[i2] += hc->props[os + i3] * u[i3];
+
+	    if(hc->rprops[ip1] >= rbound_kludge){
+	      //
+	      //    PROPAGATE U TO NEXT RADIUS IN RPROPS
+	      //    
+	      for(os=pos1 + i*16,i2=0;i2 < 4;i2++,os += 4){
+		unew[i2] = 0.0;
+		for(i3=0;i3 < 4;i3++){
+		  unew[i2] += hc->props[os + i3] * u[i3];
+		}
 	      }
-	    }
-	    hc_a_equals_b_vector(u,unew,4);
-	    //    
-	    //    PROPAGATE POTEN TO NEXT RADIUS
-	    //    
-	    os = pos2 + i * 4;
-	    potnew[0] = poten[0] * hc->ppots[os+0] + 
-	      poten[1] * hc->ppots[os+1];
-	    poten[1]  = poten[0] * hc->ppots[os+2] + 
-	      poten[1] * hc->ppots[os+3];
-	    poten[0] = potnew[0];
-	    if(ibv == 0){
+	      hc_a_equals_b_vector(u,unew,4);
 	      //    
-	      //    ADD DEN * B, WHERE DEN = 0 FOR NO DENSITY CONTRAST
+	      //    PROPAGATE POTEN TO NEXT RADIUS
 	      //    
-	      dadd = hc->den[i] * b[ninho];
-	      u[2] += dadd;	/* this would have a factor 
+	      os = pos2 + i * 4;
+	      potnew[0] = poten[0] * hc->ppots[os+0] + 
+		poten[1] * hc->ppots[os+1];
+	      poten[1]  = poten[0] * hc->ppots[os+2] + 
+		poten[1] * hc->ppots[os+3];
+	      poten[0] = potnew[0];
+	      if(ibv == 0){
+		//    
+		//    ADD DEN * B, WHERE DEN = 0 FOR NO DENSITY CONTRAST
+		//    
+		dadd = hc->den[i] * b[ninho];
+		u[2] += dadd;	/* this would have a factor 
 				   grav(i)/hc->grav
 				*/
-	      //    
-	      //    ADD DEN * BETA * B * RDEN
-	      //    
-	      //	      fprintf(stderr,"%15.5e %15.5e %15.5e %15.5e\n",
-	      //      beta, hc->den[i], b[ninho],hc->rden[ninho]);
-	      poten[1] += hc->psp.beta * dadd * hc->rden[ninho];
-	    }
-	    //    
-	    //    Changes due to radial density variations
-	    //
-	    drho = hc->rho_zero[i] - hc->rho_zero[ip1];
-	    
-	    du1 = u[0] * drho/hc->rho_zero[ip1];
-	    du2 = du1 * (hc->pvisc[i]+hc->pvisc[ip1]);
-	    u[0] +=  du1;
-	    u[2] -=  2.0 * du2 + drho * poten[0];
-	    u[3] +=        du2;
-	    //hc_print_vector(poten,2,stderr);
-	    //hc_print_vector(u,4,stderr);
-	    //    
-	    //    effects of phase boundary deflections
-	    //    
-	    if ((jpb < npb)&&(hc->rprops[ip1] > rpb[jpb] - 0.0001)){
-	      if (ibv == 0) {
-		u[2] -= fpb[jpb] * b[ninho];
-		poten[1] -= hc->psp.beta * rpb[jpb] * fpb[jpb] * b[ninho] * hc->psp.rho_scale;
+		//    
+		//    ADD DEN * BETA * B * RDEN
+		//    
+		//	      fprintf(stderr,"%15.5e %15.5e %15.5e %15.5e\n",
+		//      beta, hc->den[i], b[ninho],hc->rden[ninho]);
+		poten[1] += hc->psp.beta * dadd * hc->rden[ninho];
 	      }
-	      jpb++;
+	      //    
+	      //    Changes due to radial density variations
+	      //
+	      drho = hc->rho_zero[i] - hc->rho_zero[ip1];
+	      
+	      du1 = u[0] * drho/hc->rho_zero[ip1];
+	      du2 = du1 * (hc->pvisc[i]+hc->pvisc[ip1]);
+	      u[0] +=  du1;
+	      u[2] -=  2.0 * du2 + drho * poten[0];
+	      u[3] +=        du2;
+	      //hc_print_vector(poten,2,stderr);
+	      //hc_print_vector(u,4,stderr);
+	      //    
+	      //    effects of phase boundary deflections
+	      //    
+	      if ((jpb < npb)&&(hc->rprops[ip1] > rpb[jpb] - 0.0001)){
+		if (ibv == 0) {
+		  u[2] -= fpb[jpb] * b[ninho];
+		  poten[1] -= hc->psp.beta * rpb[jpb] * fpb[jpb] * b[ninho] * hc->psp.rho_scale;
+		}
+		jpb++;
+	      }
+	      /* end of l-dependent solver kludge branch */
+	    }else{
+	      if((verbose)&&(!kludge_warned)){
+		fprintf(stderr,"hc_polsol: applying CMB fixed kludge above %i and shifting CMB to %g km depth for l %i\n",
+			hc->psp.solver_kludge_l,
+			(double)HC_Z_DEPTH(rbound_kludge),l);	      
+		kludge_warned = TRUE;
+	      }
 	    }
+
 	    //    
 	    //    IF AT A DENSITY CONTRAST, INCREMENT NINHO FOR NEXT ONE
-	    //    
+	    
 	    if(fabs(hc->den[i]) > HC_EPS_PREC)
 	      ninho++;
 	    //    
