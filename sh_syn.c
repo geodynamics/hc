@@ -119,9 +119,9 @@ int main(int argc, char **argv)
       }
       /*  */
       dphi = DEG2RAD(dx);
-      nphi = DEG2RAD(e-w)/dphi + 1;
+      nphi = ((e-w)/dx) + 1;
       dtheta = DEG2RAD(dy);
-      ntheta = DEG2RAD(n-s)/dtheta + 1;
+      ntheta = ((n-s)/dy) + 1;
       npoints = nphi * ntheta;
 
       /*  */

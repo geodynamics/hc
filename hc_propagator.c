@@ -20,8 +20,8 @@ void hc_evalpa(int l,HC_HIGH_PREC r1,HC_HIGH_PREC r2,HC_HIGH_PREC visc, HC_HIGH_
   //
   HC_HIGH_PREC den1,den2,f[4],r,rlm1,rlp1,rmlm2,rml,v2,rs;
   long int np[4][4][4];
-  int lp1,lp2,lp3,lm1,lm2,lpp,lmm,l2p3,l2p1,l2m1,lltp1,lltp2;
-  int i,j,k,os1,os2;
+  long int lp1,lp2,lp3,lm1,lm2,lpp,lmm,l2p3,l2p1,l2m1,lltp1,lltp2;
+  long int i,j,k,os1,os2;
   //fprintf(stderr,"hc_evalpa: %i %g %g %g\n",l,r1,r2,visc);
   //
   //    PASSED PARAMETERS:  L: DEGREE,
