@@ -13,7 +13,7 @@ void GMT_grdio_init (void);
 #endif
 
 
-#include "ggrd.h"
+#include "ggrd_base.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

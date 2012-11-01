@@ -124,7 +124,6 @@ Other Earth model, and modeling constants
    dealing with velocity grids 
 
 */
-#include "ggrd.h"
 #include "ggrd_grdtrack_util.h"
 /*
 

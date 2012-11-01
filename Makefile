@@ -83,7 +83,7 @@ GGRD_DEFINES = -I$(GMTHOME)/include -I$(NETCDFHOME)/include  \
 	$(PREM_DEFINES)
 GGRD_LIB_FLAGS = -L$(GMTHOME)/lib -L$(NETCDFHOME)/lib 
 GGRD_LIBS = $(ODIR)/libggrd.a $(ODIR)/libggrd.dfast.a $(ODIR)/libggrd.dbg.a 
-GGRD_INCS = $(PREM_INCS)  ggrd_grdtrack_util.h ggrd.h ggrd_struc.h
+GGRD_INCS = $(PREM_INCS)  ggrd_grdtrack_util.h ggrd_base.h ggrd_struc.h
 
 #
 #
