@@ -241,6 +241,44 @@ ggrd_boolean ggrd_grdtrack_interpolate_rtp(double r,double t,double p,
 				     g->loc_bcr);
   return result;
 }
+
+/* 
+
+this is almost redundant, use lon lat in degrees and z in [km] depth
+
+ */
+ggrd_boolean ggrd_grdtrack_interpolate_lonlatz(double lon,double lat,double z,
+					       struct ggrd_gt *g,
+					       double *value,
+					       ggrd_boolean verbose)
+{
+  double x[3];
+  ggrd_boolean result;
+  if(!g->init){			/* this will not necessarily work */
+    fprintf(stderr,"ggrd_grdtrack_interpolate_rtp: error, g structure not initialized\n");
+    return FALSE;
+  }
+  if(!g->is_three){
+    fprintf(stderr,"ggrd_grdtrack_interpolate_rtp: error, g structure is not 3-D\n");
+    return FALSE;
+  }
+  /* 
+     convert coordinates to lon / lat / z
+  */
+  x[0] = lon;
+  x[1] = lat;
+  x[2] = z;
+  if(g->zlevels_are_negative)	/* adjust for depth */
+    x[2] = -x[2];
+  
+  result = ggrd_grdtrack_interpolate(x,TRUE,g->grd,g->f,
+				     g->edgeinfo,g->mm,g->z,
+				     g->nz,value,verbose,
+				     g->loc_bcr);
+  return result;
+}
+
+
 /* 
    for 3-D  cartesian
 

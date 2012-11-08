@@ -37,6 +37,9 @@ wrappers
 int ggrd_grdtrack_init_general(ggrd_boolean ,char *, char *,char *,
 			       struct ggrd_gt *,ggrd_boolean ,
 			       ggrd_boolean, ggrd_boolean);
+ggrd_boolean ggrd_grdtrack_interpolate_lonlatz(double ,double ,double ,
+					       struct ggrd_gt *,double *,
+					       ggrd_boolean );
 ggrd_boolean ggrd_grdtrack_interpolate_rtp(double ,double ,double ,
 					    struct ggrd_gt *,double *,
 					    ggrd_boolean,ggrd_boolean);
