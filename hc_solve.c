@@ -12,7 +12,7 @@ free_slip: TRUE/FALSE. if false, will either use the plate motions or no-slip,
 solve_mode: solution mode, used for summing the solutions
 
 compute_geoid: compute the geoid (this is done half-way anyway, and
-                    should not add much computation time)
+               should not add much computation time)
 
 geoid: geoid expansion, needs to be initialized
 

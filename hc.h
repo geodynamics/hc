@@ -205,6 +205,7 @@ struct hc_parameters{
   hc_boolean sol_binary_out;	/* binary or ASCII output of SH expansion */
   hc_boolean print_spatial;	/* print the spatial solution */
   hc_boolean compute_geoid; 	/* compute and print the geoid */
+  hc_boolean print_density_field;	 /* print the scaled density field */
   hc_boolean compute_geoid_correlations; 	/* compute correlations only */
   int solution_mode;	/* velocity or stress */
 

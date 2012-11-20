@@ -174,7 +174,9 @@ int main(int argc, char **argv)
        
     */
     /* 
+
        output of spherical harmonics solution
+
     */
     switch(p->solution_mode){
     case HC_VEL:
@@ -198,24 +200,27 @@ int main(int argc, char **argv)
 			       p->solution_mode,
 			       p->sol_binary_out,p->verbose);
     fclose(out);
-    /* 
-       print the density field 
-    */
-    sprintf(file_prefix,"dscaled");
-    if(p->sol_binary_out)
-      sprintf(filename,"%s.%s",file_prefix,HC_SOLOUT_FILE_BINARY);
-    else
-      sprintf(filename,"%s.%s",file_prefix,HC_SOLOUT_FILE_ASCII);
-    if(p->verbose)
-      fprintf(stderr,"%s: writing scaled density anomaly field to %s\n",
-	      argv[0],filename);
- 
-    out = ggrd_open(filename,"w","main");
-    hc_print_dens_anom(model,out,p->sol_binary_out,p->verbose);
-    fclose(out);
-
-
     /*  */
+    if(p->print_density_field){
+      /* 
+	 print the density field 
+      */
+      sprintf(file_prefix,"dscaled");
+      if(p->sol_binary_out)
+	sprintf(filename,"%s.%s",file_prefix,HC_SOLOUT_FILE_BINARY);
+      else
+	sprintf(filename,"%s.%s",file_prefix,HC_SOLOUT_FILE_ASCII);
+      if(p->verbose)
+	fprintf(stderr,"%s: writing scaled density anomaly field to %s\n",
+		argv[0],filename);
+      
+      out = ggrd_open(filename,"w","main");
+      hc_print_dens_anom(model,out,p->sol_binary_out,p->verbose);
+      fclose(out);
+    }
+
+
+    /* compute the geoid? */
     if(p->compute_geoid){
       if(p->compute_geoid_correlations){
 	if(p->compute_geoid == 2){ /* check if all geoids were computed */

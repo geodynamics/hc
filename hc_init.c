@@ -47,7 +47,10 @@ void hc_init_parameters(struct hc_parameters *p)
 
   p->verbose = 0;		/* debugging output? (0,1,2,3,4...) */
   p->sol_binary_out = TRUE;	/* binary or ASCII output of SH expansion */
-  p->solution_mode = HC_VEL;	/* default: velocity */
+  p->solution_mode = HC_VEL;	/* default: velocity output */
+
+  p->print_density_field = TRUE; /* print the scaled density field (useful for debugging) */
+
   p->solver_mode = HC_SOLVER_MODE_DEFAULT ;
   
   p->print_pt_sol = FALSE;
