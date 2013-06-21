@@ -85,9 +85,9 @@ int main(int argc, char **argv)
   if(verbose)
     fprintf(stderr,"%s: waiting to read spherical harmonic coefficients from stdin (use %s -h for help)\n",
 	    argv[0],argv[0]);
-  while(sh_read_parameters_from_file(&type,&lmax,&shps,&ilayer,&nset,
-				     &zlabel,&ivec,stdin,short_format,
-				     binary,verbose)){
+  while(sh_read_parameters_from_stream(&type,&lmax,&shps,&ilayer,&nset,
+				       &zlabel,&ivec,stdin,short_format,
+				       binary,verbose)){
     if(short_format_ivec){
       ivec = 1;
       shps = 2;
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
 
     /* input and init */
     sh_allocate_and_init(&exp,shps,lmax,type,ivec,verbose,((regular_basis != 0)?(1):(0)));
-    sh_read_coefficients_from_file(exp,shps,-1,stdin,binary,fac,verbose);
+    sh_read_coefficients_from_stream(exp,shps,-1,stdin,binary,fac,verbose);
     if(regular_basis == 1){
       /* 
 	 regular basis output on regular grid
@@ -137,10 +137,10 @@ int main(int argc, char **argv)
 			     theta,ntheta,phi,nphi,data,
 			     verbose,FALSE);
       /* output */
-      sh_print_reg_spatial_data_to_file(exp,shps,data,
-					(nset>1)?(TRUE):(FALSE),
-					zlabel, theta,ntheta,
-					phi,nphi,stdout);
+      sh_print_reg_spatial_data_to_stream(exp,shps,data,
+					  (nset>1)?(TRUE):(FALSE),
+					  zlabel, theta,ntheta,
+					  phi,nphi,stdout);
     }else if(regular_basis == -1){
       /* output on locations input lon lat file */
       if(verbose)
@@ -165,15 +165,15 @@ int main(int argc, char **argv)
       fclose(in);
       hc_vecalloc(&data,npoints * shps,"sh_shsyn data");
       sh_compute_spatial_irreg(exp,ivec,theta,phi,npoints,data,verbose);
-      sh_print_irreg_spatial_data_to_file(exp,shps,data,(nset>1)?(TRUE):(FALSE),
-					  zlabel,theta,phi,npoints,stdout);
+      sh_print_irreg_spatial_data_to_stream(exp,shps,data,(nset>1)?(TRUE):(FALSE),
+					    zlabel,theta,phi,npoints,stdout);
      }else{			/* use the built in spatial basis (Gaussian) */
       /* expansion */
       hc_vecalloc(&data,exp[0].npoints * shps,"sh_syn");
       sh_compute_spatial(exp,ivec,FALSE,&dummy,data,verbose);
       /* output */
-      sh_print_spatial_data_to_file(exp,shps,data,(nset>1)?(TRUE):(FALSE),
-				    zlabel,stdout);
+      sh_print_spatial_data_to_stream(exp,shps,data,(nset>1)?(TRUE):(FALSE),
+				      zlabel,stdout);
     }
     free(exp);free(data);
   }

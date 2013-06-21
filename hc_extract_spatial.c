@@ -149,21 +149,21 @@ int main(int argc, char **argv)
 		(double)zlabel);
 
       ivec=FALSE;sh_compute_spatial((vsol+ilayer*shps_read),ivec,TRUE,&plm,data,verbose);
-      sh_print_spatial_data_to_file((vsol+ilayer*shps_read),shps,data,TRUE,zlabel,stdout);
+      sh_print_spatial_data_to_stream((vsol+ilayer*shps_read),shps,data,TRUE,zlabel,stdout);
       break;
     case 2:
       /*  */
       if(verbose)
 	fprintf(stderr,"%s: printing v_theta v_phi SHE at layer %i (depth: %g)\n",argv[0],ilayer,(double)zlabel);
       ivec=TRUE;sh_compute_spatial((vsol+ilayer*shps_read+1),ivec,TRUE,&plm,data,verbose);
-      sh_print_spatial_data_to_file((vsol+ilayer*shps_read+1),shps,data,TRUE,zlabel,stdout);
+      sh_print_spatial_data_to_stream((vsol+ilayer*shps_read+1),shps,data,TRUE,zlabel,stdout);
       break;
     case 3:
       if(verbose)
 	fprintf(stderr,"%s: printing v_r v_theta v_phi SHE at layer %i (depth: %g)\n",argv[0],ilayer,(double)zlabel);
       ivec=FALSE;sh_compute_spatial((vsol+ilayer*shps_read),  ivec,TRUE,&plm,data,verbose); /* radial */
       ivec=TRUE; sh_compute_spatial((vsol+ilayer*shps_read+1),ivec,TRUE,&plm,(data+npoints),verbose); /* theta,phi */
-      sh_print_spatial_data_to_file((vsol+ilayer*shps_read),shps,data,TRUE,zlabel,stdout);
+      sh_print_spatial_data_to_stream((vsol+ilayer*shps_read),shps,data,TRUE,zlabel,stdout);
       break;
     case 4:
       fprintf(stdout,"%5i %11g\n",ilayer,(double)HC_Z_DEPTH(model->r[ilayer]));

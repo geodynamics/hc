@@ -140,7 +140,8 @@ all: $(ODIR) $(BDIR) libs sh_tools hc_tools
 sh_tools: 	$(BDIR)/sh_syn $(BDIR)/sh_corr $(BDIR)/sh_ana $(BDIR)/sh_power \
 	 $(BDIR)/sh_extract_layer
 
-hc_tools: $(BDIR)/hc  $(BDIR)/hc_extract_sh_layer  $(BDIR)/hc_extract_spatial \
+hc_tools: $(BDIR)/hc  $(BDIR)/hc_visc_scan $(BDIR)/hc_invert_dtopo \
+	$(BDIR)/hc_extract_sh_layer  $(BDIR)/hc_extract_spatial \
 	$(BDIR)/rotvec2vel $(BDIR)/print_gauss_lat
 
 weird_tools: $(BDIR)/convert_bernhard_dens
@@ -204,13 +205,23 @@ $(BDIR)/prem2dsm: $(ODIR)/prem2dsm.o $(PREM_OBJS)
 	$(CC) $(ODIR)/prem2dsm.o $(PREM_OBJS) -o $(BDIR)/prem2dsm -lm $(LDFLAGS) 
 
 
-$(BDIR)/hc: $(LIBS) $(INCS) $(ODIR)/main.o $(PREM_OBJS)
-	$(CC) $(LIB_FLAGS) $(ODIR)/main.o -o $(BDIR)/hc \
+$(BDIR)/hc: $(LIBS) $(INCS) $(ODIR)/hc.o $(PREM_OBJS)
+	$(CC) $(LIB_FLAGS) $(ODIR)/hc.o -o $(BDIR)/hc \
 		-lhc -lrick $(HEAL_LIBS_LINKLINE) $(PREM_OBJS) \
 		 $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS) 
 
-$(BDIR)/hc.dbg: $(LIBS) $(INCS) $(ODIR)/main.dbg.o $(PREM_OBJS)
-	$(CC) $(LIB_FLAGS) $(ODIR)/main.dbg.o -o $(BDIR)/hc.dbg \
+$(BDIR)/hc_visc_scan: $(LIBS) $(INCS) $(ODIR)/hc_visc_scan.o $(PREM_OBJS)
+	$(CC) $(LIB_FLAGS) $(ODIR)/hc_visc_scan.o -o $(BDIR)/hc_visc_scan \
+		-lhc -lrick $(HEAL_LIBS_LINKLINE) $(PREM_OBJS) \
+		 $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS) 
+
+$(BDIR)/hc_invert_dtopo: $(LIBS) $(INCS) $(ODIR)/hc_invert_dtopo.o $(PREM_OBJS)
+	$(CC) $(LIB_FLAGS) $(ODIR)/hc_invert_dtopo.o -o $(BDIR)/hc_invert_dtopo \
+		-lhc -lrick $(HEAL_LIBS_LINKLINE) $(PREM_OBJS) \
+		 $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS) 
+
+$(BDIR)/hc.dbg: $(LIBS) $(INCS) $(ODIR)/hc.dbg.o $(PREM_OBJS)
+	$(CC) $(LIB_FLAGS) $(ODIR)/hc.dbg.o -o $(BDIR)/hc.dbg \
 		-lhc.dbg -lrick.dbg $(HEAL_LIBS_LINKLINE) $(PREM_OBJS) \
 		 $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS) 
 

@@ -77,7 +77,10 @@ void hc_polsol(struct hcs *hc, 	/*
 					     anomalies changes between
 					     call, but nothing else
 				     */
-	       hc_boolean verbose)
+	       hc_boolean verbose, /* output options */
+	       hc_boolean calc_kernel_only /* only compute the
+					      kernels */
+	       )
 {
 
   //    ****************************************************************
@@ -193,7 +196,8 @@ void hc_polsol(struct hcs *hc, 	/*
   int i,i2,i3,i6,j,l,m,nih,nxtv,ivis,os,pos1,pos2,gi,g1,g2,gic,
     prop_s1,prop_s2,nvisp1,nzero,n6,ninho,nl=0,ip1;
   int newprp,newpot,jpb,inho2,ibv,indx[3],a_or_b,ilayer,lmax,
-    nprops_max,jsol;
+    nprops_max,jsol,mmax;
+  int klayer = 1;
   double *xprem;
   HC_HIGH_PREC *b,du1,du2,el,rnext,drho,dadd;
   HC_PREC rbound_kludge;
@@ -560,8 +564,8 @@ void hc_polsol(struct hcs *hc, 	/*
     begin m loop
 
     */
-
-    for(m=0;m <= l;m++){
+    mmax = (calc_kernel_only)?(0):(l);
+    for(m=0;m <= mmax;m++){
       /* 
 
 
@@ -574,7 +578,7 @@ void hc_polsol(struct hcs *hc, 	/*
       //
       a_or_b = 0;		/* start with A coefficient */
       do{			/* do loop for A/B evaluation */
-	if(l <= dens_anom[0].lmax){
+	if((!calc_kernel_only) && (l <= dens_anom[0].lmax)){
 	  /*
 	    
 	    obtain the coefficients from the density field expansions
@@ -594,6 +598,9 @@ void hc_polsol(struct hcs *hc, 	/*
 	    b[i] = 0.0;
 	}
 	b[inho] = 0.0;
+	if(calc_kernel_only)
+	  b[klayer] = 1.0;
+	
 	//    
 	//    U(C) = [0,VC,SC,0], U(A) = [0,0,SA,SX]
 	//    POT(A) = [U5(A),-(L+1)*U5(A)]T, POT(C) = [U5(C),L*U5(C)]T

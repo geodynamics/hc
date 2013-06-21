@@ -114,9 +114,9 @@ int main(int argc, char **argv)
       /* SH header */
       if(short_format && loop)
 	fprintf(stdout,"%g\n",(double)HC_Z_DEPTH(model->r[ilayer]));
-      sh_print_parameters_to_file((sol+ilayer*shps_read),shps,
-				  ilayer,nset,(HC_PREC)(HC_Z_DEPTH(model->r[ilayer])),
-				  stdout,short_format,FALSE,verbose);
+      sh_print_parameters_to_stream((sol+ilayer*shps_read),shps,
+				    ilayer,nset,(HC_PREC)(HC_Z_DEPTH(model->r[ilayer])),
+				    stdout,short_format,FALSE,verbose);
     }
     switch(mode){
     case 1:
@@ -124,21 +124,21 @@ int main(int argc, char **argv)
       if(verbose)
 	fprintf(stderr,"%s: printing x_r SHE at layer %i (depth: %g)\n",
 		argv[0],ilayer,(double)HC_Z_DEPTH(model->r[ilayer]));
-      sh_print_coefficients_to_file((sol+ilayer*shps_read),shps,stdout,fac,FALSE,verbose);
+      sh_print_coefficients_to_stream((sol+ilayer*shps_read),shps,stdout,fac,FALSE,verbose);
       break;
     case 2:
       /*  */
       if(verbose)
 	fprintf(stderr,"%s: printing x_pol x_tor SHE at layer %i (depth: %g)\n",
 		argv[0],ilayer,(double)HC_Z_DEPTH(model->r[ilayer]));
-      sh_print_coefficients_to_file((sol+ilayer*shps_read+1),shps,stdout,fac,FALSE,verbose);
+      sh_print_coefficients_to_stream((sol+ilayer*shps_read+1),shps,stdout,fac,FALSE,verbose);
       break;
     case 3:
       /* mode == 3 */
       if(verbose)
 	fprintf(stderr,"%s: printing x_r x_pol x_tor SHE at layer %i (depth: %g)\n",
 		argv[0],ilayer,(double)HC_Z_DEPTH(model->r[ilayer]));
-      sh_print_coefficients_to_file((sol+ilayer*shps_read),shps,stdout,fac,FALSE,verbose);
+      sh_print_coefficients_to_stream((sol+ilayer*shps_read),shps,stdout,fac,FALSE,verbose);
       break;
     case 4:
       fprintf(stdout,"%5i %11g\n",ilayer,(double)HC_Z_DEPTH(model->r[ilayer]));
@@ -148,14 +148,14 @@ int main(int argc, char **argv)
       if(verbose)
 	fprintf(stderr,"%s: printing x_pol SHE at layer %i (depth: %g)\n",
 		argv[0],ilayer,(double)HC_Z_DEPTH(model->r[ilayer]));
-      sh_print_coefficients_to_file((sol+ilayer*shps_read+1),shps,stdout,fac,FALSE,verbose);
+      sh_print_coefficients_to_stream((sol+ilayer*shps_read+1),shps,stdout,fac,FALSE,verbose);
       break;
     case 6:
       /*  */
       if(verbose)
 	fprintf(stderr,"%s: printing x_tor SHE at layer %i (depth: %g)\n",
 		argv[0],ilayer,(double)HC_Z_DEPTH(model->r[ilayer]));
-      sh_print_coefficients_to_file((sol+ilayer*shps_read+2),shps,stdout,fac,FALSE,verbose);
+      sh_print_coefficients_to_stream((sol+ilayer*shps_read+2),shps,stdout,fac,FALSE,verbose);
       break;
  
     default:

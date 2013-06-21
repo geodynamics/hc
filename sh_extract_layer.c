@@ -56,8 +56,8 @@ int main(int argc, char **argv)
   in = ggrd_open(argv[1],"r","sh_extract_layer");
   /* start loop */
   i = 0;
-  sh_read_parameters_from_file(&type,&lmax, &shps,&i,&nset,(zdepth+i),
-			       &ivec,in,short_format_in,binary,verbose);
+  sh_read_parameters_from_stream(&type,&lmax, &shps,&i,&nset,(zdepth+i),
+				 &ivec,in,short_format_in,binary,verbose);
   if(verbose)
     fprintf(stderr,"sh_extract_layer: detected %i layers, vec: %i, type %i SH file, shps: %i, layer %i at depth %g\n",
 	    nset,ivec,type,shps,i+1,(double)zdepth[i]);
@@ -76,10 +76,10 @@ int main(int argc, char **argv)
   }
   for(;i<nset;i++){
     if(i != 0)
-      sh_read_parameters_from_file(&type,&lmax,&shps,&i,&nset,(zdepth+i),
-				   &ivec,in,short_format_in,binary,verbose);
-    sh_read_coefficients_from_file((exp+i),shps,-1,in,binary,unitya,
-				   verbose);
+      sh_read_parameters_from_stream(&type,&lmax,&shps,&i,&nset,(zdepth+i),
+				     &ivec,in,short_format_in,binary,verbose);
+    sh_read_coefficients_from_stream((exp+i),shps,-1,in,binary,unitya,
+				     verbose);
     if(i == ilayer){		/* output */
       if(verbose)
 	fprintf(stderr,"%s: printing SH from %s at layer %i out of %i to stdout (depth: %g)\n",
@@ -87,9 +87,9 @@ int main(int argc, char **argv)
       /* 
 	 output will remove the layer number information 
       */
-      sh_print_parameters_to_file((exp+i),shps,ilayer,1,zdepth[i],
-				  stdout,short_format_output,FALSE,verbose);
-      sh_print_coefficients_to_file((exp+i),shps,stdout,unitya,FALSE,verbose);
+      sh_print_parameters_to_stream((exp+i),shps,ilayer,1,zdepth[i],
+				    stdout,short_format_output,FALSE,verbose);
+      sh_print_coefficients_to_stream((exp+i),shps,stdout,unitya,FALSE,verbose);
     }
   }
   fclose(in);

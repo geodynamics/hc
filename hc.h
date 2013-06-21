@@ -226,7 +226,7 @@ struct hc_parameters{
 		     */
   HC_PREC *rdf,*sdf;
   int ndf;
-  struct sh_lms *ref_geoid;
+  struct sh_lms *ref_geoid,*ref_dtopo;
   HC_PREC rlayer[3];		/* for four layer approaches (first
 				   layer radius is CMB radius) */
 
@@ -237,6 +237,7 @@ struct hc_parameters{
   char prem_model_filename[HC_CHAR_LENGTH];	/* PREM model filename */
   char dens_scaling_filename[HC_CHAR_LENGTH];	/*  */
   char ref_geoid_file[HC_CHAR_LENGTH]; /* reference geoid */
+  char ref_dtopo_file[HC_CHAR_LENGTH]; /* reference dynamic topography */
 };
 
 /* plate velocity structure */
@@ -281,7 +282,7 @@ struct hcs{
   int inho;		/* number of density layers */
   HC_PREC *dfact; 	/* density factors, derived from layer thickness */
   HC_PREC *rden; 	/* radii of density layers [normalized] */
-  
+  HC_PREC rho_top_kg;	/* top density in kg/m^3 */
   struct sh_lms *dens_anom; /* 
 			       expansions of density
 			       anomalies has to be [inho] (if
@@ -421,6 +422,7 @@ density scaling modes
 
 #define HC_SOLVER_MODE_DEFAULT 0
 #define HC_SOLVER_MODE_VISC_SCAN 1
+#define HC_SOLVER_MODE_DYNTOPO_INVERT 2
 
 /* 
    

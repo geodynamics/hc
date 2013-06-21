@@ -308,8 +308,31 @@ HC_PREC sh_correlation_per_degree(struct sh_lms *exp1, struct sh_lms *exp2, int 
   tmp = sqrt(sum[1]*sum[2]);
   return sum[0]/tmp;
 }
+void sh_single_par_and_exp_to_file(struct sh_lms *exp, char *name,
+				   hc_boolean binary,hc_boolean verbose)
+{
+  FILE *out;
+  out = fopen(name,"w");
+  if(!out){
+    fprintf(stderr,"sh_single_par_and_exp_to_file: ERROR: problem openeing %s\n",name);
+    exit(-1);
+  }
+  sh_single_par_and_exp_to_stream(exp,out,binary,verbose);
+  fclose(out);
+  if(verbose)
+    fprintf(stderr,"sh_single_par_and_exp_to_file: written to %s\n",name);
+}
 
 
+
+void sh_single_par_and_exp_to_stream(struct sh_lms *exp, FILE *out,
+				     hc_boolean binary,hc_boolean verbose)
+{
+  HC_PREC fac[1]={1.0};
+  const hc_boolean short_format = FALSE;
+  sh_print_parameters_to_stream(exp,1,0,1,0,out,short_format,binary,verbose);
+  sh_print_coefficients_to_stream(exp,1,out,fac,binary,verbose);
+}
 
 
 /* 
@@ -330,10 +353,10 @@ if short_format is selected, will only print
 lmax
 
 */
-void sh_print_parameters_to_file(struct sh_lms *exp, int shps,
-				 int ilayer, int nset,HC_CPREC zlabel,
-				 FILE *out, hc_boolean short_format,
-				 hc_boolean binary,hc_boolean verbose)
+void sh_print_parameters_to_stream(struct sh_lms *exp, int shps,
+				   int ilayer, int nset,HC_CPREC zlabel,
+				   FILE *out, hc_boolean short_format,
+				   hc_boolean binary,hc_boolean verbose)
 {
   HC_PREC fz;
   /* 
@@ -412,15 +435,15 @@ void sh_print_parameters_to_file(struct sh_lms *exp, int shps,
    
    
 */
-hc_boolean sh_read_parameters_from_file(int *type, int *lmax, 
-					int *shps,
-					int *ilayer, int *nset,
-					HC_CPREC *zlabel,
-					int *ivec,
-					FILE *in, 
-					hc_boolean short_format,
-					hc_boolean binary,
-					hc_boolean verbose)
+hc_boolean sh_read_parameters_from_stream(int *type, int *lmax, 
+					  int *shps,
+					  int *ilayer, int *nset,
+					  HC_CPREC *zlabel,
+					  int *ivec,
+					  FILE *in, 
+					  hc_boolean short_format,
+					  hc_boolean binary,
+					  hc_boolean verbose)
 {
   int input1[2],input2[3];
   HC_PREC fz;
@@ -536,11 +559,11 @@ hc_boolean sh_read_parameters_from_file(int *type, int *lmax,
    fac[3] scales the coefficients
 
 */
-void sh_print_coefficients_to_file(struct sh_lms *exp, 
-				   int shps, FILE *out, 
-				   HC_CPREC *fac,
-				   hc_boolean binary, 
-				   hc_boolean verbose)
+void sh_print_coefficients_to_stream(struct sh_lms *exp, 
+				     int shps, FILE *out, 
+				     HC_CPREC *fac,
+				     hc_boolean binary, 
+				     hc_boolean verbose)
 {
   int j,l,m;
   HC_PREC value[2];
@@ -587,7 +610,7 @@ void sh_print_coefficients_to_file(struct sh_lms *exp,
 	fprintf(out,"\n");
       } /* end m loop */
     }	/* end l loop */
-    fprintf(out,"\n");
+    //fprintf(out,"\n");
   }
 }
 /* 
@@ -605,9 +628,9 @@ lmax: -1: use lmax from expansion
 
 
 */
-void sh_read_coefficients_from_file(struct sh_lms *exp, int shps, int lmax,
-				    FILE *in, hc_boolean binary, HC_CPREC *fac,
-				    hc_boolean verbose)
+void sh_read_coefficients_from_stream(struct sh_lms *exp, int shps, int lmax,
+				      FILE *in, hc_boolean binary, HC_CPREC *fac,
+				      hc_boolean verbose)
 {
   int j,k,l,m,lmax_loc;
   HC_CPREC value[2]={0,0};
@@ -621,12 +644,12 @@ void sh_read_coefficients_from_file(struct sh_lms *exp, int shps, int lmax,
   */
   for(j=1;j < shps;j++){ /* check the lmax */
     if(exp[j].lmax != exp[0].lmax){
-      fprintf(stderr,"sh_read_coefficients_from_file: error: lmax(%i):%i != lmax(0):%i\n",
+      fprintf(stderr,"sh_read_coefficients_from_stream: error: lmax(%i):%i != lmax(0):%i\n",
 	      j+1,exp[j].lmax,exp[0].lmax);
       exit(-1);
     }
     if(exp[j].type != exp[0].type ){
-      fprintf(stderr,"sh_read_coefficients_from_file: error: type(%i):%i != type(0):%i\n",
+      fprintf(stderr,"sh_read_coefficients_from_stream: error: type(%i):%i != type(0):%i\n",
 	      j+1,exp[j].type,exp[0].type);
       exit(-1);
     }
@@ -636,7 +659,7 @@ void sh_read_coefficients_from_file(struct sh_lms *exp, int shps, int lmax,
       for(m=0;m <= l;m++)
 	for(j=0;j < shps;j++){
 	  if(hc_read_float(fvalue,2,in)!=2){
-	    fprintf(stderr,"sh_read_coefficients_from_file: read error: set %i l %i m %i\n",
+	    fprintf(stderr,"sh_read_coefficients_from_stream: read error: set %i l %i m %i\n",
 		    j+1,l,m);
 	    exit(-1);
 	  }
@@ -651,7 +674,7 @@ void sh_read_coefficients_from_file(struct sh_lms *exp, int shps, int lmax,
       for(m=0;m <= l;m++)
 	for(j=0;j < shps;j++){
 	  if(fscanf(in,HC_TWO_FLT_FORMAT,value,(value+1))!=2){
-	    fprintf(stderr,"sh_read_coefficients_from_file: read error: set %i l %i m %i, last val: %g %g\n",
+	    fprintf(stderr,"sh_read_coefficients_from_stream: read error: set %i l %i m %i, last val: %g %g\n",
 		    j+1,l,m,(double)value[0],(double)value[1]);
 	    exit(-1);
 	  }
@@ -713,9 +736,9 @@ lon lat z data
 instead
 
 */
-void sh_read_spatial_data_from_file(struct sh_lms *exp, FILE *in, 
+void sh_read_spatial_data_from_stream(struct sh_lms *exp, FILE *in, 
 				    my_boolean use_3d, 
-				    int shps, HC_PREC *data, 
+				      int shps, HC_PREC *data, 
 				    HC_PREC *z)
 {
   struct ggrd_gt *gdummy=(struct ggrd_gt *)NULL;
@@ -1327,9 +1350,9 @@ else  : coordinates = lon lat
 shps is the number of scalars that are passed in the data[shps * npoints] array
 
 */
-void sh_print_spatial_data_to_file(struct sh_lms *exp, int shps, 
-				   HC_PREC *data, hc_boolean use_3d,
-				   HC_PREC z, FILE *out)
+void sh_print_spatial_data_to_stream(struct sh_lms *exp, int shps, 
+				     HC_PREC *data, hc_boolean use_3d,
+				     HC_PREC z, FILE *out)
 {
   int j,k;
   HC_PREC lon,lat;
@@ -1404,11 +1427,11 @@ void sh_get_coordinates(struct sh_lms *exp,
 regular grid version
 
 */
-void sh_print_reg_spatial_data_to_file(struct sh_lms *exp, int shps, 
-				       HC_PREC *data, hc_boolean use_3d,
-				       HC_PREC z, HC_PREC *theta,int ntheta,
-				       HC_PREC *phi,int nphi,
-				       FILE *out)
+void sh_print_reg_spatial_data_to_stream(struct sh_lms *exp, int shps, 
+					 HC_PREC *data, hc_boolean use_3d,
+					 HC_PREC z, HC_PREC *theta,int ntheta,
+					 HC_PREC *phi,int nphi,
+					 FILE *out)
 {
   int i,j,k,l,npoints;
   HC_PREC lon,lat;
@@ -1420,7 +1443,7 @@ void sh_print_reg_spatial_data_to_file(struct sh_lms *exp, int shps,
 #ifdef HC_USE_HEALPIX
     
   case SH_HEALPIX:
-    HC_ERROR("sh_print_reg_spatial_data_to_file","healpix not implemented");
+    HC_ERROR("sh_print_reg_spatial_data_to_stream","healpix not implemented");
     break;		
 #endif
   case SH_RICK:
@@ -1446,7 +1469,7 @@ void sh_print_reg_spatial_data_to_file(struct sh_lms *exp, int shps,
 #ifdef HC_USE_SPHEREPACK
   case SH_SPHEREPACK_GAUSS:
   case SH_SPHEREPACK_EVEN:
-    HC_ERROR("sh_print_reg_spatial_data_to_file","spherepack not implemented");
+    HC_ERROR("sh_print_reg_spatial_data_to_stream","spherepack not implemented");
     break;
 #endif
   default:
@@ -1459,10 +1482,10 @@ void sh_print_reg_spatial_data_to_file(struct sh_lms *exp, int shps,
 irregular, arbitrary version
 
 */
-void sh_print_irreg_spatial_data_to_file(struct sh_lms *exp, int shps, 
-				       HC_PREC *data, hc_boolean use_3d,
-				       HC_PREC z, HC_PREC *theta,HC_PREC *phi,int npoints,
-				       FILE *out)
+void sh_print_irreg_spatial_data_to_stream(struct sh_lms *exp, int shps, 
+					   HC_PREC *data, hc_boolean use_3d,
+					   HC_PREC z, HC_PREC *theta,HC_PREC *phi,int npoints,
+					   FILE *out)
 {
   int i,k;
   HC_PREC lon,lat;
@@ -1472,7 +1495,7 @@ void sh_print_irreg_spatial_data_to_file(struct sh_lms *exp, int shps,
   switch(exp->type){
 #ifdef HC_USE_HEALPIX
   case SH_HEALPIX:
-    HC_ERROR("sh_print_irreg_spatial_data_to_file","healpix not implemented");
+    HC_ERROR("sh_print_irreg_spatial_data_to_stream","healpix not implemented");
     break;		
 #endif
   case SH_RICK:
@@ -1495,7 +1518,7 @@ void sh_print_irreg_spatial_data_to_file(struct sh_lms *exp, int shps,
 #ifdef HC_USE_SPHEREPACK
   case SH_SPHEREPACK_GAUSS:
   case SH_SPHEREPACK_EVEN:
-    HC_ERROR("sh_print_irreg_spatial_data_to_file","spherepack not implemented");
+    HC_ERROR("sh_print_irreg_spatial_data_to_stream","spherepack not implemented");
     break;
 #endif
   default:
@@ -1782,7 +1805,7 @@ void sh_get_coeff(struct sh_lms *exp,int l, int m, int use_b,
     break;
 #endif
   default:
-    sh_exp_type_error("sh_read_coefficients_from_file",exp);
+    sh_exp_type_error("sh_read_coefficients_from_stream",exp);
     break;
   }
 }

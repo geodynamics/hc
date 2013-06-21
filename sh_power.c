@@ -65,16 +65,16 @@ int main(int argc, char **argv)
   }
   fprintf(stderr,"%s: awaiting spherical harmonics expansion (%s) from stdin (use %s -h for help)\n",
 	  argv[0],short_format ? "short format" : "long format",argv[0]);
-  while(sh_read_parameters_from_file(&type,&lmax,&shps,&ilayer,&nset,
-				     &zlabel,&ivec,stdin,short_format,
-				     binary,verbose)){
+  while(sh_read_parameters_from_stream(&type,&lmax,&shps,&ilayer,&nset,
+				       &zlabel,&ivec,stdin,short_format,
+				       binary,verbose)){
     fprintf(stderr,"%s: computing power per degree and unit area for lmax %i ivec: %i at z: %g\n",
 	    argv[0],lmax,ivec,(double)zlabel);
     /* 
        input and init 
     */
     sh_allocate_and_init(&exp,shps,lmax, type,ivec,verbose,FALSE);
-    sh_read_coefficients_from_file(exp,shps,-1,stdin,binary,fac,verbose);
+    sh_read_coefficients_from_stream(exp,shps,-1,stdin,binary,fac,verbose);
     /* get space */
     hc_vecrealloc(&power,exp->lmaxp1 * shps,"sh_power");
     /* compute the powers */

@@ -81,9 +81,9 @@ int main(int argc, char **argv)
 	    argv[0],(short_format)?("(short format)"):("(long format)"),argv[0]);
   /* allocate two expansions */
   i=0;
-  while(sh_read_parameters_from_file(&type,(lmax+i),&shps,&ilayer,&nset,
-				     &zlabel,&ivec,stdin,short_format,
-				     binary,verbose)){
+  while(sh_read_parameters_from_stream(&type,(lmax+i),&shps,&ilayer,&nset,
+				       &zlabel,&ivec,stdin,short_format,
+				       binary,verbose)){
     if(ivec){
       fprintf(stderr,"%s: error, vector fields not implemented yet\n",argv[0]);
       exit(-1);
@@ -94,10 +94,10 @@ int main(int argc, char **argv)
     /* input and init */
     if(i==0){
       sh_allocate_and_init(&exp1,shps,lmax[i],type,ivec,verbose,0);
-      sh_read_coefficients_from_file(exp1,shps,-1,stdin,binary,fac,verbose);
+      sh_read_coefficients_from_stream(exp1,shps,-1,stdin,binary,fac,verbose);
     }else{
       sh_allocate_and_init(&exp2,shps,lmax[i],type,ivec,verbose,0);
-      sh_read_coefficients_from_file(exp2,shps,-1,stdin,binary,fac,verbose);
+      sh_read_coefficients_from_stream(exp2,shps,-1,stdin,binary,fac,verbose);
     }
     if(verbose)
       fprintf(stderr,"ok.\n");

@@ -97,7 +97,7 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
 	      hc->npb,hc->rpb,hc->fpb,free_slip,
 	      (pvel+0),hc->pol_sol,
 	      compute_geoid,geoid,hc->save_solution,
-	      verbose);
+	      verbose,FALSE);
     if(print_pt_sol)		/* print poloidal solution without the
 				   scaling factors */
       hc_print_poloidal_solution(hc->pol_sol,hc,31, /* print only up
@@ -314,4 +314,46 @@ void hc_compute_sol_spatial(struct hcs *hc, struct sh_lms *sol_w,
 		       (*sol_x+os),verbose);
   }
   hc->spatial_solution_computed = TRUE;
+}
+
+/* 
+   calculate dynamic topgoraphy given radial tractions in [MPa] 
+   
+   pass dtopo as NULL initialized
+
+
+*/
+void hc_compute_dynamic_topography(struct hcs *hc,struct sh_lms *spectral_sol,
+				   struct sh_lms **dtopo,
+				   hc_boolean scale_from_MPa_to_m,
+				   hc_boolean verbose)
+{
+  HC_PREC scale;
+  const int shps = 3;	   /* radial component of stress */
+  int nlayer;
+  nlayer = hc->nradp2-1;	/* top layer */
+  /* original solution is non-dim */
+  scale = hc->stress_scale/hc->r[nlayer]; /* go to MPa */
+  if(scale_from_MPa_to_m){
+    /*        
+       output will be in [m]
+    */
+    scale *= -1./(hc->rho_top_kg*(HC_GACC/100))*1e6;
+  }
+
+  if(verbose){
+    if(scale_from_MPa_to_m)
+      fprintf(stderr,"hc_compute_dynamic_topography: density %g to scale stress [MPa] to [m] with %g (g: %g) layer %i\n",(double)hc->rho_top_kg,(double)scale,(double)HC_GACC/100,hc->nradp2);
+    else
+       fprintf(stderr,"hc_compute_dynamic_topography: leaving in MPa, layer %i\n",
+	       hc->nradp2);
+  }
+  /* create a new expansion */
+  sh_allocate_and_init(dtopo,1,
+		       spectral_sol[nlayer*shps].lmax, 
+		       spectral_sol[nlayer*shps].type, 
+		       FALSE, verbose,FALSE);
+  /* assign */
+  sh_copy_lms((spectral_sol+nlayer*shps),*dtopo);
+  sh_scale_expansion(*dtopo,scale); /* scale */
 }

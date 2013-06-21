@@ -164,7 +164,7 @@ int main(int argc, char **argv)
       sh_read_spatial_data_from_grd(exp,ggrd,use_3d,shps,data,&zlabel);
     }else{
       /* read in data from stdin */
-      sh_read_spatial_data_from_file(exp,stdin,use_3d,shps,data,&zlabel);
+      sh_read_spatial_data_from_stream(exp,stdin,use_3d,shps,data,&zlabel);
     }
     /* 
        perform spherical harmonic expansion 
@@ -172,12 +172,12 @@ int main(int argc, char **argv)
     sh_compute_spectral(data,ivec,FALSE,&dummy,
 			exp,verbose);
     /* print parameters of expansion */
-    sh_print_parameters_to_file(exp,shps,ilayer,nset,zlabel,
-				stdout,short_format,binary,
-				verbose);
-    /* print coefficients */
-    sh_print_coefficients_to_file(exp,shps,stdout,fac,binary, 
+    sh_print_parameters_to_stream(exp,shps,ilayer,nset,zlabel,
+				  stdout,short_format,binary,
 				  verbose);
+    /* print coefficients */
+    sh_print_coefficients_to_stream(exp,shps,stdout,fac,binary, 
+				    verbose);
   }
   fprintf(stderr,"%s: printing to stdout, done\n",argv[0]);
   free(exp);free(data);

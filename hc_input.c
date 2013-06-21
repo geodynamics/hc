@@ -23,9 +23,9 @@ int hc_read_sh_solution(struct hcs *hc,
      
   */
   n = os = 0;
-  while(sh_read_parameters_from_file(&type,&lmax,&shps,&ilayer,
-				     &nset,&zlabel,&ivec,in,
-				     FALSE,binary,verbose)){
+  while(sh_read_parameters_from_stream(&type,&lmax,&shps,&ilayer,
+				       &nset,&zlabel,&ivec,in,
+				       FALSE,binary,verbose)){
     hc->sh_type = type;
     if(ilayer != n){
       fprintf(stderr,"hc_read_sh_solution: error: ilayer %i n %i\n",
@@ -50,8 +50,8 @@ int hc_read_sh_solution(struct hcs *hc,
     /* 
        read coefficients
     */
-    sh_read_coefficients_from_file((*sol+os),shps,-1,in,
-				   binary,unity,verbose);
+    sh_read_coefficients_from_stream((*sol+os),shps,-1,in,
+				     binary,unity,verbose);
     if(verbose){
       if(shps == 3)
 	fprintf(stderr,"hc_read_sh_solution: z: %8.3f |r|: %12.5e |pol|: %12.5e |tor|: %12.5e\n",

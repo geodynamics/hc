@@ -39,15 +39,15 @@ void hc_print_spectral_solution(struct hcs *hc,struct sh_lms *sol,
     /* 
        write parameters, convert radius to depth in [km]  
     */
-    sh_print_parameters_to_file((sol+os),ntype,i,hc->nradp2,
-				HC_Z_DEPTH(hc->r[i]),
-				out,FALSE,binary,verbose);
+    sh_print_parameters_to_stream((sol+os),ntype,i,hc->nradp2,
+				  HC_Z_DEPTH(hc->r[i]),
+				  out,FALSE,binary,verbose);
     /* 
        
        write the set of coefficients in D&T convention
        
     */
-    sh_print_coefficients_to_file((sol+os),ntype,out,fac,
+    sh_print_coefficients_to_stream((sol+os),ntype,out,fac,
 				  binary,verbose);
     if(verbose >= 2){
       switch(sol_mode){
@@ -99,9 +99,9 @@ void hc_print_sh_scalar_field(struct sh_lms *sh, FILE *out,
 			      hc_boolean verbose)
 {
   HC_CPREC fac[1] = {1.0};
-  sh_print_parameters_to_file(sh,1,0,1,0.0,out,
-			      short_format,binary,verbose); /* parameters in long format */
-  sh_print_coefficients_to_file(sh,1,out,fac,binary,verbose); /* coefficients */
+  sh_print_parameters_to_stream(sh,1,0,1,0.0,out,
+				short_format,binary,verbose); /* parameters in long format */
+  sh_print_coefficients_to_stream(sh,1,out,fac,binary,verbose); /* coefficients */
 }
 
 
@@ -781,8 +781,8 @@ void hc_print_dens_anom(struct hcs *hc,
     sh_c_is_a_plus_b_coeff((exp+2),(exp+0),(exp+1)); /* c = a+b */
 
     /* print to file */
-    sh_print_parameters_to_file((exp+2),1,i,hc->nradp2,HC_Z_DEPTH(hc->r[i]),out,FALSE,binary,verbose);
-    sh_print_coefficients_to_file((exp+2),1,out,fac,binary,verbose);
+    sh_print_parameters_to_stream((exp+2),1,i,hc->nradp2,HC_Z_DEPTH(hc->r[i]),out,FALSE,binary,verbose);
+    sh_print_coefficients_to_stream((exp+2),1,out,fac,binary,verbose);
     if(verbose>2)fprintf(stderr,"hc_print_dens_anom: z: %8.3f (f1: %6.3f f2: %6.3f) %3i/%3i pow: %10.3e %10.3e %10.3e\n",
 			 (double)HC_Z_DEPTH(hc->r[i]),
 			 (double)f1,(double)f2,i+1,hc->nradp2,

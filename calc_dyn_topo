@@ -1,0 +1,38 @@
+#!/bin/bash
+
+density=3377.97
+
+lmax=31
+
+
+#eo="$eo -dens $datadir/tomography/models/smean.$lmax.m.ab -dshs  " # density model
+#eo="$eo -dnp"
+#eo="$eo -ds 0.2" # density scaling
+
+#eo="$eo -vf visc.dat " # viscosity
+#eo="$eo -cbckl 63"		# solver trick
+
+rm rtrac.sol.bin geoid.ab
+
+hc  -fs  -rtrac $eo -v
+
+if [ ! -s rtrac.sol.bin ];then
+    echo $0: error, no output produced 
+    exit
+    
+fi
+
+hc_extract_sh_layer rtrac.sol.bin 2 4 | awk '{print($2)}' > sdepth.dat
+nlay=`lc sdepth.dat`
+
+# convert to m
+fac=`gawk -v rho=$density -v g=10 'BEGIN{print(-1/(rho*g)*1e6)}' `
+echo $nlay $fac
+
+
+hc_extract_sh_layer rtrac.sol.bin $nlay 1 0 > tmp.ab
+cat tmp.ab | \
+    sh_syn 0 0 0 360 -90 90 1 2> /dev/null  | \
+    gawk -v fac=$fac '{print($1,$2,$3*fac)}' | \
+    xyz2grd -fg -Rg -I1 -Nnan  -Gdtopo.grd
+grd2map dtopo.grd
