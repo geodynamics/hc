@@ -88,16 +88,15 @@ int main(int argc, char **argv)
   {
     /* compute solution */
     hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
-	     (solved)?(FALSE):(TRUE), /* density changed? */
+	     TRUE, /* density changed? */
 	     (solved)?(FALSE):(TRUE), /* plate velocity changed? */
 	     TRUE,			/* viscosity changed */
 	     FALSE,p->compute_geoid,
 	     pvel,model->dens_anom,geoid,
 	     p->verbose);
     /* extract the top tractions */
-    hc_compute_dynamic_topography(model,sol_spectral,&dtopo,FALSE,p->verbose);
-    
-    sh_single_par_and_exp_to_file(dtopo,"dtopo.ab",TRUE,p->verbose);
+    hc_compute_dynamic_topography(model,sol_spectral,&dtopo,TRUE,p->verbose);
+    //sh_single_par_and_exp_to_file(dtopo,"dtopo.ab",TRUE,p->verbose);
 
     /* geoid correlation */
     hc_compute_correlation(geoid,p->ref_geoid,(gcorr),0,p->verbose); /* full correlation */

@@ -36,3 +36,6 @@ cat tmp.ab | \
     gawk -v fac=$fac '{print($1,$2,$3*fac)}' | \
     xyz2grd -fg -Rg -I1 -Nnan  -Gdtopo.grd
 grd2map dtopo.grd
+
+
+hc_extract_sh_layer dscaled.sol.bin 2 4
