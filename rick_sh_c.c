@@ -364,7 +364,7 @@ void rick_shc2d_pre_reg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
   if(ivec == 0){
     /* 
 
-    scalar
+       scalar
 
     */
     rick_vecrealloc(&loc_plma,ntheta*rick->lmsize,"rick_shc2d_pre_reg 3");
@@ -426,9 +426,9 @@ void rick_shc2d_pre_reg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
 	  
 	  /* 
 	     
-	  add up contributions from all l,m 
+	     add up contributions from all l,m 
 	  
-	  u_theta
+	     u_theta
 	  
 	  */
 	  rdatax[idata] +=   /* cos term */
@@ -465,12 +465,11 @@ void rick_shc2d_irreg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
   // */
   SH_RICK_HIGH_PREC  dpdt,dpdp,mphi,sin_theta,sfac,cfac;
   SH_RICK_PREC *plm=NULL,*dplm=NULL;
-  int  i,k,k2,m,l,lmaxp1,lm1;
+  int  i,k,k2,m,l,lm1;
   if(!rick->initialized){
     fprintf(stderr,"rick_shc2d_pre_reg: error: initialize modules first\n");
     exit(-1);
   }
-  lmaxp1 = lmax + 1;               
   if((lmax+1)*(lmax+2)/2 > rick->lmsize){
     fprintf(stderr,"rick_shc2d_pre_reg: error: lmax %i out of bounds\n",lmax);
       exit(-1);

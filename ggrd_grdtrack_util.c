@@ -246,7 +246,7 @@ ggrd_boolean ggrd_grdtrack_interpolate_rtp(double r,double t,double p,
 
 this is almost redundant, use lon lat in degrees and z in [km] depth
 
- */
+*/
 ggrd_boolean ggrd_grdtrack_interpolate_lonlatz(double lon,double lat,double z,
 					       struct ggrd_gt *g,
 					       double *value,

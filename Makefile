@@ -6,9 +6,7 @@
 #
 # see source files for comments and reference to original authors
 # 
-# 
-#
-#
+
 #
 # EDIT HERE FOR GMT VERSION 
 #

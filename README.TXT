@@ -1,10 +1,8 @@
 README FOR HC
 
-Version 1.0.1
+Version 1.0.2
 
 Thorsten Becker - twb@usc.edu
-
-
 
 
 HC is a global mantle circulation solver following Hager & O'Connell
@@ -12,17 +10,17 @@ HC is a global mantle circulation solver following Hager & O'Connell
 density distributions and plate velocities.
 
 This particular implementation illustrates one possible way to combine
-the HC solver routines. 
+the HC solver routines.
 
 Based on code by Brad Hager, Richard O'Connell, and Bernhard
 Steinberger, this version is by Thorsten Becker and Craig O'Neill.
 
 Note also that the Solid Earth Teaching and Research Environment
-(SEATREE)
-
-     http://geosys.usc.edu/projects/seatree/
-
-provides a convenient user interface for HC.
+(SEATREE, http://geosys.usc.edu/projects/seatree/), as preinstalled
+with software as a VirtualBox available from the USC Geodynamics Earth
+Science Computing Environment (UGESCE,
+http://geodynamics.usc.edu/~becker/ugesce.html) provides a convenient
+user interface for HC.
 
 
 INSTALLATION
@@ -100,8 +98,6 @@ below.
 Example input data is provided in subdirectory example_data/
 
 >>>
-
-becker@walter:~/progs/src/hc-svn                                                                                                                        > hc -help
 hc - perform Hager & O'Connell flow computation
 
 This code can compute velocities, tractions, and geoid for simple density distributions
@@ -122,6 +118,7 @@ and provide lots of output. Default setting is quiet operation.
 
 See README.TXT in the installation directory for example for how to plot output, and
 http://geosys.usc.edu/projects/seatree/ for a graphical user interface.
+http://geodynamics.usc.edu/~becker/ugesce.html for a VirtualBox install.
 
 density anomaly options:
 -dens	name	use name as a SH density anomaly model (dens.sh.dat)
@@ -137,8 +134,6 @@ Earth model options:
 -prem	name	set Earth model to name (prem/prem.dat)
 -vf	name	viscosity structure filename (visc.dat), use pvisc.py to edit
 		This file is in non_dim_radius viscosity[Pas] format
-		if name is "visc_scan", will loop through a four layer viscosity scan
-
 boundary condition options:
 -fs		perform free slip computation (ON)
 -ns		perform no slip computation (OFF)
@@ -150,6 +145,7 @@ boundary condition options:
 -vtime	time	use this particular time step of the plate velocities (-1)
 
 solution procedure and I/O options:
+-cbckl	val	will modify CMB boundary condition for all l > val with solver kludge (2147483647)
 -ng		do not compute and print the geoid (1)
 -ag		compute geoid at all layer depths, as opposed to the surface only
 -rg	name	compute correlation of surface geoid with that in file "name",
@@ -162,8 +158,15 @@ solution procedure and I/O options:
 
 
 
-
 <<<
+
+KNOWN LIMITATIONS
+
+The propagator matrix approach can be unstable for moderately high
+maximum degrees. This behavior can be addressed partially by compiling
+HC in quadruple precision, and kinematic boundary can be addressed
+with a kludge, see -cbckl. 
+
 
 SPHERICAL HARMONICS FORMAT
 
@@ -333,6 +336,14 @@ computations and plotting.
 
 https://geosys.usc.edu/projects/seatree/wiki/ 
      
+UGESCE
+
+The USC Geodynamics Earth Science Computing Environment (UGESCE,
+http://geodynamics.usc.edu/~becker/ugesce.html) provides a VirtualBox
+Linux install that includes SEATREE, HC, and a range of other Earth
+Science data and software, all in one (big) package, ready to go.
+
+
 
 
 				   
