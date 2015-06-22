@@ -190,17 +190,17 @@ $(BDIR)/sh_extract_layer: $(LIBS) $(INCS) $(ODIR)/sh_extract_layer.o
 
 $(BDIR)/print_gauss_lat: print_gauss_lat.c
 	$(CC) $(CFLAGS) print_gauss_lat.c -o $(BDIR)/print_gauss_lat -lm $(INC_FLAGS) \
-	$(LIB_FLAGS)   -lrick -lhc -lggrd -lgmt -lnetcdf $(LDFLAGS)
+	$(LIB_FLAGS)   -lrick -lhc -lggrd -lgmt -lnetcdf $(LDFLAGS) -lm
 
 $(BDIR)/convert_bernhard_dens: convert_bernhard_dens.c
 	$(CC) $(CFLAGS) convert_bernhard_dens.c -o $(BDIR)/convert_bernhard_dens -lm $(INC_FLAGS) \
 	$(LIB_FLAGS)   -lrick -lhc -lggrd -lgmt -lnetcdf $(LDFLAGS)
 
 $(BDIR)/rotvec2vel: rotvec2vel.c
-	$(CC) $(CFLAGS) rotvec2vel.c -o $(BDIR)/rotvec2vel -lm $(LDFLAGS)
+	$(CC) $(CFLAGS) rotvec2vel.c -o $(BDIR)/rotvec2vel $(GGRD_LIB_FLAGS) -lm $(LDFLAGS)
 
 $(BDIR)/prem2dsm: $(ODIR)/prem2dsm.o $(PREM_OBJS)
-	$(CC) $(ODIR)/prem2dsm.o $(PREM_OBJS) -o $(BDIR)/prem2dsm -lm $(LDFLAGS) 
+	$(CC) $(ODIR)/prem2dsm.o $(PREM_OBJS) -o $(BDIR)/prem2dsm -lm $(GGRD_LIB_FLAGS) $(LDFLAGS) 
 
 
 $(BDIR)/hc: $(LIBS) $(INCS) $(ODIR)/hc.o $(PREM_OBJS)

@@ -104,8 +104,8 @@ int ggrd_read_vel_grids(struct ggrd_master *ggrd, /* ggrd master structure
     wraparound = FALSE,
     pixelreg = FALSE,
     weighted = TRUE;
-  char sname[GGRD_STRLEN],suffix[50],loc_prefix[50],*char_dummy=NULL,
-    vsfile_loc[GGRD_STRLEN],tfilename[GGRD_STRLEN];
+  char sname[GGRD_CHAR_LENGTH],suffix[50],loc_prefix[50],*char_dummy=NULL,
+    vsfile_loc[GGRD_CHAR_LENGTH],tfilename[GGRD_CHAR_LENGTH];
   float *fgrd;
   double *dgrd;
   GGRD_CPREC minphi,mintheta,omaxphi,maxtheta,std[4],rms[4],

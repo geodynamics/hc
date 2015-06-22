@@ -21,7 +21,7 @@ plate tectonic stages interpolation structure
 
 */
 struct ggrd_t{
-  char file[1000];		/* filename */
+  char file[GGRD_CHAR_LENGTH];		/* filename */
   GGRD_CPREC *vtimes;		/* times at which velocities or materials 
 				   are specified. this will hold
 				   
@@ -124,8 +124,8 @@ struct ggrd_temp_init{
   int init,scale_with_prem;
   int override_tbc,limit_trange;
   double scale,offset;
-  char gfile[1000];
-  char dfile[1000];
+  char gfile[GGRD_CHAR_LENGTH];
+  char dfile[GGRD_CHAR_LENGTH];
   struct ggrd_gt d[1];		/* grid structure */
   struct prem_model prem; 	/* PREM model */
 };
@@ -137,10 +137,10 @@ struct ggrd_master{		/* master structure */
   int vtop_control,vtop_control_init;
   int age_control,age_control_init;
   
-  char mat_file[1000];
-  char ray_file[1000];
-  char vtop_dir[1000];
-  char age_file[1000];
+  char mat_file[GGRD_CHAR_LENGTH];
+  char ray_file[GGRD_CHAR_LENGTH];
+  char vtop_dir[GGRD_CHAR_LENGTH];
+  char age_file[GGRD_CHAR_LENGTH];
   
   /* grid structures */
   struct ggrd_gt *mat;		/* material grids */

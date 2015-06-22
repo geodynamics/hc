@@ -253,13 +253,20 @@ void hc_compute_correlation(struct sh_lms *g1,struct sh_lms *g2,
 void lonlatpv2cv(HC_PREC lon, float lat, 
 		 HC_PREC *polar_vec,HC_PREC *cart_vec)
 {
-  HC_HIGH_PREC polar_base[9];
   HC_PREC theta,phi;
   theta = LAT2THETA((HC_HIGH_PREC)lat);
   phi   = LON2PHI((HC_HIGH_PREC)lon);
+  thetaphipv2cv(theta,phi,polar_vec,cart_vec);
+}
+/* theta, phi version */
+void thetaphipv2cv(HC_PREC theta, float phi, 
+		   HC_PREC *polar_vec,HC_PREC *cart_vec)
+{
+  HC_HIGH_PREC polar_base[9];
   calc_polar_base_at_theta_phi(theta,phi,polar_base);
   lonlatpv2cv_with_base(polar_vec,polar_base,cart_vec);
 }
+
 void lonlatpv2cv_with_base(HC_PREC *polar_vec,
 			   HC_HIGH_PREC *polar_base,
 			   HC_PREC *cart_vec)

@@ -76,9 +76,11 @@ general variable type defines
 
 #endif
 
-
-#define HC_CHAR_LENGTH 300		/* length of char arrays */
-
+#ifndef GGRD_CHAR_LENGTH
+#define HC_CHAR_LENGTH 1000		/* length of char arrays */
+#else
+#define HC_CHAR_LENGTH GGRD_CHAR_LENGTH
+#endif
 
 
 
@@ -445,6 +447,9 @@ macro defintions
 #define HC_TPPROD 3
 #define HC_NRNTNP 4
 
+#define HC_X 0
+#define HC_Y 1
+#define HC_Z 2
 
 /* for solution */
 #define HC_RAD 0

@@ -22,7 +22,12 @@
 #endif
 
 /* string length */
-#define GGRD_STRLEN 300
+#ifndef HC_CHAR_LENGTH 
+#define GGRD_CHAR_LENGTH 1000
+#else
+#define GGRD_CHAR_LENGTH HC_CHAR_LENGTH
+#endif
+
 
 /* errors */
 #define GGRD_PE(x) {fprintf(stderr,"ggrd: %s\n",x);}
