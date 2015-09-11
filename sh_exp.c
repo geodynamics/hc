@@ -1020,7 +1020,7 @@ input/output:
 
 */
 void sh_compute_spectral(HC_PREC *data, int ivec,
-			 hc_boolean save_plm,HC_PREC **plm,
+			 hc_boolean save_plm,SH_RICK_PREC **plm,
 			 struct sh_lms *exp, hc_boolean verbose)
 {
   if(save_plm){
