@@ -165,7 +165,9 @@ KNOWN LIMITATIONS
 The propagator matrix approach can be unstable for moderately high
 maximum degrees. This behavior can be addressed partially by compiling
 HC in quadruple precision, and kinematic boundary can be addressed
-with a kludge, see -cbckl. 
+with a kludge, see -cbckl. If you compile with this trick and
+quadruple precision (the default within SEATREE), you should be good
+to up to L=127.
 
 
 SPHERICAL HARMONICS FORMAT

@@ -500,7 +500,7 @@ int ggrd_grdtrack_init(double *west, double *east,
   FILE *din;
   float dz1,dz2;
   struct GRD_HEADER ogrd;
-  int i,one_or_zero,nx,ny,mx,my,nn;
+  int i,one_or_zero,nx,ny,mx,my;
   char filename[BUFSIZ*2],*cdummy;
   static int gmt_init = FALSE;
   /* 
@@ -716,7 +716,7 @@ int ggrd_grdtrack_init(double *west, double *east,
   nx = irint ( (*east - *west) / (*grd)[0].x_inc) + one_or_zero;
   ny = irint ( (*north - *south) / (*grd)[0].y_inc) + one_or_zero;
   /* real size of data */
-  nn = nx * ny;
+  //nn = nx * ny;
 
   /* padded */
   mx = nx + 4;
