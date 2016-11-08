@@ -1,4 +1,4 @@
-#CFLAGS = -g
+CFLAGS = -g
 #
 #
 # makefile for experimental Hager & O'Connell routines
@@ -9,6 +9,13 @@
 
 #
 # EDIT HERE FOR GMT VERSION 
+#GMTHOME=/usr/lib/gmt
+#NETCDFHOME=/usr/local
+#HCHOME=/usr/local/hc
+#
+GMTHOME=/sw/
+NETCDFHOME=/sw/lib
+HCHOME=/usr/local/hc
 #
 include Makefile.include
 #
@@ -82,13 +89,14 @@ GGRD_DEFINES = -I$(GMTHOME)/include -I$(NETCDFHOME)/include  \
 GGRD_LIB_FLAGS = -L$(GMTHOME)/lib -L$(NETCDFHOME)/lib 
 GGRD_LIBS = $(ODIR)/libggrd.a $(ODIR)/libggrd.dfast.a $(ODIR)/libggrd.dbg.a 
 GGRD_INCS = $(PREM_INCS)  ggrd_grdtrack_util.h ggrd_base.h ggrd_struc.h
-
+GMT_LIB_FLAGS = -I$(GMTHOME)/lib
 #
 #
 #
 # Hager & O'Connell code
 #
 #
+LDFLAGS=
 # C sources of subroutines (not main)
 #
 HC_SOURCES = sh_exp.c sh_model.c hc_init.c hc_solve.c hc_propagator.c \
@@ -115,8 +123,7 @@ HC_OBJS_DBG = $(ODIR)/sh_exp.dbg.o $(ODIR)/sh_model.dbg.o $(ODIR)/hc_input.dbg.o
 HC_LIBS = $(ODIR)/libhc.a 
 HC_LIBS_DEBUG =  $(ODIR)/libhc.dbg.a
 
-LIB_FLAGS = $(HEAL_LIB_FLAGS) $(RICK_LIB_FLAGS) \
-	$(GGRD_LIB_FLAGS) \
+LIB_FLAGS = $(HEAL_LIB_FLAGS) $(RICK_LIB_FLAGS) $(GGRD_LIB_FLAGS) $(GMT_LIB_FLAGS)\
 	-L$(ODIR)/
 
 #
@@ -164,11 +171,10 @@ hcplates:
 
 
 $(BDIR)/sh_test: $(LIBS) $(INCS) $(ODIR)/sh_test.o
-	$(CC) $(LIB_FLAGS) $(ODIR)/sh_test.o \
-		-o $(BDIR)/sh_test -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS)
+	$(CC) $(LIB_FLAGS) $(ODIR)/sh_test.o -o $(BDIR)/sh_test -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS)
 
 $(BDIR)/sh_syn: $(LIBS) $(INCS) $(ODIR)/sh_syn.o
-	$(CC) $(LIB_FLAGS) $(ODIR)/sh_syn.o \
+	$(CC) $(LIBS) $(LIB_FLAGS) $(ODIR)/sh_syn.o \
 		-o $(BDIR)/sh_syn -lhc -lrick $(HEAL_LIBS_LINKLINE) $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS)
 $(BDIR)/sh_corr: $(LIBS) $(INCS) $(ODIR)/sh_corr.o
 	$(CC) $(LIB_FLAGS) $(ODIR)/sh_corr.o \

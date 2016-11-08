@@ -240,6 +240,8 @@ struct hc_parameters{
   char dens_scaling_filename[HC_CHAR_LENGTH];	/*  */
   char ref_geoid_file[HC_CHAR_LENGTH]; /* reference geoid */
   char ref_dtopo_file[HC_CHAR_LENGTH]; /* reference dynamic topography */
+  int residual_lmin, residual_lmax;
+
 };
 
 /* plate velocity structure */

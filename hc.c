@@ -228,6 +228,8 @@ int main(int argc, char **argv)
 	fprintf(stderr,"%s: correlation for geoid with %s\n",argv[0],p->ref_geoid_file);
       hc_compute_correlation(geoid,p->ref_geoid,corr,1,p->verbose);
       fprintf(stdout,"%10.7f %10.7f\n",(double)corr[0],(double)corr[1]);
+      hc_compute_residual(p,geoid,p->ref_geoid,corr,2,p->verbose);
+            fprintf(stdout,"%10.7f %10.7f\n",(double)corr[0],(double)corr[1]);
     }else{
       /* 
 	 print geoid solution 
