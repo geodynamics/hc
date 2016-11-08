@@ -234,12 +234,56 @@ void hc_compute_correlation(struct sh_lms *g1,struct sh_lms *g2,
   case 1:			/* 1...20 and 4..9 correlations */
     lmaxg = MIN(20,lmaxg);
     if(verbose)
-      fprintf(stderr,"hc_compute_correlation: computing 1...%i and 4..9 correlations\n",lmaxg);
+      fprintf(stderr,"hc_compute_correlation: computing 1...%i and 4..7 correlations\n",lmaxg);
     c[0] = sh_correlation_per_degree(g1,g2,1,lmaxg);
-    c[1] = sh_correlation_per_degree(g1,g2,4,9);
+    c[1] = sh_correlation_per_degree(g1,g2,4,7);
     break;
   default:
     fprintf(stderr,"sh_compute_correlation: mode %i undefined\n",mode);
+    exit(-1);
+  }
+}
+
+void hc_compute_residual(struct hc_parameters *p, struct sh_lms *g1,struct sh_lms *g2,
+			    HC_PREC *c,int mode,hc_boolean verbose)
+{
+  int lmaxg;
+  lmaxg = MIN(g1->lmax,g1->lmax);
+
+  switch(mode){
+  case 0:			/* 1...LMAX */
+    if(verbose)
+      fprintf(stderr,"hc_compute_residual: computing 1...%i\n",lmaxg);
+    c[0] = sh_residual_per_degree(g1,g2,1,lmaxg,0);    
+    break;
+  case 1:			/* 1...20 and 4..7 correlations */
+    lmaxg = MIN(20,lmaxg);
+    if(verbose)
+      fprintf(stderr,"hc_compute_residual: computing 1...%i and 2..7 residuals\n",lmaxg);
+    c[0] = sh_residual_per_degree(g1,g2,1,lmaxg,0);
+    c[1] = sh_residual_per_degree(g1,g2,2,7,0);
+    break;
+  case 2:
+    /* print degree-by-degree correlations */
+    lmaxg = MIN(20,lmaxg);
+    if(verbose)
+      fprintf(stderr,"hc_compute_residual: computing residual for degrees %d-%d\n",p->residual_lmin,p->residual_lmax);
+    int ideg;
+    HC_PREC ctot= 0.0;
+    for(ideg=p->residual_lmin;ideg<=p->residual_lmax;ideg++){
+      HC_PREC cthis;
+      cthis = sh_residual_per_degree(g1,g2,ideg,ideg,1);
+      ctot += cthis;
+      fprintf(stdout,"%d %Le\n",ideg,cthis);
+    }
+    fprintf(stdout,"%Lf\n",ctot);
+    c[0] = sh_residual_per_degree(g1,g2,1,lmaxg,0);
+    c[1] = sh_residual_per_degree(g1,g2,2,7,0);
+
+    break;
+
+  default:
+    fprintf(stderr,"sh_compute_residual: mode %i undefined\n",mode);
     exit(-1);
   }
 }

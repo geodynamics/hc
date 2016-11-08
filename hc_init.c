@@ -74,6 +74,8 @@ void hc_init_parameters(struct hc_parameters *p)
   /* plate velocities */
   p->pvel_mode = HC_INIT_P_FROM_FILE; /* default is single plate velocity */
   p->pvel_time = -1;
+  p->residual_lmin=1;
+  p->residual_lmax=9;
   /* 
 
   filenames
@@ -542,6 +544,15 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
       used_parameter = TRUE;
     }else if(strcmp(argv[i],"-vvv")==0){	
       p->verbose = 3;
+      used_parameter = TRUE;    
+    }else if(strcmp(argv[i],"-residual_lmin")==0){	
+      hc_advance_argument(&i,argc,argv);
+      sscanf(argv[i],"%d",&p->residual_lmin);
+      used_parameter = TRUE;
+      
+    }else if(strcmp(argv[i],"-residual_lmax")==0){	
+      hc_advance_argument(&i,argc,argv);
+      sscanf(argv[i],"%d",&p->residual_lmax);
       used_parameter = TRUE;
     }			
 

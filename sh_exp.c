@@ -291,6 +291,7 @@ HC_PREC sh_correlation_per_degree(struct sh_lms *exp1, struct sh_lms *exp2, int 
 
       atmp = value1[0];
       ctmp = value2[0];
+      //      fprintf(stdout,"REFa = %Le and PREDc = %Le\n",atmp,ctmp); 
       sum[0] += atmp * ctmp;
       sum[1] += atmp * atmp;
       sum[2] += ctmp * ctmp;
@@ -308,6 +309,58 @@ HC_PREC sh_correlation_per_degree(struct sh_lms *exp1, struct sh_lms *exp2, int 
   tmp = sqrt(sum[1]*sum[2]);
   return sum[0]/tmp;
 }
+
+HC_PREC sh_residual_per_degree(struct sh_lms *exp1, struct sh_lms *exp2, int lmin,int lmax, int printresidual)
+{
+  int l,m;
+  HC_CPREC sum[3],tmp,atmp,btmp,ctmp,dtmp,value1[2],value2[2];
+  //  double dtmp;
+  hc_boolean need_b;
+
+  sum[0]=sum[1]=sum[2]=0.0;
+
+  if((lmax > exp1->lmax)||(lmax > exp2->lmax)||(lmax < 1)||(lmin < 1)){
+    fprintf(stderr,"sh_compute_correlation_per_degree: error: L1 %i L2 %i lmin %i lmax %i\n",
+	    exp1->lmax,exp2->lmax,lmin,lmax);
+    exit(-1);
+  }
+  for(l=lmin;l <= lmax;l++){
+
+    for(m=0;m<=l;m++){
+
+      need_b = (hc_boolean) ((m == 0) ? (0) : (2));
+      sh_get_coeff(exp1,l,m,need_b,TRUE,value1); /* convert to DT normalization  */
+      sh_get_coeff(exp2,l,m,need_b,TRUE,value2); /* convert to DT normalization  */
+
+      atmp = value1[0];
+      ctmp = value2[0];
+
+      sum[0] += pow(atmp - ctmp,2.0);
+      //      sum[1] += atmp * atmp;
+      //sum[2] += ctmp * ctmp;
+
+
+      if(need_b){
+	btmp = value1[1];
+	dtmp = value2[1];
+	sum[0] += pow(btmp - dtmp,2.0);
+	//if(printresidual) fprintf(stdout,"calculated: l,m=%d,%d atmp %Le btmp %Le\n",l,m,atmp,btmp);
+	//if(printresidual) fprintf(stdout,"reference : l,m=%d,%d ctmp %Le dtmp %Le\n",l,m,ctmp,dtmp);
+	if(printresidual) fprintf(stdout,"%d %d %Le %Le\n",l,m,atmp-ctmp,btmp-dtmp);
+	//sum[1] += btmp * btmp;
+	//sum[2] += dtmp * dtmp;
+      }else{
+	//if(printresidual) fprintf(stdout,"calculated: l,m=%d,%d atmp %Le\n",l,m,atmp);
+	//if(printresidual) fprintf(stdout,"reference : l,m=%d,%d ctmp %Le\n",l,m,ctmp);
+	if(printresidual) fprintf(stdout,"%d %d %Le\n",l,m,atmp-ctmp);
+      }
+    } /* end m loop */
+    
+  } /* end l loop */
+  //tmp = sqrt(sum[1]*sum[2]);
+  return sum[0];
+}
+
 void sh_single_par_and_exp_to_file(struct sh_lms *exp, char *name,
 				   hc_boolean binary,hc_boolean verbose)
 {
