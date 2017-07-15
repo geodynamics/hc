@@ -5,7 +5,7 @@
 read in a spherical harmonic expansion in  Dahlen and Tromp normalization 
 and computer power per degree and unit area
 
-Thorsten Becker (twb@usc.edu)
+Thorsten Becker (twb@ig.utexas.edu)
 
 
 usage: cat ab.sh_ana | sh_power [short_format, 0]

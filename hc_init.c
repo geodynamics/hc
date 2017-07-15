@@ -424,7 +424,7 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
       fprintf(stderr,"-dshs\t\tuse the short, Becker & Boschi (2002) format for the SH density model (%s)\n",
 	      hc_name_boolean(p->read_short_dens_sh));
 
-      fprintf(stderr,"-ds\t\tdensity scaling factor (%g)\n",
+      fprintf(stderr,"-ds\tval\tdensity scaling factor (%g)\n",
 	      (double)p->dens_anom_scale);
       fprintf(stderr,"-dnp\t\tdo not scale density anomalies with PREM but rather mean density (%s)\n",
 	      hc_name_boolean(!p->scale_dens_anom_with_prem));

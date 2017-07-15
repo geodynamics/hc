@@ -13,7 +13,7 @@ Steinberger (2000)
 the original code is due to Brad Hager, Rick O'Connell, and was
 largely modified by Bernhard Steinberger
 
-this version by Thorsten Becker (twb@usc.edu)
+this version by Thorsten Becker (twb@ig.utexas.edu)
 
 
 >>> SOME COMMENTS FROM THE ORIGINAL CODE <<<

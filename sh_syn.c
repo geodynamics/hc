@@ -8,7 +8,7 @@
 
 read in spherical harmonics coefficients (stdin) and expand to spatial basis (stdout)
 
-Thorsten Becker (twb@usc.edu)
+Thorsten Becker (twb@ig.utexas.edu)
 
 
 $Id: sh_syn.c,v 1.6 2006/01/22 01:11:34 becker Exp $

@@ -7,7 +7,7 @@
    condition at surface. based on Hager & O'Connell (1981), Hager &
    Clayton (1989), and Steinberger (2000). the original code is due to
    Brad Hager, Rick O'Connell, and was largely modified by Bernhard
-   Steinberger. this version by Thorsten Becker (twb@usc.edu) for
+   Steinberger. this version by Thorsten Becker (twb@ig.utexas.edu) for
    additional comments, see hc.c
 
    scan through viscosities and compute correlation with the geoid

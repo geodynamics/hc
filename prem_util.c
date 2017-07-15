@@ -5,7 +5,7 @@ routines to deal with PREM earth model by Dziewonki & Anderson (1981)
 
 $Id: prem_util.c,v 1.1 2005/10/19 22:52:57 becker Exp $
 
-twb@usc.edu
+twb@ig.utexas.edu
 
 
 

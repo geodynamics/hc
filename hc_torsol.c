@@ -9,7 +9,7 @@
 // will incorporate the poloidal part of the plate velocities
 //
 //
-// Thorsten Becker, twb@usc.edu
+// Thorsten Becker, twb@ig.utexas.edu
 //
 // $Id: hc_torsol.c,v 1.8 2006/01/22 01:11:34 becker Exp becker $
 //

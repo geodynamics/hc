@@ -113,7 +113,7 @@ void hc_polsol(struct hcs *hc, 	/*
   // RJO and Bernhard Steinberger
   //
   //
-  // Thorsten Becker twb@usc.edu
+  // Thorsten Becker twb@ig.utexas.edu
   //
   //
   // $Id: hc_polsol.c,v 1.12 2006/03/20 05:32:48 becker Exp becker $

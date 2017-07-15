@@ -1,8 +1,8 @@
 README FOR HC
 
-Version 1.0.2
+Version 1.0.6 - 2017
 
-Thorsten Becker - twb@usc.edu
+Thorsten Becker - twb@ig.utexas.edu
 
 
 HC is a global mantle circulation solver following Hager & O'Connell
@@ -340,8 +340,8 @@ https://geosys.usc.edu/projects/seatree/wiki/
      
 UGESCE
 
-The USC Geodynamics Earth Science Computing Environment (UGESCE,
-http://geodynamics.usc.edu/~becker/ugesce.html) provides a VirtualBox
+The Unified Geodynamics Earth Science Computing Environment (UGESCE,
+http://www-udc.ig.utexas.edu/external/becker/ugesce.html) provides a VirtualBox
 Linux install that includes SEATREE, HC, and a range of other Earth
 Science data and software, all in one (big) package, ready to go.
 

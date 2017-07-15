@@ -25,7 +25,7 @@ for correlation between l = 4 and 9
 cat geoid.ab itg-hc-geoid.ab | sh_corr 9 0 0 4  
 
 
-Thorsten Becker (twb@usc.edu)
+Thorsten Becker (twb@ig.utexas.edu)
 
 
 */

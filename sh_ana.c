@@ -7,7 +7,7 @@ type of spherical harmonic expansion desired and performs a spherical
 harmonics analysis. input spatial data is read from stdin, output
 coefficients in Dahlen and Tromp normalization to stdout
 
-Thorsten Becker (twb@usc.edu)
+Thorsten Becker (twb@ig.utexas.edu)
 
 
 usage: 

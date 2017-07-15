@@ -7,7 +7,7 @@ Rick's spherical harmonics subroutines. It is intended to illustrate
 how those packages can be used interchangably using the wrappers this
 package provides
 
-Thorsten Becker (twb@usc.edu)
+Thorsten Becker (twb@ig.utexas.edu)
 
 
 usage: 
