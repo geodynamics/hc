@@ -17,10 +17,10 @@ Steinberger, this version is by Thorsten Becker and Craig O'Neill.
 
 Note also that the Solid Earth Teaching and Research Environment
 (SEATREE, http://geosys.usc.edu/projects/seatree/), as preinstalled
-with software as a VirtualBox available from the USC Geodynamics Earth
-Science Computing Environment (UGESCE,
-http://geodynamics.usc.edu/~becker/ugesce.html) provides a convenient
-user interface for HC.
+with software as a VirtualBox available from the Unified Geodynamics
+Earth Science Computing Environment (UGESCE,
+http://www-udc.ig.utexas.edu/external/becker/ugesce.html) provides a
+convenient user interface for HC.
 
 
 INSTALLATION
