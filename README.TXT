@@ -118,7 +118,7 @@ and provide lots of output. Default setting is quiet operation.
 
 See README.TXT in the installation directory for example for how to plot output, and
 http://geosys.usc.edu/projects/seatree/ for a graphical user interface.
-http://geodynamics.usc.edu/~becker/ugesce.html for a VirtualBox install.
+http://www-udc.ig.utexas.edu/external/becker/sdata.html for a VirtualBox install.
 
 density anomaly options:
 -dens	name	use name as a SH density anomaly model (dens.sh.dat)
@@ -324,7 +324,7 @@ Note that sh_syn and sh_ana are only example implementations of the
 subroutines, there's very limited actual functionality. For a more
 useful spherical harmonics package, see shansyn at 
 
-http://geodynamics.usc.edu/~becker/sdata.html
+http://www-udc.ig.utexas.edu/external/becker/sdata.html
 
 
 That being said, also note helper programs sh_corr and sh_power.
