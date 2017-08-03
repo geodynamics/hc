@@ -216,7 +216,8 @@ void hc_advance_argument(int *i,int argc, char **argv)
 /* 
    compute the correlation between two scalar fields
    mode 0 : full correlation
-        1 : up to 20 and between 4...9
+        1 : up to 20, and between 4...9
+        2 : up to 20, and between 4...9, and between 2...4
 
  */
 void hc_compute_correlation(struct sh_lms *g1,struct sh_lms *g2,
@@ -237,6 +238,14 @@ void hc_compute_correlation(struct sh_lms *g1,struct sh_lms *g2,
       fprintf(stderr,"hc_compute_correlation: computing 1...%i and 4..9 correlations\n",lmaxg);
     c[0] = sh_correlation_per_degree(g1,g2,1,lmaxg);
     c[1] = sh_correlation_per_degree(g1,g2,4,9);
+    break;
+  case 2:			/* 1...20, 4..9, 2..4 correlations */
+    lmaxg = MIN(20,lmaxg);
+    if(verbose)
+      fprintf(stderr,"hc_compute_correlation: computing 1...%i and 4..9 correlations\n",lmaxg);
+    c[0] = sh_correlation_per_degree(g1,g2,1,lmaxg);
+    c[1] = sh_correlation_per_degree(g1,g2,4,9);
+    c[2] = sh_correlation_per_degree(g1,g2,2,4);
     break;
   default:
     fprintf(stderr,"sh_compute_correlation: mode %i undefined\n",mode);

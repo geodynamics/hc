@@ -14,16 +14,24 @@
 
 */
 
+/* indices for arrays */
+#define IVMIN 0
+#define IVMAX 1
+#define IDV 2
+
+
+
 int main(int argc, char **argv)
 {
   struct hcs *model;		/* main structure, make sure to initialize with 
 				   zeroes */
   struct sh_lms *sol_spectral=NULL, *geoid = NULL;		/* solution expansions */
   struct sh_lms *pvel=NULL;					/* local plate velocity expansion */
-  int nsol,lmax,solved;
+  int nsol,lmax;
   struct hc_parameters p[1]; /* parameters */
-  HC_PREC corr[2];			/* correlations */
-  HC_PREC vl[4][3],v[4],dv;			/*  for viscosity scans */
+  hc_boolean solved = FALSE; /* init with FALSE! */
+  hc_boolean vary_umlm = FALSE;
+  HC_PREC vl[HC_VSCAN_NLAYER_MAX][3],v[HC_VSCAN_NLAYER_MAX];			/*  for viscosity scans */
   /* 
      
   
@@ -50,24 +58,23 @@ int main(int argc, char **argv)
   */
   p->solver_mode = HC_SOLVER_MODE_VISC_SCAN;
   p->visc_init_mode = HC_INIT_E_FOUR_LAYERS;
-  p->compute_geoid = 1;
-  p->compute_geoid_correlations = TRUE;
-  
-  if(argc > 1){
-    /* read in the reference geoid */
-    strcpy(p->ref_geoid_file,argv[1]);
-    hc_read_scalar_shexp(p->ref_geoid_file,&(p->ref_geoid),"reference geoid",p);
-  }else{
-    fprintf(stderr,"%s: ERROR: need geoid.ab file as an argument\n",argv[0]);
-    fprintf(stderr,"%s: usage:\n\n%s geoid.ab\n\n",argv[0],argv[0]);
-    fprintf(stderr,"%s: for help, use:\n\n%s geoid.ab -h\n\n",argv[0],argv[0]);
-    exit(-1);
-  }
-  
+  p->compute_geoid = 1;		/* compute geoid at surface */
   /* 
-     handle other command line arguments
+     handle command line arguments
   */
-  hc_handle_command_line(argc,argv,2,p);
+  hc_handle_command_line(argc,argv,1,p);
+  
+  fprintf(stderr,"%s: starting scan using reference %s, dv: %g, nlayer: %i/%i, z_ulm: %g\n",
+	  argv[0],p->ref_geoid_file,p->vscan_dv,p->vscan_n,
+	  HC_VSCAN_NLAYER_MAX,
+	  HC_Z_DEPTH(p->rlayer[0]));
+  if(p->vscan_n < 0){
+    p->vscan_n = - p->vscan_n;
+    fprintf(stderr,"%s: i.e. %i layers, but additionally varying upper/lower mantle boundary\n",
+	    argv[0],p->vscan_n);
+    vary_umlm = TRUE;
+  }
+
   /* 
 
      begin main program part
@@ -86,7 +93,7 @@ int main(int argc, char **argv)
      (3)
   
      initialize all variables
-  
+     
      - choose the internal spherical harmonics convention
      - assign constants
      - assign phase boundaries, if any
@@ -120,12 +127,7 @@ int main(int argc, char **argv)
   
   /* init done */
   /* 
-
-
-
      SOLUTION PART
-
-
   */
   /* 
      make room for the spectral solution on irregular grid
@@ -135,65 +137,120 @@ int main(int argc, char **argv)
   /* make room for geoid solution at surface */
   sh_allocate_and_init(&geoid,1,model->dens_anom[0].lmax,
 		       model->sh_type,HC_SCALAR,p->verbose,FALSE);
+
     
-  /* parameter space log bounds */
-  
-  dv = .1;			/* spacing */
-  
-  vl[0][0]=  -3;vl[0][1]=3+1e-5;vl[0][2]=dv; /*   0..100 layer log bounds and spacing */
-  vl[1][0]=  -3;vl[1][1]=3+1e-5;vl[1][2]=dv; /* 100..410 */
-  if(p->free_slip){
-    vl[2][0]=  0;vl[2][1]=0+1e-5;vl[2][2]=dv; /* for free slip,
-						 only relative
-						 viscosisites
-						 matter for
-						 correlation */
-  }else{
-    vl[2][0]=  -3;vl[2][1]=3+1e-5;vl[2][2]=dv; /* need to actually
-						  loop 410 .660 */
-  }
-  vl[3][0]=  -3;vl[3][1]=3+1e-5;vl[3][2]=dv; /* 660 ... 2871 */
-  
-  
-  /*  */
-  /* select plate velocity */
+  /* select plate velocity if not free slip */
   if(!p->free_slip)
     hc_select_pvel(p->pvel_time,&model->pvel,pvel,p->verbose);
   
-  solved=0;
-  for(v[0]=vl[0][0];v[0] <= vl[0][1];v[0] += vl[0][2])
-    for(v[1]=vl[1][0];v[1] <= vl[1][1];v[1] += vl[1][2])
-      for(v[2]=vl[2][0];v[2] <= vl[2][1];v[2] += vl[2][2])
-	for(v[3]=vl[3][0];v[3] <= vl[3][1];v[3] += vl[3][2]){
-	  /* layer viscosity structure */
-	  p->elayer[0] = pow(10,v[3]); /* bottom */
-	  p->elayer[1] = pow(10,v[2]); /* 660..410 */
-	  p->elayer[2] = pow(10,v[1]); /* 410..100 */
-	  p->elayer[3] = pow(10,v[0]); /* 100..0  */
-	  hc_assign_viscosity(model,HC_INIT_E_FOUR_LAYERS,p->elayer,p);
-	  /* print viscosities of 0...100, 100...410, 410 ... 660 and 660...2871  layer */
-	  fprintf(stdout,"%14.7e %14.7e %14.7e %14.7e\t",
-		  (double)p->elayer[3],(double)p->elayer[2],
-		  (double)p->elayer[1],(double)p->elayer[0]);
-	  /* compute solution */
-	  hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
-		   (solved)?(FALSE):(TRUE), /* density changed? */
-		   (solved)?(FALSE):(TRUE), /* plate velocity changed? */
-		   TRUE,			/* viscosity changed */
-		   FALSE,p->compute_geoid,
-		   pvel,model->dens_anom,geoid,
-		   p->verbose);
-	  /* only output are the geoid correlations, for now */
-	  hc_compute_correlation(geoid,p->ref_geoid,corr,1,p->verbose);
-	  fprintf(stdout,"%10.7f %10.7f ",
-		  (double)corr[0],(double)corr[1]);
-	  fprintf(stdout,"\n");
-	  solved++;
-	}
-  /*
-     
-    free memory
+  /* parameter space log bounds */
+  
+  switch(p->vscan_n){
+  case 4:
+    /* 
+       
+       for layer case
 
+     */
+    /* uniform "priors" */
+    vl[0][IVMIN]=  -HC_VSCAN_VMAX;vl[0][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[0][IDV]=p->vscan_dv; /*   0..100
+											       layer
+											       log
+											       bounds
+											       and
+											       spacing */
+    vl[1][IVMIN]=  -HC_VSCAN_VMAX;vl[1][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[1][IDV]=p->vscan_dv; /* 100..410 */
+    if(p->free_slip){
+      vl[2][IVMIN]=  0;vl[2][IVMAX]=0+1e-5;vl[2][IDV]=p->vscan_dv; /* for free
+								      slip, only relative
+								      viscosisites matter
+								      for correlation */
+      fprintf(stderr,"%s: for free slip, we set upper mantle (layer 2) to unity (only relative viscosities matter)\n",argv[0]);
+    }else{
+      vl[2][IVMIN]=  -HC_VSCAN_VMAX;vl[2][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[2][IDV]=p->vscan_dv; /* need to actually
+											       loop 410 .660 */
+    }
+    vl[3][IVMIN]=  -HC_VSCAN_VMAX;vl[3][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[3][IDV]=p->vscan_dv; /* 660 ... 2871 */
+
+    /* loop */
+    for(v[0]=vl[0][IVMIN];v[0] <= vl[0][IVMAX];v[0] += vl[0][IDV])
+      for(v[1]=vl[1][IVMIN];v[1] <= vl[1][IVMAX];v[1] += vl[1][IDV])
+	for(v[2]=vl[2][IVMIN];v[2] <= vl[2][IVMAX];v[2] += vl[2][IDV])
+	  for(v[3]=vl[3][IVMIN];v[3] <= vl[3][IVMAX];v[3] += vl[3][IDV])
+	    visc_scan_out(v,geoid,sol_spectral,pvel,p,model,&solved,vary_umlm);
+    break;
+  case 3:
+    /* 
+
+       three layer case
+
+    */
+    vl[0][IVMIN]=  -HC_VSCAN_VMAX;vl[0][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[0][IDV]=p->vscan_dv; /*   0..100
+											       layer
+											       log
+											       bounds
+											       and
+											       spacing */
+    /* vl[1] will be same as vl[2] */
+    if(p->free_slip){
+      vl[2][IVMIN]=  0;vl[2][IVMAX]=0+1e-5;vl[2][IDV]=p->vscan_dv; /* for free
+								      slip, only relative
+								      viscosisites matter
+								      for correlation */
+      fprintf(stderr,"%s: for free slip, we set upper mantle (layer 2) to unity (only relative viscosities matter)\n",argv[0]);
+    }else{
+      vl[2][IVMIN]=  -HC_VSCAN_VMAX;vl[2][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[2][IDV]=p->vscan_dv; /* need to actually
+											       loop 410 .660 */
+    }
+    vl[3][IVMIN]=  -HC_VSCAN_VMAX;vl[3][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[3][IDV]=p->vscan_dv; /* 660 ... 2871 */
+    /* loop */
+    for(v[0]=vl[0][IVMIN];v[0] <= vl[0][IVMAX];v[0] += vl[0][IDV])
+      for(v[2]=vl[2][IVMIN];v[2] <= vl[2][IVMAX];v[2] += vl[2][IDV]){
+	v[1] = v[2];
+	for(v[3]=vl[3][IVMIN];v[3] <= vl[3][IVMAX];v[3] += vl[3][IDV])
+	  visc_scan_out(v,geoid,sol_spectral,pvel,p,model,&solved,vary_umlm);
+      }
+    break;
+  case 2:
+    /* 
+       two layer case
+
+       vl[0] and vl[1] will be same as vl[2] 
+
+    */
+    if(p->free_slip){
+      vl[2][IVMIN]=  0;vl[2][IVMAX]=0+1e-5;vl[2][IDV]=p->vscan_dv; /* for
+								      free
+								      slip,
+								      only
+								      relative
+								      viscosisites
+								      matter
+								      for
+								      correlation */
+      fprintf(stderr,"%s: for free slip, we set upper mantle (layer 2) to unity (only relative viscosities matter)\n",argv[0]);
+    }else{
+      vl[2][IVMIN]=  -HC_VSCAN_VMAX;vl[2][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[2][IDV]=p->vscan_dv; /* need to actually
+											       loop 410 .660 */
+    }
+    vl[3][IVMIN]=  -HC_VSCAN_VMAX;vl[3][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[3][IDV]=p->vscan_dv; /* 660 ... 2871 */
+    /* loop */
+    for(v[2]=vl[2][IVMIN];v[2] <= vl[2][IVMAX];v[2] += vl[2][IDV]){
+      v[0] = v[1] = v[2];
+      for(v[3]=vl[3][IVMIN];v[3] <= vl[3][IVMAX];v[3] += vl[3][IDV])
+	visc_scan_out(v,geoid,sol_spectral,pvel,p,model,&solved,vary_umlm);
+    }
+    break;
+  default:
+    fprintf(stderr,"%s: not set up for %i layers\n",argv[0],p->vscan_n);
+    exit(-1);
+    break;
+  }
+  
+  /*
+    
+    free memory
+    
   */
   sh_free_expansion(sol_spectral,nsol);
   /* local copies of plate velocities */
@@ -206,3 +263,37 @@ int main(int argc, char **argv)
   return 0;
 }
 
+
+/* 
+   print out a four layer viscosity structure geoid correlation suite,
+   or additionally scan through the upper/lower mantle depths
+ */
+void visc_scan_out(HC_PREC *v,struct sh_lms *geoid,
+		   struct sh_lms *sol_spectral,
+		   struct sh_lms *pvel,
+		   struct hc_parameters *p,
+		   struct hcs *model,
+		   hc_boolean *solved,
+		   hc_boolean vary_umlm)
+{
+  HC_PREC corr[3],r660=660;
+  const HC_PREC rtop = 300.1, rbot = 1800+1e-5, dr = 25;
+
+  if(vary_umlm){
+    for(r660=rtop;r660<=rbot;r660+=dr){
+      /* overwrite 660 as first non CMB boundary from the bottom */
+      p->rlayer[0] = HC_ND_RADIUS(r660);
+      /* print viscosities of 0...100, 100...410, 410 ... 660 and
+	 660...2871 layer in log space */ 
+      fprintf(stdout,"%14.7e %14.7e %14.7e %14.7e\t",v[0],v[1],v[2],v[3]);
+      hc_calc_geoid_corr_four_layer(v,geoid,sol_spectral,pvel,p,model,solved,corr);
+      fprintf(stdout,"%10.7f %10.7f %10.7f\t%8.3f\n",corr[0],corr[1],corr[2],r660);
+    }
+  }else{
+    /* no radius scan */
+    fprintf(stdout,"%14.7e %14.7e %14.7e %14.7e\t",v[0],v[1],v[2],v[3]);
+    hc_calc_geoid_corr_four_layer(v,geoid,sol_spectral,pvel,p,model,solved,corr);
+    fprintf(stdout,"%10.7f %10.7f %10.7f\n",corr[0],corr[1],corr[2]);
+  }
+
+}

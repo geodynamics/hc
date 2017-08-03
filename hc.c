@@ -58,7 +58,6 @@ int main(int argc, char **argv)
   char filename[HC_CHAR_LENGTH],file_prefix[10];
   HC_PREC *sol_spatial = NULL;	/* spatial solution,
 				   e.g. velocities */
-  HC_PREC corr[2];			/* correlations */
   static hc_boolean geoid_binary = FALSE;	/* type of geoid output */
   static HC_CPREC unitya[1] = {1.0};
   /* 
@@ -151,7 +150,7 @@ int main(int argc, char **argv)
     /* make room for geoid solution at surface */
     sh_allocate_and_init(&geoid,1,model->dens_anom[0].lmax,
 			 model->sh_type,HC_SCALAR,p->verbose,FALSE);
-  else if(p->compute_geoid == 2) /* all layers */
+  else if(p->compute_geoid == 2) /* all layers (or kernels) */
     sh_allocate_and_init(&geoid,model->nradp2,model->dens_anom[0].lmax,
 			 model->sh_type,HC_SCALAR,p->verbose,FALSE);
   
@@ -163,113 +162,114 @@ int main(int argc, char **argv)
   hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
 	   TRUE,TRUE,TRUE,p->print_pt_sol,p->compute_geoid,
 	   pvel,model->dens_anom,geoid,
-	   p->verbose);
+	   p->verbose,p->print_kernel_only);
   /* 
      
      OUTPUT PART
      
   */
-  /* 
-     
-     output of spherical harmonics solution
-     
-  */
-  switch(p->solution_mode){
-  case HC_VEL:
-    sprintf(file_prefix,"vel");break;
-  case HC_RTRACTIONS:
-    sprintf(file_prefix,"rtrac");break;
-  case HC_HTRACTIONS:
-    sprintf(file_prefix,"htrac");break;
-  default:
-    HC_ERROR(argv[0],"solution mode undefined");break;
-  }
-  if(p->sol_binary_out)
-    sprintf(filename,"%s.%s",file_prefix,HC_SOLOUT_FILE_BINARY);
-  else
-    sprintf(filename,"%s.%s",file_prefix,HC_SOLOUT_FILE_ASCII);
-  if(p->verbose)
-    fprintf(stderr,"%s: writing spherical harmonics solution to %s\n",
-	    argv[0],filename);
-  out = ggrd_open(filename,"w","main");
-  hc_print_spectral_solution(model,sol_spectral,out,
-			     p->solution_mode,
-			     p->sol_binary_out,p->verbose);
-  fclose(out);
-  /*  */
-  if(p->print_density_field){
+  if(!p->print_kernel_only){
     /* 
-       print the density field 
+       
+       output of spherical harmonics solution
+       
     */
-    sprintf(file_prefix,"dscaled");
+    switch(p->solution_mode){
+    case HC_VEL:
+      sprintf(file_prefix,"vel");break;
+    case HC_RTRACTIONS:
+      sprintf(file_prefix,"rtrac");break;
+    case HC_HTRACTIONS:
+      sprintf(file_prefix,"htrac");break;
+    default:
+      HC_ERROR(argv[0],"solution mode undefined");break;
+    }
     if(p->sol_binary_out)
       sprintf(filename,"%s.%s",file_prefix,HC_SOLOUT_FILE_BINARY);
     else
       sprintf(filename,"%s.%s",file_prefix,HC_SOLOUT_FILE_ASCII);
     if(p->verbose)
-      fprintf(stderr,"%s: writing scaled density anomaly field to %s\n",
+      fprintf(stderr,"%s: writing spherical harmonics solution to %s\n",
 	      argv[0],filename);
-    
     out = ggrd_open(filename,"w","main");
-    hc_print_dens_anom(model,out,p->sol_binary_out,p->verbose);
+    hc_print_spectral_solution(model,sol_spectral,out,
+			       p->solution_mode,
+			       p->sol_binary_out,p->verbose);
     fclose(out);
-  }
+    /*  */
+    if(p->print_density_field){
+      /* 
+	 print the density field 
+      */
+      sprintf(file_prefix,"dscaled");
+      if(p->sol_binary_out)
+	sprintf(filename,"%s.%s",file_prefix,HC_SOLOUT_FILE_BINARY);
+      else
+	sprintf(filename,"%s.%s",file_prefix,HC_SOLOUT_FILE_ASCII);
+      if(p->verbose)
+	fprintf(stderr,"%s: writing scaled density anomaly field to %s\n",
+		argv[0],filename);
+      
+      out = ggrd_open(filename,"w","main");
+      hc_print_dens_anom(model,out,p->sol_binary_out,p->verbose);
+      fclose(out);
+    }
+    if(p->print_spatial){
+      /* 
+	 we wish to use the spatial solution
+	 
+	 expand velocities to spatial base, compute spatial
+	 representation
+	 
+      */
+      hc_compute_sol_spatial(model,sol_spectral,&sol_spatial,
+			     p->verbose);
+      /* 
+	 
+	 output of spatial solution
+	 
+      */
+      sprintf(filename,"%s.%s",file_prefix,HC_SPATIAL_SOLOUT_FILE);
+      /* print lon lat z v_r v_theta v_phi */
+      hc_print_spatial_solution(model,sol_spectral,sol_spatial,
+				filename,HC_LAYER_OUT_FILE,
+				p->solution_mode,p->sol_binary_out,
+				p->verbose);
+    }
+    
+  } /* end non-kernel branch */
   
   
   /* compute the geoid? */
   if(p->compute_geoid){
-    if(p->compute_geoid_correlations){
-      if(p->compute_geoid == 2){ /* check if all geoids were computed */
-	fprintf(stderr,"%s: ERROR: can only compute correlation for surface geoid, geoid = %i\n",
-		argv[0],p->compute_geoid);
-	exit(-1);
-      }
-      if(p->verbose)
-	fprintf(stderr,"%s: correlation for geoid with %s\n",argv[0],p->ref_geoid_file);
-      hc_compute_correlation(geoid,p->ref_geoid,corr,1,p->verbose);
-      fprintf(stdout,"%10.7f %10.7f\n",(double)corr[0],(double)corr[1]);
-    }else{
-      /* 
-	 print geoid solution 
-      */
+    /* 
+       print geoid solution 
+    */
+    if(p->print_kernel_only)
+      sprintf(filename,"%s",HC_GEOID_KERNEL_FILE);
+    else
       sprintf(filename,"%s",HC_GEOID_FILE);
-      if(p->verbose)
-	fprintf(stderr,"%s: writing geoid to %s, %s\n",
-		argv[0],filename,(p->compute_geoid == 1)?("at surface"):("all layers"));
-      out = ggrd_open(filename,"w","main");	
+    if(p->verbose)
+      fprintf(stderr,"%s: writing geoid %sto %s, %s\n",argv[0],
+	      ((p->print_kernel_only)?("kernels "):("")),filename,
+	      (p->compute_geoid == 1)?("at surface"):("all layers"));
+    out = ggrd_open(filename,"w","main");	
+    if(p->print_kernel_only){
+      hc_print_geoid_kernel(geoid,model->r,model->nradp2,out,p->verbose);
+    }else{			/* geoid solutions */
       if(p->compute_geoid == 1) /* surface layer */
 	hc_print_sh_scalar_field(geoid,out,FALSE,geoid_binary,p->verbose);
       else{			/* all layers */
 	for(i=0;i < model->nradp2;i++){
 	  sh_print_parameters_to_stream((geoid+i),1,i,model->nradp2,
-					HC_Z_DEPTH(model->r[i]),out,FALSE,geoid_binary,p->verbose); 
-	  sh_print_coefficients_to_stream((geoid+i),1,out,unitya,geoid_binary,p->verbose); 
+					HC_Z_DEPTH(model->r[i]),out,
+					FALSE,geoid_binary,p->verbose); 
+	  sh_print_coefficients_to_stream((geoid+i),1,out,
+					  unitya,geoid_binary,p->verbose); 
 	}
       }
-      fclose(out);
     }
-  }
-  if(p->print_spatial){
-    /* 
-       we wish to use the spatial solution
-       
-       expand velocities to spatial base, compute spatial
-       representation
-       
-    */
-    hc_compute_sol_spatial(model,sol_spectral,&sol_spatial,
-			   p->verbose);
-    /* 
-
-       output of spatial solution
-       
-    */
-    sprintf(filename,"%s.%s",file_prefix,HC_SPATIAL_SOLOUT_FILE);
-    /* print lon lat z v_r v_theta v_phi */
-    hc_print_spatial_solution(model,sol_spectral,sol_spatial,
-			      filename,HC_LAYER_OUT_FILE,
-			      p->solution_mode,p->sol_binary_out,
-			      p->verbose);
+    fclose(out);
   }
   /* 
      

@@ -781,7 +781,9 @@ void hc_print_dens_anom(struct hcs *hc,
     sh_c_is_a_plus_b_coeff((exp+2),(exp+0),(exp+1)); /* c = a+b */
 
     /* print to file */
-    sh_print_parameters_to_stream((exp+2),1,i,hc->nradp2,HC_Z_DEPTH(hc->r[i]),out,FALSE,binary,verbose);
+    sh_print_parameters_to_stream((exp+2),1,i,
+				  hc->nradp2,
+				  HC_Z_DEPTH(hc->r[i]),out,FALSE,binary,verbose);
     sh_print_coefficients_to_stream((exp+2),1,out,fac,binary,verbose);
     if(verbose>2)fprintf(stderr,"hc_print_dens_anom: z: %8.3f (f1: %6.3f f2: %6.3f) %3i/%3i pow: %10.3e %10.3e %10.3e\n",
 			 (double)HC_Z_DEPTH(hc->r[i]),
@@ -792,4 +794,22 @@ void hc_print_dens_anom(struct hcs *hc,
   }
   
   sh_free_expansion(exp,3);
+}
+void hc_print_geoid_kernel(struct sh_lms *gk, HC_PREC *r,int nradp2, FILE *out,
+			   hc_boolean verbose)
+{
+  HC_PREC value[2];
+  int i, l,lmax;
+  lmax = gk[0].lmax;
+  fprintf(out,"%i %i\n",nradp2,lmax);
+  for(i=0;i < nradp2;i++){
+    fprintf(out,"%g ",HC_Z_DEPTH(r[i]));
+    if(verbose>1)
+      fprintf(stderr,"hc_print_geoid_kernel: depth: %10g\n",HC_Z_DEPTH(r[i]));
+    for(l=0;l <= lmax;l++){
+      sh_get_coeff((gk+i),l,0,FALSE,TRUE,value);
+      fprintf(out,"%12.5e ",value[0]);
+    }
+    fprintf(out,"\n");
+  }
 }

@@ -45,7 +45,8 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
 	      struct sh_lms *pvel, /* plate velocity expansion */
 	      struct sh_lms *dens_anom,
 	      struct sh_lms *geoid, /* geoid solution, needs to be init */
-	      hc_boolean verbose)
+	      hc_boolean verbose,
+	      hc_boolean print_kernel_only)
 {
   int nsh_pol,nsh_tor=0;
   static hc_boolean convert_to_dt = TRUE; /* convert the poloidal and
@@ -97,12 +98,17 @@ void hc_solve(struct hcs *hc, hc_boolean free_slip,
 	      hc->npb,hc->rpb,hc->fpb,free_slip,
 	      (pvel+0),hc->pol_sol,
 	      compute_geoid,geoid,hc->save_solution,
-	      verbose,FALSE);
+	      verbose,print_kernel_only);
     if(print_pt_sol)		/* print poloidal solution without the
 				   scaling factors */
-      hc_print_poloidal_solution(hc->pol_sol,hc,31, /* print only up
-						       to lmax = 31 or
-						       below */
+      hc_print_poloidal_solution(hc->pol_sol,hc,HC_LMAX_DEFAULT, /* print
+								    only
+								    up
+								    to
+								    lmax
+								    default
+								    or
+								    below */
 				 HC_POLSOL_FILE,convert_to_dt,verbose);
   }
   if(!free_slip){
@@ -356,4 +362,53 @@ void hc_compute_dynamic_topography(struct hcs *hc,struct sh_lms *spectral_sol,
   /* assign */
   sh_copy_lms((spectral_sol+nlayer*shps),*dtopo);
   sh_scale_expansion(*dtopo,scale); /* scale */
+}
+
+/* 
+   calculate geoid correlations, assuming that density and kinematic
+   parameters are set
+
+   input:
+   log_eta[4], viscosities 0-100,100-410,410-660,660-CMB, in log10 space
+   geoid, sol_spectral, and pvel
+
+   p,model
+
+   solved (called with FALSE once)
+
+   output:
+   corr[3],solved
+*/
+
+void hc_calc_geoid_corr_four_layer(HC_PREC *log_eta,
+				   struct sh_lms *geoid,
+				   struct sh_lms *sol_spectral,
+				   struct sh_lms *pvel,
+				   struct hc_parameters *p,
+				   struct hcs *model,
+				   hc_boolean *solved,
+				   HC_PREC *corr)
+{
+  /* layer viscosity structure */
+  p->elayer[0] = pow(10,log_eta[3]); /* bottom up */
+  p->elayer[1] = pow(10,log_eta[2]); 
+  p->elayer[2] = pow(10,log_eta[1]); 
+  p->elayer[3] = pow(10,log_eta[0]); 
+
+  /*  */
+  hc_assign_viscosity(model,HC_INIT_E_FOUR_LAYERS,p->elayer,p);
+  /* compute solution */
+  hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
+	   (*solved)?(FALSE):(TRUE), /* density changed? */
+	   (*solved)?(FALSE):(TRUE), /* plate velocity changed? */
+	   TRUE,			/* viscosity changed */
+	   FALSE,			/* don't print solution */
+	   p->compute_geoid,			/* yes, compute the geoid (could also be two, but is assumed to be at least unity) */
+	   pvel,model->dens_anom,geoid,
+	   p->verbose,
+	   FALSE);		/* not just kernel */
+  /* only output are the geoid correlations, for now */
+  hc_compute_correlation(geoid,p->ref_geoid,corr,2,p->verbose);
+  
+  *solved = TRUE;
 }

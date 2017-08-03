@@ -873,6 +873,7 @@ void hc_polsol(struct hcs *hc, 	/*
   if(nl != hc->nradp2){
     HC_ERROR("hc_polsol","nl not equal to nrad+2 at end of solution loop");
   }
+
   if(compute_geoid){
     //
     //    Calculating geoid coefficients. The factor gf comes from
@@ -902,6 +903,7 @@ void hc_polsol(struct hcs *hc, 	/*
       fprintf(stderr,"hc_polsol: error, geoid = %i undefined\n",compute_geoid);
       exit(-1);
     }
+
     for(gic=0,gi=g1;gi < g2;gi++,gic++){			  /* depth loop */
       /* 
 	 first coefficients 
@@ -912,7 +914,9 @@ void hc_polsol(struct hcs *hc, 	/*
 
       os = gi * 6 + n6;	/* select component */
       for(l=2;l <= pol_sol[0].lmax;l++){
-	for(m=0;m <= l;m++){
+	mmax = (calc_kernel_only)?(0):(l);
+	for(m=0;m <= mmax;m++){	/* will typically be <= l, but only 0
+				   for kernel computation */
 	  if (m != 0){
 	    sh_get_coeff((pol_sol+os),l,m,2,FALSE,clm); /* internal convention */
 	    clm[0] *= hc->psp.geoid_factor;
@@ -929,6 +933,7 @@ void hc_polsol(struct hcs *hc, 	/*
     if(verbose > 1)
       fprintf(stderr,"hc_polsol: assigned geoid\n");
   } /* end geoid */
+  
   /* 
      free the local arrays 
   */

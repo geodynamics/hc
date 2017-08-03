@@ -52,19 +52,7 @@ int main(int argc, char **argv)
       }
     }
   }
-  if(argc > 2){
-    sscanf(argv[2],"%i",&i);
-    if(i)
-    short_format = TRUE;
-  }
-  if(argc > 3){
-    sscanf(argv[3],"%i",&i);
-    if(i)
-      per_degree = TRUE;
-  }
-  if(argc > 4)
-    sscanf(argv[4],"%i",&lmin);
-    if((argc > 5)|| (argc < 0)){
+  if((argc > 5)|| (argc < 0)){
     fprintf(stderr,"usage: cat sh.1 sh.2 | %s [llim, %i] [short_format, %i] [per_degree, %i] [lmin, %i]\n",
 	    argv[0],llim,short_format,per_degree,lmin);
     fprintf(stderr,"reads two spherical harmonic expansions from stdin and computes\n");
@@ -76,7 +64,21 @@ int main(int argc, char **argv)
     fprintf(stderr,"lmin: will compute total correlation starting at lmin\n");
     exit(-1);
   }
+  if(argc > 2){
+    sscanf(argv[2],"%i",&i);
+    if(i)
+      short_format = TRUE;
+  }
+  if(argc > 3){
+    sscanf(argv[3],"%i",&i);
+    if(i)
+      per_degree = TRUE;
+  }
+  if(argc > 4)
+    sscanf(argv[4],"%i",&lmin);
+  
   if(verbose)
+
     fprintf(stderr,"%s: waiting to read two spherical harmonic coefficients %s from stdin (use %s -h for help)\n",
 	    argv[0],(short_format)?("(short format)"):("(long format)"),argv[0]);
   /* allocate two expansions */

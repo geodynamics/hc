@@ -25,11 +25,6 @@ void hc_init_parameters(struct hc_parameters *p)
   p->no_slip = FALSE;		/* no slip boundary condition? */
   p->platebc = FALSE;		/* plate velocities? */
   p->compute_geoid = 1;	/* compute the geoid? 1: surface 2: all layers */
-  p->compute_geoid_correlations = FALSE;	/* compute the geoid
-						   correlation with
-						   refernece only
-						   (only works for
-						   surface) */
   p->dens_anom_scale = HC_D_LOG_V_D_LOG_D ;	/* default density anomaly scaling to
 						   go from PREM percent traveltime
 						   anomalies to density anomalies */
@@ -51,6 +46,9 @@ void hc_init_parameters(struct hc_parameters *p)
 
   p->print_density_field = TRUE; /* print the scaled density field (useful for debugging) */
 
+
+  p->print_kernel_only = FALSE;
+  
   p->solver_mode = HC_SOLVER_MODE_DEFAULT ;
   
   p->print_pt_sol = FALSE;
@@ -74,6 +72,12 @@ void hc_init_parameters(struct hc_parameters *p)
   /* plate velocities */
   p->pvel_mode = HC_INIT_P_FROM_FILE; /* default is single plate velocity */
   p->pvel_time = -1;
+
+  /* 
+     viscosity scan stuff
+  */
+  p->vscan_n  = HC_VSCAN_NLAYER_MAX;
+  p->vscan_dv =  HC_VSCAN_DV0;
   /* 
 
   filenames
@@ -82,6 +86,8 @@ void hc_init_parameters(struct hc_parameters *p)
   strncpy(p->visc_filename,HC_VISC_FILE,HC_CHAR_LENGTH);
   strncpy(p->dens_filename,HC_DENS_SH_FILE,HC_CHAR_LENGTH);
   strncpy(p->prem_model_filename,PREM_MODEL_FILE,HC_CHAR_LENGTH);
+  strncpy(p->ref_geoid_file, HC_GEOID_REF_FILE,HC_CHAR_LENGTH);
+  strncpy(p->ref_dtopo_file, HC_DTOPO_REF_FILE,HC_CHAR_LENGTH);
 }
 
 /* 
@@ -160,32 +166,36 @@ void hc_init_main(struct hcs *hc,int sh_type,
      initialize viscosity structure from file
   */
   hc_assign_viscosity(hc,p->visc_init_mode,p->elayer,p);
-  /* 
 
-     initialize possible depth dependent scaling of density model
-  */
-  hc_assign_dd_scaling(HC_INIT_DD_FROM_FILE,dd_dummy,p,hc->r_cmb);
-
-
-  if(p->verbose)
-    switch(p->dd_dens_scale){
-    case HC_DD_CONSTANT:
-      fprintf(stderr,"hc_init_main: using constant dln\\rho/dln input density scaling of %g\n",
-	      (double)hc->dens_scale);
-      break;
-    case HC_DD_READ_FROM_FILE:
-      fprintf(stderr,"hc_init_main: reading density scaling from file\n");
-      break;
-    case HC_DD_POLYNOMIAL:
-      fprintf(stderr,"hc_init_main: using polynomial density scaling (NOT IMPLEMENTED YET)\n");
-      exit(-1);
-      break;
-    default:
-      fprintf(stderr,"hc_init_main: error, dd mode %i undefined\n",
-	      p->dd_dens_scale);
-      exit(-1);
-    }
-  
+  if(!p->print_kernel_only){
+    /* 
+       
+       initialize possible depth dependent scaling of density model
+    */
+    hc_assign_dd_scaling(HC_INIT_DD_FROM_FILE,dd_dummy,p,hc->r_cmb);
+    
+    
+    if(p->verbose)
+      switch(p->dd_dens_scale){
+      case HC_DD_CONSTANT:
+	fprintf(stderr,"hc_init_main: using constant dln\\rho/dln input density scaling of %g\n",
+		(double)hc->dens_scale);
+	break;
+      case HC_DD_READ_FROM_FILE:
+	fprintf(stderr,"hc_init_main: reading density scaling from file\n");
+	break;
+      case HC_DD_POLYNOMIAL:
+	fprintf(stderr,"hc_init_main: using polynomial density scaling (NOT IMPLEMENTED YET)\n");
+	exit(-1);
+	break;
+      default:
+	fprintf(stderr,"hc_init_main: error, dd mode %i undefined\n",
+		p->dd_dens_scale);
+	exit(-1);
+      }
+  }else{
+    fprintf(stderr,"hc_init_main: no density properties read, printing kernels only\n");
+  }
   
   if(p->no_slip && (!p->platebc)){
     /* 
@@ -197,7 +207,6 @@ void hc_init_main(struct hcs *hc,int sh_type,
       HC_ERROR("hc_init","no slip and free_slip doesn't make sense");
     if(p->verbose)
       fprintf(stderr,"hc_init: initializing for no slip\n");
-
     /* 
        read in the densities first to determine L from the density expansion
     */
@@ -205,7 +214,8 @@ void hc_init_main(struct hcs *hc,int sh_type,
 		      p->dens_filename,-1,FALSE,FALSE,p->scale_dens_anom_with_prem,
 		      p->verbose,p->read_short_dens_sh,
 		      p->dd_dens_scale,p->ndf,p->rdf,p->sdf,
-		      (p->solver_mode == HC_SOLVER_MODE_VISC_SCAN)?(TRUE):(FALSE));
+		      (p->solver_mode == HC_SOLVER_MODE_VISC_SCAN)?(TRUE):(FALSE),
+		      p->print_kernel_only);
     /* 
        assign all zeroes up to the lmax of the density expansion 
     */
@@ -230,7 +240,8 @@ void hc_init_main(struct hcs *hc,int sh_type,
     hc_assign_density(hc,p->compressible,HC_INIT_D_FROM_FILE,p->dens_filename,hc->pvel.p[0].lmax,
 		      FALSE,FALSE,p->scale_dens_anom_with_prem,
 		      p->verbose,p->read_short_dens_sh, p->dd_dens_scale,p->ndf,p->rdf,p->sdf,
-		      (p->solver_mode == HC_SOLVER_MODE_VISC_SCAN)?(TRUE):(FALSE));
+		      (p->solver_mode == HC_SOLVER_MODE_VISC_SCAN)?(TRUE):(FALSE),
+		      p->print_kernel_only);
   }else if(p->free_slip){
     /* 
        
@@ -244,8 +255,9 @@ void hc_init_main(struct hcs *hc,int sh_type,
     /* read in the density fields */
     hc_assign_density(hc,p->compressible,HC_INIT_D_FROM_FILE,p->dens_filename,-1,FALSE,FALSE,
 		      p->scale_dens_anom_with_prem,
-		      p->verbose,p->read_short_dens_sh, p->dd_dens_scale,p->ndf,p->rdf,p->sdf,
-		      (p->solver_mode == HC_SOLVER_MODE_VISC_SCAN)?(TRUE):(FALSE));
+		      p->verbose,p->read_short_dens_sh,p->dd_dens_scale,p->ndf,p->rdf,p->sdf,
+		      (p->solver_mode == HC_SOLVER_MODE_VISC_SCAN)?(TRUE):(FALSE),
+		      p->print_kernel_only);
   }else{
     HC_ERROR("hc_init","boundary condition logic error");
   }
@@ -361,6 +373,8 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
 {
   int i;
   hc_boolean used_parameter;
+  HC_PREC tmp;
+  
   for(i=start_from_i;i < argc;i++){
     used_parameter = FALSE;			/*  */
     if((p->solver_mode == HC_SOLVER_MODE_VISC_SCAN && argc < 2) || /* need
@@ -412,7 +426,7 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
       }
       fprintf(stderr,"See README.TXT in the installation directory for example for how to plot output, and\n");
       fprintf(stderr,"http://geosys.usc.edu/projects/seatree/ for a graphical user interface.\n");
-      fprintf(stderr,"http://geodynamics.usc.edu/~becker/ugesce.html for a VirtualBox install.\n\n");
+      fprintf(stderr,"https://goo.gl/D4E8oy for a VirtualBox install.\n\n");
 
 
       fprintf(stderr,"density anomaly options:\n");
@@ -437,13 +451,30 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
       fprintf(stderr,"Earth model options:\n");
       fprintf(stderr,"-prem\tname\tset Earth model to name (%s)\n",
 	      p->prem_model_filename);
-      fprintf(stderr,"-vf\tname\tviscosity structure filename (%s), use pvisc.py to edit\n",
-	      p->visc_filename);
-      fprintf(stderr,"\t\tThis file is in non_dim_radius viscosity[Pas] format\n");
-      if(p->solver_mode == HC_SOLVER_MODE_VISC_SCAN)
-	fprintf(stderr,"\t\tWARNING: Will loop through a four layer viscosity scan\n\n");
+      if((p->solver_mode == HC_SOLVER_MODE_VISC_SCAN)||
+	 (p->solver_mode == HC_SOLVER_MODE_DYNTOPO_INVERT)){
+	
+	fprintf(stderr,"\t\tWARNING: Will loop through a four layer viscosity scan\nscan options:\n");
+	
+	fprintf(stderr,"-gref\tname\tuse filename for reference geoid (%s)\n",
+		p->ref_geoid_file);
+	fprintf(stderr,"-vs_n\tn\tuse n layers out of %i for viscosity scane (%i)\n",
+		HC_VSCAN_NLAYER_MAX,p->vscan_n);
+	fprintf(stderr,"-vs_dv\tval\tuse val spacing in log space for viscosity scane (%g)\n",
+		p->vscan_dv);
+	fprintf(stderr,"-vs_zlm\tdepth\tuse depth[km] for the upper/lower mantle boundary (%g)\n",
+		HC_Z_DEPTH(p->rlayer[0]));
+
+	if(p->solver_mode == HC_SOLVER_MODE_DYNTOPO_INVERT)
+	  fprintf(stderr,"-dtref\tname\tuse filename for reference dynamic topography (%s)\n",
+		  p->ref_dtopo_file);
+      }else{
+	fprintf(stderr,"-vf\tname\tviscosity structure filename (%s), use pvisc.py to edit\n",
+		p->visc_filename);
+	fprintf(stderr,"\t\tThis file is in non_dim_radius viscosity[Pas] format\n");
+      }
       
-      fprintf(stderr,"boundary condition options:\n");
+      fprintf(stderr,"\nboundary condition options:\n");
       fprintf(stderr,"-fs\t\tperform free slip computation (%s)\n",hc_name_boolean(p->free_slip));
       fprintf(stderr,"-ns\t\tperform no slip computation (%s)\n",hc_name_boolean(p->no_slip));
       fprintf(stderr,"-pvel\tname\tset prescribed surface velocities from file name (%s)\n",
@@ -464,15 +495,15 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
 	fprintf(stderr,"-ng\t\tdo not compute and print the geoid (%i)\n",
 		p->compute_geoid);
 	fprintf(stderr,"-ag\t\tcompute geoid at all layer depths, as opposed to the surface only\n");
-	fprintf(stderr,"-rg\tname\tcompute correlation of surface geoid with that in file \"name\",\n");
-	fprintf(stderr,"\t\tthis will not print out the geoid file, but only correlations (%s)\n",
-		hc_name_boolean(p->compute_geoid_correlations));
+	
 	fprintf(stderr,"-pptsol\t\tprint pol[6] and tor[2] solution vectors (%s)\n",
 		hc_name_boolean(p->print_pt_sol));
 	fprintf(stderr,"-px\t\tprint the spatial solution to file (%s)\n",
 		hc_name_boolean(p->print_spatial));
 	fprintf(stderr,"-rtrac\t\tcompute srr,srt,srp tractions [MPa] instead of velocities [cm/yr] (default: vel)\n");
 	fprintf(stderr,"-htrac\t\tcompute stt,stp,spp tractions [MPa] instead of velocities [cm/yr] (default: vel)\n");
+	fprintf(stderr,"-pk\t\tprint kernels only, up to default L = %i\n",HC_LMAX_DEFAULT);
+	
       }
       fprintf(stderr,"-v\t-vv\t-vvv: verbosity levels (%i)\n",
 	      (int)(p->verbose));
@@ -481,6 +512,24 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
     }else if(strcmp(argv[i],"-ds")==0){	/* density anomaly scaling factor */
       hc_advance_argument(&i,argc,argv);
       sscanf(argv[i],HC_FLT_FORMAT,&p->dens_anom_scale);
+      used_parameter = TRUE;
+    }else if(strcmp(argv[i],"-vs_n")==0){	
+      hc_advance_argument(&i,argc,argv);
+      sscanf(argv[i],"%i",&p->vscan_n);
+      if(p->vscan_n >  HC_VSCAN_NLAYER_MAX){
+	fprintf(stderr,"hc_init: error, vscan layer %i out of bounds, max is %i\n",
+		p->vscan_n,HC_VSCAN_NLAYER_MAX);
+	exit(-1);
+      }
+      used_parameter = TRUE;
+    }else if(strcmp(argv[i],"-vs_dv")==0){	
+      hc_advance_argument(&i,argc,argv);
+      sscanf(argv[i],HC_FLT_FORMAT,&p->vscan_dv);
+      used_parameter = TRUE;
+    }else if(strcmp(argv[i],"-vs_zlm")==0){	
+      hc_advance_argument(&i,argc,argv);
+      sscanf(argv[i],HC_FLT_FORMAT,&tmp);
+      p->rlayer[0] = HC_ND_RADIUS(tmp);
       used_parameter = TRUE;
     }else if(strcmp(argv[i],"-cbckl")==0){	/* solver kludge */
       hc_advance_argument(&i,argc,argv);
@@ -495,6 +544,9 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
       used_parameter = TRUE;
     }else if(strcmp(argv[i],"-ns")==0){	/* no slip flag */
       p->no_slip = TRUE;p->free_slip = FALSE;
+      used_parameter = TRUE;
+    }else if(strcmp(argv[i],"-pk")==0){	
+      p->print_kernel_only = TRUE;
       used_parameter = TRUE;
     }else if(strcmp(argv[i],"-dshs")==0){ /* use short format for densities ? */
       hc_toggle_boolean(&p->read_short_dens_sh);
@@ -526,6 +578,14 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
     }else if(strcmp(argv[i],"-dsp")==0){
       p->dd_dens_scale = HC_DD_POLYNOMIAL;
       hc_advance_argument(&i,argc,argv);
+      used_parameter = TRUE;
+    }else if(strcmp(argv[i],"-gref")==0){ /* geoid reference */
+      hc_advance_argument(&i,argc,argv);
+      strncpy(p->ref_geoid_file,argv[i],HC_CHAR_LENGTH);
+      used_parameter = TRUE;
+    }else if(strcmp(argv[i],"-dtref")==0){ /* dyn topo reference */
+      hc_advance_argument(&i,argc,argv);
+      strncpy(p->ref_dtopo_file,argv[i],HC_CHAR_LENGTH);
       used_parameter = TRUE;
     }else if(strcmp(argv[i],"-vf")==0){ /* viscosity filename */
       hc_advance_argument(&i,argc,argv);
@@ -565,13 +625,6 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
       }else if(strcmp(argv[i],"-ag")==0){	/* compute geoid at all layers */
 	p->compute_geoid = 2;
 	used_parameter = TRUE;		
-      }else if(strcmp(argv[i],"-rg")==0){	/* compute geoid correlations */
-	p->compute_geoid = TRUE;
-	hc_toggle_boolean(&p->compute_geoid_correlations);
-	hc_advance_argument(&i,argc,argv); /* filename */
-	strncpy(p->ref_geoid_file,argv[i],HC_CHAR_LENGTH);
-	hc_read_scalar_shexp(p->ref_geoid_file,&(p->ref_geoid),"reference_geoid",p);
-	used_parameter = TRUE;
       }else if(strcmp(argv[i],"-rtrac")==0){	/* compute radial
 						   tractions */
 	p->solution_mode = HC_RTRACTIONS;
@@ -587,6 +640,21 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
 	      argv[0],argv[i]);
       exit(-1);
     }
+  }
+  if(p->print_kernel_only){	/* make room to store kernels */
+    fprintf(stderr,"%s: print kernel overriding geoid settings\n",argv[0]);
+    p->compute_geoid = 2;
+  }
+  
+  if((p->solver_mode == HC_SOLVER_MODE_VISC_SCAN) ||
+     (p->solver_mode == HC_SOLVER_MODE_DYNTOPO_INVERT)){
+    /* we need a reference  geoid */
+    hc_read_scalar_shexp(p->ref_geoid_file,&(p->ref_geoid),"reference geoid",p);
+  }
+  if(p->solver_mode == HC_SOLVER_MODE_DYNTOPO_INVERT){
+    /* we need a reference dynamic topography */
+    hc_read_scalar_shexp(p->ref_dtopo_file,&(p->ref_dtopo),
+			 "reference dynamic topography",p);
   }
 }
 /* 
@@ -756,7 +824,8 @@ void hc_assign_density(struct hcs *hc,
 		       hc_boolean use_short_format,
 		       hc_boolean dd_dens_scale, /* depth dependent or polynomial scaling ? */
 		       int ndf,HC_PREC *rdf,HC_PREC *sdf, /* depth dependent scaling factors */
-		       hc_boolean save_orig_danom) /* save the original density anomalies for later rescaling */
+		       hc_boolean save_orig_danom, /* save the original density anomalies for later rescaling */
+		       hc_boolean print_kernerl_only)
 {
   FILE *in;
   int type,lmax,shps,ilayer,nset,ivec,i,j;
@@ -1378,7 +1447,10 @@ void hc_assign_dd_scaling(int mode, HC_PREC dlayer[4],struct hc_parameters *p,
       p->ndf = 4;
       hc_vecrealloc(&p->rdf,(p->ndf),"hc_assign_dd_scaling");
       hc_vecrealloc(&p->sdf,(p->ndf),"hc_assign_dd_scaling");
-      p->rdf[0] = rcmb;p->rdf[1] = p->rlayer[0];p->rdf[2] = p->rlayer[1];p->rdf[3] = p->rlayer[2];
+      p->rdf[0] = rcmb;
+      p->rdf[1] = p->rlayer[0];
+      p->rdf[2] = p->rlayer[1];
+      p->rdf[3] = p->rlayer[2];
       for(i=0;i<4;i++)
 	p->sdf[i] = dlayer[i];
       if(p->verbose)

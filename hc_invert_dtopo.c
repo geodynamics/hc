@@ -34,30 +34,18 @@ int main(int argc, char **argv)
   */
   p->solver_mode = HC_SOLVER_MODE_DYNTOPO_INVERT;
   p->compute_geoid = 1;
-  p->compute_geoid_correlations = TRUE;
   p->solution_mode = HC_RTRACTIONS; /* make sure to compute tractions */
   /*  */
-  p->verbose = 1; 
-  if(argc > 2){
-    /* read in the reference geoid */
-    strcpy(p->ref_geoid_file,argv[1]);
-    hc_read_scalar_shexp(p->ref_geoid_file,&(p->ref_geoid),
-			 "reference geoid",p);
-    /* read in the reference topography */
-    strcpy(p->ref_dtopo_file,argv[2]);
-    hc_read_scalar_shexp(p->ref_dtopo_file,&(p->ref_dtopo),
-			 "reference dynamic topography",p);
-  }else{
-    fprintf(stderr,"%s: ERROR: need geoid.ab dtopo.ab file as arguments\n",argv[0]);
-    fprintf(stderr,"%s: usage:\n\n%s geoid.ab dtopo.ab\n\n",argv[0],argv[0]);
-    fprintf(stderr,"%s: for help, use\n\n%s geoid.ab dtopo.ab -h\n\n",argv[0],argv[0]);
-    exit(-1);
-  }
-  
+  p->verbose = 1;
+
+
   /* 
      handle other command line arguments
   */
   hc_handle_command_line(argc,argv,3,p);
+
+  fprintf(stderr,"%s: using %s for dyn topo and %s for geoid\n",
+	  argv[0],p->ref_dtopo_file,p->ref_geoid_file);
   /* 
 
      begin main program part
@@ -91,9 +79,8 @@ int main(int argc, char **argv)
 	     TRUE, /* density changed? */
 	     (solved)?(FALSE):(TRUE), /* plate velocity changed? */
 	     TRUE,			/* viscosity changed */
-	     FALSE,p->compute_geoid,
-	     pvel,model->dens_anom,geoid,
-	     p->verbose);
+	     FALSE,p->compute_geoid,pvel,model->dens_anom,geoid,
+	     p->verbose,FALSE);
     /* extract the top tractions */
     hc_compute_dynamic_topography(model,sol_spectral,&dtopo,TRUE,p->verbose);
     //sh_single_par_and_exp_to_file(dtopo,"dtopo.ab",TRUE,p->verbose);
