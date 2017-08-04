@@ -1,0 +1,208 @@
+#!/bin/bash
+modes=${1-"1 2 3 4"}
+
+
+for mode in $modes;do
+    if [[ $mode = 1 || $mode = 2 || $mode = 1b ]];then
+	
+	#
+	# two layers for 660 fixed 
+	#
+	nlay=2
+	for smodel in smean2 s40rts stb00d st11den-1 lrr98d smean2_ntn;do
+	    infile=visc_scan_out/visc_scan.$smodel.$nlay.dat.gz
+	    # r_20 r_4-9 r_2-4
+	    for gcol in 1 2 3;do
+		zcat $infile | gawk  -v g=$gcol '{col=4+g;print($4,$col)}'   > tmp.$gcol.$smodel
+	    done
+	done
+	if [ $mode = 1 ];then
+	    cat <<EOF | gnuplot
+set term post color enh solid 24
+set xlabel '{/Symbol h}_{lm}/{/Symbol h}_{um}'
+set ylabel 'correlation'
+set out 'visc.l1.tomo.ps'
+set logscale x
+set key left
+set xrange [0.1:*]
+set multi
+plot 'tmp.1.smean2_ntn' using (10**\$1) : (\$2) title 'r_{20}, SMEAN2' w l lt 1 lw 4,\
+     'tmp.3.smean2_ntn' using (10**\$1) : (\$2) title 'r_{2-4}, SMEAN2' w l lt 2 lw 4,\
+     'tmp.2.smean2_ntn' using (10**\$1) : (\$2) title 'r_{4-9}, ' w l lt 3 lw 4,\
+     'tmp.1.s40rts' using (10**\$1) : (\$2) title 'r_{20}, S40RTS' w l lt 1 lw 1,\
+     'tmp.3.s40rts' using (10**\$1) : (\$2) title 'r_{2-4}, S40RTS' w l lt 2 lw 1,\
+     'tmp.2.s40rts' using (10**\$1) : (\$2) title 'r_{4-9}, S40RTS' w l lt 3 lw 1
+
+
+EOF
+	    echo visc.l1.tomo.ps
+	elif [ $mode = 1b ];then
+	    cat <<EOF | gnuplot
+set term post color enh solid 24
+set xlabel '{/Symbol h}_{lm}/{/Symbol h}_{um}'
+set ylabel 'correlation'
+set out 'visc_l1_tomo_slab.ps'
+set logscale x
+set key samplen 2 right bottom
+set xrange [0.1:*]
+set multi
+plot 'tmp.1.smean2' using (10**\$1) : (\$2) title 'r_{20}, tomography' w l lt 1 lw 5,\
+     'tmp.3.smean2' using (10**\$1) : (\$2) title 'r_{2-4}, tomography' w l lt 2 lw 5,\
+     'tmp.2.smean2' using (10**\$1) : (\$2) title 'r_{4-9}, tomography' w l lt 3 lw 5,\
+     'tmp.1.lrr98d' using (10**\$1) : (\$2) title 'r_{20}, slabs' w l lt 1 lw 2,\
+     'tmp.3.lrr98d' using (10**\$1) : (\$2) title 'r_{2-4}, slabs' w l lt 2 lw 2,\
+     'tmp.2.lrr98d' using (10**\$1) : (\$2) title 'r_{4-9}, slabs' w l lt 3 lw 2
+EOF
+	    echo visc_l1_tomo_slab.ps
+	    epstopdf visc_l1_tomo_slab.ps
+	elif [ $mode = 2 ];then
+	    
+	    cat <<EOF | gnuplot
+set term post color enh solid 24
+set xlabel '{/Symbol h}_{lm}/{/Symbol h}_{um}'
+set ylabel 'correlation'
+set out 'visc.l1.sub.ps'
+set logscale x
+set key left
+set xrange [0.1:*]
+plot 'tmp.1.stb00d'    using (10**\$1) : (\$2) title 'r_{20}, M1' w l lt 1 lw 4,\
+     'tmp.1.st11den-1' using (10**\$1) : (\$2) title 'r_{20}, M2' w l lt 1 lw 1,\
+     'tmp.3.stb00d' using (10**\$1) : (\$2) title 'r_{2-4}, M1' w l lt 2 lw 4,\
+     'tmp.3.st11den-1' using (10**\$1) : (\$2) title 'r_{2-4}, M2' w l lt 2 lw 1,\
+     'tmp.2.stb00d' using (10**\$1) : (\$2) title 'r_{4-9}, M1' w l lt 3 lw 4,\
+     'tmp.2.st11den-1' using (10**\$1) : (\$2) title 'r_{4-9}, M2' w l lt 3 lw 1
+
+
+EOF
+	    echo visc.l1.sub.ps
+	fi
+    elif [ $mode = 3 ];then
+	#
+# two layer tradeoff
+	#
+	nlay=-2
+	#	for smodel in smean2 lrr98d stb00d s40rts semucb-wm1 st11den-1 smean2_ntn;do
+	for smodel in smean2_ntn lrr98d;do
+	    if [ $smodel = smean2_ntn ];then
+		mlabel="tomography"
+	    elif [ $smodel = lrr98d ];then
+		mlabel="slabs"
+	    else
+		mlabel=`echo $smodel | gawk '{print(toupper($1))}'`
+	    fi
+	    infile=visc_scan_out/visc_scan.$smodel.$nlay.dat.gz
+	    
+	    # r_20 r_4-9 r_2-4
+	    #for gcol in 1 2 3;do
+	    for gcol in 1 3;do
+		
+		zcat $infile | gawk  -v g=$gcol '{col=4+g;print($4,$8,$col)}'   > tmp.$gcol.$smodel
+		
+		reg=`minmax -I1/25 tmp.$gcol.$smodel`
+		sinc=-I0.005/1
+		surface $reg $sinc tmp.$gcol.$smodel -Gtmp.grd -T.5
+		
+		if [ $gcol -eq 1 ];then
+		    rl="r@-20@-"
+		elif [ $gcol -eq 3 ];then
+		    rl="r@-2-4@-"
+		fi
+		# find 660 max
+		(grd2xyz -R-2/3/500/700 tmp.grd 	   | gawk '{if($2==660)print($1,$3)}' | gawk -v col=2 -v pcol=1 -f max.awk  | gawk '{printf("%.2f %g\n",$1,$2)}' > tmp.660) &
+		(grd2max_location tmp.grd > tmp.max ) &
+
+		makecpt -T-.4/.8/0.05 -Cpolar -D > tmp.cpt
+		proj=-JX5/-5
+		ofile=visc_scan_plots/"visc_l1_2d_"$smodel"_"$gcol".ps"
+		grdimage tmp.grd $reg -Ctmp.cpt $proj -Ba1f.1:"log@-10@-(@~h@~@-lm@-/@~h@~@-um@-)":/a200f20:"z@-um/lm@- [km]":WeSn -P -K  > $ofile
+
+		grdcontour -S4 tmp.grd $reg $proj -C.3 -A -O -K  >> $ofile
+		psscale -D1.5/4.75/2/.2h -Ctmp.cpt -B.3/:"$rl": -O -K  -E >> $ofile
+		wait
+		# abs max
+		cat tmp.max | psxy $reg $proj -O -K -Sa.2 -Gorange -W0.5 >> $ofile
+		rmax=`grd2max tmp.grd | gawk '{printf("%.2f",$1)}' `
+		
+		read r660 x < tmp.660
+		echo $x 660 | psxy $reg $proj -O -Sc.2 -Gorange -W0.5 -K >> $ofile
+
+		echo -2.8 1550 18 0 0 ML "r@-max@-(660 km) = $r660" | pstext -R -J -O -K >> $ofile
+		echo -2.8 1700 18 0 0 ML "r@-max@- = $rmax" | pstext -R -J -O -K >> $ofile
+		
+		echo -2.8 1400 22 0 0 ML "$mlabel" | pstext -Wwhite -O $reg $proj >> $ofile
+
+		rm tmp.660 tmp.max
+		modifybb $ofile
+		(epstopdf $ofile; rm $ofile)& 
+		rm tmp.grd
+		echo $ifile $gcol $reg
+	    done
+	done
+    elif [ $mode = 4 ];then
+	#
+	# three layers
+	#
+	nlay=3
+
+	for zlm in 660 1000;do
+	    #for smodel in smean2 st11den-1 smean2_ntn semucb-wm1;do
+	    for smodel in smean2_ntn lrr98d;do
+		if [ $smodel = smean2_ntn ];then
+		    mlabel="tomography"
+		elif [ $smodel = lrr98d ];then
+		    mlabel="slabs"
+		else
+		    mlabel=`echo $smodel | gawk '{print(toupper($1))}'`
+		fi
+
+		#for smodel in smean2 ;do
+		if [ $zlm = 660 ];then
+		    infile=visc_scan_out/visc_scan.$smodel.$nlay.dat.gz
+		else
+		    infile=visc_scan_out/visc_scan.$smodel.$nlay.$zlm.dat.gz
+		fi
+		# r_20 r_4-9 r_2-4
+		#for gcol in 1 2 3;do
+		for gcol in 1 ;do
+		    if [ $zlm = 660 ];then
+			ofile=visc_scan_plots/"visc_l2_2d_"$smodel"_"$gcol".ps"
+		    else
+			ofile=visc_scan_plots/"visc_l2_2d_"$smodel"_"$gcol"_"$zlm".ps"
+		    fi
+		    
+		    zcat $infile | gawk  -v g=$gcol '{col=4+g;print($4,$1,$col)}'   | sort +2 -rn > tmp.$gcol.$smodel
+		    #head -20 tmp.$gcol.$smodel
+		    max=`head -1 tmp.$gcol.$smodel`
+
+		    reg=`minmax -I1/1 tmp.$gcol.$smodel`
+		    sinc=-I0.005/0.005
+		    
+		    surface $reg $sinc tmp.$gcol.$smodel -Gtmp.grd -T.5
+		    
+		    if [ $gcol -eq 1 ];then
+			rl="r@-20@-"
+		    elif [ $gcol -eq 3 ];then
+			rl="r@-2-4@-"
+		    fi
+		    
+		    makecpt -T-.4/.8/0.05 -Cpolar -D > tmp.cpt
+		    proj=-JX5/-5
+
+		    grdimage tmp.grd $reg -Ctmp.cpt $proj -Ba1f.1:"log@-10@-(@~h@~@-lm@-/@~h@~@-um@-), z@-ulm@- = $zlm km":/a1f.1:"log@-10@-(@~h@~@-lith@-/@~h@~@-um@-)":WeSn -P -K  > $ofile
+
+		    grdcontour -S4 tmp.grd $reg $proj -C.3 -A -O -K  >> $ofile
+		    psscale -D1.5/4.75/2/.2h -Ctmp.cpt -B.3/:"$rl": -O -K  -E >> $ofile
+		    grd2max_location tmp.grd | psxy $reg $proj -O -K -Sa.2 -Gorange -W0.5 >> $ofile
+		    rmax=`grd2max tmp.grd | gawk '{printf("%.2f",$1)}'`
+		    echo -2.8 2 22 0 0 ML $mlabel | pstext -Wwhite -O $reg -K $proj >> $ofile
+		    echo -2.8 2.6 18 0 0 ML "r@-max@- = $rmax " | pstext  -O $reg $proj >> $ofile
+		    modifybb $ofile
+		    (epstopdf $ofile; rm $ofile)& 
+		done
+	    done
+	done	
+
+    fi
+done
+rm tmp*
+
