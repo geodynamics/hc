@@ -64,10 +64,11 @@ int main(int argc, char **argv)
   */
   hc_handle_command_line(argc,argv,1,p);
   
-  fprintf(stderr,"%s: starting scan using reference %s, dv: %g, nlayer: %i/%i, z_ulm: %g\n",
+  fprintf(stderr,"%s: starting scan using reference %s, dv: %g, nlayer: %i/%i, z_ulm: %g z_asth: %g\n",
 	  argv[0],p->ref_geoid_file,p->vscan_dv,p->vscan_n,
 	  HC_VSCAN_NLAYER_MAX,
-	  HC_Z_DEPTH(p->rlayer[0]));
+	  HC_Z_DEPTH(p->rlayer[0]),
+	  HC_Z_DEPTH(p->rlayer[1]));
   if(p->vscan_n < 0){
     p->vscan_n = - p->vscan_n;
     fprintf(stderr,"%s: i.e. %i layers, but additionally varying upper/lower mantle boundary\n",

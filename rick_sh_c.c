@@ -815,7 +815,8 @@ void rick_init(int lmax,int ivec,int *npoints,int *nplm,
   SH_RICK_PREC xtemp;
   int i,l;
 
-
+  //fprintf(stderr,"rick_init: lmax: %i was_called: %i\n",lmax,rick->was_called);
+  
   if(!rick->was_called){
     if(lmax == 0){
       fprintf(stderr,"rick_init: error: lmax is zero: %i\n",lmax);

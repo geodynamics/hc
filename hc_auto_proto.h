@@ -1,4 +1,5 @@
 /* convert_bernhard_dens.c */
+/* gaussp.c */
 /* ggrd_grdtrack_util.c */
 void ggrd_init_master(struct ggrd_master *);
 void ggrd_grdinfo(char *);
@@ -45,7 +46,7 @@ void hc_init_main(struct hcs *, int, struct hc_parameters *);
 void hc_init_constants(struct hcs *, double, char *, unsigned short);
 void hc_handle_command_line(int, char **, int, struct hc_parameters *);
 void hc_assign_viscosity(struct hcs *, int, double [4], struct hc_parameters *);
-void hc_assign_density(struct hcs *, unsigned short, int, char *, int, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, int, double *, double *, unsigned short);
+void hc_assign_density(struct hcs *, unsigned short, int, char *, int, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, int, double *, double *, unsigned short, unsigned short);
 double hc_find_dens_scale(double, double, unsigned short, double *, double *, int);
 void hc_init_phase_boundaries(struct hcs *, int, unsigned short);
 void hc_assign_plate_velocities(struct hcs *, int, char *, unsigned short, int, unsigned short, unsigned short, unsigned short);
@@ -113,19 +114,22 @@ unsigned short hc_is_little_endian(void);
 void hc_flip_byte_order(void *, size_t);
 void hc_flipit(void *, void *, size_t);
 void hc_print_dens_anom(struct hcs *, FILE *, unsigned short, unsigned short);
+void hc_print_geoid_kernel(struct sh_lms *, double *, int, FILE *, unsigned short);
 /* hc_polsol.c */
 void hc_polsol(struct hcs *, int, double *, int, double *, unsigned short, struct sh_lms *, unsigned short, int, double *, double *, unsigned short, struct sh_lms *, struct sh_lms *, unsigned short, struct sh_lms *, unsigned short, unsigned short, unsigned short);
 /* hc_propagator.c */
 void hc_evalpa(int, double, double, double, double *);
 void hc_evppot(int, double, double *);
 /* hc_solve.c */
-void hc_solve(struct hcs *, unsigned short, int, struct sh_lms *, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, struct sh_lms *, struct sh_lms *, struct sh_lms *, unsigned short);
+void hc_solve(struct hcs *, unsigned short, int, struct sh_lms *, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, struct sh_lms *, struct sh_lms *, struct sh_lms *, unsigned short, unsigned short);
 void hc_sum(struct hcs *, int, struct sh_lms *, struct sh_lms *, int, unsigned short, struct sh_lms *, unsigned short);
 void hc_compute_sol_spatial(struct hcs *, struct sh_lms *, double **, unsigned short);
 void hc_compute_dynamic_topography(struct hcs *, struct sh_lms *, struct sh_lms **, unsigned short, unsigned short);
+void hc_calc_geoid_corr_four_layer(double *, struct sh_lms *, struct sh_lms *, struct sh_lms *, struct hc_parameters *, struct hcs *, unsigned short *, double *);
 /* hc_torsol.c */
 void hc_torsol(struct hcs *, int, int, int, double *, double **, double **, struct sh_lms *, struct sh_lms *, double *, unsigned short);
 /* hc_visc_scan.c */
+void visc_scan_out(double *, struct sh_lms *, struct sh_lms *, struct sh_lms *, struct hc_parameters *, struct hcs *, unsigned short *, unsigned short);
 /* prem2dsm.c */
 /* prem_util.c */
 int prem_find_layer_x(double, double, double *, int, int, double *);

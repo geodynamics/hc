@@ -464,6 +464,8 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
 		p->vscan_dv);
 	fprintf(stderr,"-vs_zlm\tdepth\tuse depth[km] for the upper/lower mantle boundary (%g)\n",
 		HC_Z_DEPTH(p->rlayer[0]));
+	fprintf(stderr,"-vs_zau\tdepth\tuse depth[km] for the asthenosphere/upper mantle boundary (%g)\n",
+		HC_Z_DEPTH(p->rlayer[1]));
 
 	if(p->solver_mode == HC_SOLVER_MODE_DYNTOPO_INVERT)
 	  fprintf(stderr,"-dtref\tname\tuse filename for reference dynamic topography (%s)\n",
@@ -530,6 +532,11 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
       hc_advance_argument(&i,argc,argv);
       sscanf(argv[i],HC_FLT_FORMAT,&tmp);
       p->rlayer[0] = HC_ND_RADIUS(tmp);
+      used_parameter = TRUE;
+    }else if(strcmp(argv[i],"-vs_zau")==0){	
+      hc_advance_argument(&i,argc,argv);
+      sscanf(argv[i],HC_FLT_FORMAT,&tmp);
+      p->rlayer[1] = HC_ND_RADIUS(tmp);
       used_parameter = TRUE;
     }else if(strcmp(argv[i],"-cbckl")==0){	/* solver kludge */
       hc_advance_argument(&i,argc,argv);

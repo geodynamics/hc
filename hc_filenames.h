@@ -27,3 +27,9 @@
 
 #define HC_LAYER_OUT_FILE "vdepth.dat" /* depth [km] output */
 #define HC_GEOID_FILE "geoid.ab" /* geoid output file */
+
+#define HC_GEOID_REF_FILE "geoid_ref.ab" /* geoid reference */
+
+#define HC_DTOPO_REF_FILE "dtopo.ab" /* dynatic topography reference */
+
+#define HC_GEOID_KERNEL_FILE "geoidk.dat" /* geoid kernel file */

@@ -208,7 +208,6 @@ struct hc_parameters{
   hc_boolean print_spatial;	/* print the spatial solution */
   hc_boolean compute_geoid; 	/* compute and print the geoid */
   hc_boolean print_density_field;	 /* print the scaled density field */
-  hc_boolean compute_geoid_correlations; 	/* compute correlations only */
   int solution_mode;	/* velocity or stress */
 
   int pvel_mode;		/* plate velocity mode */
@@ -218,7 +217,11 @@ struct hc_parameters{
 
   hc_boolean solver_mode;	
   hc_boolean visc_init_mode;
-  HC_PREC elayer[4];
+
+  HC_PREC vscan_dv;		/* spacing for viscosity scan */
+  int vscan_n;		/* how many layers to use */
+
+  HC_PREC elayer[HC_VSCAN_NLAYER_MAX]; /* use full four layers for array */
 
   hc_boolean read_short_dens_sh, read_short_pvel_sh; /* short SH format for density or plate velocity files
 							files? */
@@ -229,10 +232,18 @@ struct hc_parameters{
   HC_PREC *rdf,*sdf;
   int ndf;
   struct sh_lms *ref_geoid,*ref_dtopo;
-  HC_PREC rlayer[3];		/* for four layer approaches (first
-				   layer radius is CMB radius) */
+  
+  HC_PREC rlayer[HC_VSCAN_NLAYER_MAX-1];		/* for four
+							   layer
+							   approaches
+							   (first
+							   layer
+							   radius is
+							   CMB
+							   radius) */
 
   hc_boolean print_pt_sol;	/* output of p[6] and t[2] vectors */
+  hc_boolean print_kernel_only; 
   char visc_filename[HC_CHAR_LENGTH];	/* name of viscosity profile file */
   char pvel_filename[HC_CHAR_LENGTH];	/* name of plate velocities file */
   char dens_filename[HC_CHAR_LENGTH];	/* name of density model file */

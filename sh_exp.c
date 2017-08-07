@@ -20,7 +20,7 @@ void sh_allocate_and_init(struct sh_lms **exp, int n,int lmax,
 			  hc_boolean regular)
 {
   int i;
-  /* init as zeroes! */
+  /* init as zeroes! (but this won't necessarily set the logic flags!) */
   *exp = (struct sh_lms *)calloc(n,sizeof(struct sh_lms));
   if(!(*exp))
     HC_MEMERROR("sh_allocate_and_init");
@@ -75,7 +75,7 @@ void sh_init_expansion(struct sh_lms *exp, int lmax, int type,
      (l+1)*l/2 + m, times two for A and B
   */
   exp->lmsmall2 = (exp->lmaxp1)*(exp->lmaxp1+1); /* for A and B */
-
+  
   /* 
    
   */
@@ -112,6 +112,13 @@ void sh_init_expansion(struct sh_lms *exp, int lmax, int type,
     break;
 #endif
   case SH_RICK:			/* SH_RICK PART */
+    exp->rick.was_called = FALSE; /* this used to work via a calloc
+				     call, but because not int, make
+				     sure to work */
+    exp->rick.computed_legendre =
+      exp->rick.initialized = 
+      exp->rick.vector_sh_fac_init =
+      exp->rick.sin_cos_saved = FALSE;
     /* 
        make room for the coefficients A and B in compact storage
     */
@@ -120,8 +127,7 @@ void sh_init_expansion(struct sh_lms *exp, int lmax, int type,
        use single precision vector 
     */
     rick_vecalloc(&exp->alm,exp->n_lm,"sh_init_expansion");
-
-    sh_clear_alm(exp);
+    sh_clear_alm(exp);		/* set to zero */
     /* 
        
     init the parameters for Rick subroutines
