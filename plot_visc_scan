@@ -26,10 +26,10 @@ set logscale x
 set key left
 set xrange [0.1:*]
 set multi
-plot 'tmp.1.smean2_ntn' using (10**\$1) : (\$2) title 'r_{20}, SMEAN2' w l lt 1 lw 4,\
+plot 'tmp.1.smean2_ntn' using (10**\$1) : (\$2) title 'r_{2-20}, SMEAN2' w l lt 1 lw 4,\
      'tmp.3.smean2_ntn' using (10**\$1) : (\$2) title 'r_{2-4}, SMEAN2' w l lt 2 lw 4,\
      'tmp.2.smean2_ntn' using (10**\$1) : (\$2) title 'r_{4-9}, ' w l lt 3 lw 4,\
-     'tmp.1.s40rts' using (10**\$1) : (\$2) title 'r_{20}, S40RTS' w l lt 1 lw 1,\
+     'tmp.1.s40rts' using (10**\$1) : (\$2) title 'r_{2-20}, S40RTS' w l lt 1 lw 1,\
      'tmp.3.s40rts' using (10**\$1) : (\$2) title 'r_{2-4}, S40RTS' w l lt 2 lw 1,\
      'tmp.2.s40rts' using (10**\$1) : (\$2) title 'r_{4-9}, S40RTS' w l lt 3 lw 1
 
@@ -46,10 +46,10 @@ set logscale x
 set key samplen 2 right bottom
 set xrange [0.1:*]
 set multi
-plot 'tmp.1.smean2' using (10**\$1) : (\$2) title 'r_{20}, tomography' w l lt 1 lw 5,\
+plot 'tmp.1.smean2' using (10**\$1) : (\$2) title 'r_{2-20}, tomography' w l lt 1 lw 5,\
      'tmp.3.smean2' using (10**\$1) : (\$2) title 'r_{2-4}, tomography' w l lt 2 lw 5,\
      'tmp.2.smean2' using (10**\$1) : (\$2) title 'r_{4-9}, tomography' w l lt 3 lw 5,\
-     'tmp.1.lrr98d' using (10**\$1) : (\$2) title 'r_{20}, slabs' w l lt 1 lw 2,\
+     'tmp.1.lrr98d' using (10**\$1) : (\$2) title 'r_{2-20}, slabs' w l lt 1 lw 2,\
      'tmp.3.lrr98d' using (10**\$1) : (\$2) title 'r_{2-4}, slabs' w l lt 2 lw 2,\
      'tmp.2.lrr98d' using (10**\$1) : (\$2) title 'r_{4-9}, slabs' w l lt 3 lw 2
 EOF
@@ -65,8 +65,8 @@ set out 'visc.l1.sub.ps'
 set logscale x
 set key left
 set xrange [0.1:*]
-plot 'tmp.1.stb00d'    using (10**\$1) : (\$2) title 'r_{20}, M1' w l lt 1 lw 4,\
-     'tmp.1.st11den-1' using (10**\$1) : (\$2) title 'r_{20}, M2' w l lt 1 lw 1,\
+plot 'tmp.1.stb00d'    using (10**\$1) : (\$2) title 'r_{2-20}, M1' w l lt 1 lw 4,\
+     'tmp.1.st11den-1' using (10**\$1) : (\$2) title 'r_{2-20}, M2' w l lt 1 lw 1,\
      'tmp.3.stb00d' using (10**\$1) : (\$2) title 'r_{2-4}, M1' w l lt 2 lw 4,\
      'tmp.3.st11den-1' using (10**\$1) : (\$2) title 'r_{2-4}, M2' w l lt 2 lw 1,\
      'tmp.2.stb00d' using (10**\$1) : (\$2) title 'r_{4-9}, M1' w l lt 3 lw 4,\
@@ -103,7 +103,7 @@ EOF
 		surface $reg $sinc tmp.$gcol.$smodel -Gtmp.grd -T.5
 		
 		if [ $gcol -eq 1 ];then
-		    rl="r@-20@-"
+		    rl="r@-2-20@-"
 		elif [ $gcol -eq 3 ];then
 		    rl="r@-2-4@-"
 		fi
@@ -180,7 +180,7 @@ EOF
 		    surface $reg $sinc tmp.$gcol.$smodel -Gtmp.grd -T.5
 		    
 		    if [ $gcol -eq 1 ];then
-			rl="r@-20@-"
+			rl="r@-2-20@-"
 		    elif [ $gcol -eq 3 ];then
 			rl="r@-2-4@-"
 		    fi
@@ -201,7 +201,73 @@ EOF
 		done
 	    done
 	done	
+    elif [ $mode = 5 ];then
+	#
+	# four layers
+	#
+	nlay=4
 
+	#for zlm in 660 1000;do
+	for zlm in 660;do
+	    #for smodel in smean2 st11den-1 smean2_ntn semucb-wm1;do
+	    #for smodel in smean2_ntn lrr98d;do
+	    for smodel in smean2_ntn ;do
+		if [ $smodel = smean2_ntn ];then
+		    mlabel="tomography"
+		elif [ $smodel = lrr98d ];then
+		    mlabel="slabs"
+		else
+		    mlabel=`echo $smodel | gawk '{print(toupper($1))}'`
+		fi
+		for za in 200 300 410 ;do
+		    if [ $za = 410 ];then
+			suf=dat.gz
+			suf2=.ps
+		    else
+			suf=a.$za.dat.gz
+			suf2=a.$za.ps
+		    fi
+		    if [ $zlm = 660 ];then
+			infile=visc_scan_out/visc_scan.$smodel.$nlay.$suf
+		    else
+			infile=visc_scan_out/visc_scan.$smodel.$nlay.$zlm.$suf
+		    fi
+		    for gcol in 1 ;do
+			
+			if [ $zlm = 660 ];then
+			    ofile=visc_scan_plots/"visc_l4_"$smodel"_"$gcol"$suf2"
+			else
+			    ofile=visc_scan_plots/"visc_l4_"$smodel"_"$gcol"_"$zlm"$suf2"
+			fi
+			zcat $infile | \
+			    gawk  -v g=$gcol '{col=4+g;print($1,$2,$4,$col)}'   | \
+			    sort +3 -rn > tmp.$gcol.$smodel
+			#head -10 tmp.$gcol.$smodel
+			echo model $smodel zlm $zlm
+			
+
+			zlmproj=2
+			proj="-JX5/5 -JZ5 -Z$zlmproj -E145/30 "
+			reg=-R-0.5/3/0/3/2/3
+			head -500 tmp.$gcol.$smodel > tmp.plot
+			minmax tmp.plot
+
+			#makecpt -T0.85/0.86/0.0005 -Cpolar -D > tmp.cpt
+			makecpt -T`gawk -v col=4 -f min.awk tmp.plot`/`gawk -v col=4 -f max.awk tmp.plot`/0.0005 -Cpolar -D > tmp.cpt
+			psxyz tmp.plot $proj $reg -P -W0.5  -Ctmp.cpt -Su.1  -N -K \
+			      -Ba1f.1:"log@-10@-(@~h@~@-lith@-/@~h@~@-um@-)":/a1f.1:"log@-10@-(@~h@~@-ast@-/@~h@~@-um@-)":/a.2f.02:"log@-10@-(@~h@~@-lm@-/@~h@~@-um@-)": > $ofile
+			psscale -O -K -Ctmp.cpt -B.003/:"r@-2-20@-": -D3/6/2/.2h >> $ofile
+			gawk -v zlmp=$zlmproj '{print($1,$2,zlmp,$4)}' tmp.plot | \
+			    psxyz  $proj $reg  -W0.5  -Ctmp.cpt -Sc.1 -W0.5  -N -O >> $ofile
+			
+			
+			modifybb $ofile
+			epstopdf $ofile; rm $ofile
+			echo
+		    done
+		done
+	    done
+	done
     fi
 done
 rm tmp*

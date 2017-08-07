@@ -1,6 +1,6 @@
 README FOR HC
 
-Version 1.0.6 - 2017
+Version 1.0.7 - 2017
 
 Thorsten Becker - twb@ig.utexas.edu
 
@@ -26,8 +26,9 @@ convenient user interface for HC.
 INSTALLATION
 
 The code should compile on any basic UNIX/Linux system with the GMT
-tools (by default, version > 4.2.1) and libraries installed. See the
-Makefile for comments and what to modify.
+tools (by default, version > 4.2.1, and only version 4.X.X is
+supported!) and libraries installed. See the Makefile for comments and
+what to modify.
 
 What is described below is the hc Hager & O'Connell (1981) forward
 flow and geoid computation. For plate velocity inversions following
@@ -47,6 +48,8 @@ if you installed GMT yourself, or
         /usr/lib/gmt
 
 if you installed GMT with a package manager.
+
+NOTE: ONLY GMT VERSION 4 IS SUPPORTED.
 
 2) NETCDFHOME: for the netcdf libraries.  This could be e.g.
 
@@ -100,11 +103,14 @@ Example input data is provided in subdirectory example_data/
 >>>
 hc - perform Hager & O'Connell flow computation
 
-This code can compute velocities, tractions, and geoid for simple density distributions
-and plate velocities using the semi-analytical approach of Hager & O'Connell (1981).
-This particular implementation illustrates one possible way to combine the HC solver routines.
-Based on code by Brad Hager, Richard O'Connell, and Bernhard Steinberger.
-This version by Thorsten Becker and Craig O'Neill
+This code can compute velocities, tractions, and geoid for simple
+density distributions and plate velocities using the semi-analytical
+approach of Hager & O'Connell (1981).  This particular implementation
+illustrates *one possible way* to combine the HC solver routines,
+hc_visc_scan (see below) another. 
+
+Based on code by Brad Hager, Richard O'Connell, and Bernhard
+Steinberger.  This version by Thorsten Becker and Craig O'Neill
 
 usage example:
 
@@ -159,6 +165,15 @@ solution procedure and I/O options:
 
 
 <<<
+
+
+OTHER BINARIES
+
+hc_visc_scan	Illustrates how to do a parameter space scan for
+		viscosities and compute geoid correlations on the
+		fly. plot_visc_scan visualizes the output. 
+
+
 
 KNOWN LIMITATIONS
 
