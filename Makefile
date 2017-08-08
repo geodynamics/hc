@@ -136,7 +136,7 @@ LIBS = $(HC_LIBS) $(GGRD_LIBS) $(HEAL_LIBS) $(RICK_LIB)
 all: $(ODIR) $(BDIR) libs sh_tools hc_tools 
 
 sh_tools: 	$(BDIR)/sh_syn $(BDIR)/sh_corr $(BDIR)/sh_ana $(BDIR)/sh_power \
-	 $(BDIR)/sh_extract_layer
+	 $(BDIR)/sh_extract_layer $(BDIR)/gaussp
 
 hc_tools: $(BDIR)/hc  $(BDIR)/hc_visc_scan $(BDIR)/hc_invert_dtopo \
 	$(BDIR)/hc_extract_sh_layer  $(BDIR)/hc_extract_spatial \
@@ -180,7 +180,12 @@ $(BDIR)/sh_power: $(LIBS) $(INCS) $(ODIR)/sh_power.o
 
 $(BDIR)/sh_ana: $(LIBS) $(INCS) $(ODIR)/sh_ana.o
 	$(CC) $(LIB_FLAGS) $(ODIR)/sh_ana.o \
-		-o $(BDIR)/sh_ana -lhc -lrick $(HEAL_LIBS_LINKLINE) $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS)
+		-o $(BDIR)/sh_ana -lhc -lrick $(HEAL_LIBS_LINKLINE) \
+	$(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS)
+
+$(BDIR)/gaussp: $(LIBS) $(INCS) $(ODIR)/gaussp.o
+	$(CC) $(LIB_FLAGS) $(ODIR)/gaussp.o \
+		-o $(BDIR)/gaussp -lhc -lrick $(GGRD_LIBS_LINKLINE)  -lm $(LDFLAGS)
 
 $(BDIR)/sh_extract_layer: $(LIBS) $(INCS) $(ODIR)/sh_extract_layer.o
 	$(CC) $(LIB_FLAGS) $(ODIR)/sh_extract_layer.o \

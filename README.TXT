@@ -171,7 +171,8 @@ OTHER BINARIES
 
 hc_visc_scan	Illustrates how to do a parameter space scan for
 		viscosities and compute geoid correlations on the
-		fly. plot_visc_scan visualizes the output. 
+		fly. drive_visc_scan runs a bunch of tests, and
+		plot_visc_scan visualizes the output.
 
 
 
