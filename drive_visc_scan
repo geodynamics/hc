@@ -7,7 +7,7 @@ smodels=${2-"smean2 lrr98d s40rts semucb-wm1 smean2_ntn st11den-1 stb00d"}
 zlm=${3-660}		# depth of the upper/lower mantle boundary
 zau=${4-410}			# depth of the asthenosphere, from 100.... zau
 
-geoid_ref=$HOME/progs/src/seatree/python/data/hc/itg-hc-geoid.chambat.ab
+geoid_ref=egm2008-hc-geoid.chambat.31.ab
 mkdir -p visc_scan_out/
 
 for lay in $layers;do
