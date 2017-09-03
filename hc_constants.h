@@ -15,6 +15,7 @@ Earth model constants
 #define HC_VISNOR 1e21		/* reference viscosity [Pas] */
 #define HC_GACC 10.0e2		/* gravitational acceleration [cm/s2] */
 #define HC_CAPITAL_G 6.6742e-11	/* gravitational constant [Nm2/kg2]*/
+//6.67408 would be better, leave for backward compatibility?
 
 #define HC_SECYR  3.1556926e7	/* seconds/year  */
 

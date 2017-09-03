@@ -384,9 +384,17 @@ void ggrd_get_velocities(GGRD_CPREC *vrloc,GGRD_CPREC *vthetaloc,
     *vrloc=      ggrd->v.vr[index];
     *vthetaloc = ggrd->v.vt[index];
     *vphiloc=    ggrd->v.vp[index];
-  }  else {
+  } else {
+    /* transition between stages */
+    ggrd->time_hist.vstage_transition = dtrange;
+    /* 
+       false by default, could change that  
+    */
+    //ggrd->time_hist.interpol_time_lin = FALSE;
+    
     // interpolate in time
-    ggrd_interpol_time(time,&ggrd->time_hist,&i1,&i2,&vf1,&vf2,dtrange);
+    if(!ggrd_interpol_time(time,&ggrd->time_hist,&i1,&i2,&vf1,&vf2))
+      exit(-1);
     if(fabs(vf1) > 1e-7){
       index1 = i1 * ggrd->v.n[HC_NRNTNP] + index;
       *vrloc=      ggrd->v.vr[index1] * vf1 ;

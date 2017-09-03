@@ -90,8 +90,7 @@ int ggrd_read_vel_grids(struct ggrd_master *ggrd, /* ggrd master structure
 						     */
 			char *prefix, /* start filenames with this
 					prefix */
-			ggrd_boolean use_nearneighbor
-			)
+			ggrd_boolean use_nearneighbor)
 {
   FILE *in,*out;
   int i,j,k,l,level,os,os1,ivt,*index;

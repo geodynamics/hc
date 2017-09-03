@@ -23,16 +23,19 @@
 
 void ggrd_init_master(struct ggrd_master *ggrd)
 {
-  ggrd->mat_control = ggrd->mat_control_init = 0;
-  ggrd->ray_control = ggrd->ray_control_init = 0;
-  ggrd->vtop_control = ggrd->vtop_control_init = 0;
-  ggrd->age_control = ggrd->age_control_init = 0;
-  ggrd->nage = 0;ggrd->age_bandlim = 200.;
-  ggrd->sf_init = 0;
-  ggrd->time_hist.init = 0;
-  ggrd->temp.init = 0;ggrd->use_temp = 0;
-  ggrd->comp.init = 0;ggrd->use_comp = 0;
+  ggrd->mat_control = ggrd->mat_control_init = FALSE;
+  ggrd->ray_control = ggrd->ray_control_init = FALSE;
+  ggrd->vtop_control = ggrd->vtop_control_init = FALSE;
+  ggrd->age_control = ggrd->age_control_init = FALSE;
+  ggrd->nage = 0;
+  ggrd->age_bandlim = 200.;
+  ggrd->sf_init = FALSE;
+  ggrd->time_hist.init = FALSE;
+  ggrd->temp.init = ggrd->use_temp = FALSE;
+  ggrd->comp.init = ggrd->use_comp = FALSE;
   ggrd->time_hist.vstage_transition = 0.1; /* in Ma, transition */
+  ggrd->time_hist.interpol_time_lin = FALSE;
+  ggrd->time_hist.called = FALSE;
   /* 3-D velocity settings  */
   ggrd_init_vstruc(ggrd);
 }
@@ -231,7 +234,7 @@ ggrd_boolean ggrd_grdtrack_interpolate_rtp(double r,double t,double p,
       x[0]-=360.0;
   }
   x[1] = 90.0 - t * ONEEIGHTYOVERPI; /* lat */
-  x[2] = (1.0-r) * 6371.0;	/* depth in [km] */
+  x[2] = (1.0-r) * GGRD_RADIUS_E_KM;	/* depth in [km] */
   if(g->zlevels_are_negative)	/* adjust for depth */
     x[2] = -x[2];
 
@@ -1103,16 +1106,33 @@ void ggrd_gt_interpolate_z(double z,float *za,int nz,
 //     WARNING: if the routine gets called with the same time twice, will
 //     not recalculate the weights
 //
-void ggrd_interpol_time(GGRD_CPREC time,struct ggrd_t *thist,
-			int *i1,int *i2,GGRD_CPREC *f1,GGRD_CPREC *f2,
-			GGRD_CPREC dxlimit)
+// will return 1 if OK, none 1 if error
+//
+/* 
+   if thist.interpol_time_lin is set, will interpolate linearly from
+
+   t1left
+   t2mid
+   t3mid
+   t4mid
+   ...
+
+
+
+ */
+
+int ggrd_interpol_time(GGRD_CPREC time,struct ggrd_t *thist,
+		       int *i1,int *i2,GGRD_CPREC *f1,GGRD_CPREC *f2)
 {
 
-  GGRD_CPREC tloc,xll;
+  GGRD_CPREC tloc,xll,dxlimit;
   int i22,i;
+  /* respect stages with some smoothing */
+  dxlimit = thist->vstage_transition;
+
   if(!thist->init){
     fprintf(stderr,"ggrd_interpol_time: error: thist is not init\n");
-    exit(-1);
+    return 0;
   }
   tloc = time;
   //
@@ -1129,94 +1149,111 @@ void ggrd_interpol_time(GGRD_CPREC time,struct ggrd_t *thist,
 	 init loop
 
       */
-      /* check if dxlimit is larger than actual stage intervals */
-      for(i=0;i < thist->nvtimes;i++){
-	xll =  thist->vtimes[i*3+2] - thist->vtimes[i*3];
-	if(dxlimit > xll){
-	  fprintf(stderr,"inter_vel: adjusting transition width to %g from time intervals\n",
-		  xll);
-	  dxlimit = xll;
+      if(thist->interpol_time_lin){
+	/* linear approach */
+	ggrd_vecalloc(&thist->tl,thist->nvtimes,"tinterp 1");
+	thist->tl[0] = thist->vtimes[0]; /* left */
+	for(i=1;i<thist->nvtimes;i++)
+	  thist->tl[i] =  thist->vtimes[i*3+1]; /* center */
+      }else{
+
+	/* check if dxlimit is larger than actual stage intervals */
+	for(i=0;i < thist->nvtimes;i++){
+	  xll =  thist->vtimes[i*3+2] - thist->vtimes[i*3];
+	  if(dxlimit > xll){
+	    fprintf(stderr,"inter_vel: adjusting transition width to %g from time intervals\n",
+		    xll);
+	    dxlimit = xll;
+	  }
 	}
+	thist->ntlim = thist->nvtimes-1;
+	/* init some more factors */
+	thist->xllimit=  -dxlimit/2.0;
+	thist->xrlimit=   dxlimit/2.0;
       }
-      thist->ntlim = thist->nvtimes-1;
-      /* init some more factors */
-      thist->xllimit=  -dxlimit/2.0;
-      thist->xrlimit=   dxlimit/2.0;
       thist->time_old = thist->vtimes[0] - 100; /* to make sure we get a
 					    first fix */
       thist->called = TRUE;
     } /* end init */
-    if(fabs(tloc - thist->time_old)>5e-7){       
+    
+    if(fabs(tloc - thist->time_old)>1e-7){       
       /* 
 	 need to get new factors 
       */
-      //     
-      //     heave to determine interpolation factors, time has changed
-      //     or not called at least once
-      //     
-      //     obtain the time intervals to the left and right of time
-      //     
-      if(tloc < thist->vtimes[0]){
-	if(fabs(tloc - thist->vtimes[0]) < 0.1){
-	  tloc = thist->vtimes[0];
+      if(thist->interpol_time_lin){
+	thist->iright_loc=1; 
+	while((tloc >  thist->tl[thist->iright_loc])&&(thist->iright_loc < thist->nvtimes-1))
+	  thist->iright_loc++;
+	thist->ileft_loc=thist->iright_loc-1; 
+	thist->f2_loc = (tloc-thist->tl[thist->ileft_loc])/(thist->tl[thist->iright_loc] - thist->tl[thist->ileft_loc]);
+	thist->f1_loc = 1-thist->f2_loc;
+      }else{
+	//
+	//     obtain the time intervals to the left and right of time
+	//     
+	if(tloc < thist->vtimes[0]){
+	  if(fabs(tloc - thist->vtimes[0]) < 0.1){
+	    tloc = thist->vtimes[0];
+	  }else{
+	    fprintf(stderr,"inter_vel: error, time: %g  too small\n",tloc);
+	    fprintf(stderr,"inter_vel: while vtimes are given from %g to %g\n",
+		    thist->vtimes[0],thist->vtimes[thist->nvtimes3-1]);
+	    return 0;
+	  }
+	}
+	if(tloc > thist->vtimes[thist->nvtimes3-1]){
+	  if(fabs(tloc - thist->vtimes[thist->nvtimes3-1]) < 0.1){
+	    tloc = thist->vtimes[thist->nvtimes3-1];
+	  }else{
+	    fprintf(stderr,"inter_vel: error, time: %g too large\n",tloc);
+	    fprintf(stderr,"inter_vel: while vtimes are given from %g to %g\n",
+		    thist->vtimes[0],thist->vtimes[thist->nvtimes3-1]);
+	    return 0;
+	  }
+	}
+	thist->iright_loc=0;  // right interval index
+	i22=1;         // right interval midpoint
+	//     find the right interval such that its midpoint is larger or equal than time
+	while((tloc > thist->vtimes[i22]) && 
+	      (thist->iright_loc < thist->ntlim)){
+	  thist->iright_loc++;
+	  i22 += 3;
+	}
+	if(thist->iright_loc == 0){
+	  thist->iright_loc = 1;
+	  i22 = 4;
+	}
+	thist->ileft_loc = thist->iright_loc - 1; // left interval index
+	//
+	//     distance from right boundary of left interval 
+	//     (=left boundary of right interval) 
+	// normalized version
+	//xll = 2.0 * (tloc - thist->vtimes[i22-1])/(thist->vtimes[i22] - thist->vtimes[ileft_loc*3-2]);
+	xll = tloc - thist->vtimes[i22-1]; /* real time version */
+	//
+	//     this will have xll go from -0.5 to 0.5 around the transition between stages
+	//     which is at xl1=0
+	//
+	//     vf1_loc and vf2_loc are the weights for velocities within the left and right
+	//     intervals respectively
+	//
+	if(xll < thist->xllimit){ // xllimit should be 1-dx, dx~0.1
+	  thist->f1_loc = 1.0;
+	  thist->f2_loc = 0.0;
 	}else{
-	  fprintf(stderr,"inter_vel: error, time: %g  too small\n",tloc);
-	  fprintf(stderr,"inter_vel: while vtimes are given from %g to %g\n",
-		  thist->vtimes[0],thist->vtimes[thist->nvtimes3-1]);
-	  exit(-1);  
+	  if(xll > thist->xrlimit){ // xrlimit should be 1+dx, dx~0.1
+	    thist->f1_loc = 0.0;
+	    thist->f2_loc = 1.0;
+	  }else {            // in between 
+	    xll =     (xll-thist->xllimit)/dxlimit; // normalize by transition width
+	    thist->f2_loc = ((1.0 - cos(xll * GGRD_PI))/2.0); // this goes from 0 to 1
+	    //     weight for left velocities
+	    thist->f1_loc = 1.0 - thist->f2_loc;
+	  }
 	}
-      }
-      if(tloc > thist->vtimes[thist->nvtimes3-1]){
-	if(fabs(tloc - thist->vtimes[thist->nvtimes3-1]) < 0.1){
-	  tloc = thist->vtimes[thist->nvtimes3-1];
-	}else{
-	  fprintf(stderr,"inter_vel: error, time: %g too large\n",tloc);
-	  fprintf(stderr,"inter_vel: while vtimes are given from %g to %g\n",
-		  thist->vtimes[0],thist->vtimes[thist->nvtimes3-1]);
-	  exit(-1);
-	}
-      }
-      thist->iright_loc=0;  // right interval index
-      i22=1;         // right interval midpoint
-      //     find the right interval such that its midpoint is larger or equal than time
-      while((tloc > thist->vtimes[i22]) && 
-	    (thist->iright_loc < thist->ntlim)){
-	thist->iright_loc++;
-	i22 += 3;
-      }
-      if(thist->iright_loc == 0){
-	thist->iright_loc = 1;
-	i22 = 4;
-      }
-      thist->ileft_loc = thist->iright_loc - 1; // left interval index
-      //
-      //     distance from right boundary of left interval 
-      //     (=left boundary of right interval) 
-      // normalized version
-      //xll = 2.0 * (tloc - thist->vtimes[i22-1])/(thist->vtimes[i22] - thist->vtimes[ileft_loc*3-2]);
-      xll = tloc - thist->vtimes[i22-1]; /* real time version */
-      //
-      //     this will have xll go from -0.5 to 0.5 around the transition between stages
-      //     which is at xl1=0
-      //
-      //     vf1_loc and vf2_loc are the weights for velocities within the left and right
-      //     intervals respectively
-      //
-      if(xll < thist->xllimit){ // xllimit should be 1-dx, dx~0.1
-	thist->f1_loc = 1.0;
-	thist->f2_loc = 0.0;
-      }	else {
-	if(xll > thist->xrlimit){ // xrlimit should be 1+dx, dx~0.1
-	  thist->f1_loc = 0.0;
-	  thist->f2_loc = 1.0;
-	}else {            // in between 
-	  xll =     (xll-thist->xllimit)/dxlimit; // normalize by transition width
-	  thist->f2_loc = ((1.0 - cos(xll * GGRD_PI))/2.0); // this goes from 0 to 1
-	  //     weight for left velocities
-	  thist->f1_loc = 1.0 - thist->f2_loc;
-	}
-      }
-      //fprintf(stderr,"%g %g %g %i %i %g %g\n",time,f1_loc,f2_loc,ileft_loc,iright_loc,thist->vtimes[3*ileft_loc+2],thist->vtimes[3*iright_loc]);
+	//fprintf(stderr,"%g %g %g %i %i %g %g\n",time,f1_loc,f2_loc,ileft_loc,iright_loc,thist->vtimes[3*ileft_loc+2],thist->vtimes[3*iright_loc]);
+
+      }	/* end the stage branch */
       thist->time_old = tloc;
     }
     //     assign the local variables to the output variables
@@ -1226,6 +1263,7 @@ void ggrd_interpol_time(GGRD_CPREC time,struct ggrd_t *thist,
     *f1 = thist->f1_loc;
     *f2 = thist->f2_loc;
   } // end ntimes>1 part
+  return 1;
 }
 
 /* 

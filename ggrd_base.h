@@ -48,7 +48,14 @@
 /* 180/pi */
 #ifndef GGRD_PIF
 #define GGRD_PIF 57.295779513082320876798154814105
-#endif 
+#endif
+
+#ifdef HC_RE_KM
+#define GGRD_RADIUS_E_KM HC_RE_KM
+#else
+#define GGRD_RADIUS_E_KM 6371.0
+#endif
+ 
 /* 
    
 modes

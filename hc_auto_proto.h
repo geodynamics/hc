@@ -15,7 +15,7 @@ void ggrd_find_spherical_vel_from_rigid_cart_rot(double *, double *, double *, d
 void ggrd_print_layer_avg(float *, float *, int, int, int, FILE *, GMT_LONG *);
 int ggrd_init_thist_from_file(struct ggrd_t *, char *, unsigned char, unsigned char);
 void ggrd_gt_interpolate_z(double, float *, int, int *, int *, double *, double *, unsigned char, unsigned char *);
-void ggrd_interpol_time(double, struct ggrd_t *, int *, int *, double *, double *, double);
+int ggrd_interpol_time(double, struct ggrd_t *, int *, int *, double *, double *);
 int interpolate_seafloor_ages(double, double, double, struct ggrd_master *, double *);
 FILE *ggrd_open(char *, char *, char *);
 void ggrd_vecalloc(double **, int, char *);
@@ -131,6 +131,9 @@ void hc_torsol(struct hcs *, int, int, int, double *, double **, double **, stru
 /* hc_visc_scan.c */
 void visc_scan_out(double *, struct sh_lms *, struct sh_lms *, struct sh_lms *, struct hc_parameters *, struct hcs *, unsigned short *, unsigned short);
 /* prem2dsm.c */
+/* prem2r.c */
+double fm(double, double *, struct prem_model *);
+/* prem2rp.c */
 /* prem_util.c */
 int prem_find_layer_x(double, double, double *, int, int, double *);
 double prem_compute_pval(double *, double *, int, double);
@@ -138,7 +141,6 @@ double prem_compute_dpval(double *, double *, int, double);
 double prem_vs_voigt(double, double, double, double, double);
 void prem_get_rhodrho(double *, double *, double, struct prem_model *);
 void prem_get_rho(double *, double, struct prem_model *);
-void prem_get_pressure(double *, double, struct prem_model *);
 void prem_get_values(double *, double *, double *, double *, double *, double *, double *, double *, double *, double *, double, struct prem_model *);
 int prem_read_model(char *, struct prem_model *, unsigned short);
 int prem_read_para_set(double *, int, int, FILE *);

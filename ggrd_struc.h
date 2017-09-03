@@ -36,7 +36,7 @@ struct ggrd_t{
 				   and that number times 3 */
 
   GGRD_CPREC tmin,tmax;		/* range of times */
-  unsigned char init;
+  ggrd_boolean init;
 
   GGRD_CPREC xllimit,xrlimit;
   GGRD_CPREC f1_loc,f2_loc,time_old;
@@ -44,7 +44,12 @@ struct ggrd_t{
 
   GGRD_CPREC vstage_transition;
 
-  unsigned char called;
+  ggrd_boolean interpol_time_lin;
+  
+  GGRD_CPREC *tl;		/* for linear interpolation */
+  
+
+  ggrd_boolean called;
 
 };
 
@@ -71,9 +76,9 @@ struct ggrd_gt{
   float *z;			/* depth levels */
   int nz;
 
-  unsigned char zlevels_are_negative;
+  ggrd_boolean zlevels_are_negative;
 
-  unsigned char init,geographic_in,
+  ggrd_boolean init,geographic_in,
     is_three;			/* is it a 3-D set? */
 
   double west,east,south,north;
@@ -89,7 +94,7 @@ struct ggrd_gt{
 struct ggrd_vip{
   int ider[1+3*GGRD_MAX_IORDER],istencil[3],
     ixtracer[3],old_order,orderp1,isshift[3];
-  unsigned char init,reduce_r_stencil,z_warned,w_warned;
+  ggrd_boolean init,reduce_r_stencil,z_warned,w_warned;
 
 };
 /*
@@ -107,10 +112,10 @@ struct ggrd_vel{
 				   specified */
   GGRD_CPREC dtheta,dphi;	/* spacing in theta and phi */
   GGRD_CPREC velscale,rcmb;
-  unsigned char init,		/* initialized? */
+  ggrd_boolean init,		/* initialized? */
     history,			/* time-dependent? */
     read_gmt;		/*  read GMT grd files or binary format?*/
-  unsigned char rl_warned,vd_init,vd_reduce_r_stencil;	/*  */
+  ggrd_boolean rl_warned,vd_init,vd_reduce_r_stencil;	/*  */
 
   struct ggrd_vip vd;		/* velocity interpolation structure */
 };
@@ -140,7 +145,7 @@ struct ggrd_master{		/* master structure */
   char mat_file[GGRD_CHAR_LENGTH];
   char ray_file[GGRD_CHAR_LENGTH];
   char vtop_dir[GGRD_CHAR_LENGTH];
-  char age_file[GGRD_CHAR_LENGTH];
+  char age_dir[GGRD_CHAR_LENGTH];
   
   /* grid structures */
   struct ggrd_gt *mat;		/* material grids */
