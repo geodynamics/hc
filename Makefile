@@ -151,7 +151,8 @@ hc_lib: $(HC_LIBS) $(GGRD_LIBS)
 debug_libs: $(HC_LIBS_DEBUG)
 
 really_all: proto all debug_libs $(BDIR)/hc.dbg \
-	hcplates $(BDIR)/ggrd_test $(BDIR)/grdinttester $(BDIR)/prem2dsm
+	hcplates $(BDIR)/ggrd_test $(BDIR)/grdinttester \
+	$(BDIR)/prem2dsm $(BDIR)/prem2r
 
 
 
@@ -206,6 +207,9 @@ $(BDIR)/rotvec2vel: rotvec2vel.c
 
 $(BDIR)/prem2dsm: $(ODIR)/prem2dsm.o $(PREM_OBJS)
 	$(CC) $(ODIR)/prem2dsm.o $(PREM_OBJS) -o $(BDIR)/prem2dsm -lm $(GGRD_LIB_FLAGS) $(LDFLAGS) 
+
+$(BDIR)/prem2r: $(ODIR)/prem2r.o $(PREM_OBJS)
+	$(CC) $(ODIR)/prem2r.o $(PREM_OBJS) -o $(BDIR)/prem2r -lm $(GGRD_LIB_FLAGS) $(LDFLAGS) 
 
 
 $(BDIR)/hc: $(LIBS) $(INCS) $(ODIR)/hc.o $(PREM_OBJS)

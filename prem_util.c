@@ -166,27 +166,7 @@ void prem_get_rho(double *rho,double rnd,
   *rho = prem_compute_pval(x,(prem->crho+os),prem->np,1e3);
   free(x);
 }
-/* 
-   get pressure in GPa at non-dim radius rnd
-*/
-void prem_get_pressure(double *p,double rnd, struct prem_model *prem)
-{
-  int ilayer,os;
-  double *x;
-  if(!prem->init){
-    fprintf(stderr,"prem_get_pressure: error, struc not init \n");
-    exit(-1);
-  }
-  x=(double *)malloc(sizeof(double)*prem->np);
-  if(!x){
-    fprintf(stderr,"prem_get_pressure: mem error\n");
-    exit(-1);
-  }
-  ilayer = prem_find_layer_x(rnd,1.0,prem->r,prem->n,prem->np,x);
-  os = ilayer * prem->np;
-  *p = prem_compute_pval(x,(prem->crho+os),prem->np,1e3);
-  free(x);
-}
+
 
 
 //

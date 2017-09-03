@@ -55,7 +55,7 @@ struct prem_model{
   double rb[PREM_N];		/* top boundary of layers, in meters */
   double r[PREM_N];		/* non-dimensionalized version  */
   double r0;			/* surface r in meters */
-
+  
   char model_filename[2000];	/* model file name */
 
   hc_boolean init;
