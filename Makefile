@@ -9,7 +9,7 @@ CFLAGS = -g
 
 #
 # EDIT HERE FOR GMT VERSION 
-#GMTHOME=/usr/lib/gmt
+GMTHOME=/opt/gmt4
 #NETCDFHOME=/usr/local
 #HCHOME=/usr/local/hc
 #

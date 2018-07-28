@@ -85,6 +85,7 @@ char *hc_name_boolean(unsigned short);
 unsigned short hc_toggle_boolean(unsigned short *);
 void hc_advance_argument(int *, int, char **);
 void hc_compute_correlation(struct sh_lms *, struct sh_lms *, double *, int, unsigned short);
+void hc_compute_residual(struct hc_parameters *, struct sh_lms *, struct sh_lms *, double *, int, unsigned short);
 void lonlatpv2cv(double, float, double *, double *);
 void thetaphipv2cv(double, float, double *, double *);
 void lonlatpv2cv_with_base(double *, double *, double *);
@@ -162,16 +163,6 @@ void rick_gauleg(double, double, double *, double *, int);
 /* rotvec2vel.c */
 FILE *rv_myopen(const char *, const char *);
 /* sh_ana.c */
-/* shana_sh.c */
-void shana_compute_allplm(int, int, double *, double *, struct shana_module *);
-void shana_pix2ang(int, int, double *, double *, struct shana_module *);
-void shana_shc2d(double *, double *, int, int, double *, double *, struct shana_module *);
-void shana_shc2d_pre(double *, double *, int, double *, double *, int, float *, float *, struct shana_module *);
-void shana_shd2c(double *, double *, int, int, double *, double *, struct shana_module *);
-void shana_shd2c_pre(double *, double *, int, double *, double *, int, double *, double *, struct shana_module *);
-void shana_init(int, int, int *, int *, int *, struct shana_module *);
-void shana_free_module(struct shana_module *, int);
-void shana_plmbar1(double *, double *, int, int, double, struct shana_module *);
 /* sh_corr.c */
 /* sh_exp.c */
 void sh_allocate_and_init(struct sh_lms **, int, int, int, int, unsigned short, unsigned short);
@@ -182,6 +173,7 @@ double sh_total_power(struct sh_lms *);
 void sh_compute_power_per_degree(struct sh_lms *, double *);
 double sh_correlation(struct sh_lms *, struct sh_lms *, int);
 double sh_correlation_per_degree(struct sh_lms *, struct sh_lms *, int, int);
+double sh_residual_per_degree(struct sh_lms *, struct sh_lms *, int, int, int);
 void sh_single_par_and_exp_to_file(struct sh_lms *, char *, unsigned short, unsigned short);
 void sh_single_par_and_exp_to_stream(struct sh_lms *, FILE *, unsigned short, unsigned short);
 void sh_print_parameters_to_stream(struct sh_lms *, int, int, int, double, FILE *, unsigned short, unsigned short, unsigned short);
@@ -226,6 +218,16 @@ void sh_print_model_spatial_data(struct sh_lms_model *, double *, FILE *, unsign
 /* sh_power.c */
 /* sh_syn.c */
 /* sh_test.c */
+/* shana_sh.c */
+void shana_compute_allplm(int, int, double *, double *, struct shana_module *);
+void shana_pix2ang(int, int, double *, double *, struct shana_module *);
+void shana_shc2d(double *, double *, int, int, double *, double *, struct shana_module *);
+void shana_shc2d_pre(double *, double *, int, double *, double *, int, float *, float *, struct shana_module *);
+void shana_shd2c(double *, double *, int, int, double *, double *, struct shana_module *);
+void shana_shd2c_pre(double *, double *, int, double *, double *, int, double *, double *, struct shana_module *);
+void shana_init(int, int, int *, int *, int *, struct shana_module *);
+void shana_free_module(struct shana_module *, int);
+void shana_plmbar1(double *, double *, int, int, double, struct shana_module *);
 /* simple_test.c */
 /* spherepack_sh.c */
 /* test_fft.c */
