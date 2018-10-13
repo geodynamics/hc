@@ -210,7 +210,8 @@ ggrd_boolean ggrd_grdtrack_interpolate_rtp(double r,double t,double p,
 					   struct ggrd_gt *g,
 					   double *value,
 					   ggrd_boolean verbose,
-					   ggrd_boolean shift_to_pos_lon)
+					   ggrd_boolean shift_to_pos_lon,
+					   double radius_planet_in_km)
 {
   double x[3];
   ggrd_boolean result;
@@ -234,7 +235,9 @@ ggrd_boolean ggrd_grdtrack_interpolate_rtp(double r,double t,double p,
       x[0]-=360.0;
   }
   x[1] = 90.0 - t * ONEEIGHTYOVERPI; /* lat */
-  x[2] = (1.0-r) * GGRD_RADIUS_E_KM;	/* depth in [km] */
+
+  x[2] = (1.0-r) * radius_planet_in_km;	/* depth in [km] */
+
   if(g->zlevels_are_negative)	/* adjust for depth */
     x[2] = -x[2];
 

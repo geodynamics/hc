@@ -42,7 +42,7 @@ ggrd_boolean ggrd_grdtrack_interpolate_lonlatz(double ,double ,double ,
 					       ggrd_boolean );
 ggrd_boolean ggrd_grdtrack_interpolate_rtp(double ,double ,double ,
 					    struct ggrd_gt *,double *,
-					    ggrd_boolean,ggrd_boolean);
+					   ggrd_boolean,ggrd_boolean,double);
 ggrd_boolean ggrd_grdtrack_interpolate_xyz(double ,double ,double ,
 					    struct ggrd_gt *,double *,
 					    ggrd_boolean);
