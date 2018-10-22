@@ -394,6 +394,7 @@ ggrd_boolean ggrd_grdtrack_interpolate_xy(double xin,double yin,
   result = ggrd_grdtrack_interpolate(x,FALSE,g->grd,g->f,g->edgeinfo,
 				     g->mm,g->z,g->nz,value,verbose,
 				     g->loc_bcr);
+  //fprintf(stderr,"%g %g %g\n",x[0],x[1],*value);
   return result;
 }
 
@@ -882,6 +883,10 @@ ggrd_boolean ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degrees
   /* If point is outside grd area, 
      shift it using periodicity or skip if not periodic. */
 
+  *value = NAN;			/* use NAN as default so that error
+				   returns don't have some number in
+				   case user forgets to check */
+  /* check if in bounds */
   while ( (in[1] < grd[0].y_min) && (edgeinfo[0].nyp > 0) ) 
     in[1] += (grd[0].y_inc * edgeinfo[0].nyp);
   if (in[1] < grd[0].y_min){
@@ -944,8 +949,8 @@ ggrd_boolean ggrd_grdtrack_interpolate(double *in, /* lon/lat/z [2/3] in degrees
     *value = GMT_get_bcr_z(grd, in[0], in[1], f, edgeinfo);
 #endif
   }
-  //if(verbose)
-  //fprintf(stderr,"ggrd_interpolate: lon: %g lat: %g val: %g\n",in[0],in[1],*value);
+  if(verbose)
+    fprintf(stderr,"ggrd_interpolate: lon: %g lat: %g val: %g\n",in[0],in[1],*value);
   return TRUE;
 }
 /*
