@@ -11,11 +11,6 @@
 #include "hc_filenames.h"
 #include <math.h>
 
-#ifndef __GMT_INCLUDED__
-#define _GMT_MATH_H		/* gmt_math.h led to clashes with some other codes */
-#include "gmt.h"
-#define __GMT_INCLUDED__
-#endif
 
 
 /* 
@@ -122,11 +117,6 @@ Other Earth model, and modeling constants
 #include "hc_constants.h"
 
 
-/* 
-   dealing with velocity grids 
-
-*/
-#include "ggrd_grdtrack_util.h"
 /*
 
 spherical harmonics 

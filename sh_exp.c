@@ -742,36 +742,21 @@ lon lat z data
 instead
 
 */
-void sh_read_spatial_data_from_stream(struct sh_lms *exp, FILE *in, 
-				    my_boolean use_3d, 
-				      int shps, HC_PREC *data, 
-				    HC_PREC *z)
+void sh_read_spatial_data_from_stream(struct sh_lms *exp, FILE *in, my_boolean use_3d, int shps, HC_PREC *data, 
+				      HC_PREC *z)
 {
-  struct ggrd_gt *gdummy=(struct ggrd_gt *)NULL;
-  sh_read_spatial_data(exp,in,gdummy,FALSE,use_3d,shps,data,z);
-}
-/* similar for grd files */
-void sh_read_spatial_data_from_grd(struct sh_lms *exp, struct ggrd_gt *ggrd,
-				   my_boolean use_3d,
-				   int shps, HC_PREC *data, 
-				   HC_PREC *z)
-{
-  FILE *fdummy=NULL;
-  sh_read_spatial_data(exp,fdummy,ggrd,TRUE,use_3d,shps,data,z);
+  sh_read_spatial_data(exp,in,use_3d,shps,data,z);
 }
 /* 
 
 generic function
 
 */
-void sh_read_spatial_data(struct sh_lms *exp, FILE *in, struct ggrd_gt *ggrd,my_boolean use_grd,
-			  my_boolean use_3d, int shps, 
-			  HC_PREC *data, HC_PREC *z)
+void sh_read_spatial_data(struct sh_lms *exp, FILE *in,my_boolean use_3d, int shps, HC_PREC *data, HC_PREC *z)
 
 {
   HC_PREC lon,lat,xp[3];
   int j,k;
-  double dvalue;
   /* 
      read in data for each layer 
   */
@@ -822,71 +807,50 @@ void sh_read_spatial_data(struct sh_lms *exp, FILE *in, struct ggrd_gt *ggrd,my_
        read coordinates 
     */
     if(!use_3d){
-      if(!use_grd){
-	/* 
-	   read in lon lat  
-	*/
-	if(fscanf(in,HC_TWO_FLT_FORMAT,&lon,&lat) != 2){
-	  fprintf(stderr,"sh_read_spatial_data: error: lon lat format: pixel %i: read error\n",
-		  (int)j);
-	  exit(-1);
-	}
+      /* 
+	 read in lon lat  
+      */
+      if(fscanf(in,HC_TWO_FLT_FORMAT,&lon,&lat) != 2){
+	fprintf(stderr,"sh_read_spatial_data: error: lon lat format: pixel %i: read error\n",
+		(int)j);
+	exit(-1);
       }
     }else{
-      if(!use_grd){
-	/* 
-	   read in lon lat z[i] 
-	*/
-	if(fscanf(in,HC_THREE_FLT_FORMAT,&lon,&lat,z) != 3){
-	  fprintf(stderr,"sh_read_spatial_data: error: lon lat z format: pixel %i: read error\n",
-		  (int)j);
-	  exit(-1);
-	}
-      }else{
-	fprintf(stderr,"sh_read_spatial_data: error: 3D not implemented for grd yet\n");
+      /* 
+	 read in lon lat z[i] 
+      */
+      if(fscanf(in,HC_THREE_FLT_FORMAT,&lon,&lat,z) != 3){
+	fprintf(stderr,"sh_read_spatial_data: error: lon lat z format: pixel %i: read error\n",
+		(int)j);
 	exit(-1);
       }
     }
-    if(use_grd){
-      /* 
-	 interpolate from grd 
-      */
-      for(k=0;k < shps;k++){
-	if(!ggrd_grdtrack_interpolate_tp((double)xp[HC_THETA],(double)xp[HC_PHI],(ggrd+k),&dvalue,FALSE,FALSE)){
-	  fprintf(stderr,"sh_read_spatial_data: interpolation error grd %i, lon %g lat %g\n",
-		  k+1,(double)PHI2LON(xp[HC_PHI]),(double)THETA2LAT(xp[HC_THETA]));
-	  exit(-1);
-	}
-	data[k*exp[0].npoints+j] = dvalue;
-      }
-    }else{
-      /* 
-	 read data 
-      */
-      for(k=0;k < shps;k++){
-	if(fscanf(in,HC_FLT_FORMAT,(data+k*exp[0].npoints+j))!=1){
-	  fprintf(stderr,"sh_read_spatial_data: error: scalar format: pixel %i: read error\n",
-		  (int)j);
-	  exit(-1);
-	}
-      }
-      /* 
-	 adjust longitude range 
-      */
-      if(lon < 0)
-	lon += 360.0;
-      /* 
-	 check if location is OK (we don't know about z defaults) 
-      */
-      if(((fabs(PHI2LON(xp[HC_PHI])-lon) > 1e-3)&&(fabs(fabs(PHI2LON(xp[HC_PHI])-lon)-360) > 1e-3))||
-	 (fabs(THETA2LAT(xp[HC_THETA])-lat) > 1e-3)){
-	fprintf(stderr,"sh_read_model_spatial_data: error: pixel %i coordinate mismatch:\n",
+    /* 
+       read data 
+    */
+    for(k=0;k < shps;k++){
+      if(fscanf(in,HC_FLT_FORMAT,(data+k*exp[0].npoints+j))!=1){
+	fprintf(stderr,"sh_read_spatial_data: error: scalar format: pixel %i: read error\n",
 		(int)j);
-	fprintf(stderr,"sh_read_model_spatial_data: orig: %g, %g file: %g, %g\n",
-		(double)PHI2LON(xp[HC_PHI]),(double)THETA2LAT(xp[HC_THETA]),
-		(double)lon,(double)lat);
 	exit(-1);
       }
+    }
+    /* 
+       adjust longitude range 
+    */
+    if(lon < 0)
+      lon += 360.0;
+    /* 
+       check if location is OK (we don't know about z defaults) 
+    */
+    if(((fabs(PHI2LON(xp[HC_PHI])-lon) > 1e-3)&&(fabs(fabs(PHI2LON(xp[HC_PHI])-lon)-360) > 1e-3))||
+       (fabs(THETA2LAT(xp[HC_THETA])-lat) > 1e-3)){
+      fprintf(stderr,"sh_read_model_spatial_data: error: pixel %i coordinate mismatch:\n",
+	      (int)j);
+      fprintf(stderr,"sh_read_model_spatial_data: orig: %g, %g file: %g, %g\n",
+	      (double)PHI2LON(xp[HC_PHI]),(double)THETA2LAT(xp[HC_THETA]),
+	      (double)lon,(double)lat);
+      exit(-1);
     }
   }	/* end points in layer loop */
 }

@@ -63,7 +63,7 @@ int main(int argc, char **argv)
   /* 
      read in velocity/traction solution
   */
-  in = ggrd_open(argv[1],"r","hc_extract_spatial");
+  in = hc_fopen(argv[1],"r","hc_extract_spatial");
   shps_read = hc_read_sh_solution(model,&vsol,in,binary_in,verbose);
   fclose(in);
   nvsol = model->nradp2 * shps_read;
@@ -109,7 +109,7 @@ int main(int argc, char **argv)
   if(read_dsol){
     if((mode != 5)&&(mode != 6))
       HC_ERROR("hc_extract_spatial","error, only mode 5 and  can handle scalar input");
-    in = ggrd_open(argv[4],"r","hc_extract_spatial");
+    in = hc_fopen(argv[4],"r","hc_extract_spatial");
     shps_read_d = hc_read_sh_solution(model,&dsol,in,binary_in,
 				    verbose);
     fclose(in);

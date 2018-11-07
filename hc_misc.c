@@ -224,7 +224,7 @@ void hc_compute_correlation(struct sh_lms *g1,struct sh_lms *g2,
 			    HC_PREC *c,int mode,hc_boolean verbose)
 {
   int lmaxg;
-  lmaxg = MIN(g1->lmax,g1->lmax);
+  lmaxg = HC_MIN(g1->lmax,g1->lmax);
 
   switch(mode){
   case 0:			/* 1...LMAX */
@@ -233,14 +233,14 @@ void hc_compute_correlation(struct sh_lms *g1,struct sh_lms *g2,
     c[0] = sh_correlation_per_degree(g1,g2,1,lmaxg);    
     break;
   case 1:			/* 1...20 and 4..9 correlations */
-    lmaxg = MIN(20,lmaxg);
+    lmaxg = HC_MIN(20,lmaxg);
     if(verbose)
       fprintf(stderr,"hc_compute_correlation: computing 1...%i and 4..9 correlations\n",lmaxg);
     c[0] = sh_correlation_per_degree(g1,g2,1,lmaxg);
     c[1] = sh_correlation_per_degree(g1,g2,4,9);
     break;
   case 2:			/* 1...20, 4..9, 2..4 correlations */
-    lmaxg = MIN(20,lmaxg);
+    lmaxg = HC_MIN(20,lmaxg);
     if(verbose)
       fprintf(stderr,"hc_compute_correlation: computing 1...%i and 4..9 correlations\n",lmaxg);
     c[0] = sh_correlation_per_degree(g1,g2,1,lmaxg);

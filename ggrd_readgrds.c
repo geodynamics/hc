@@ -1,5 +1,5 @@
 #include "hc.h"
-#include "gmt.h"
+#include "hc_ggrd.h"
 /*
 
   read in velocities from a set of GMT grd files named 

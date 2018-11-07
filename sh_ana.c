@@ -1,5 +1,5 @@
 #include "hc.h"
-
+#include "hc_ggrd.h"
 /* 
 
 read in data in lon lat z format, spaced as required by the particular

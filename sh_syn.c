@@ -1,8 +1,6 @@
 #include "hc.h"
-#include "gmt.h"
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "hc_ggrd.h"
+
 
 /* 
 

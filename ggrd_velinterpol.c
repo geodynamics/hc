@@ -26,7 +26,7 @@
 //
 //
 #include "hc.h"
-
+#include "hc_ggrd.h"
 
 int ggrd_find_vel_and_der(GGRD_CPREC *xloc,
 			  GGRD_CPREC time,GGRD_CPREC dtrange,

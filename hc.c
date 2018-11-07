@@ -191,7 +191,7 @@ int main(int argc, char **argv)
     if(p->verbose)
       fprintf(stderr,"%s: writing spherical harmonics solution to %s\n",
 	      argv[0],filename);
-    out = ggrd_open(filename,"w","main");
+    out = hc_fopen(filename,"w","main");
     hc_print_spectral_solution(model,sol_spectral,out,
 			       p->solution_mode,
 			       p->sol_binary_out,p->verbose);
@@ -210,7 +210,7 @@ int main(int argc, char **argv)
 	fprintf(stderr,"%s: writing scaled density anomaly field to %s\n",
 		argv[0],filename);
       
-      out = ggrd_open(filename,"w","main");
+      out = hc_fopen(filename,"w","main");
       hc_print_dens_anom(model,out,p->sol_binary_out,p->verbose);
       fclose(out);
     }
@@ -253,7 +253,7 @@ int main(int argc, char **argv)
       fprintf(stderr,"%s: writing geoid %sto %s, %s\n",argv[0],
 	      ((p->print_kernel_only)?("kernels "):("")),filename,
 	      (p->compute_geoid == 1)?("at surface"):("all layers"));
-    out = ggrd_open(filename,"w","main");	
+    out = hc_fopen(filename,"w","main");	
     if(p->print_kernel_only){
       hc_print_geoid_kernel(geoid,model->r,model->nradp2,out,p->verbose);
     }else{			/* geoid solutions */

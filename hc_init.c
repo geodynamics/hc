@@ -728,7 +728,7 @@ void hc_assign_viscosity(struct hcs *hc,int mode,
 
        from bottom to top
     */
-    in = ggrd_open(p->visc_filename,"r","hc_assign_viscosity");
+    in = hc_fopen(p->visc_filename,"r","hc_assign_viscosity");
     hc_vecrealloc(&hc->rvisc,1,"hc_assign_viscosity");
     hc_vecrealloc(&hc->visc,1,"hc_assign_viscosity");
     hc->nvis = 0;mean = 0.0;mws = 0.0;
@@ -870,7 +870,7 @@ void hc_assign_density(struct hcs *hc,
     
     */
 
-    in = ggrd_open(filename,"r","hc_assign_density");
+    in = hc_fopen(filename,"r","hc_assign_density");
     if(verbose)
       fprintf(stderr,"hc_assign_density: reading density anomalies in [%g%%] from %s\n",
 	      100*HC_DENSITY_SCALING,filename);
@@ -1265,7 +1265,7 @@ void hc_init_single_plate_exp(char *filename,struct hcs *hc, hc_boolean pvel_in_
   /* scale to go from cm/yr to internal scale */
   vfac[0] = vfac[1] = 1.0/hc->vel_scale;
   
-  in = ggrd_open(filename,"r","hc_init_single_plate_exp");
+  in = hc_fopen(filename,"r","hc_init_single_plate_exp");
   if(read_short_pvel_sh){
     ivec = 1;shps = 2;type = HC_DEFAULT_INTERNAL_FORMAT;ilayer=0;zlabel=0;nset=1;
     fscanf(in,"%i",&lmax);
@@ -1432,7 +1432,7 @@ void hc_assign_dd_scaling(int mode, HC_PREC dlayer[4],struct hc_parameters *p,
 	  fprintf(stderr,"hc_assign_dd_scaling: reading depth dependent  dln\\rho/dln density scaling from %s\n",
 		  p->dens_scaling_filename);
 	p->ndf=0;smean = 0.0;
-	in = ggrd_open(p->dens_scaling_filename,"r","hc_assign_dd_scaling");
+	in = hc_fopen(p->dens_scaling_filename,"r","hc_assign_dd_scaling");
 	while(fscanf(in,HC_TWO_FLT_FORMAT,dtmp,(dtmp+1)) == 2){
 	  hc_vecrealloc(&p->rdf,(1+p->ndf),"hc_assign_dd_scaling");
 	  hc_vecrealloc(&p->sdf,(1+p->ndf),"hc_assign_dd_scaling");
@@ -1550,4 +1550,19 @@ void hc_select_pvel(HC_PREC time, struct pvels *pvel,
       HC_ERROR("hc_select_pvel","interpolation not implemented yet");
     }
   }
+}
+
+/* 
+   open a file safely and give an error message if there was
+   a problem
+*/
+FILE *hc_fopen(char *name, char *mode, char *program)
+{
+  FILE *in;
+  if((in=fopen(name,mode)) == NULL){
+    fprintf(stderr,"%s: error: can not open file %s for mode %s access\n",
+	    program,name,mode);
+    exit(-1);
+  }
+  return in;
 }
