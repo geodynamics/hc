@@ -72,10 +72,9 @@ PREM_INCS = prem.h
 #
 # GMT grd handling, now includes PREM stuff
 #
-GGRD_SRCS = ggrd_velinterpol.c ggrd_readgrds.c ggrd_grdtrack_util.c sh_exp_ggrd.c sh_ana.c sh_syn.c
+GGRD_SRCS = ggrd_velinterpol.c ggrd_readgrds.c ggrd_grdtrack_util.c sh_exp_ggrd.c 
 GGRD_OBJS = $(ODIR)/ggrd_velinterpol.o $(ODIR)/ggrd_readgrds.o \
-	$(ODIR)/ggrd_grdtrack_util.o $(ODIR)/sh_exp_ggrd.o \
-	$(ODIR)/sh_ana.o  $(ODIR)/sh_syn.o
+	$(ODIR)/ggrd_grdtrack_util.o $(ODIR)/sh_exp_ggrd.o 
 
 GGRD_OBJS_DBG = $(ODIR)/ggrd_velinterpol.dbg.o $(ODIR)/ggrd_readgrds.dbg.o $(ODIR)/ggrd_grdtrack_util.dbg.o 
 GGRD_DEFINES = -I$(GMTHOME)/include -I$(NETCDFHOME)/include  

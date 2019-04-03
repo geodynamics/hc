@@ -1,6 +1,6 @@
 README FOR HC
 
-Version 1.0.7 - 2017
+Version 1.0.8 - 2018
 
 Thorsten Becker - twb@ig.utexas.edu
 
@@ -88,6 +88,13 @@ With all things set up, you should be able to type
 make all
 
 to compile the programs.
+
+IF YOU DO NOT WANT TO COMPILE USING THE GTM4 LIBRARIES, use
+
+make all_no_gmt
+
+this will compile the main HC program, but not the sh_exp type of
+routines, as those rely on the netcdf/grd I/O capabilities via GMT. 
 
 
 
