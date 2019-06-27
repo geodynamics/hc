@@ -35,5 +35,3 @@ float ggrd_gt_rms(float *, int);
 float ggrd_gt_mean(float *, int);
 /* sh_exp_ggrd.c */
 void sh_read_spatial_data_from_grd(struct sh_lms *, struct ggrd_gt *, unsigned short, int, double *, double *);
-/* sh_ana.c */
-/* sh_syn.c */

@@ -127,7 +127,7 @@ INC_FLAGS =  $(HEAL_INC_FLAGS) $(ADD_FLAGS) $(RICK_INC_FLAGS)
 INCS = hc_auto_proto.h $(HEAL_INCS) $(RICK_INCS) $(OINCS)
 #
 # defines
-DEFINES = $(RICK_DEFINES) $(HEAL_DEFINES)  
+DEFINES = $(RICK_DEFINES) $(HEAL_DEFINES) 
 #
 # libraries without ggrd
 LIBS = $(HC_LIBS)  $(HEAL_LIBS) $(RICK_LIB)
@@ -324,6 +324,7 @@ $(ODIR)/libggrd.dbg.a: $(GGRD_OBJS_DBG)
 #
 $(ODIR)/hc_init.o: hc_init.c  $(INCS) $(PREM_INC)
 	$(CC) $(CFLAGS) $(INC_FLAGS) $(DEFINES) $(PREM_DEFINES) -c hc_init.c -o $(ODIR)/hc_init.o
+
 $(ODIR)/hc_init.dbg.o: hc_init.c  $(INCS) $(PREM_INC)
 	$(CC) $(CFLAGS_DEBUG) $(INC_FLAGS) \
 	$(DEFINES) $(PREM_DEFINES) -c hc_init.c -o $(ODIR)/hc_init.dbg.o

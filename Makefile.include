@@ -12,6 +12,6 @@
 ADD_FLAGS = 
 
 
-GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include 
+GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFDIR)/include 
 GGRD_LIBS_LINKLINE = -lggrd -lgmt -lpsl -lnetcdf 
-LDFLAGS = -lnetcdf
+LDFLAGS = -L$(NETCDFDIR)/lib -lnetcdf
