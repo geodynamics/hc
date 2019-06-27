@@ -803,12 +803,12 @@ void hc_print_geoid_kernel(struct sh_lms *gk, HC_PREC *r,int nradp2, FILE *out,
   lmax = gk[0].lmax;
   fprintf(out,"%i %i\n",nradp2,lmax);
   for(i=0;i < nradp2;i++){
-    fprintf(out,"%g ",HC_Z_DEPTH(r[i]));
+    fprintf(out,"%g ",(double)HC_Z_DEPTH(r[i]));
     if(verbose>1)
-      fprintf(stderr,"hc_print_geoid_kernel: depth: %10g\n",HC_Z_DEPTH(r[i]));
+      fprintf(stderr,"hc_print_geoid_kernel: depth: %10g\n",(double)HC_Z_DEPTH(r[i]));
     for(l=0;l <= lmax;l++){
       sh_get_coeff((gk+i),l,0,FALSE,TRUE,value);
-      fprintf(out,"%12.5e ",value[0]);
+      fprintf(out,"%12.5e ",(double)value[0]);
     }
     fprintf(out,"\n");
   }

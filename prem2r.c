@@ -65,7 +65,7 @@ int main(int argc,char **argv)
   }
 
   
-  for(i=0;i<n;i+=10){
+  for(i=0;i<n;i++){
     r = HC_RE_KM-zp[i];
     rnd = r/HC_RE_KM;
     prem_get_rho(&rho,rnd,prem);

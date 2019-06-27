@@ -461,11 +461,11 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
 	fprintf(stderr,"-vs_n\tn\tuse n layers out of %i for viscosity scane (%i)\n",
 		HC_VSCAN_NLAYER_MAX,p->vscan_n);
 	fprintf(stderr,"-vs_dv\tval\tuse val spacing in log space for viscosity scane (%g)\n",
-		p->vscan_dv);
+		(double)p->vscan_dv);
 	fprintf(stderr,"-vs_zlm\tdepth\tuse depth[km] for the upper/lower mantle boundary (%g)\n",
-		HC_Z_DEPTH(p->rlayer[0]));
+		(double)HC_Z_DEPTH(p->rlayer[0]));
 	fprintf(stderr,"-vs_zau\tdepth\tuse depth[km] for the asthenosphere/upper mantle boundary (%g)\n",
-		HC_Z_DEPTH(p->rlayer[1]));
+		(double)HC_Z_DEPTH(p->rlayer[1]));
 
 	if(p->solver_mode == HC_SOLVER_MODE_DYNTOPO_INVERT)
 	  fprintf(stderr,"-dtref\tname\tuse filename for reference dynamic topography (%s)\n",
