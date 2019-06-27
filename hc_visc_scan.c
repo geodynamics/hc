@@ -65,10 +65,10 @@ int main(int argc, char **argv)
   hc_handle_command_line(argc,argv,1,p);
   
   fprintf(stderr,"%s: starting scan using reference %s, dv: %g, nlayer: %i/%i, z_ulm: %g z_asth: %g\n",
-	  argv[0],p->ref_geoid_file,p->vscan_dv,p->vscan_n,
+	  argv[0],p->ref_geoid_file,(double)p->vscan_dv,p->vscan_n,
 	  HC_VSCAN_NLAYER_MAX,
-	  HC_Z_DEPTH(p->rlayer[0]),
-	  HC_Z_DEPTH(p->rlayer[1]));
+	  (double)HC_Z_DEPTH(p->rlayer[0]),
+	  (double)HC_Z_DEPTH(p->rlayer[1]));
   if(p->vscan_n < 0){
     p->vscan_n = - p->vscan_n;
     fprintf(stderr,"%s: i.e. %i layers, but additionally varying upper/lower mantle boundary\n",
@@ -286,15 +286,16 @@ void visc_scan_out(HC_PREC *v,struct sh_lms *geoid,
       p->rlayer[0] = HC_ND_RADIUS(r660);
       /* print viscosities of 0...100, 100...410, 410 ... 660 and
 	 660...2871 layer in log space */ 
-      fprintf(stdout,"%14.7e %14.7e %14.7e %14.7e\t",v[0],v[1],v[2],v[3]);
+      fprintf(stdout,"%14.7e %14.7e %14.7e %14.7e\t",(double)v[0],(double)v[1],(double)v[2],(double)v[3]);
       hc_calc_geoid_corr_four_layer(v,geoid,sol_spectral,pvel,p,model,solved,corr);
-      fprintf(stdout,"%10.7f %10.7f %10.7f\t%8.3f\n",corr[0],corr[1],corr[2],r660);
+      fprintf(stdout,"%10.7f %10.7f %10.7f\t%8.3f\n",(double)corr[0],(double)corr[1],
+	      (double)corr[2],(double)r660);
     }
   }else{
     /* no radius scan */
-    fprintf(stdout,"%14.7e %14.7e %14.7e %14.7e\t",v[0],v[1],v[2],v[3]);
+    fprintf(stdout,"%14.7e %14.7e %14.7e %14.7e\t",(double)v[0],(double)v[1],(double)v[2],(double)v[3]);
     hc_calc_geoid_corr_four_layer(v,geoid,sol_spectral,pvel,p,model,solved,corr);
-    fprintf(stdout,"%10.7f %10.7f %10.7f\n",corr[0],corr[1],corr[2]);
+    fprintf(stdout,"%10.7f %10.7f %10.7f\n",(double)corr[0],(double)corr[1],(double)corr[2]);
   }
 
 }

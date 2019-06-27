@@ -37,7 +37,7 @@ int main(int argc, char **argv)
   fprintf(stderr,"%s: output is latitude[deg] cos(theta) weight\n",argv[0]);
 
   for(i=0;i<nlat;i++)
-    fprintf(stderr,"%12.8f %14.10e %14.10e\n",90-acos(x[i])*fac,x[i],w[i]);
+    fprintf(stderr,"%12.8lf %14.10e %14.10e\n",(double)(90-acos(x[i])*fac),(double)x[i],(double)w[i]);
   
   free(x);free(w);
   return 0;
