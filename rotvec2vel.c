@@ -157,17 +157,18 @@ int main(int argc, char *argv[])
 	rotvel[k+j]=0.0;
   
   if(fixed_plate > 0){
-    fprintf(stderr,"%s: input plate number %i(%i) will be fixed\n",argv[0],fixed_plate,name[fixed_plate-1]);
+    fprintf(stderr,"%s: input plate number %i(%i) will be fixed\n",
+	    argv[0],fixed_plate,name[fixed_plate-1]);
     if(fixed_plate > nplt){
       fprintf(stderr,"%s: fixed plate number (%i) greater than plate numbers (1...%i)\n\n",
 	      argv[0],fixed_plate,nplt);
     }
-    for(i=0;i<3;i++)
+    for(i=0;i < 3;i++)
       redvec[i]= *(rotvel+name[fixed_plate-1]*3+i);
   }else{
     for(i=0;i < 3;i++)
       redvec[i]=0.0;
-    if(fixed_plate==-2){
+    if(fixed_plate == -2){
       normalize=1;
       fprintf(stderr,"%s: normalizing all vectors\n",argv[0]);
     }else if(fixed_plate < -2 && fixed_plate > -6){
@@ -181,12 +182,13 @@ int main(int argc, char *argv[])
   // 
   for(k=i=0;i < coded_plates;i++,k+=3){
     if(assigned[i]){
-      for(j=0;j<3;j++)
-	*(rotvel+k+j) -= redvec[j];
       strncpy(pname,(allplates+(code_length+1)*i),code_length);
       // original vector
       fprintf(stderr,"%s: plate %3i %3s wx: %12g wy: %12g wz: %12g",
 	      argv[0],i+1,pname,*(rotvel+k),*(rotvel+k+1),*(rotvel+k+2));
+      for(j=0;j < 3;j++)	/* correction */
+	*(rotvel+k+j) -= redvec[j];
+
       if(i == name[fixed_plate-1])
 	fprintf(stderr," [deg/Myr] (fixed)\n");
       else
@@ -194,14 +196,14 @@ int main(int argc, char *argv[])
      
       // normalize
       for(length=0.0,j=0;j<3;j++)
-	length+= *(rotvel+k+j)* *(rotvel+k+j);
+	length += *(rotvel+k+j)* *(rotvel+k+j);
       length=sqrt(length);
       if(normalize)
-	for(j=0;j<3;j++)
+	for(j=0;j < 3;j++)
 	  *(rotvel+k+j) /= length;
       // or assign unit length
       if(unity_vec){
-	for(j=0;j<3;j++){
+	for(j=0;j < 3;j++){
 	  if(unity_vec-1==j){
 	    *(rotvel+k+j)=1.0;
 	  }else{
@@ -209,7 +211,7 @@ int main(int argc, char *argv[])
 	  }
 	}
       }
-      for(length=0.0,j=0;j<3;j++)
+      for(length=0.0,j=0;j < 3;j++)
 	length+= *(rotvel+k+j)* *(rotvel+k+j);
       length=sqrt(length);
       // converted 
@@ -226,7 +228,9 @@ int main(int argc, char *argv[])
   }
   minplate=1e6;
   maxplate=-1;
+  //
   // read in lon lat code tripels
+  //
   nrp=1;
   points=(double *)malloc(sizeof(double)*3*nrp);
   k=0;
@@ -305,8 +309,12 @@ int main(int argc, char *argv[])
   for(i=0;i < coded_plates;i++)
     if(assigned[i]){
       strncpy(pname,(allplates+(code_length+1)*i),3);
-      fprintf(stderr,"%s: %3s (%3i) was assigned %7i times out of %7i, %15.8f percent\n",
-	      argv[0],pname,i+1,*(stats+i),nrp,(double)(*(stats+i))/(double)nrp*100.0);
+      fprintf(stderr,"%s: %3s (%3i) (%9.2e %9.2e %9.2e) assigned %7i/%7i, %15.3f%% \n",
+	      argv[0],pname,i+1,
+	      *(rotvel+i*3)/PIOVERONEEIGHTY_TIMES_VELFACTOR,
+	      *(rotvel+i*3+1)/PIOVERONEEIGHTY_TIMES_VELFACTOR,
+	      *(rotvel+i*3+2)/PIOVERONEEIGHTY_TIMES_VELFACTOR,
+	      *(stats+i),nrp,(double)(*(stats+i))/(double)nrp*100.0);
     }
   fprintf(stderr,"%s: done\n",argv[0]);
   return 0;
