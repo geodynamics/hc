@@ -886,7 +886,8 @@ void hc_assign_density(struct hcs *hc,
     if(use_short_format){
       if(verbose)
 	fprintf(stderr,"hc_assign_density: using short format for density SH\n");
-      fscanf(in,"%i",&nset);
+      if(fscanf(in,"%i",&nset) != 1)
+	HC_ERROR("hc_assign_density","code read error");
       ilayer = -1;
     }else{
       if(verbose)
@@ -1268,7 +1269,8 @@ void hc_init_single_plate_exp(char *filename,struct hcs *hc, hc_boolean pvel_in_
   in = hc_fopen(filename,"r","hc_init_single_plate_exp");
   if(read_short_pvel_sh){
     ivec = 1;shps = 2;type = HC_DEFAULT_INTERNAL_FORMAT;ilayer=0;zlabel=0;nset=1;
-    fscanf(in,"%i",&lmax);
+    if(fscanf(in,"%i",&lmax) != 1)
+      HC_ERROR("hc_init_single_plate_exp","lmax read error");
   }else{
     if(!sh_read_parameters_from_stream(&type,&lmax,&shps,&ilayer, &nset,
 				       &zlabel,&ivec,in,FALSE,
