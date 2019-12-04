@@ -390,6 +390,10 @@ void hc_calc_geoid_corr_four_layer(HC_PREC *log_eta,
 				   HC_PREC *corr)
 {
   /* layer viscosity structure */
+  /* 
+      convert from log10(eta/1e21)
+
+  */
   p->elayer[0] = pow(10,log_eta[3]); /* bottom up */
   p->elayer[1] = pow(10,log_eta[2]); 
   p->elayer[2] = pow(10,log_eta[1]); 

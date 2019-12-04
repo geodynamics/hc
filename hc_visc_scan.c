@@ -12,6 +12,9 @@
 
    scan through viscosities and compute correlation with the geoid
 
+
+   output viscosities are log10(eta/1e21), top to bottom
+   
 */
 
 /* indices for arrays */
@@ -279,21 +282,30 @@ void visc_scan_out(HC_PREC *v,struct sh_lms *geoid,
 {
   HC_PREC corr[3],r660=660;
   const HC_PREC rtop = 300.1, rbot = 1800+1e-5, dr = 25;
-
+  if(p->vscan_rlv){
+    if((v[0] < v[1])||(v[0] < v[2]))		/* lithosphere should be > asth or upper mantle */
+      return;
+    if(v[1] > v[2])		/* asthenosphere should be < upper mantle */
+      return;
+    if(v[2] > v[3])
+      return;
+  }
   if(vary_umlm){
     for(r660=rtop;r660<=rbot;r660+=dr){
       /* overwrite 660 as first non CMB boundary from the bottom */
       p->rlayer[0] = HC_ND_RADIUS(r660);
       /* print viscosities of 0...100, 100...410, 410 ... 660 and
 	 660...2871 layer in log space */ 
-      fprintf(stdout,"%14.7e %14.7e %14.7e %14.7e\t",(double)v[0],(double)v[1],(double)v[2],(double)v[3]);
+      fprintf(stdout,"%14.7e %14.7e %14.7e %14.7e\t",
+	      (double)v[0],(double)v[1],(double)v[2],(double)v[3]);
       hc_calc_geoid_corr_four_layer(v,geoid,sol_spectral,pvel,p,model,solved,corr);
       fprintf(stdout,"%10.7f %10.7f %10.7f\t%8.3f\n",(double)corr[0],(double)corr[1],
 	      (double)corr[2],(double)r660);
     }
   }else{
     /* no radius scan */
-    fprintf(stdout,"%14.7e %14.7e %14.7e %14.7e\t",(double)v[0],(double)v[1],(double)v[2],(double)v[3]);
+    fprintf(stdout,"%14.7e %14.7e %14.7e %14.7e\t",
+	    (double)v[0],(double)v[1],(double)v[2],(double)v[3]);
     hc_calc_geoid_corr_four_layer(v,geoid,sol_spectral,pvel,p,model,solved,corr);
     fprintf(stdout,"%10.7f %10.7f %10.7f\n",(double)corr[0],(double)corr[1],(double)corr[2]);
   }
