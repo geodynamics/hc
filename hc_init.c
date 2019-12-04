@@ -425,7 +425,7 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
 	break;
       }
       fprintf(stderr,"See README.TXT in the installation directory for example for how to plot output, and\n");
-      fprintf(stderr,"http://geosys.usc.edu/projects/seatree/ for a graphical user interface.\n");
+      fprintf(stderr,"http://http://www-udc.ig.utexas.edu/external/becker/seatree/ for a graphical user interface.\n");
       fprintf(stderr,"https://goo.gl/D4E8oy for a VirtualBox install.\n\n");
 
 
