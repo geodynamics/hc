@@ -61,8 +61,8 @@ PREM
 
 */
 
-#define HC_VSCAN_VMAX 3				/* range for viscosities in log space */
+#define HC_VSCAN_VMAX 3				/* +/- range for viscosities in log space */
 #define HC_VSCAN_NLAYER_MAX 4		/* max number of layers, HAS
 					   TO BE FOUR FOR NOW */
 
-#define HC_VSCAN_DV0 0.25			/* default spacing for scan */
+#define HC_VSCAN_DV0 0.1			/* default spacing for scan */

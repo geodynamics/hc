@@ -208,6 +208,11 @@ struct hc_parameters{
   hc_boolean solver_mode;	
   hc_boolean visc_init_mode;
 
+  hc_boolean vscan_rlv; /* restrict the v[4] values to
+			   something "reasonable" in
+			   terms of relative layer
+			   strength */
+
   HC_PREC vscan_dv;		/* spacing for viscosity scan */
   int vscan_n;		/* how many layers to use */
 
@@ -233,7 +238,9 @@ struct hc_parameters{
 							   radius) */
 
   hc_boolean print_pt_sol;	/* output of p[6] and t[2] vectors */
-  hc_boolean print_kernel_only; 
+  hc_boolean print_kernel_only;
+
+  
   char visc_filename[HC_CHAR_LENGTH];	/* name of viscosity profile file */
   char pvel_filename[HC_CHAR_LENGTH];	/* name of plate velocities file */
   char dens_filename[HC_CHAR_LENGTH];	/* name of density model file */
