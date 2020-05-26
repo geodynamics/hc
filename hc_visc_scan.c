@@ -34,7 +34,7 @@ int main(int argc, char **argv)
   struct hc_parameters p[1]; /* parameters */
   hc_boolean solved = FALSE; /* init with FALSE! */
   hc_boolean vary_umlm = FALSE;
-  HC_PREC vl[HC_VSCAN_NLAYER_MAX][3],v[HC_VSCAN_NLAYER_MAX];			/*  for viscosity scans */
+  HC_PREC dv_use,vl[HC_VSCAN_NLAYER_MAX][3],v[HC_VSCAN_NLAYER_MAX];			/*  for viscosity scans */
   /* 
      
   
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
   */
   hc_handle_command_line(argc,argv,1,p);
   
-  fprintf(stderr,"%s: starting scan using reference %s, dv: %g, nlayer: %i/%i, z_ulm: %g z_asth: %g\n",
+  fprintf(stderr,"%s: starting scan using reference %s, dv_ref: %g, nlayer: %i/%i, z_ulm: %g z_asth: %g\n",
 	  argv[0],p->ref_geoid_file,(double)p->vscan_dv,p->vscan_n,
 	  HC_VSCAN_NLAYER_MAX,
 	  (double)HC_Z_DEPTH(p->rlayer[0]),
@@ -148,6 +148,7 @@ int main(int argc, char **argv)
     hc_select_pvel(p->pvel_time,&model->pvel,pvel,p->verbose);
   
   /* parameter space log bounds */
+  dv_use = p->vscan_dv;	/* don't modify */
   
   switch(p->vscan_n){
   case 4:
@@ -157,24 +158,24 @@ int main(int argc, char **argv)
 
      */
     /* uniform "priors" */
-    vl[0][IVMIN]=  -HC_VSCAN_VMAX;vl[0][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[0][IDV]=p->vscan_dv; /*   0..100
-											       layer
-											       log
-											       bounds
-											       and
-											       spacing */
-    vl[1][IVMIN]=  -HC_VSCAN_VMAX;vl[1][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[1][IDV]=p->vscan_dv; /* 100..410 */
+    vl[0][IVMIN]=  -HC_VSCAN_VMAX;vl[0][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[0][IDV]=dv_use; /*   0..100
+											  layer
+											  log
+											  bounds
+											  and
+											  spacing */
+    vl[1][IVMIN]=  -HC_VSCAN_VMAX;vl[1][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[1][IDV]=dv_use; /* 100..410 */
     if(p->free_slip){
-      vl[2][IVMIN]=  0;vl[2][IVMAX]=0+1e-5;vl[2][IDV]=p->vscan_dv; /* for free
+      vl[2][IVMIN]=  0;vl[2][IVMAX]=0+1e-5;vl[2][IDV]=dv_use; /* for free
 								      slip, only relative
 								      viscosisites matter
 								      for correlation */
       fprintf(stderr,"%s: for free slip, we set upper mantle (layer 2) to unity (only relative viscosities matter)\n",argv[0]);
     }else{
-      vl[2][IVMIN]=  -HC_VSCAN_VMAX;vl[2][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[2][IDV]=p->vscan_dv; /* need to actually
+      vl[2][IVMIN]=  -HC_VSCAN_VMAX;vl[2][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[2][IDV]=dv_use; /* need to actually
 											       loop 410 .660 */
     }
-    vl[3][IVMIN]=  -HC_VSCAN_VMAX;vl[3][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[3][IDV]=p->vscan_dv; /* 660 ... 2871 */
+    vl[3][IVMIN]=  -HC_VSCAN_VMAX;vl[3][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[3][IDV]=dv_use; /* 660 ... 2871 */
 
     /* loop */
     for(v[0]=vl[0][IVMIN];v[0] <= vl[0][IVMAX];v[0] += vl[0][IDV])
@@ -184,12 +185,13 @@ int main(int argc, char **argv)
 	    visc_scan_out(v,geoid,sol_spectral,pvel,p,model,&solved,vary_umlm);
     break;
   case 3:
+    dv_use /= 3;		/* refine */
     /* 
 
        three layer case
 
     */
-    vl[0][IVMIN]=  -HC_VSCAN_VMAX;vl[0][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[0][IDV]=p->vscan_dv; /*   0..100
+    vl[0][IVMIN]=  -HC_VSCAN_VMAX;vl[0][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[0][IDV]=dv_use; /*   0..100
 											       layer
 											       log
 											       bounds
@@ -197,16 +199,16 @@ int main(int argc, char **argv)
 											       spacing */
     /* vl[1] will be same as vl[2] */
     if(p->free_slip){
-      vl[2][IVMIN]=  0;vl[2][IVMAX]=0+1e-5;vl[2][IDV]=p->vscan_dv; /* for free
+      vl[2][IVMIN]=  0;vl[2][IVMAX]=0+1e-5;vl[2][IDV]=dv_use; /* for free
 								      slip, only relative
 								      viscosisites matter
 								      for correlation */
       fprintf(stderr,"%s: for free slip, we set upper mantle (layer 2) to unity (only relative viscosities matter)\n",argv[0]);
     }else{
-      vl[2][IVMIN]=  -HC_VSCAN_VMAX;vl[2][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[2][IDV]=p->vscan_dv; /* need to actually
+      vl[2][IVMIN]=  -HC_VSCAN_VMAX;vl[2][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[2][IDV]=dv_use; /* need to actually
 											       loop 410 .660 */
     }
-    vl[3][IVMIN]=  -HC_VSCAN_VMAX;vl[3][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[3][IDV]=p->vscan_dv; /* 660 ... 2871 */
+    vl[3][IVMIN]=  -HC_VSCAN_VMAX;vl[3][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[3][IDV]=dv_use; /* 660 ... 2871 */
     /* loop */
     for(v[0]=vl[0][IVMIN];v[0] <= vl[0][IVMAX];v[0] += vl[0][IDV])
       for(v[2]=vl[2][IVMIN];v[2] <= vl[2][IVMAX];v[2] += vl[2][IDV]){
@@ -222,8 +224,9 @@ int main(int argc, char **argv)
        vl[0] and vl[1] will be same as vl[2] 
 
     */
+    dv_use /= 10;		/* finer */
     if(p->free_slip){
-      vl[2][IVMIN]=  0;vl[2][IVMAX]=0+1e-5;vl[2][IDV]=p->vscan_dv; /* for
+      vl[2][IVMIN]=  0;vl[2][IVMAX]=0+1e-5;vl[2][IDV]=dv_use; /* for
 								      free
 								      slip,
 								      only
@@ -234,10 +237,10 @@ int main(int argc, char **argv)
 								      correlation */
       fprintf(stderr,"%s: for free slip, we set upper mantle (layer 2) to unity (only relative viscosities matter)\n",argv[0]);
     }else{
-      vl[2][IVMIN]=  -HC_VSCAN_VMAX;vl[2][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[2][IDV]=p->vscan_dv; /* need to actually
+      vl[2][IVMIN]=  -HC_VSCAN_VMAX;vl[2][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[2][IDV]=dv_use; /* need to actually
 											       loop 410 .660 */
     }
-    vl[3][IVMIN]=  -HC_VSCAN_VMAX;vl[3][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[3][IDV]=p->vscan_dv; /* 660 ... 2871 */
+    vl[3][IVMIN]=  -HC_VSCAN_VMAX;vl[3][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[3][IDV]=dv_use; /* 660 ... 2871 */
     /* loop */
     for(v[2]=vl[2][IVMIN];v[2] <= vl[2][IVMAX];v[2] += vl[2][IDV]){
       v[0] = v[1] = v[2];
@@ -291,7 +294,7 @@ void visc_scan_out(HC_PREC *v,struct sh_lms *geoid,
       return;
   }
   if(vary_umlm){
-    for(r660=rtop;r660<=rbot;r660+=dr){
+    for(r660=rtop;r660 <= rbot;r660 += dr){
       /* overwrite 660 as first non CMB boundary from the bottom */
       p->rlayer[0] = HC_ND_RADIUS(r660);
       /* print viscosities of 0...100, 100...410, 410 ... 660 and
