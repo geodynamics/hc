@@ -668,6 +668,12 @@ void hc_assign_viscosity(struct hcs *hc,int mode,
 	hc->visc[i] = 0.0;
       }
     }
+    if( p->verbose){
+      fprintf(stderr,"hc_assign_viscosity: %d layers\n",hc->nvis);
+      for(i=0;i<hc->nvis;i++){
+	fprintd(stderr,"%.3e %.3e\n",hc->rvisc[i],hc->visc[i]);
+      }
+    }
     break;
     
   case HC_INIT_E_FROM_FILE:		

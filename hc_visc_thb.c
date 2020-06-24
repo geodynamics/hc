@@ -14,6 +14,20 @@
 
 */
 
+#define MAX_NUM_VOR 16
+struct {
+  int nlayer;
+  double layer_r[MAX_NUM_VOR];
+  double layer_visc[MAX_NUM_VOR];  
+} thb_solution;
+
+void interpolate_solution(struct thb_solution *solution,HC_PREC *rvisc,HC_PREC *visc){
+  
+}
+
+
+
+
 int main(int argc, char **argv)
 {
   struct hcs *model;		/* main structure, make sure to initialize with 
