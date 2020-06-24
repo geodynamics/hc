@@ -400,6 +400,8 @@ init and assignment modes
 */
 #define HC_INIT_E_FROM_FILE 0	/* viscosity */
 #define HC_INIT_E_FOUR_LAYERS 1
+#define HC_INIT_E_INTERP 2      /* Interpolated viscosity structure */
+#define HC_INTERP_LAYERS 100 
 
 #define HC_INIT_D_FROM_FILE 0	/* density */
 #define HC_RESCALE_D 1

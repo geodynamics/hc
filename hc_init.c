@@ -627,7 +627,7 @@ void hc_assign_viscosity(struct hcs *hc,int mode,
     /* initialize a four layer viscosity structure, viscosity values
        for 2871-660, 660-410, 410-100,100-0 should be given in units
        of visnor [1e21] as elayer[4]
-     */
+    */
     hc_vecrealloc(&hc->rvisc,4,"hc_assign_viscosity");
     hc_vecrealloc(&hc->visc,4,"hc_assign_viscosity");
     /* number of layers */
@@ -637,7 +637,7 @@ void hc_assign_viscosity(struct hcs *hc,int mode,
     hc->rvisc[1] = p->rlayer[0];
     hc->rvisc[2] = p->rlayer[1];
     hc->rvisc[3] = p->rlayer[2];
-
+    
     for(i=0;i < hc->nvis;i++){
       hc->visc[i] = elayer[i];
       //fprintf(stderr,"%11g %11g\n",hc->rvisc[i],hc->visc[i]);
@@ -646,7 +646,30 @@ void hc_assign_viscosity(struct hcs *hc,int mode,
       fprintf(stderr,"hc_assign_viscosity: assigned four layer viscosity: %.2e %.2e %.2e %.2e\n",
 	      (double)hc->visc[0],(double)hc->visc[1],
 	      (double)hc->visc[2],(double)hc->visc[3]);
-  break;
+    break;
+  case HC_INIT_E_INTERP:
+    {
+      int nlayer = HC_INTERP_LAYERS;
+      /* initialize an empty viscosity structure with a fixed number of layers */
+      /* This will be used by THB Viscosity code to create parameterized viscosity structures. */
+      hc_vecrealloc(&hc->rvisc,nlayer,"hc_assign_viscosity");
+      hc_vecrealloc(&hc->visc,nlayer,"hc_assign_viscosity");
+      /* number of layers */
+      hc->nvis = nlayer;
+      /* radii */
+      hc->rvisc[0] = hc->r_cmb;
+      const double delta = (1.0 - hc->r_cmb)/((double) nlayer+1);
+      for(i=1;i<nlayer-1;i++){
+	hc->rvisc[i] = hc->rvisc[i-1] + delta;
+      }
+      hc->rvisc[nlayer-1] = 1.0;
+      /* Initialize viscosities as all zeros */
+      for(i=0;i < hc->nvis;i++){
+	hc->visc[i] = 0.0;
+      }
+    }
+    break;
+    
   case HC_INIT_E_FROM_FILE:		
     /* 
        
@@ -1483,3 +1506,4 @@ void hc_select_pvel(HC_PREC time, struct pvels *pvel,
     }
   }
 }
+

@@ -9,12 +9,17 @@ CFLAGS = -g
 
 #
 # EDIT HERE FOR GMT VERSION 
-GMTHOME=/opt/gmt4
+#GMTHOME=/opt/gmt4
+#NETCDFHOME=/opt/gmt4
+# Macports:
+GMTHOME=/opt/local/lib/gmt4
+NETCDFHOME=/opt/local
+# linux/ubuntu
 #NETCDFHOME=/usr/local
 #HCHOME=/usr/local/hc
 #
-GMTHOME=/sw/
-NETCDFHOME=/sw/lib
+#GMTHOME=/sw/
+#NETCDFHOME=/sw/lib
 HCHOME=/usr/local/hc
 #
 include Makefile.include

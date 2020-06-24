@@ -1,4 +1,5 @@
 #
+GMTHOME=/opt/gmt4
 # for GMT3.4.5, use the next two lines
 #GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include  -DUSE_GMT3
 #GGRD_LIBS_LINKLINE = -lggrd -lgmt -lnetcdf 
@@ -6,10 +7,10 @@
 #
 #
 # quad precision
-#ADD_FLAGS = -DHC_PRECISION=32 -O2 
+ADD_FLAGS = -DHC_PRECISION=32 -O2 
 #
 # double precision
-ADD_FLAGS = -O2
+#ADD_FLAGS = -O2
 
 
 GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include 
