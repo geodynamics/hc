@@ -7,7 +7,7 @@ GMTHOME=/opt/gmt4
 #
 #
 # quad precision
-ADD_FLAGS = -DHC_PRECISION=32 -O2
+ADD_FLAGS = -DHC_PRECISION=32 -O3
 #
 # double precision
 #ADD_FLAGS = -O2

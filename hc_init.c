@@ -84,6 +84,18 @@ void hc_init_parameters(struct hc_parameters *p)
   strncpy(p->visc_filename,HC_VISC_FILE,HC_CHAR_LENGTH);
   strncpy(p->dens_filename,HC_DENS_SH_FILE,HC_CHAR_LENGTH);
   strncpy(p->prem_model_filename,PREM_MODEL_FILE,HC_CHAR_LENGTH);
+  /* THB stuff */
+  p->thb_no_hierarchical = FALSE;
+  strncpy(p->thb_ensemble_filename,THB_ENSEMBLE_FILE,HC_CHAR_LENGTH);
+  strncpy(p->thb_covmat_filename,THB_COVMAT_FILE,HC_CHAR_LENGTH);
+  p->thb_nl = 6;
+  for(int i=0;i<6;i++)
+    p->thb_ll[i] = i+2; /* ll = {2,3,4,5,6,7} */
+  p->thb_iter = 1000;
+  p->thb_save_start = p->thb_iter/2;
+  p->thb_sample_target = 100;
+  p->thb_save_skip = 10;
+  
 }
 
 /* 
@@ -554,7 +566,37 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
       hc_advance_argument(&i,argc,argv);
       sscanf(argv[i],"%d",&p->residual_lmax);
       used_parameter = TRUE;
-    }			
+    }else if(strcmp(argv[i],"-thb_iter")==0){
+      hc_advance_argument(&i,argc,argv);
+      sscanf(argv[i],"%d",&p->thb_iter);
+      used_parameter=TRUE;
+    }if(strcmp(argv[i],"-thb_save_start")==0){
+      hc_advance_argument(&i,argc,argv);
+      sscanf(argv[i],"%d",&p->thb_save_start);
+      used_parameter=TRUE;
+    }if(strcmp(argv[i],"-thb_sample_target")==0){
+      hc_advance_argument(&i,argc,argv);
+      sscanf(argv[i],"%d",&p->thb_sample_target);
+      used_parameter=TRUE;      
+    }else if(strcmp(argv[i],"-thb_no_hierarchical")==0){
+      p->thb_no_hierarchical = TRUE;
+      used_parameter=TRUE;
+    }else if(strcmp(argv[i],"-thb_ll")==0){
+      /* begin by counting the commas in this string */
+      hc_advance_argument(&i,argc,argv);
+      p->thb_nl=0;
+      int j;
+      const char delim[2]=",";
+      char *pt;
+      pt = strtok(argv[i],delim);
+      while( pt != NULL ){
+	int ltmp;
+	sscanf(pt,"%d",&(p->thb_ll[p->thb_nl]));
+	p->thb_nl++;
+	pt = strtok(NULL,delim);
+      }
+      used_parameter=TRUE;
+    }
 
     if(p->solver_mode == HC_SOLVER_MODE_DEFAULT){
       /* 
@@ -671,7 +713,7 @@ void hc_assign_viscosity(struct hcs *hc,int mode,
     if( p->verbose){
       fprintf(stderr,"hc_assign_viscosity: %d layers\n",hc->nvis);
       for(i=0;i<hc->nvis;i++){
-	fprintf(stderr,"%.3e %.3e\n",hc->rvisc[i],hc->visc[i]);
+	fprintf(stderr,"%.3e %.3e\n",(double) hc->rvisc[i],(double) hc->visc[i]);
       }
     }
     break;

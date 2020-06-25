@@ -243,6 +243,16 @@ struct hc_parameters{
   char ref_dtopo_file[HC_CHAR_LENGTH]; /* reference dynamic topography */
   int residual_lmin, residual_lmax;
 
+  /* additional parameters related to THB viscosity inversion */
+  int thb_iter;
+  hc_boolean thb_no_hierarchical; /* whether to perform a hierarchical inversion */
+  char thb_ensemble_filename[HC_CHAR_LENGTH]; /* name of output file for viscosity ensemble */
+  char thb_covmat_filename[HC_CHAR_LENGTH]; /* name of file from which to read the covariance matrix */
+  int thb_nl; /* number of spherical harmonic degrees at which to compute the residual */
+  int thb_ll[10]; /* spherical harmonic degrees at which to compute the residual */
+  int thb_sample_target; /* number of samples in final ensemble */
+  int thb_save_start; /* when to start saving samples */
+  int thb_save_skip;
 };
 
 /* plate velocity structure */

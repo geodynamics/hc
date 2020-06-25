@@ -70,13 +70,15 @@ int thb_max_layers(int iter){
   // and the maximum number of allowed layers.
   int burnin_steps[MAX_NUM_VOR];
 
-  burnin_steps[2] = 5000;
   int i;
-  for(i=3;i<MAX_NUM_VOR;i++){
-    burnin_steps[i] = burnin_steps[i-1] + 5000*i;
-    i++;
+  for(i=0;i<MAX_NUM_VOR;i++){
+    if(i<3){
+      burnin_steps[i] = 0;
+    }else{
+      burnin_steps[i] = burnin_steps[i-1] + 5000*(i-2);
+    }
   }
-  int max_layers = 2;
+  int max_layers = 3;
   while(max_layers < MAX_NUM_VOR && burnin_steps[max_layers] < iter){
     max_layers++;
   }
@@ -189,7 +191,6 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   }
 }
 
-
 int main(int argc, char **argv)
 {
 
@@ -203,22 +204,6 @@ int main(int argc, char **argv)
   struct hc_parameters p[1]; /* parameters */
   HC_PREC corr[2];			/* correlations */
   HC_PREC vl[4][3],v[4],dv;			/*  for viscosity scans */
-
-  struct thb_solution sol1,sol2; /* accepted and proposed solutions */
-  /* THB residual vectors */
-  int thb_ll[] = {2,3,4,5,6,7};
-  int thb_nl = 6;
-  int thb_nlm=0;
-  {
-    int i;
-    for(i=0;i<thb_nlm;i++){
-      thb_nlm += 2*thb_ll[i]+1;
-    }
-  }
-  double *residual1 = (double *) malloc(sizeof(double)*thb_nlm);
-  double *residual2 = (double *) malloc(sizeof(double)*thb_nlm);
-  double likeprob1,likeprob2;
-  
   
   /* Initialize random number generation using GNU Scientific Library */
   
@@ -335,7 +320,17 @@ int main(int argc, char **argv)
 		       model->sh_type,HC_SCALAR,p->verbose,FALSE);
 
   /* BEGIN THB VISCOSITY LOOP */
-  int maxit = 1e3;
+  
+  struct thb_solution sol1,sol2; /* accepted and proposed solutions */
+  /* THB residual vectors */
+  int thb_nlm=0;
+  for(int i=0;i<p->thb_nl;i++)
+    thb_nlm += 2*p->thb_ll[i]+1;
+  
+  double *residual1 = (double *) malloc(sizeof(double)*thb_nlm);
+  double *residual2 = (double *) malloc(sizeof(double)*thb_nlm);
+  fprintf(stdout,"Allocated residual [%dx1]\n",thb_nlm);
+  double likeprob1,likeprob2;
 
   // initialize solution
   sol1.nlayer = 2;
@@ -345,6 +340,37 @@ int main(int argc, char **argv)
   sol1.visc[1] = 22.0;
   sol1.var = 1.0;
   interpolate_viscosity(&sol1,model->rvisc,model->visc,p);
+  p->thb_save_skip = (p->thb_iter - p->thb_save_start)/p->thb_sample_target;
+  FILE *thb_ensemble_file = NULL;
+  thb_ensemble_file = fopen(p->thb_ensemble_filename,"w");
+  {
+    fprintf(thb_ensemble_file,"#THB Viscosity parameters:\n");
+    fprintf(thb_ensemble_file,"#Maximum iterations: %d\n",p->thb_iter);
+    fprintf(thb_ensemble_file,"#Save start %d\n#Save skip %d\n#Sample target %d\n",p->thb_save_start,p->thb_save_skip,p->thb_sample_target);
+    fprintf(thb_ensemble_file,"#NL=%d, L=[%d",p->thb_nl,p->thb_ll[0]);
+    
+    int i;
+    for(i=1;i<p->thb_nl;i++){
+      fprintf(thb_ensemble_file,",%d",p->thb_ll[i]);
+    }
+    fprintf(thb_ensemble_file,"]\n");
+    
+    fprintf(thb_ensemble_file,"#Burnin schedule follows:\n#iter max layers\n");
+    int max_layers=0;
+    i=0;
+    while(max_layers < MAX_NUM_VOR){
+      if( thb_max_layers(i) > max_layers ){
+	max_layers = thb_max_layers(i);
+	fprintf(thb_ensemble_file,"#%d, %d\n",i,max_layers);
+      }
+      i++;
+    }
+    fflush(thb_ensemble_file);
+  }
+    
+  /* Write viscosity file header */
+  fprintf(thb_ensemble_file,"#iter\t,total_residual\t,likeprob\t,var\t,nlayer\t,rr\t,visc\n");
+  
   /* select plate velocity */
   if(!p->free_slip)
     hc_select_pvel(p->pvel_time,&model->pvel,pvel,p->verbose);
@@ -359,7 +385,7 @@ int main(int argc, char **argv)
 	   p->verbose);
   solved=1;
   //hc_compute_correlation(geoid,p->ref_geoid,corr,1,p->verbose);
-  sh_residual_vector(geoid,p->ref_geoid,thb_ll,thb_nl,residual1,0);
+  HC_PREC total_residual1 = sh_residual_vector(geoid,p->ref_geoid,p->thb_ll,p->thb_nl,residual1,0);
   /* Calculate the Mahalanobis Distance Phi */
   {
     double mdist = 0.0;    
@@ -369,12 +395,10 @@ int main(int argc, char **argv)
     }    
     likeprob1 = -0.5 * mdist;
   }
-  fprintf(stdout,"%10.7f %10.7f ",
-	  (double)corr[0],(double)corr[1]);
-  fprintf(stdout,"\n");
   
+  /* Calculate starting solution */
   int iter=0;
-  while(iter < maxit){
+  while(iter < p->thb_iter){
     propose_solution( model, &sol1, &sol2, rng, iter, p);
     interpolate_viscosity(&sol2, model->rvisc, model->visc,p);
     hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
@@ -386,7 +410,7 @@ int main(int argc, char **argv)
 	     p->verbose); 
     double varfakt = sol2.var / sol1.var;
     //hc_compute_residual(p,geoid,p->ref_geoid,corr,2,p->verbose);
-    HC_PREC total_residual2 = sh_residual_vector(geoid,p->ref_geoid,thb_ll,thb_nl,residual2,0);
+    HC_PREC total_residual2 = sh_residual_vector(geoid,p->ref_geoid,p->thb_ll,p->thb_nl,residual2,0);
 
     /* Calculate the Mahalanobis Distance Phi */
     {
@@ -406,6 +430,7 @@ int main(int argc, char **argv)
     if( probAccept > 0 || probAccept > log(randDouble())){
       // Accept the proposed solution
       likeprob1 = likeprob2;
+      total_residual1 = total_residual2;
       sol1 = sol2;
       if( p->verbose ){
 	fprintf(stdout,"Accepted new solution:\n");
@@ -413,28 +438,33 @@ int main(int argc, char **argv)
 	for(i=0;i<sol2.nlayer;i++){
 	  fprintf(stdout,"%le %le\n",sol2.r[i],sol2.visc[i]);
 	}
-	fprintf(stdout,"Residual: %le\n",(double) total_residual2);
+	fprintf(stdout,"Residual: %le\n",(double) sqrt(total_residual2));
       }
-
-      
     }
 
-
+    if( !(iter%1000) || p->verbose==2)
+      fprintf(stderr,"Finished iteration %d\n",iter);
     
-    fprintf(stdout,"%10.7f %10.7f\n",(double)corr[0],(double)corr[1]);
-    fprintf(stderr,"Finished iteration %d\n",iter);
-    
-    
+    //save ensemble
+    if( iter >= p->thb_save_start && !(iter%p->thb_save_skip)){
+      fprintf(thb_ensemble_file,"%08d,%.6le,%le,%le,%02d",iter,sqrt(total_residual1),likeprob1,sol1.var,sol1.nlayer);
+      for(int i=0;i<sol1.nlayer;i++) fprintf(thb_ensemble_file,",%le",sol1.r[i]);
+      for(int i=0;i<sol1.nlayer;i++) fprintf(thb_ensemble_file,",%le",sol1.visc[i]);
+      fprintf(thb_ensemble_file,"\n");
+    }
     iter++;
   }
+  fflush(thb_ensemble_file);
+  fclose(thb_ensemble_file);
   /* END THB VISCOSITY LOOP */  
   /*
-     
+    
     free memory
-
+    
   */
   free(residual1);
   free(residual2);
+  
   sh_free_expansion(sol_spectral,nsol);
   /* local copies of plate velocities */
   sh_free_expansion(pvel,2);

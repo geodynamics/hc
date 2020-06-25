@@ -27,3 +27,7 @@
 
 #define HC_LAYER_OUT_FILE "vdepth.dat" /* depth [km] output */
 #define HC_GEOID_FILE "geoid.ab" /* geoid output file */
+
+/* THB Stuff */
+#define THB_ENSEMBLE_FILE "ensemble.txt"
+#define THB_COVMAT_FILE "cd.txt"

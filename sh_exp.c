@@ -369,7 +369,6 @@ HC_PREC sh_residual_vector(struct sh_lms *exp1, struct sh_lms *exp2, int *ll, in
   nl is the number of spherical harmonic degrees.
  */
 {
-  int l,m;
   HC_CPREC sum[3],tmp,atmp,btmp,ctmp,dtmp,value1[2],value2[2];
   //  double dtmp;
   hc_boolean need_b;
@@ -388,8 +387,8 @@ HC_PREC sh_residual_vector(struct sh_lms *exp1, struct sh_lms *exp2, int *ll, in
   int il;
   int ilm=0;
   for(il=0;il<nl;il++){
-    l = ll[il]; // iterate through spherical harmonic degrees in list
-    for(m=0;m<=l;m++){
+    int l = ll[il]; // iterate through spherical harmonic degrees in list
+    for(int m=0;m<=l;m++){
       need_b = (hc_boolean) ((m == 0) ? (0) : (2));
       sh_get_coeff(exp1,l,m,need_b,TRUE,value1); /* convert to DT normalization  */
       sh_get_coeff(exp2,l,m,need_b,TRUE,value2); /* convert to DT normalization  */
