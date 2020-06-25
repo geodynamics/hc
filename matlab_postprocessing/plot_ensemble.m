@@ -2,8 +2,9 @@
 clear;
 close all;
 
-ensemble_file = '../test_mpi.txt';
+ensemble_file = '../mpi_prior.txt';
 result = load_ensemble(ensemble_file);
+disp('done loading ensemble');
 %%
 figure;
 subplot(2,2,1);
