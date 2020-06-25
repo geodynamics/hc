@@ -150,7 +150,7 @@ all: $(ODIR) $(BDIR) libs sh_tools hc_tools
 sh_tools: 	$(BDIR)/sh_syn $(BDIR)/sh_corr $(BDIR)/sh_ana $(BDIR)/sh_power \
 	 $(BDIR)/sh_extract_layer
 
-hc_tools: $(BDIR)/hc  $(BDIR)/hc_visc_scan $(BDIR)/hc_invert_dtopo \
+hc_tools: $(BDIR)/hc  $(BDIR)/hc_visc_scan $(BIDR)/hc_visc_thb $(BDIR)/hc_invert_dtopo \
 	$(BDIR)/hc_extract_sh_layer  $(BDIR)/hc_extract_spatial \
 	$(BDIR)/rotvec2vel $(BDIR)/print_gauss_lat
 
@@ -222,7 +222,12 @@ $(BDIR)/hc: $(LIBS) $(INCS) $(ODIR)/hc.o $(PREM_OBJS)
 $(BDIR)/hc_visc_scan: $(LIBS) $(INCS) $(ODIR)/hc_visc_scan.o $(PREM_OBJS)
 	$(CC) $(LIB_FLAGS) $(ODIR)/hc_visc_scan.o -o $(BDIR)/hc_visc_scan \
 		-lhc -lrick $(HEAL_LIBS_LINKLINE) $(PREM_OBJS) \
-		 $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS) 
+		 $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS)
+
+$(BDIR)/hc_visc_thb: $(LIBS) $(INCS) $(ODIR)/hc_visc_thb.o $(PREM_OBJS)
+	$(CC) $(LIB_FLAGS) $(ODIR)/hc_visc_thb.o -o $(BDIR)/hc_visc_thb \
+		-lhc -lrick $(HEAL_LIBS_LINKLINE) $(PREM_OBJS) \
+		 $(GGRD_LIBS_LINKLINE) -lm -lgsl $(LDFLAGS) 
 
 $(BDIR)/hc_invert_dtopo: $(LIBS) $(INCS) $(ODIR)/hc_invert_dtopo.o $(PREM_OBJS)
 	$(CC) $(LIB_FLAGS) $(ODIR)/hc_invert_dtopo.o -o $(BDIR)/hc_invert_dtopo \

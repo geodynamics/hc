@@ -16,7 +16,8 @@
 #include "gmt.h"
 #define __GMT_INCLUDED__
 #endif
-
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_randist.h>
 
 /* 
 
@@ -380,7 +381,14 @@ struct hcs{
   my_boolean spectral_solution_computed, spatial_solution_computed;
 };
 
-
+/* for Bayesian viscosity inversions */
+#define MAX_NUM_VOR 16
+struct thb_solution {
+  int nlayer;
+  double r[MAX_NUM_VOR];
+  double visc[MAX_NUM_VOR];
+  double var;
+} ;
 /* 
 
 solution modes
