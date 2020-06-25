@@ -40,7 +40,7 @@ double randn(gsl_rng *rng)//normally distributed random number
   return r;
 }
 
-void interpolate_viscosity(struct thb_solution *solution,HC_PREC *rvisc,HC_PREC *visc){
+void interpolate_viscosity(struct thb_solution *solution,HC_PREC *rvisc,HC_PREC *visc, struct hc_parameters *p){
   const int nlayer = HC_INTERP_LAYERS;
   int i=0;
   int j=0;
@@ -51,10 +51,39 @@ void interpolate_viscosity(struct thb_solution *solution,HC_PREC *rvisc,HC_PREC 
       j++;
     visc[i] = solution->visc[j]+(solution->visc[j+1]-solution->visc[j])/(solution->r[j+1]-solution->r[j])*(this_r-solution->r[j]);
     visc[i] = pow(10.0,visc[i]);
-  }  
+  }
+  if( p->verbose ){
+    fprintf(stderr,"interpolate_viscosity input:\n");
+    for(i=0;i<solution->nlayer;i++){
+      fprintf(stderr,"%.3e %.3e\n",(double) solution->r[i],(double) solution->visc[i]);
+    }
+    fprintf(stderr,"interpolate viscosity output:\n");
+    for(i=0;i<HC_INTERP_LAYERS;i++){
+      fprintf(stderr,"%.3e %.3e\n",(double) rvisc[i],(double) visc[i]);
+    }
+
+  }
 }
 
-void propose_solution(struct hcs *model, struct thb_solution *old_solution, struct thb_solution *new_solution,gsl_rng *rng){
+int thb_max_layers(int iter){
+  // Calculate the maximum number of control points/layers allowed according to a burn-in schedule
+  // and the maximum number of allowed layers.
+  int burnin_steps[MAX_NUM_VOR];
+
+  burnin_steps[2] = 5000;
+  int i;
+  for(i=3;i<MAX_NUM_VOR;i++){
+    burnin_steps[i] = burnin_steps[i-1] + 5000*i;
+    i++;
+  }
+  int max_layers = 2;
+  while(max_layers < MAX_NUM_VOR && burnin_steps[max_layers] < iter){
+    max_layers++;
+  }
+  return max_layers;
+}
+
+void propose_solution(struct hcs *model, struct thb_solution *old_solution, struct thb_solution *new_solution,gsl_rng *rng, int iter, struct hc_parameters *p){
   const double visc_min = 19.0;
   const double visc_max = 25.0;
   const double visc_range = visc_max - visc_min;
@@ -69,30 +98,32 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   const double var_min = 1e-3;
   const double var_max = 1e50;
   const double var_change = 0.05;
-  
+
+  const int max_vor = thb_max_layers( iter );
+
   // choose one of five options at random
   int random_choice = 0;
-  int success = 1;
+  int success = 0;
   while(!success){
     success=1;
     new_solution[0] = old_solution[0]; // copy old to new
     random_choice = randInt(5);
     if(random_choice == 0){
-      if( new_solution->nlayer == MAX_NUM_VOR ){
+      if( new_solution->nlayer == max_vor ){
 	success = 0;
       }else{
 	// Add a control point at random
-	double new_depth = rad_min + rad_range*randDouble();
+	double new_rad = rad_min + rad_range*randDouble();
 	double new_visc = visc_min + visc_range*randDouble();
 	int i=0;
-	while(new_solution->r[i] < new_visc && i < new_solution->nlayer)
+	while(new_solution->r[i] < new_rad && i < new_solution->nlayer)
 	  i++;
 	int j;
-	for(j=new_solution->nlayer;j>i;j++){
+	for(j=new_solution->nlayer;j>i;j--){
 	  new_solution->r[j] = new_solution->r[j-1];
 	  new_solution->visc[j] = new_solution->visc[j-1];
 	}
-	new_solution->r[i] = new_depth;
+	new_solution->r[i] = new_rad;
 	new_solution->visc[i] = new_visc;
 	new_solution->nlayer++;
       }
@@ -149,6 +180,13 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
 	success = 0; // This ensures that the nodes remain in increasing order
     }
   }// End while not successful
+  if( p-> verbose){
+    fprintf(stderr,"Proposed solution:\n");
+    int i;
+    for(i=0;i<new_solution->nlayer;i++){
+      fprintf(stderr,"%.3e %.3e\n",new_solution->r[i],new_solution->visc[i]);
+    }
+  }
 }
 
 
@@ -165,7 +203,23 @@ int main(int argc, char **argv)
   struct hc_parameters p[1]; /* parameters */
   HC_PREC corr[2];			/* correlations */
   HC_PREC vl[4][3],v[4],dv;			/*  for viscosity scans */
+
   struct thb_solution sol1,sol2; /* accepted and proposed solutions */
+  /* THB residual vectors */
+  int thb_ll[] = {2,3,4,5,6,7};
+  int thb_nl = 6;
+  int thb_nlm=0;
+  {
+    int i;
+    for(i=0;i<thb_nlm;i++){
+      thb_nlm += 2*thb_ll[i]+1;
+    }
+  }
+  double *residual1 = (double *) malloc(sizeof(double)*thb_nlm);
+  double *residual2 = (double *) malloc(sizeof(double)*thb_nlm);
+  double likeprob1,likeprob2;
+  
+  
   /* Initialize random number generation using GNU Scientific Library */
   
   const gsl_rng_type *rng_type;
@@ -281,15 +335,16 @@ int main(int argc, char **argv)
 		       model->sh_type,HC_SCALAR,p->verbose,FALSE);
 
   /* BEGIN THB VISCOSITY LOOP */
-  int maxit = 1e2;
+  int maxit = 1e3;
 
   // initialize solution
   sol1.nlayer = 2;
   sol1.r[0] = model->r_cmb;
   sol1.r[1] = 1.0;
-  sol1.visc[0] = 1.0e22;
-  sol1.visc[1] = 1.0e22;
-  interpolate_viscosity(&sol1,model->rvisc,model->visc);
+  sol1.visc[0] = 22.0;
+  sol1.visc[1] = 22.0;
+  sol1.var = 1.0;
+  interpolate_viscosity(&sol1,model->rvisc,model->visc,p);
   /* select plate velocity */
   if(!p->free_slip)
     hc_select_pvel(p->pvel_time,&model->pvel,pvel,p->verbose);
@@ -303,15 +358,25 @@ int main(int argc, char **argv)
 	   pvel,model->dens_anom,geoid,
 	   p->verbose);
   solved=1;
-  hc_compute_correlation(geoid,p->ref_geoid,corr,1,p->verbose);
+  //hc_compute_correlation(geoid,p->ref_geoid,corr,1,p->verbose);
+  sh_residual_vector(geoid,p->ref_geoid,thb_ll,thb_nl,residual1,0);
+  /* Calculate the Mahalanobis Distance Phi */
+  {
+    double mdist = 0.0;    
+    int i;
+    for(i=0;i<thb_nlm;i++){
+      mdist += residual1[i]*residual1[i]/sol1.var; // Assumes a diagonal covariance matrix
+    }    
+    likeprob1 = -0.5 * mdist;
+  }
   fprintf(stdout,"%10.7f %10.7f ",
 	  (double)corr[0],(double)corr[1]);
   fprintf(stdout,"\n");
   
   int iter=0;
   while(iter < maxit){
-    propose_solution( model, &sol1, &sol2, rng);
-    interpolate_viscosity(&sol2, model->rvisc, model->visc);
+    propose_solution( model, &sol1, &sol2, rng, iter, p);
+    interpolate_viscosity(&sol2, model->rvisc, model->visc,p);
     hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
 	     (solved)?(FALSE):(TRUE), /* density changed? */
 	     (solved)?(FALSE):(TRUE), /* plate velocity changed? */
@@ -320,7 +385,47 @@ int main(int argc, char **argv)
 	     pvel,model->dens_anom,geoid,
 	     p->verbose); 
     double varfakt = sol2.var / sol1.var;
+    //hc_compute_residual(p,geoid,p->ref_geoid,corr,2,p->verbose);
+    HC_PREC total_residual2 = sh_residual_vector(geoid,p->ref_geoid,thb_ll,thb_nl,residual2,0);
+
+    /* Calculate the Mahalanobis Distance Phi */
+    {
+      double mdist = 0.0;    
+      int i;
+      for(i=0;i<thb_nlm;i++){
+	mdist += residual2[i]*residual2[i]/sol2.var; // Assumes a diagonal covariance matrix
+      }
+      likeprob2 = -0.5*mdist;
+    }
     
+    /* Calculate the probablity of acceptance: */
+    int k2 = sol2.nlayer-1;
+    int k1 = sol1.nlayer-1;
+    double prefactor = -0.5 * ((double) thb_nlm)*log(varfakt);
+    double probAccept = prefactor + likeprob2 - likeprob1 + log((double) (k1+1)) - log((double) (k2+1));
+    if( probAccept > 0 || probAccept > log(randDouble())){
+      // Accept the proposed solution
+      likeprob1 = likeprob2;
+      sol1 = sol2;
+      if( p->verbose ){
+	fprintf(stdout,"Accepted new solution:\n");
+	int i;
+	for(i=0;i<sol2.nlayer;i++){
+	  fprintf(stdout,"%le %le\n",sol2.r[i],sol2.visc[i]);
+	}
+	fprintf(stdout,"Residual: %le\n",(double) total_residual2);
+      }
+
+      
+    }
+
+
+    
+    fprintf(stdout,"%10.7f %10.7f\n",(double)corr[0],(double)corr[1]);
+    fprintf(stderr,"Finished iteration %d\n",iter);
+    
+    
+    iter++;
   }
   /* END THB VISCOSITY LOOP */  
   /*
@@ -328,6 +433,8 @@ int main(int argc, char **argv)
     free memory
 
   */
+  free(residual1);
+  free(residual2);
   sh_free_expansion(sol_spectral,nsol);
   /* local copies of plate velocities */
   sh_free_expansion(pvel,2);

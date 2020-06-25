@@ -361,6 +361,63 @@ HC_PREC sh_residual_per_degree(struct sh_lms *exp1, struct sh_lms *exp2, int lmi
   return sum[0];
 }
 
+HC_PREC sh_residual_vector(struct sh_lms *exp1, struct sh_lms *exp2, int *ll, int nl, double *residual, int printresidual)
+/*
+  Retrieve a residual vector for each spherical harmonic coefficient.
+  The rsidual is computed between the expansion in exp1 and the expansion in exp2
+  ll should be a list of spherical harmonic degrees
+  nl is the number of spherical harmonic degrees.
+ */
+{
+  int l,m;
+  HC_CPREC sum[3],tmp,atmp,btmp,ctmp,dtmp,value1[2],value2[2];
+  //  double dtmp;
+  hc_boolean need_b;
+
+  sum[0]=sum[1]=sum[2]=0.0;
+
+  int lmin=ll[0];
+  int lmax=ll[nl-1];
+  
+  if((lmax > exp1->lmax)||(lmax > exp2->lmax)||(lmax < 1)||(lmin < 1)){
+    fprintf(stderr,"sh_residual_vector: error: L1 %i L2 %i lmin %i lmax %i\n",
+	    exp1->lmax,exp2->lmax,lmin,lmax);
+    exit(-1);
+  }
+
+  int il;
+  int ilm=0;
+  for(il=0;il<nl;il++){
+    l = ll[il]; // iterate through spherical harmonic degrees in list
+    for(m=0;m<=l;m++){
+      need_b = (hc_boolean) ((m == 0) ? (0) : (2));
+      sh_get_coeff(exp1,l,m,need_b,TRUE,value1); /* convert to DT normalization  */
+      sh_get_coeff(exp2,l,m,need_b,TRUE,value2); /* convert to DT normalization  */
+
+      atmp = value1[0];
+      ctmp = value2[0];
+
+      sum[0] += pow(atmp - ctmp,2.0);
+      //      sum[1] += atmp * atmp;
+      //sum[2] += ctmp * ctmp;
+      residual[ilm] = atmp-ctmp; ilm++;
+      
+      if(need_b){
+	btmp = value1[1];
+	dtmp = value2[1];
+	sum[0] += pow(btmp - dtmp,2.0);
+	residual[ilm] = btmp-dtmp; ilm++;
+	
+	if(printresidual) fprintf(stdout,"%d %d %Le %Le\n",l,m,atmp-ctmp,btmp-dtmp);
+      }else{
+	if(printresidual) fprintf(stdout,"%d %d %Le\n",l,m,atmp-ctmp);
+      }
+    } /* end m loop */    
+  } /* end l loop */
+  //tmp = sqrt(sum[1]*sum[2]);
+  return sum[0];
+}
+
 void sh_single_par_and_exp_to_file(struct sh_lms *exp, char *name,
 				   hc_boolean binary,hc_boolean verbose)
 {

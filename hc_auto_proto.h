@@ -131,8 +131,9 @@ void hc_torsol(struct hcs *, int, int, int, long double *, long double **, long 
 int randInt(int);
 double randDouble(void);
 double randn(gsl_rng *);
-void interpolate_viscosity(struct thb_solution *, long double *, long double *);
-void propose_solution(struct hcs *, struct thb_solution *, struct thb_solution *, gsl_rng *);
+void interpolate_viscosity(struct thb_solution *, long double *, long double *, struct hc_parameters *);
+int thb_max_layers(int);
+void propose_solution(struct hcs *, struct thb_solution *, struct thb_solution *, gsl_rng *, int, struct hc_parameters *);
 /* prem2dsm.c */
 /* prem_util.c */
 int prem_find_layer_x(double, double, double *, int, int, double *);
@@ -180,6 +181,7 @@ void sh_compute_power_per_degree(struct sh_lms *, long double *);
 long double sh_correlation(struct sh_lms *, struct sh_lms *, int);
 long double sh_correlation_per_degree(struct sh_lms *, struct sh_lms *, int, int);
 long double sh_residual_per_degree(struct sh_lms *, struct sh_lms *, int, int, int);
+long double sh_residual_vector(struct sh_lms *, struct sh_lms *, int *, int, double *, int);
 void sh_single_par_and_exp_to_file(struct sh_lms *, char *, unsigned short, unsigned short);
 void sh_single_par_and_exp_to_stream(struct sh_lms *, FILE *, unsigned short, unsigned short);
 void sh_print_parameters_to_stream(struct sh_lms *, int, int, int, long double, FILE *, unsigned short, unsigned short, unsigned short);

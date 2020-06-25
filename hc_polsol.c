@@ -226,7 +226,7 @@ void hc_polsol(struct hcs *hc, 	/*
   /* 
      max number of propagator levels, choose this generously
   */
-  nprops_max = hc->nradp2 * 3;
+  nprops_max = hc->nradp2 * 4;
   /* 
      for prop and ppot: one set of propagators for all layers, there
      lmax of those
