@@ -128,12 +128,6 @@ void hc_compute_dynamic_topography(struct hcs *, struct sh_lms *, struct sh_lms 
 void hc_torsol(struct hcs *, int, int, int, long double *, long double **, long double **, struct sh_lms *, struct sh_lms *, long double *, unsigned short);
 /* hc_visc_scan.c */
 /* hc_visc_thb.c */
-int randInt(gsl_rng *, int);
-double randDouble(gsl_rng *);
-double randn(gsl_rng *);
-void interpolate_viscosity(struct thb_solution *, long double *, long double *, struct hc_parameters *);
-int thb_max_layers(int);
-void propose_solution(struct hcs *, struct thb_solution *, struct thb_solution *, gsl_rng *, int, struct hc_parameters *);
 /* prem2dsm.c */
 /* prem_util.c */
 int prem_find_layer_x(double, double, double *, int, int, double *);

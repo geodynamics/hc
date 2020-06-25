@@ -2,7 +2,7 @@
 clear;
 close all;
 
-ensemble_file = '../prior_ensemble.txt';
+ensemble_file = '../test_mpi.txt';
 result = load_ensemble(ensemble_file);
 %%
 figure;
