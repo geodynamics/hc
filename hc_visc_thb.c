@@ -17,20 +17,15 @@
 */
 
 //helper functions
-int randInt(int n)//random integer in the range 0-n-1, inclusive
+int randInt(gsl_rng *rng,int n)//random integer in the range 0-n-1, inclusive
 {
-  //This implements rejection sampling to ensure uniform distribution of integers
-  int r;
-  int limit = RAND_MAX - (RAND_MAX % n);
-  
-  while((r = rand()) >= limit);
-  
-  return r % n;
+  int r = (int) gsl_rng_uniform_int(rng, (unsigned long int) n);
+  return r;
 }
 
-double randDouble()//random double in the range 0-1
+double randDouble(gsl_rng *rng)//random double in the range 0-1
 {
-  double r = (double) rand() / ((double) RAND_MAX);
+  double r = gsl_rng_uniform(rng);// gsl routine to generate random double in [0-1)
   return r;
 }
 
@@ -98,7 +93,7 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   const double drmin = 7e-3;           // minimum layer thickness
   
   const double var_min = 1e-3;
-  const double var_max = 1e50;
+  const double var_max = 1e3;
   const double var_change = 0.05;
 
   const int max_vor = thb_max_layers( iter );
@@ -109,14 +104,18 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   while(!success){
     success=1;
     new_solution[0] = old_solution[0]; // copy old to new
-    random_choice = randInt(5);
+    if( p->thb_no_hierarchical ){
+      random_choice = randInt(rng,4);
+    }else{
+      random_choice = randInt(rng,5);
+    }
     if(random_choice == 0){
       if( new_solution->nlayer == max_vor ){
 	success = 0;
       }else{
 	// Add a control point at random
-	double new_rad = rad_min + rad_range*randDouble();
-	double new_visc = visc_min + visc_range*randDouble();
+	double new_rad = rad_min + rad_range*randDouble(rng);
+	double new_visc = visc_min + visc_range*randDouble(rng);
 	int i=0;
 	while(new_solution->r[i] < new_rad && i < new_solution->nlayer)
 	  i++;
@@ -131,7 +130,7 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
       }
     }else if(random_choice == 1){
       // kill a layer (at random)
-      if( new_solution->nlayer <= 2){
+      if( new_solution->nlayer == 2){
 	success = 0; // can't kill when there are 2 control points!
       }else if( new_solution->nlayer == 3){
 	int kill_layer = 1;
@@ -139,11 +138,11 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
 	new_solution->visc[1] = new_solution->visc[2];
 	new_solution->nlayer--;
       }else{
-	int kill_layer = randInt(new_solution->nlayer-2) + 1;
+	int kill_layer = randInt(rng,new_solution->nlayer-2) + 1;
 	int j;
-	for(j=new_solution->nlayer-1;j>kill_layer;j--){
-	  new_solution->r[j-1] = new_solution->r[j];
-	  new_solution->visc[j-1] = new_solution->visc[j];
+	for(j=kill_layer;j<new_solution->nlayer-1;j++){
+	  new_solution->r[j] = new_solution->r[j+1];
+	  new_solution->visc[j] = new_solution->visc[j+1];
 	}
 	new_solution->nlayer--;
       }
@@ -152,7 +151,7 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
       if(new_solution->nlayer == 2){
 	success = 0;
       }else{
-	int perturb_layer = randInt(new_solution->nlayer-2)+1;
+	int perturb_layer = randInt(rng,new_solution->nlayer-2)+1;
 	new_solution->r[ perturb_layer ] += rad_change*randn(rng);
 	if(new_solution->r[ perturb_layer] <= model-> r_cmb || new_solution->r[ perturb_layer ] >= 1.0){
 	  success = 0;
@@ -160,7 +159,7 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
       }
     }else if(random_choice == 3){
       //perturb viscosity
-      int perturb_layer = randInt(new_solution->nlayer);
+      int perturb_layer = randInt(rng,new_solution->nlayer);
       new_solution->visc[perturb_layer] += visc_change*randn(rng);
       if( new_solution->visc[perturb_layer] > visc_max || new_solution->visc[perturb_layer] < visc_min){
 	success = 0;
@@ -172,7 +171,8 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
 	success = 0;
       }
     }else{
-      exit(-1);
+      fprintf(stderr,"Warning: this random choice isn't implemented\n");
+      success = 0;
     }
     // any additional sanity checks on the proposed solution:
     int j;
@@ -401,17 +401,18 @@ int main(int argc, char **argv)
   while(iter < p->thb_iter){
     propose_solution( model, &sol1, &sol2, rng, iter, p);
     interpolate_viscosity(&sol2, model->rvisc, model->visc,p);
-    hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
-	     (solved)?(FALSE):(TRUE), /* density changed? */
-	     (solved)?(FALSE):(TRUE), /* plate velocity changed? */
-	     TRUE,			/* viscosity changed */
-	     FALSE,p->compute_geoid,
-	     pvel,model->dens_anom,geoid,
-	     p->verbose); 
+    if(!p->thb_sample_prior)
+      hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
+	       (solved)?(FALSE):(TRUE), /* density changed? */
+	       (solved)?(FALSE):(TRUE), /* plate velocity changed? */
+	       TRUE,			/* viscosity changed */
+	       FALSE,p->compute_geoid,
+	       pvel,model->dens_anom,geoid,
+	       p->verbose); 
     double varfakt = sol2.var / sol1.var;
     //hc_compute_residual(p,geoid,p->ref_geoid,corr,2,p->verbose);
     HC_PREC total_residual2 = sh_residual_vector(geoid,p->ref_geoid,p->thb_ll,p->thb_nl,residual2,0);
-
+    
     /* Calculate the Mahalanobis Distance Phi */
     {
       double mdist = 0.0;    
@@ -427,7 +428,7 @@ int main(int argc, char **argv)
     int k1 = sol1.nlayer-1;
     double prefactor = -0.5 * ((double) thb_nlm)*log(varfakt);
     double probAccept = prefactor + likeprob2 - likeprob1 + log((double) (k1+1)) - log((double) (k2+1));
-    if( probAccept > 0 || probAccept > log(randDouble())){
+    if( p->thb_sample_prior || probAccept > 0 || probAccept > log(randDouble(rng))){
       // Accept the proposed solution
       likeprob1 = likeprob2;
       total_residual1 = total_residual2;

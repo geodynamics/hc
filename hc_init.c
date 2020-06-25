@@ -95,7 +95,7 @@ void hc_init_parameters(struct hc_parameters *p)
   p->thb_save_start = p->thb_iter/2;
   p->thb_sample_target = 100;
   p->thb_save_skip = 10;
-  
+  p->thb_sample_prior = FALSE;
 }
 
 /* 
@@ -580,6 +580,13 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
       used_parameter=TRUE;      
     }else if(strcmp(argv[i],"-thb_no_hierarchical")==0){
       p->thb_no_hierarchical = TRUE;
+      used_parameter=TRUE;
+    }else if(strcmp(argv[i],"-thb_sample_prior")==0){
+      p->thb_sample_prior = TRUE;
+      used_parameter=TRUE;
+    }else if(strcmp(argv[i],"-thb_ensemble_filename")==0){
+      hc_advance_argument(&i,argc,argv);
+      sscanf(argv[i],"%s",&p->thb_ensemble_filename);
       used_parameter=TRUE;
     }else if(strcmp(argv[i],"-thb_ll")==0){
       /* begin by counting the commas in this string */

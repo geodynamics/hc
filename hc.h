@@ -246,6 +246,7 @@ struct hc_parameters{
   /* additional parameters related to THB viscosity inversion */
   int thb_iter;
   hc_boolean thb_no_hierarchical; /* whether to perform a hierarchical inversion */
+  hc_boolean thb_sample_prior;    /* sample the prior (do not compute any solutions) */
   char thb_ensemble_filename[HC_CHAR_LENGTH]; /* name of output file for viscosity ensemble */
   char thb_covmat_filename[HC_CHAR_LENGTH]; /* name of file from which to read the covariance matrix */
   int thb_nl; /* number of spherical harmonic degrees at which to compute the residual */
