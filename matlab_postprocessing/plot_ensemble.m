@@ -2,7 +2,7 @@
 clear;
 close all;
 
-ensemble_file = '../mpi_prior.txt';
+ensemble_file = '../ensemble.txt';
 result = load_ensemble(ensemble_file);
 disp('done loading ensemble');
 %%
@@ -18,6 +18,12 @@ title('log of var');
 subplot(2,2,3);
 hist(result.nlayer);
 title('number of layers');
+
+subplot(2,2,4);
+plot(result.residual);
+hold on
+plot(result.var);
+title('residual')
 
 %%
 nr = 100;

@@ -345,6 +345,14 @@ int main(int argc, char **argv)
   interpolate_viscosity(&sol1,model->rvisc,model->visc,p);
   p->thb_save_skip = (p->thb_iter - p->thb_save_start)/p->thb_sample_target;
   FILE *thb_ensemble_file = NULL;
+  double chain_temperature;
+  if(p->thb_parallel_tempering){
+    /* space chain temperatures uniformly from 1 to 10 */
+    chain_temperature = 10.0*((double) rank)/((double) size-1);
+  }else{
+    chain_temperature = 1.0;
+  }
+  
   if(!rank){
     thb_ensemble_file = fopen(p->thb_ensemble_filename,"w");
     {
@@ -398,14 +406,16 @@ int main(int argc, char **argv)
     for(i=0;i<thb_nlm;i++){
       mdist += residual1[i]*residual1[i]/sol1.var; // Assumes a diagonal covariance matrix
     }    
-    sol1.likeprob = -0.5 * mdist;
+    sol1.likeprob = -0.5 * mdist/chain_temperature;
   }
-  
-  /* Calculate starting solution */
+
+  /* BEGIN THB LOOP */
   int iter=0;
   while(iter < p->thb_iter){
+    /* Propose Solution */
     propose_solution( model, &sol1, &sol2, rng, iter, p);
     interpolate_viscosity(&sol2, model->rvisc, model->visc,p);
+    /* Calculate forward model */
     if(!p->thb_sample_prior)
       hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
 	       (solved)?(FALSE):(TRUE), /* density changed? */
@@ -415,7 +425,6 @@ int main(int argc, char **argv)
 	       pvel,model->dens_anom,geoid,
 	       p->verbose); 
     double varfakt = sol2.var / sol1.var;
-    //hc_compute_residual(p,geoid,p->ref_geoid,corr,2,p->verbose);
     sol2.total_residual = sh_residual_vector(geoid,p->ref_geoid,p->thb_ll,p->thb_nl,residual2,0);
     
     /* Calculate the Mahalanobis Distance Phi */
@@ -425,7 +434,7 @@ int main(int argc, char **argv)
       for(i=0;i<thb_nlm;i++){
 	mdist += residual2[i]*residual2[i]/sol2.var; // Assumes a diagonal covariance matrix
       }
-      sol2.likeprob = -0.5*mdist;
+      sol2.likeprob = -0.5*mdist/chain_temperature;
     }
     
     /* Calculate the probablity of acceptance: */
@@ -446,6 +455,18 @@ int main(int argc, char **argv)
       }
     }
 
+    /* parallel tempering */
+    if( p->thb_parallel_tempering && iter > p->thb_swap_start && !(iter%p->thb_steps_for_swap)){
+      /* propose swapping of solutions */      
+      /* propose a permutation */
+      /* gather the chain temperatures */
+      /* gather the chain Mahalanobis distances */
+      /* rank 0 does all the swapping... */
+
+    }
+
+    
+    /* update progress */
     if( !(iter%1000) || p->verbose==2)
       fprintf(stderr,"[%d]: Finished iteration %d\n",rank,iter);
     

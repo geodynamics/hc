@@ -96,6 +96,9 @@ void hc_init_parameters(struct hc_parameters *p)
   p->thb_sample_target = 100;
   p->thb_save_skip = 10;
   p->thb_sample_prior = FALSE;
+  p->thb_parallel_tempering = FALSE;
+  p->thb_swap_start = 50000;
+  p->thb_steps_for_swap = 100;
 }
 
 /* 
@@ -586,7 +589,7 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
       used_parameter=TRUE;
     }else if(strcmp(argv[i],"-thb_ensemble_filename")==0){
       hc_advance_argument(&i,argc,argv);
-      sscanf(argv[i],"%s",&p->thb_ensemble_filename);
+      strncpy(p->thb_ensemble_filename,argv[i],HC_CHAR_LENGTH);
       used_parameter=TRUE;
     }else if(strcmp(argv[i],"-thb_ll")==0){
       /* begin by counting the commas in this string */

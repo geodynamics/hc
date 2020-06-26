@@ -8,6 +8,7 @@ while ~feof(fh)
     end
 end
 fclose(fh);
+chain = zeros(n,1);
 residual = zeros(n,1);
 nlayer = zeros(n,1);
 var = zeros(n,1);
@@ -23,10 +24,11 @@ while ~feof(fh)
     else
         fields = sscanf(line,'%f,');
         if ~isempty(fields)
-            residual(i) =fields(3);
-            var(i) = fields(5);
-            nlayer(i) = fields(6);
-            rad_start = 7;
+            residual(i) =fields(2);
+            chain(i) = fields(1);
+            var(i) = fields(4);
+            nlayer(i) = fields(5);
+            rad_start = 6;
             rad_end = rad_start + nlayer(i)-1;
             visc_start = rad_end+1;
             visc_end = visc_start + nlayer(i)-1;
@@ -46,3 +48,4 @@ result.var = var;
 result.visc = visc;
 result.rad = rad;
 result.n = n;
+result.chain = chain;

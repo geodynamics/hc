@@ -254,6 +254,9 @@ struct hc_parameters{
   int thb_sample_target; /* number of samples in final ensemble */
   int thb_save_start; /* when to start saving samples */
   int thb_save_skip;
+  hc_boolean thb_parallel_tempering;
+  int thb_swap_start;
+  int thb_steps_for_swap;
 };
 
 /* plate velocity structure */
