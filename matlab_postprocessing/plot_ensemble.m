@@ -2,7 +2,8 @@
 clear;
 close all;
 
-ensemble_file = '../ensemble_semucb_l2-7.txt';
+% ensemble_file = '../ensemble_semucb_l2-7.txt';
+ensemble_file = '../test_mpi.txt';
 result = load_ensemble(ensemble_file);
 disp('done loading ensemble');
 %%
@@ -12,11 +13,11 @@ hist(result.residual,50);
 title('residuals');
 
 subplot(2,2,2);
-hist(log10(result.var),50);
+hist(log10(result.var),20);
 title('log of var');
 
 subplot(2,2,3);
-hist(result.nlayer);
+hist(result.nlayer,[0:1:17]);
 title('number of layers');
 
 subplot(2,2,4);

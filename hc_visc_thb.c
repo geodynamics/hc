@@ -102,38 +102,44 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   // choose one of five options at random
   int random_choice = 0;
   int success = 0;
+  /* Choose the random option and use rejection sampling to restrict forbidden cases */
   while(!success){
-    success=1;
-    new_solution[0] = old_solution[0]; // copy old to new
+    success = 1;
     if( p->thb_no_hierarchical ){
       random_choice = randInt(rng,4);
     }else{
       random_choice = randInt(rng,5);
     }
+    if( old_solution->nlayer == 2 && (random_choice == 1 || random_choice == 2))
+      success = 0;
+    if( old_solution->nlayer == max_vor && random_choice == 0)
+      success = 0;
+  }
+  success = 0;
+  int failcount = 0;
+  while(!success){
+    failcount++;
+    success=1;
+    new_solution[0] = old_solution[0]; // copy old to new
+
     if(random_choice == 0){
-      if( new_solution->nlayer == max_vor ){
-	success = 0;
-      }else{
-	// Add a control point at random
-	double new_rad = rad_min + rad_range*randDouble(rng);
-	double new_visc = visc_min + visc_range*randDouble(rng);
-	int i=0;
-	while(new_solution->r[i] < new_rad && i < new_solution->nlayer)
-	  i++;
-	int j;
-	for(j=new_solution->nlayer;j>i;j--){
-	  new_solution->r[j] = new_solution->r[j-1];
-	  new_solution->visc[j] = new_solution->visc[j-1];
-	}
-	new_solution->r[i] = new_rad;
-	new_solution->visc[i] = new_visc;
-	new_solution->nlayer++;
+      // Add a control point at random
+      double new_rad = rad_min + rad_range*randDouble(rng);
+      double new_visc = visc_min + visc_range*randDouble(rng);
+      int i=0;
+      while(new_solution->r[i] < new_rad && i < new_solution->nlayer)
+	i++;
+      int j;
+      for(j=new_solution->nlayer;j>i;j--){
+	new_solution->r[j] = new_solution->r[j-1];
+	new_solution->visc[j] = new_solution->visc[j-1];
       }
+      new_solution->r[i] = new_rad;
+      new_solution->visc[i] = new_visc;
+      new_solution->nlayer++;      
     }else if(random_choice == 1){
       // kill a layer (at random)
-      if( new_solution->nlayer == 2){
-	success = 0; // can't kill when there are 2 control points!
-      }else if( new_solution->nlayer == 3){
+      if( new_solution->nlayer == 3){
 	int kill_layer = 1;
 	new_solution->r[1] = new_solution->r[2];
 	new_solution->visc[1] = new_solution->visc[2];
@@ -181,6 +187,10 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
       double dr = new_solution->r[j]-new_solution->r[j-1];
       if( dr < drmin )
 	success = 0; // This ensures that the nodes remain in increasing order
+    }
+    if( failcount > 1000){
+      fprintf(stderr,"Fail count %d, random option %d\n",failcount,random_choice);
+      error(-1);
     }
   }// End while not successful
   if( p-> verbose){
@@ -353,7 +363,11 @@ int main(int argc, char **argv)
   double chain_temperature;
   if(p->thb_parallel_tempering){
     /* space chain temperatures uniformly from 1 to 10 */
-    chain_temperature = 9.0*((double) rank)/((double) size-1)+1.0;
+    if( !rank ){
+      chain_temperature = 1.0;
+    }else{      
+      chain_temperature = 9.0*((double) rank)/((double) size-1)+1.0;
+    }
   }else{
     chain_temperature = 1.0;
   }
@@ -506,6 +520,7 @@ int main(int argc, char **argv)
 	  double Ti = chain_temperature;
 	  if( p->thb_sample_prior || probAcceptSwap > 0 || probAcceptSwap > log(randDouble(rng)) ){
 	    /* accept the swap */
+	    if( p->verbose == 2) fprintf(stderr,"Swapping %d <--> %d\n",swapi,swapj);
 	    chain_temperature = Tj;
 	    Tj = Ti;
 	  }
@@ -528,7 +543,7 @@ int main(int argc, char **argv)
 
     
     /* update progress */
-    if( !(iter%1000) || p->verbose==2)
+    if(!rank && (!(iter%1000) || p->verbose==2))
       fprintf(stderr,"[%d]: Finished iteration %d\n",rank,iter);
     
     //save ensemble   
@@ -542,8 +557,8 @@ int main(int argc, char **argv)
       MPI_Gather(&sol1,sizeof(struct thb_solution),MPI_BYTE,all_solutions,sizeof(struct thb_solution),MPI_BYTE,0,MPI_COMM_WORLD);
       MPI_Gather(&chain_temperature,1,MPI_DOUBLE,all_temperatures,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
       if(!rank){
+	int write_success = 0;
 	for(int irank=0;irank<size;irank++){
-	  int write_success =0;
 	  if( all_temperatures[irank] == 1.0 ){
 	    fprintf(thb_ensemble_file,"%02d,%08d,%.6le,%le,%le,%02d",irank,iter,sqrt(all_solutions[irank].total_residual),(double) all_solutions[irank].likeprob,all_solutions[irank].var,all_solutions[irank].nlayer);
 	    for(int i=0;i<all_solutions[irank].nlayer;i++) fprintf(thb_ensemble_file,",%le",all_solutions[irank].r[i]);
@@ -551,10 +566,13 @@ int main(int argc, char **argv)
 	    fprintf(thb_ensemble_file,"\n");
 	    write_success++;
 	  }
-	  if( !write_success ){
-	    fprintf(stderr,"Warning: Nothing written to ensemble file\n");
-	  }
 	}
+	if( !write_success ){
+	  fprintf(stderr,"Warning: Nothing written to ensemble file\n");
+	  fprintf(stderr,"Chain temperatures:");
+	  for(int i=0;i<size;i++) fprintf(stderr,"%.8le (%d) ",all_temperatures[i],(int) all_temperatures[i]==1.0);
+	  fprintf(stderr,"\n");
+	}	
 	free(all_solutions);
 	free(all_temperatures);
       }
