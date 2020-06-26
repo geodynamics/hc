@@ -188,9 +188,9 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
       if( dr < drmin )
 	success = 0; // This ensures that the nodes remain in increasing order
     }
-    if( failcount > 1000){
+    if( failcount > 10000){
       fprintf(stderr,"Fail count %d, random option %d\n",failcount,random_choice);
-      error(-1);
+      exit(-1);
     }
   }// End while not successful
   if( p-> verbose){
