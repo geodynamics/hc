@@ -402,8 +402,9 @@ struct thb_solution {
   double r[MAX_NUM_VOR];
   double visc[MAX_NUM_VOR];
   double var;
+  double mdist;
   HC_PREC total_residual;
-  HC_PREC likeprob;
+  HC_PREC likeprob;  
 } ;
 /* 
 

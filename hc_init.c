@@ -591,6 +591,17 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
       hc_advance_argument(&i,argc,argv);
       strncpy(p->thb_ensemble_filename,argv[i],HC_CHAR_LENGTH);
       used_parameter=TRUE;
+    }else if(strcmp(argv[i],"-thb_parallel_tempering")==0){
+      p->thb_parallel_tempering = TRUE;
+      used_parameter=TRUE;
+    }else if(strcmp(argv[i],"-thb_swap_start")==0){	
+      hc_advance_argument(&i,argc,argv);
+      sscanf(argv[i],"%d",&p->thb_swap_start);
+      used_parameter = TRUE;
+    }else if(strcmp(argv[i],"-thb_steps_for_swap")==0){	
+      hc_advance_argument(&i,argc,argv);
+      sscanf(argv[i],"%d",&p->thb_steps_for_swap);
+      used_parameter = TRUE;  
     }else if(strcmp(argv[i],"-thb_ll")==0){
       /* begin by counting the commas in this string */
       hc_advance_argument(&i,argc,argv);

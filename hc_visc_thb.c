@@ -198,7 +198,12 @@ int main(int argc, char **argv)
   int rank,size;
   MPI_Comm_size(MPI_COMM_WORLD,&size);
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-    
+  if(size % 2){
+    fprintf(stderr,"Error: MPI size must be even!\n");
+    exit(-1);
+  }
+
+  
   struct hcs *model;		/* main structure, make sure to initialize with 
 				   zeroes */
   struct sh_lms *sol_spectral=NULL, *geoid = NULL;		/* solution expansions */
@@ -348,7 +353,7 @@ int main(int argc, char **argv)
   double chain_temperature;
   if(p->thb_parallel_tempering){
     /* space chain temperatures uniformly from 1 to 10 */
-    chain_temperature = 10.0*((double) rank)/((double) size-1);
+    chain_temperature = 9.0*((double) rank)/((double) size-1)+1.0;
   }else{
     chain_temperature = 1.0;
   }
@@ -360,6 +365,9 @@ int main(int argc, char **argv)
       fprintf(thb_ensemble_file,"#Maximum iterations: %d\n",p->thb_iter);
       fprintf(thb_ensemble_file,"#Save start %d\n#Save skip %d\n#Sample target %d\n",p->thb_save_start,p->thb_save_skip,p->thb_sample_target);
       fprintf(thb_ensemble_file,"#Number of chains: %d\n",size);
+      fprintf(thb_ensemble_file,"#Parallel tmpering: %s\n",p->thb_parallel_tempering ? "True" : "False");
+      fprintf(thb_ensemble_file,"#Parallel tempering start %d\n",p->thb_swap_start);
+      fprintf(thb_ensemble_file,"#Parallel tempering steps for swap: %d\n",p->thb_steps_for_swap);
       fprintf(thb_ensemble_file,"#NL=%d, L=[%d",p->thb_nl,p->thb_ll[0]);
 
       int i;
@@ -405,7 +413,8 @@ int main(int argc, char **argv)
     int i;
     for(i=0;i<thb_nlm;i++){
       mdist += residual1[i]*residual1[i]/sol1.var; // Assumes a diagonal covariance matrix
-    }    
+    }
+    sol1.mdist = mdist;
     sol1.likeprob = -0.5 * mdist/chain_temperature;
   }
 
@@ -434,6 +443,7 @@ int main(int argc, char **argv)
       for(i=0;i<thb_nlm;i++){
 	mdist += residual2[i]*residual2[i]/sol2.var; // Assumes a diagonal covariance matrix
       }
+      sol2.mdist = mdist;
       sol2.likeprob = -0.5*mdist/chain_temperature;
     }
     
@@ -457,9 +467,60 @@ int main(int argc, char **argv)
 
     /* parallel tempering */
     if( p->thb_parallel_tempering && iter > p->thb_swap_start && !(iter%p->thb_steps_for_swap)){
-      /* propose swapping of solutions */      
-      /* propose a permutation */
-      /* gather the chain temperatures */
+      /* propose swapping of solutions */
+      /* assign each MPI rank a 'swap partner' */
+      int *ranks;
+      ranks = (int *) malloc(sizeof(int)*size);
+      if(!rank){
+	for(int i=0;i<size;i++) ranks[i] = i;
+	gsl_ran_shuffle(rng,ranks,size,sizeof(int));/* random permutation of the ranks */
+      }
+      int *partners;
+      partners = (int *) malloc(sizeof(int)*size);
+      if(!rank){
+	for(int i=0;i<size-1;i+=2){
+	  int swapi = ranks[i];
+	  int swapj = ranks[i+1];
+	  partners[swapi] = swapj;
+	  partners[swapj] = swapi;
+	  if( p->verbose == 2 )
+	    fprintf(stderr,"Propose swap %d <--> %d\n",swapi,swapj);
+	}
+      }
+      MPI_Bcast(partners,size,MPI_INT,0,MPI_COMM_WORLD);
+      int swapi = rank;
+      int swapj = partners[rank];
+      double data[3];
+	 
+      if( swapi != swapj ){
+	if( swapi < swapj ){
+	  /* chain with the lower rank calculates the probability of swap */
+	  /* get Varj, temperaturej, mdistj */
+	  MPI_Recv(data,3,MPI_DOUBLE,swapj, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	  double varj = data[0];
+	  double mdistj = data[1];
+	  double Tj = data[2];
+	  double VarfaktS = varj/sol1.var;
+	  double prefactor = (p->thb_no_hierarchical) ? 0.0 : (1.0/chain_temperature-1.0/Tj)*thb_nlm*log(VarfaktS);
+	  double probAcceptSwap = prefactor + 0.5*(1/chain_temperature-1/Tj)*(sol1.mdist - mdistj);
+	  double Ti = chain_temperature;
+	  if( p->thb_sample_prior || probAcceptSwap > 0 || probAcceptSwap > log(randDouble(rng)) ){
+	    /* accept the swap */
+	    chain_temperature = Tj;
+	    Tj = Ti;
+	  }
+	  MPI_Send(&Tj,1,MPI_DOUBLE,swapj,0,MPI_COMM_WORLD);
+	}else{
+	  /* chain with the higher rank sends stuff for swap to be calculated */
+	  data[0] = sol1.var;
+	  data[1] = sol1.mdist;
+	  data[2] = chain_temperature;
+	  MPI_Send(data,3,MPI_DOUBLE,swapj, 0, MPI_COMM_WORLD);             // Send data required to evaluate the swap probability
+	  MPI_Recv(&chain_temperature,1,MPI_DOUBLE,swapj,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE); // Receive the temperature from partner
+	}
+	free(partners);
+	free(ranks);
+      }
       /* gather the chain Mahalanobis distances */
       /* rank 0 does all the swapping... */
 
@@ -473,17 +534,29 @@ int main(int argc, char **argv)
     //save ensemble   
     if( iter >= p->thb_save_start && !(iter%p->thb_save_skip)){
       struct thb_solution *all_solutions;
-      if(!rank)
+      double *all_temperatures;
+      if(!rank){
 	all_solutions = (struct thb_solution *) malloc( sizeof(struct thb_solution)*size );
+	all_temperatures = (double *) malloc( sizeof(double)*size );
+      }
       MPI_Gather(&sol1,sizeof(struct thb_solution),MPI_BYTE,all_solutions,sizeof(struct thb_solution),MPI_BYTE,0,MPI_COMM_WORLD);
+      MPI_Gather(&chain_temperature,1,MPI_DOUBLE,all_temperatures,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
       if(!rank){
 	for(int irank=0;irank<size;irank++){
-	  fprintf(thb_ensemble_file,"%02d,%08d,%.6le,%le,%le,%02d",irank,iter,sqrt(all_solutions[irank].total_residual),(double) all_solutions[irank].likeprob,all_solutions[irank].var,all_solutions[irank].nlayer);
-	  for(int i=0;i<all_solutions[irank].nlayer;i++) fprintf(thb_ensemble_file,",%le",all_solutions[irank].r[i]);
-	  for(int i=0;i<all_solutions[irank].nlayer;i++) fprintf(thb_ensemble_file,",%le",all_solutions[irank].visc[i]);
-	  fprintf(thb_ensemble_file,"\n");
+	  int write_success =0;
+	  if( all_temperatures[irank] == 1.0 ){
+	    fprintf(thb_ensemble_file,"%02d,%08d,%.6le,%le,%le,%02d",irank,iter,sqrt(all_solutions[irank].total_residual),(double) all_solutions[irank].likeprob,all_solutions[irank].var,all_solutions[irank].nlayer);
+	    for(int i=0;i<all_solutions[irank].nlayer;i++) fprintf(thb_ensemble_file,",%le",all_solutions[irank].r[i]);
+	    for(int i=0;i<all_solutions[irank].nlayer;i++) fprintf(thb_ensemble_file,",%le",all_solutions[irank].visc[i]);
+	    fprintf(thb_ensemble_file,"\n");
+	    write_success++;
+	  }
+	  if( !write_success ){
+	    fprintf(stderr,"Warning: Nothing written to ensemble file\n");
+	  }
 	}
-	free(all_solutions);	
+	free(all_solutions);
+	free(all_temperatures);
       }
     }
     iter++;

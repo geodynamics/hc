@@ -2,7 +2,7 @@
 clear;
 close all;
 
-ensemble_file = '../ensemble.txt';
+ensemble_file = '../ensemble_semucb_l2-7.txt';
 result = load_ensemble(ensemble_file);
 disp('done loading ensemble');
 %%
