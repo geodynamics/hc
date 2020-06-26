@@ -428,7 +428,11 @@ int main(int argc, char **argv)
     for(i=0;i<thb_nlm;i++){
       mdist += residual1[i]*residual1[i]/sol1.var; // Assumes a diagonal covariance matrix
     }
-    sol1.mdist = mdist;
+    if( p->thb_sample_prior ){
+      sol1.mdist = 0.0;
+    }else{
+      sol1.mdist = mdist;
+    }
     sol1.likeprob = -0.5 * mdist/chain_temperature;
   }
 
@@ -457,7 +461,11 @@ int main(int argc, char **argv)
       for(i=0;i<thb_nlm;i++){
 	mdist += residual2[i]*residual2[i]/sol2.var; // Assumes a diagonal covariance matrix
       }
-      sol2.mdist = mdist;
+      if( p->thb_sample_prior ){
+	sol2.mdist = 0.0;
+      }else{
+	sol2.mdist = mdist;
+      }
       sol2.likeprob = -0.5*mdist/chain_temperature;
     }
     
@@ -466,7 +474,7 @@ int main(int argc, char **argv)
     int k1 = sol1.nlayer-1;
     double prefactor = -0.5 * ((double) thb_nlm)*log(varfakt);
     double probAccept = prefactor + sol2.likeprob - sol1.likeprob + log((double) (k1+1)) - log((double) (k2+1));
-    if( p->thb_sample_prior || probAccept > 0 || probAccept > log(randDouble(rng))){
+    if( probAccept > 0 || probAccept > log(randDouble(rng))){
       // Accept the proposed solution
       sol1 = sol2;
       if( p->verbose ){
@@ -518,7 +526,7 @@ int main(int argc, char **argv)
 	  double prefactor = (p->thb_no_hierarchical) ? 0.0 : (1.0/chain_temperature-1.0/Tj)*thb_nlm*log(VarfaktS);
 	  double probAcceptSwap = prefactor + 0.5*(1/chain_temperature-1/Tj)*(sol1.mdist - mdistj);
 	  double Ti = chain_temperature;
-	  if( p->thb_sample_prior || probAcceptSwap > 0 || probAcceptSwap > log(randDouble(rng)) ){
+	  if( probAcceptSwap > 0 || probAcceptSwap > log(randDouble(rng)) ){
 	    /* accept the swap */
 	    if( p->verbose == 2) fprintf(stderr,"Swapping %d <--> %d\n",swapi,swapj);
 	    chain_temperature = Tj;
