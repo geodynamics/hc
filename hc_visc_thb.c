@@ -503,13 +503,14 @@ int main(int argc, char **argv)
 	{
 	  for(int i=0;i<size;i++) partners[i] = i;
 	  int i=0;
-	  //	for(int i=0;i<size-1;i+=2){
-	  int swapi = ranks[i];
-	  int swapj = ranks[i+1];
-	  partners[swapi] = swapj;
-	  partners[swapj] = swapi;
-	  if( p->verbose >= 3 )
-	    fprintf(stderr,"Propose swap %d <--> %d\n",swapi,swapj);
+	  for(int i=0;i<size-1;i+=2){
+	    int swapi = ranks[i];
+	    int swapj = ranks[i+1];	    
+	    partners[swapi] = swapj;
+	    partners[swapj] = swapi;	    
+	    if( p->verbose >= 3 )
+	      fprintf(stderr,"Propose swap %d <--> %d\n",swapi,swapj);
+	  }
 	}
       }
       MPI_Bcast(partners,size,MPI_INT,0,MPI_COMM_WORLD);
@@ -521,13 +522,15 @@ int main(int argc, char **argv)
 	if( swapi < swapj ){
 	  /* chain with the lower rank calculates the probability of swap */
 	  /* get Varj, temperaturej, mdistj */
-	  MPI_Recv(data,3,MPI_DOUBLE,swapj, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	  MPI_Recv(data,4,MPI_DOUBLE,swapj, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	  double varj = data[0];
 	  double mdistj = data[1];
 	  double Tj = data[2];
+	  double kj = data[3]-1.0;
+	  double ki = (double) sol1.nlayer-1.0;
 	  double VarfaktS = varj/sol1.var;
 	  double prefactor = (p->thb_no_hierarchical) ? 0.0 : (1.0/chain_temperature-1.0/Tj)*thb_nlm*log(VarfaktS);
-	  double probAcceptSwap = prefactor + 0.5*(1/chain_temperature-1/Tj)*(sol1.mdist - mdistj);
+	  double probAcceptSwap = prefactor + 0.5*(1/chain_temperature-1/Tj)*(sol1.mdist-mdistj);
 	  double Ti = chain_temperature;
 	  if( probAcceptSwap > 0 || probAcceptSwap > log(randDouble(rng)) ){
 	    /* accept the swap */
@@ -541,7 +544,8 @@ int main(int argc, char **argv)
 	  data[0] = sol1.var;
 	  data[1] = sol1.mdist;
 	  data[2] = chain_temperature;
-	  MPI_Send(data,3,MPI_DOUBLE,swapj, 0, MPI_COMM_WORLD);             // Send data required to evaluate the swap probability
+	  data[3] = (double) sol1.nlayer;
+	  MPI_Send(data,4,MPI_DOUBLE,swapj, 0, MPI_COMM_WORLD);             // Send data required to evaluate the swap probability
 	  MPI_Recv(&chain_temperature,1,MPI_DOUBLE,swapj,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE); // Receive the temperature from partner
 	}
 	free(partners);
@@ -570,7 +574,7 @@ int main(int argc, char **argv)
       if(!rank){
 	int write_success = 0;
 	for(int irank=0;irank<size;irank++){
-	  if( all_temperatures[irank] == 1.0 ){
+	  if(1 || all_temperatures[irank] == 1.0 ){
 	    fprintf(thb_ensemble_file,"%02d,%08d,%.6le,%le,%le,%02d",irank,iter,sqrt(all_solutions[irank].total_residual),(double) all_solutions[irank].likeprob,all_solutions[irank].var,all_solutions[irank].nlayer);
 	    for(int i=0;i<all_solutions[irank].nlayer;i++) fprintf(thb_ensemble_file,",%le",all_solutions[irank].r[i]);
 	    for(int i=0;i<all_solutions[irank].nlayer;i++) fprintf(thb_ensemble_file,",%le",all_solutions[irank].visc[i]);
