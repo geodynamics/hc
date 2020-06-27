@@ -48,7 +48,7 @@ void interpolate_viscosity(struct thb_solution *solution,HC_PREC *rvisc,HC_PREC 
     visc[i] = solution->visc[j]+(solution->visc[j+1]-solution->visc[j])/(solution->r[j+1]-solution->r[j])*(this_r-solution->r[j]);
     visc[i] = pow(10.0,visc[i]);
   }
-  if( p->verbose ){
+  if( p->verbose >= 3 ){
     fprintf(stderr,"interpolate_viscosity input:\n");
     for(i=0;i<solution->nlayer;i++){
       fprintf(stderr,"%.3e %.3e\n",(double) solution->r[i],(double) solution->visc[i]);
@@ -362,11 +362,11 @@ int main(int argc, char **argv)
   FILE *thb_ensemble_file = NULL;
   double chain_temperature;
   if(p->thb_parallel_tempering){
-    /* space chain temperatures uniformly from 1 to 10 */
+    /* space chain temperatures log-uniformly from 1 to 10 */
     if( !rank ){
       chain_temperature = 1.0;
     }else{      
-      chain_temperature = 9.0*((double) rank)/((double) size-1)+1.0;
+      chain_temperature = pow(10.0, rank/size*(log10(10.0)-log10(1.0)) );
     }
   }else{
     chain_temperature = 1.0;
@@ -500,12 +500,15 @@ int main(int argc, char **argv)
       int *partners;
       partners = (int *) malloc(sizeof(int)*size);
       if(!rank){
-	for(int i=0;i<size-1;i+=2){
+	{
+	  for(int i=0;i<size;i++) partners[i] = i;
+	  int i=0;
+	  //	for(int i=0;i<size-1;i+=2){
 	  int swapi = ranks[i];
 	  int swapj = ranks[i+1];
 	  partners[swapi] = swapj;
 	  partners[swapj] = swapi;
-	  if( p->verbose == 2 )
+	  if( p->verbose >= 3 )
 	    fprintf(stderr,"Propose swap %d <--> %d\n",swapi,swapj);
 	}
       }
@@ -528,11 +531,11 @@ int main(int argc, char **argv)
 	  double Ti = chain_temperature;
 	  if( probAcceptSwap > 0 || probAcceptSwap > log(randDouble(rng)) ){
 	    /* accept the swap */
-	    if( p->verbose == 2) fprintf(stderr,"Swapping %d <--> %d\n",swapi,swapj);
+	    if( p->verbose >= 3) fprintf(stderr,"Swapping %d <--> %d. mdists (%le,%le) prob=%le\n",swapi,swapj,sol1.mdist,mdistj,probAcceptSwap);
 	    chain_temperature = Tj;
 	    Tj = Ti;
 	  }
-	  MPI_Send(&Tj,1,MPI_DOUBLE,swapj,0,MPI_COMM_WORLD);
+	  MPI_Send(&Tj,1,MPI_DOUBLE,swapj,0,MPI_COMM_WORLD);	 
 	}else{
 	  /* chain with the higher rank sends stuff for swap to be calculated */
 	  data[0] = sol1.var;
@@ -544,14 +547,14 @@ int main(int argc, char **argv)
 	free(partners);
 	free(ranks);
       }
-      /* gather the chain Mahalanobis distances */
-      /* rank 0 does all the swapping... */
+      /* update the likeprob for the accepted solution using the new chain temperature */
+      sol1.likeprob = -0.5*sol1.mdist/chain_temperature;
 
     }
 
     
     /* update progress */
-    if(!rank && (!(iter%1000) || p->verbose==2))
+    if(!rank && (!(iter%1000) || p->verbose>=2))
       fprintf(stderr,"[%d]: Finished iteration %d\n",rank,iter);
     
     //save ensemble   

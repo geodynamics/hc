@@ -25,7 +25,7 @@ plot(result.residual);
 hold on
 plot(result.var);
 title('residual')
-
+drawnow()
 %%
 nr = 100;
 rmin = result.rad(1,1);
