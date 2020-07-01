@@ -396,7 +396,7 @@ struct hcs{
 };
 
 /* for Bayesian viscosity inversions */
-#define MAX_NUM_VOR 16
+#define MAX_NUM_VOR 20
 struct thb_solution {
   int nlayer;
   double r[MAX_NUM_VOR];

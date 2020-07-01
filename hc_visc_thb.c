@@ -104,17 +104,63 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   int success = 0;
   /* Choose the random option and use rejection sampling to restrict forbidden cases */
   while(!success){
-    success = 1;
-    if( p->thb_no_hierarchical ){
-      random_choice = randInt(rng,4);
+    if( old_solution->nlayer == 2 ){ /* change probabilities for the case where N=2 to remove biases */
+      double tmp = randDouble(rng);
+      if( p->thb_no_hierarchical ){
+	if( tmp < 0.25 ){
+	  random_choice = 0;
+	}else{
+	  random_choice = 3;
+	}
+      }else{/* hierarchical case */
+	if( tmp < 0.2 ){
+	  random_choice = 0;
+	}else if(tmp<0.6){
+	  random_choice = 3;
+	}else{
+	  random_choice = 4;
+	}
+      }
+      success = 1;
+    }else if( old_solution->nlayer == max_vor ){/* special case for N=Nmax */
+      double tmp = randDouble(rng);
+      if( p->thb_no_hierarchical ){
+	if( tmp < 0.25 ){
+	  random_choice = 1;
+	}else if(tmp < 0.25 + 0.75/2.0){
+	  random_choice = 2;
+	}else{
+	  random_choice = 3;
+	}
+      }else{
+	/* hierarchical case */	
+	if( tmp < 0.2 ){
+	  random_choice = 1;
+	}else if(tmp < 0.2+0.8/3.0){
+	  random_choice = 2;
+	}else if(tmp < 0.2+2.0*0.8/3.0){
+	  random_choice = 3;
+	}else{
+	  random_choice = 4;
+	}
+      }
+      success = 1;
     }else{
-      random_choice = randInt(rng,5);
+      /* Normal case - all options have equal probability */
+      success = 1;
+      if( p->thb_no_hierarchical ){
+	random_choice = randInt(rng,4);
+      }else{
+	random_choice = randInt(rng,5);
+      }
+      //if( old_solution->nlayer == 2 && (random_choice == 1 || random_choice == 2))
+      //success = 0;
+      //if( old_solution->nlayer == max_vor && random_choice == 0)
+      //success = 0;
     }
-    if( old_solution->nlayer == 2 && (random_choice == 1 || random_choice == 2))
-      success = 0;
-    if( old_solution->nlayer == max_vor && random_choice == 0)
-      success = 0;
   }
+  
+  
   success = 0;
   int failcount = 0;
   while(!success){
@@ -411,13 +457,14 @@ int main(int argc, char **argv)
     hc_select_pvel(p->pvel_time,&model->pvel,pvel,p->verbose);
   // do the initial solution
   solved=0;
-  hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
-	   (solved)?(FALSE):(TRUE), /* density changed? */
-	   (solved)?(FALSE):(TRUE), /* plate velocity changed? */
-	   TRUE,			/* viscosity changed */
-	   FALSE,p->compute_geoid,
-	   pvel,model->dens_anom,geoid,
-	   p->verbose);
+  if( !p->thb_sample_prior)
+    hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
+	     (solved)?(FALSE):(TRUE), /* density changed? */
+	     (solved)?(FALSE):(TRUE), /* plate velocity changed? */
+	     TRUE,			/* viscosity changed */
+	     FALSE,p->compute_geoid,
+	     pvel,model->dens_anom,geoid,
+	     p->verbose);
   solved=1;
   //hc_compute_correlation(geoid,p->ref_geoid,corr,1,p->verbose);
   sol1.total_residual = sh_residual_vector(geoid,p->ref_geoid,p->thb_ll,p->thb_nl,residual1,0);
@@ -470,8 +517,8 @@ int main(int argc, char **argv)
     }
     
     /* Calculate the probablity of acceptance: */
-    int k2 = sol2.nlayer-1;
-    int k1 = sol1.nlayer-1;
+    int k2 = sol2.nlayer;
+    int k1 = sol1.nlayer;
     double prefactor = -0.5 * ((double) thb_nlm)*log(varfakt);
     double probAccept = prefactor + sol2.likeprob - sol1.likeprob + log((double) (k1+1)) - log((double) (k2+1));
     if( probAccept > 0 || probAccept > log(randDouble(rng))){
@@ -488,7 +535,7 @@ int main(int argc, char **argv)
     }
 
     /* parallel tempering */
-    if( p->thb_parallel_tempering && iter > p->thb_swap_start && !(iter%p->thb_steps_for_swap)){
+    if( p->thb_parallel_tempering && iter > p->thb_swap_start && !(iter % p->thb_steps_for_swap)){
       /* propose swapping of solutions */
       /* assign each MPI rank a 'swap partner' */
       int *ranks;
@@ -553,7 +600,6 @@ int main(int argc, char **argv)
       }
       /* update the likeprob for the accepted solution using the new chain temperature */
       sol1.likeprob = -0.5*sol1.mdist/chain_temperature;
-
     }
 
     
@@ -574,7 +620,7 @@ int main(int argc, char **argv)
       if(!rank){
 	int write_success = 0;
 	for(int irank=0;irank<size;irank++){
-	  if(1 || all_temperatures[irank] == 1.0 ){
+	  if( all_temperatures[irank] == 1.0 ){
 	    fprintf(thb_ensemble_file,"%02d,%08d,%.6le,%le,%le,%02d",irank,iter,sqrt(all_solutions[irank].total_residual),(double) all_solutions[irank].likeprob,all_solutions[irank].var,all_solutions[irank].nlayer);
 	    for(int i=0;i<all_solutions[irank].nlayer;i++) fprintf(thb_ensemble_file,",%le",all_solutions[irank].r[i]);
 	    for(int i=0;i<all_solutions[irank].nlayer;i++) fprintf(thb_ensemble_file,",%le",all_solutions[irank].visc[i]);

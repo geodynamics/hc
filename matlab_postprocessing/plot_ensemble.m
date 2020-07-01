@@ -3,7 +3,9 @@ clear;
 close all;
 
 % ensemble_file = '../ensemble_semucb_l2-7.txt';
-ensemble_file = '../test_mpi.txt';
+% ensemble_file = '../ensemble_semucb_l2-7_NOparalleltempering.txt';
+
+ensemble_file = '../prior_no_tempering.txt';
 result = load_ensemble(ensemble_file);
 disp('done loading ensemble');
 %%
@@ -17,7 +19,7 @@ hist(log10(result.var),20);
 title('log of var');
 
 subplot(2,2,3);
-hist(result.nlayer,[0:1:17]);
+hist(result.nlayer,[1:1:21]);
 title('number of layers');
 
 subplot(2,2,4);
