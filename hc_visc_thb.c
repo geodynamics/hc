@@ -558,6 +558,10 @@ int main(int argc, char **argv)
   if(!rank && !p->thb_checkpoint_resume){
     thb_ensemble_file = fopen(p->thb_ensemble_filename,"w");
     {
+      fprintf(thb_ensemble_file,"#HC invoked with the following options\n#");
+      for(int i=0;i<argc;i++)
+	fprintf(thb_ensemble_file,"%s ",argv[i]);
+      fprintf(thb_ensemble_file,"\n");
       fprintf(thb_ensemble_file,"#THB Viscosity parameters:\n");
       fprintf(thb_ensemble_file,"#Maximum iterations: %d\n",p->thb_iter);
       fprintf(thb_ensemble_file,"#Save start %d\n#Save skip %d\n#Sample target %d\n",p->thb_save_start,p->thb_save_skip,p->thb_sample_target);
