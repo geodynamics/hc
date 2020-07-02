@@ -245,6 +245,7 @@ struct hc_parameters{
 
   /* additional parameters related to THB viscosity inversion */
   int thb_iter;
+  hc_boolean thb_checkpoint_resume; /* whether to resume from a checkpoint */
   hc_boolean thb_no_hierarchical; /* whether to perform a hierarchical inversion */
   hc_boolean thb_sample_prior;    /* sample the prior (do not compute any solutions) */
   char thb_ensemble_filename[HC_CHAR_LENGTH]; /* name of output file for viscosity ensemble */
@@ -396,6 +397,7 @@ struct hcs{
 };
 
 /* for Bayesian viscosity inversions */
+#define THB_CHECKPOINT_INTERVAL 100000
 #define MAX_NUM_VOR 20
 struct thb_solution {
   int nlayer;

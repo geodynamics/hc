@@ -85,6 +85,7 @@ void hc_init_parameters(struct hc_parameters *p)
   strncpy(p->dens_filename,HC_DENS_SH_FILE,HC_CHAR_LENGTH);
   strncpy(p->prem_model_filename,PREM_MODEL_FILE,HC_CHAR_LENGTH);
   /* THB stuff */
+  p->thb_checkpoint_resume = FALSE;
   p->thb_no_hierarchical = FALSE;
   strncpy(p->thb_ensemble_filename,THB_ENSEMBLE_FILE,HC_CHAR_LENGTH);
   strncpy(p->thb_covmat_filename,THB_COVMAT_FILE,HC_CHAR_LENGTH);
@@ -593,6 +594,9 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
       used_parameter=TRUE;
     }else if(strcmp(argv[i],"-thb_parallel_tempering")==0){
       p->thb_parallel_tempering = TRUE;
+      used_parameter=TRUE;
+    }else if(strcmp(argv[i],"-thb_checkpoint_resume")==0){
+      p->thb_checkpoint_resume = TRUE;
       used_parameter=TRUE;
     }else if(strcmp(argv[i],"-thb_swap_start")==0){	
       hc_advance_argument(&i,argc,argv);

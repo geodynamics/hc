@@ -36,6 +36,20 @@ double randn(gsl_rng *rng)//normally distributed random number
   return r;
 }
 
+void print_solution(FILE *fh,struct thb_solution *sol){
+  /* print a user-readable form of the solution */
+  fprintf(fh,"Solution:\nTotal residual, Likelihood %le,%le\nVar, mdist= %le,%le\nNLayers=%d\n",(double) sol->total_residual,(double) sol->likeprob,sol->var,sol->mdist,sol->nlayer);
+  fprintf(fh,"r-values:\t");
+  for(int i=0;i<sol->nlayer;i++){
+    fprintf(fh,"%.6f\t",sol->r[i]);
+  }
+  fprintf(fh,"\nvisc:\t");
+  for(int i=0;i<sol->nlayer;i++){
+    fprintf(fh,"%.6f\t",sol->visc[i]);
+  }
+  fprintf(fh,"\n");
+}
+
 void interpolate_viscosity(struct thb_solution *solution,HC_PREC *rvisc,HC_PREC *visc, struct hc_parameters *p){
   const int nlayer = HC_INTERP_LAYERS;
   int i=0;
@@ -85,7 +99,7 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   const double visc_min = 19.0;
   const double visc_max = 25.0;
   const double visc_range = visc_max - visc_min;
-  const double visc_change = 0.2;
+  const double visc_change = 0.1;
   
   const double rad_min = model->r_cmb;
   const double rad_max = 1.0;
@@ -248,6 +262,119 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   }
 }
 
+void thb_checkpoint(struct thb_solution *sol, double chain_temperature, int iter, struct hc_parameters *p){
+  int rank, size;
+  MPI_Comm_size(MPI_COMM_WORLD,&size);
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  struct thb_solution *all_solutions;
+  double *all_temperatures;
+  if(!rank){   
+    char checkpoint_file[HC_CHAR_LENGTH+7];
+    sprintf(checkpoint_file,"%s.chkpt",p->thb_ensemble_filename);
+    
+    FILE *fh = NULL;
+    fh = fopen(checkpoint_file,"w");
+    /* gather solutions from all ranks */
+    all_solutions = (struct thb_solution *) malloc( sizeof(struct thb_solution)*size );
+    all_temperatures = (double *) malloc( sizeof(double)*size );
+    MPI_Gather(sol,sizeof(struct thb_solution),MPI_BYTE,all_solutions,sizeof(struct thb_solution),MPI_BYTE,0,MPI_COMM_WORLD);
+    MPI_Gather(&chain_temperature,1,MPI_DOUBLE,all_temperatures,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    fprintf(fh,"%d\n",iter);
+    for(int i=0;i<size;i++){
+      struct thb_solution *sol = all_solutions+i;
+      fprintf(fh,"%d\t%le\t",i,all_temperatures[i]);
+      fprintf(fh,"%le\t%le\t",sol->var,sol->mdist);
+      fprintf(fh,"%d\t",sol->nlayer);
+      fprintf(fh,"%le\t%le\t",(double) sol->total_residual,(double) sol->likeprob);
+      for(int j=0;j<sol->nlayer;j++){
+	/* r-values */
+	fprintf(fh,"%le\t",sol->r[j]);
+      }
+      for(int j=0;j<sol->nlayer;j++){
+	/* visc values */
+	fprintf(fh,"%le\t",sol->visc[j]);       
+      }
+      fprintf(fh,"\n");
+    }
+    fclose(fh);
+    free(all_solutions);
+    free(all_temperatures);
+  }else{
+    /* send solution to rank 0 */
+    MPI_Gather(sol,sizeof(struct thb_solution),MPI_BYTE,all_solutions,sizeof(struct thb_solution),MPI_BYTE,0,MPI_COMM_WORLD);
+    MPI_Gather(&chain_temperature,1,MPI_DOUBLE,all_temperatures,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
+  }
+  if( p->verbose ){
+    fprintf(stderr,"Checkpoint written\n");
+  }
+}
+
+void thb_checkpoint_resume(struct thb_solution *sol, double *chain_temperature, int *iter, struct hc_parameters *p){
+  int rank, size;
+  MPI_Comm_size(MPI_COMM_WORLD,&size);
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  struct thb_solution *all_solutions;
+  double *all_temperatures;
+  if(!rank){
+    /* open checkpoint file*/
+    char checkpoint_file[HC_CHAR_LENGTH+7];
+    sprintf(checkpoint_file,"%s.chkpt",p->thb_ensemble_filename);
+    FILE *fh = NULL;
+    fh = fopen(checkpoint_file,"r");
+    if(fh == NULL){
+      perror("Error opening checkpoint file");
+      exit(-1);
+    }
+    all_solutions = (struct thb_solution *) malloc( sizeof(struct thb_solution)*size );
+    all_temperatures = (double *) malloc( sizeof(double)*size ); 
+    fscanf(fh,"%d\n",iter);
+    for(int i=0;i<size;i++){
+      struct thb_solution *sol = all_solutions+i;
+      int rank_tmp;
+      fscanf(fh,"%d\t%le\t",&rank_tmp,all_temperatures+i);
+      fscanf(fh,"%le\t%le\t",&(sol->var),&(sol->mdist));
+      fscanf(fh,"%d\t",&(sol->nlayer));
+      double residual_tmp, likeprob_tmp;
+      fscanf(fh,"%le\t%le\t", &residual_tmp, &likeprob_tmp);
+      sol->total_residual = (HC_PREC) residual_tmp;
+      sol->likeprob = (HC_PREC) likeprob_tmp;
+      for(int j=0;j<sol->nlayer;j++){
+	/* r-values */
+	fscanf(fh,"%le\t",&(sol->r[j]));
+      }
+      for(int j=0;j<sol->nlayer;j++){
+	/* visc values */
+	fscanf(fh,"%le\t",&(sol->visc[j]));       
+      }
+      fscanf(fh,"\n");
+    }
+    chain_temperature[0] = all_temperatures[rank];
+    sol[0] = all_solutions[rank];
+    fclose(fh);
+  }
+  /* Collective scatter of solutions */
+  MPI_Bcast(iter,1,MPI_INT,0,MPI_COMM_WORLD);
+  MPI_Scatter(all_solutions,sizeof(struct thb_solution),MPI_BYTE,sol,sizeof(struct thb_solution),MPI_BYTE,0,MPI_COMM_WORLD);
+  MPI_Scatter(all_temperatures,1,MPI_DOUBLE,chain_temperature,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
+  if(!rank){
+    free(all_temperatures);
+    free(all_solutions);
+  }
+  if(p->verbose){
+    fprintf(stdout,"Checkpoint restored!\n");
+    for(int i=0;i<size;i++){
+      MPI_Barrier(MPI_COMM_WORLD);
+      if( i== rank ){
+	fprintf(stdout,"Solution for rank %d:\n",rank);
+	fprintf(stdout,"iter=%d\n",*iter);
+	print_solution(stdout,sol);
+      }
+    }
+  }
+}
+
+
+
 int main(int argc, char **argv)
 {
   MPI_Init(&argc,&argv);
@@ -396,29 +523,39 @@ int main(int argc, char **argv)
   double *residual2 = (double *) malloc(sizeof(double)*thb_nlm);
   fprintf(stdout,"Allocated residual [%dx1]\n",thb_nlm);
 
-  // initialize solution
-  sol1.nlayer = 2;
-  sol1.r[0] = model->r_cmb;
-  sol1.r[1] = 1.0;
-  sol1.visc[0] = 22.0;
-  sol1.visc[1] = 22.0;
-  sol1.var = 1.0;
-  interpolate_viscosity(&sol1,model->rvisc,model->visc,p);
-  p->thb_save_skip = (p->thb_iter - p->thb_save_start)/p->thb_sample_target;
-  FILE *thb_ensemble_file = NULL;
   double chain_temperature;
-  if(p->thb_parallel_tempering){
-    /* space chain temperatures log-uniformly from 1 to 10 */
-    if( !rank ){
+  int iter;
+  // initialize solution
+  if( !p->thb_checkpoint_resume){
+    iter = 0;
+    sol1.nlayer = 2;
+    sol1.r[0] = model->r_cmb;
+    sol1.r[1] = 1.0;
+    sol1.visc[0] = 22.0;
+    sol1.visc[1] = 22.0;
+    sol1.var = 1.0;
+    if(p->thb_parallel_tempering){
+      /* space chain temperatures log-uniformly from 1 to 10 */
+      if( !rank ){
+	chain_temperature = 1.0;
+      }else{      
+	chain_temperature = pow(10.0, rank/size*(log10(10.0)-log10(1.0)) );
+      }
+    }else{
       chain_temperature = 1.0;
-    }else{      
-      chain_temperature = pow(10.0, rank/size*(log10(10.0)-log10(1.0)) );
     }
   }else{
-    chain_temperature = 1.0;
-  }
+    thb_checkpoint_resume(&sol1,&chain_temperature,&iter,p);
+    if(p->verbose){
+      print_solution(stderr,&sol1);
+    }
+  }  
+  interpolate_viscosity(&sol1,model->rvisc,model->visc,p);
+
+  p->thb_save_skip = (p->thb_iter - p->thb_save_start)/p->thb_sample_target;
+  FILE *thb_ensemble_file = NULL;
   
-  if(!rank){
+  if(!rank && !p->thb_checkpoint_resume){
     thb_ensemble_file = fopen(p->thb_ensemble_filename,"w");
     {
       fprintf(thb_ensemble_file,"#THB Viscosity parameters:\n");
@@ -450,6 +587,9 @@ int main(int argc, char **argv)
     }   
     /* Write viscosity file header */
     fprintf(thb_ensemble_file,"#iter\t,total_residual\t,likeprob\t,var\t,nlayer\t,rr\t,visc\n");
+  }else if(!rank && p->thb_checkpoint_resume){
+    thb_ensemble_file = fopen(p->thb_ensemble_filename,"a");
+    fprintf(thb_ensemble_file,"# Resumed from checkpoint\n");
   }
   
   /* select plate velocity */
@@ -484,7 +624,6 @@ int main(int argc, char **argv)
   }
 
   /* BEGIN THB LOOP */
-  int iter=0;
   while(iter < p->thb_iter){
     /* Propose Solution */
     propose_solution( model, &sol1, &sol2, rng, iter, p);
@@ -638,6 +777,9 @@ int main(int argc, char **argv)
 	free(all_temperatures);
       }
     }
+    if( !(iter % THB_CHECKPOINT_INTERVAL) )
+      thb_checkpoint(&sol1,chain_temperature,iter,p);
+    
     iter++;
   }
   if( !rank ){

@@ -3,7 +3,7 @@ fh = fopen(ensemble_file,'r');
 n = 0;
 while ~feof(fh)
     line = fgetl(fh);
-    if line(1) ~= '#'
+    if ~any(line == '#')
         n = n + 1;
     end
 end
@@ -22,6 +22,9 @@ while ~feof(fh)
     line = fgetl(fh);
     if line(1) == '#'
         % do nothing
+    elseif( any(line == '#') )
+        disp('Discarding likely corrupt line:')
+        disp(line);
     else
         fields = sscanf(line,'%f,');
         if ~isempty(fields)

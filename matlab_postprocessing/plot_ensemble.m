@@ -4,7 +4,7 @@ close all;
 
 % ensemble_file = '../ensemble_semucb_l2-7.txt';
 % ensemble_file = '../ensemble_semucb_l2-7_NOparalleltempering.txt';
-
+    
 ensemble_file = '../prior_no_tempering.txt';
 result = load_ensemble(ensemble_file);
 disp('done loading ensemble');
