@@ -108,7 +108,7 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   const double drmin = 7e-3;           // minimum layer thickness
   
   const double var_min = 1e-3;
-  const double var_max = 1e3;
+  const double var_max = 1e6;
   const double var_change = 0.05;
 
   const int max_vor = thb_max_layers( iter );
