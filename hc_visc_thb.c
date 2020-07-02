@@ -262,6 +262,10 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   }
 }
 
+/* COVARIANCE MATRIX STUFF */
+
+
+
 void thb_checkpoint(struct thb_solution *sol, double chain_temperature, int iter, struct hc_parameters *p){
   int rank, size;
   MPI_Comm_size(MPI_COMM_WORLD,&size);

@@ -233,3 +233,4 @@ void shana_plmbar1(double *, double *, int, int, long double, struct shana_modul
 /* simple_test.c */
 /* spherepack_sh.c */
 /* test_fft.c */
+/* thb.c */
