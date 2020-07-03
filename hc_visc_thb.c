@@ -450,8 +450,7 @@ int main(int argc, char **argv)
   rng = gsl_rng_alloc (rng_type);
   for(int i=0;i<rank;i++) gsl_rng_get(rng); /* burn rank-many random numbers to ensure that each MPI process takes a different path */
   printf ("[%d]: first random value = %lu\n",rank, gsl_rng_get (rng));
-  gsl_matrix *inverse_covariance_matrix;
-  load_inv_covariance_matrix(inverse_covariance_matrix,p);
+
   
   /*     
      (1)
@@ -578,7 +577,10 @@ int main(int argc, char **argv)
   //  double *residual1 = (double *) malloc(sizeof(double)*thb_nlm);
   //double *residual2 = (double *) malloc(sizeof(double)*thb_nlm);
   fprintf(stdout,"Allocated residual [%dx1]\n",thb_nlm);
-
+  gsl_matrix *inverse_covariance_matrix;
+  if( p->thb_use_covmat)
+    load_inv_covariance_matrix(inverse_covariance_matrix,p);
+  
   double chain_temperature;
   int iter;
   // initialize solution
