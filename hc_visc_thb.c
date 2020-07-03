@@ -87,7 +87,7 @@ int thb_max_layers(int iter){
     if(i<3){
       burnin_steps[i] = 0;
     }else{
-      burnin_steps[i] = burnin_steps[i-1] + 5000*(i-2);
+      burnin_steps[i] = burnin_steps[i-1] + 10000*(i-2);
     }
   }
   int max_layers = 3;
