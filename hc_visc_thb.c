@@ -1,6 +1,8 @@
 #include "hc.h"
 #include <math.h>
 #include <mpi.h>
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_blas.h>
 
 /* 
    
@@ -263,7 +265,46 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
 }
 
 /* COVARIANCE MATRIX STUFF */
-
+void load_inv_covariance_matrix(gsl_matrix *matrix, struct hc_parameters *p){
+  FILE *fh = NULL;
+  int i1=0;
+  if(p->verbose){
+    fprintf(stdout,"Reading covariance matrix from %s\n",p->thb_covmat_filename);
+  }
+  fh = fopen(p->thb_covmat_filename,"r");
+  double det;
+  i1 += fscanf(fh,"%le\n",&det);
+  int nshdeg;
+  if( nshdeg != p->thb_nl || nshdeg>10 ){
+    fprintf(stderr,"Error: mismatch in number of spherical harmonic degrees!\n");
+    exit(-1);
+  }
+  i1 += fscanf(fh,"%d\n",&nshdeg);
+  int sh_degs[10];
+  for(int i=0;i<nshdeg;i++){
+    i1 += fscanf(fh,"%d\t",&sh_degs[i]);
+    if(sh_degs[i] != p->thb_ll[i]){
+      i1 += fprintf(stderr,"Error: mismatch in spherical harmonic degrees!\n");
+      fclose(fh);
+      exit(-1);
+    }
+  }
+  int M,N;
+  i1 += fscanf(fh,"%d %d\n",&M,&N);
+  matrix = gsl_matrix_alloc(M,N);
+  /* load the data from the file */
+  for(int j=0;j<N;j++){
+    for(int i=0;i<M;i++){
+      i1 += fscanf(fh,"%le\t",&(matrix->data[i*matrix->tda+j]));     
+    }
+    i1 += fscanf(fh,"\n");
+  }
+  fclose(fh);
+  if(p->verbose){
+    fprintf(stdout,"Cdinv:\n");
+    gsl_matrix_fprintf(stdout,matrix,"%e");
+  }
+}
 
 
 void thb_checkpoint(struct thb_solution *sol, double chain_temperature, int iter, struct hc_parameters *p){
@@ -330,27 +371,28 @@ void thb_checkpoint_resume(struct thb_solution *sol, double *chain_temperature, 
       exit(-1);
     }
     all_solutions = (struct thb_solution *) malloc( sizeof(struct thb_solution)*size );
-    all_temperatures = (double *) malloc( sizeof(double)*size ); 
-    fscanf(fh,"%d\n",iter);
+    all_temperatures = (double *) malloc( sizeof(double)*size );
+    int i1=0;
+    i1 += fscanf(fh,"%d\n",iter);
     for(int i=0;i<size;i++){
       struct thb_solution *sol = all_solutions+i;
       int rank_tmp;
-      fscanf(fh,"%d\t%le\t",&rank_tmp,all_temperatures+i);
-      fscanf(fh,"%le\t%le\t",&(sol->var),&(sol->mdist));
-      fscanf(fh,"%d\t",&(sol->nlayer));
+      i1+=fscanf(fh,"%d\t%le\t",&rank_tmp,all_temperatures+i);
+      i1+=fscanf(fh,"%le\t%le\t",&(sol->var),&(sol->mdist));
+      i1+=fscanf(fh,"%d\t",&(sol->nlayer));
       double residual_tmp, likeprob_tmp;
-      fscanf(fh,"%le\t%le\t", &residual_tmp, &likeprob_tmp);
+      i1+=fscanf(fh,"%le\t%le\t", &residual_tmp, &likeprob_tmp);
       sol->total_residual = (HC_PREC) residual_tmp;
       sol->likeprob = (HC_PREC) likeprob_tmp;
       for(int j=0;j<sol->nlayer;j++){
 	/* r-values */
-	fscanf(fh,"%le\t",&(sol->r[j]));
+	i1+=fscanf(fh,"%le\t",&(sol->r[j]));
       }
       for(int j=0;j<sol->nlayer;j++){
 	/* visc values */
-	fscanf(fh,"%le\t",&(sol->visc[j]));       
+	i1+=fscanf(fh,"%le\t",&(sol->visc[j]));       
       }
-      fscanf(fh,"\n");
+      i1+=fscanf(fh,"\n");
     }
     chain_temperature[0] = all_temperatures[rank];
     sol[0] = all_solutions[rank];
@@ -408,6 +450,9 @@ int main(int argc, char **argv)
   rng = gsl_rng_alloc (rng_type);
   for(int i=0;i<rank;i++) gsl_rng_get(rng); /* burn rank-many random numbers to ensure that each MPI process takes a different path */
   printf ("[%d]: first random value = %lu\n",rank, gsl_rng_get (rng));
+  gsl_matrix *inverse_covariance_matrix;
+  load_inv_covariance_matrix(inverse_covariance_matrix,p);
+  
   /*     
      (1)
       
@@ -522,9 +567,16 @@ int main(int argc, char **argv)
   int thb_nlm=0;
   for(int i=0;i<p->thb_nl;i++)
     thb_nlm += 2*p->thb_ll[i]+1;
+
+  gsl_vector *residual1;
+  gsl_vector *residual2;
+  gsl_vector *tmp_vector;
+  residual1 = gsl_vector_alloc(thb_nlm);
+  residual2 = gsl_vector_alloc(thb_nlm);
+  tmp_vector = gsl_vector_alloc(thb_nlm);
   
-  double *residual1 = (double *) malloc(sizeof(double)*thb_nlm);
-  double *residual2 = (double *) malloc(sizeof(double)*thb_nlm);
+  //  double *residual1 = (double *) malloc(sizeof(double)*thb_nlm);
+  //double *residual2 = (double *) malloc(sizeof(double)*thb_nlm);
   fprintf(stdout,"Allocated residual [%dx1]\n",thb_nlm);
 
   double chain_temperature;
@@ -571,6 +623,8 @@ int main(int argc, char **argv)
       fprintf(thb_ensemble_file,"#Save start %d\n#Save skip %d\n#Sample target %d\n",p->thb_save_start,p->thb_save_skip,p->thb_sample_target);
       fprintf(thb_ensemble_file,"#Number of chains: %d\n",size);
       fprintf(thb_ensemble_file,"#Parallel tmpering: %s\n",p->thb_parallel_tempering ? "True" : "False");
+      fprintf(thb_ensemble_file,"#Covariance Matrix: %s\n",p->thb_use_covmat ? p->thb_covmat_filename : "False");
+      
       fprintf(thb_ensemble_file,"#Parallel tempering start %d\n",p->thb_swap_start);
       fprintf(thb_ensemble_file,"#Parallel tempering steps for swap: %d\n",p->thb_steps_for_swap);
       fprintf(thb_ensemble_file,"#NL=%d, L=[%d",p->thb_nl,p->thb_ll[0]);
@@ -615,13 +669,25 @@ int main(int argc, char **argv)
 	     p->verbose);
   solved=1;
   //hc_compute_correlation(geoid,p->ref_geoid,corr,1,p->verbose);
-  sol1.total_residual = sh_residual_vector(geoid,p->ref_geoid,p->thb_ll,p->thb_nl,residual1,0);
+  sol1.total_residual = sh_residual_vector(geoid,p->ref_geoid,p->thb_ll,p->thb_nl,residual1->data,0);
   /* Calculate the Mahalanobis Distance Phi */
   {
     double mdist = 0.0;    
     int i;
+    if( p->thb_use_covmat ){
+      /* form r'*Cd^-1*r */
+      double rtr;
+      gsl_blas_dgemv(CblasNoTrans,1.0,inverse_covariance_matrix,residual1,0.0,tmp_vector);
+      gsl_blas_ddot(residual1,tmp_vector,&rtr);
+      mdist = rtr/sol1.var;
+    }else{
+      double rtr;
+      gsl_blas_ddot(residual1,residual1,&rtr);
+      mdist = rtr/sol1.var;
+    }
+    
     for(i=0;i<thb_nlm;i++){
-      mdist += residual1[i]*residual1[i]/sol1.var; // Assumes a diagonal covariance matrix
+      mdist += residual1->data[i]*residual1->data[i]/sol1.var; // Assumes a diagonal covariance matrix
     }
     if( p->thb_sample_prior ){
       sol1.mdist = 0.0;
@@ -646,14 +712,14 @@ int main(int argc, char **argv)
 	       pvel,model->dens_anom,geoid,
 	       p->verbose); 
     double varfakt = sol2.var / sol1.var;
-    sol2.total_residual = sh_residual_vector(geoid,p->ref_geoid,p->thb_ll,p->thb_nl,residual2,0);
+    sol2.total_residual = sh_residual_vector(geoid,p->ref_geoid,p->thb_ll,p->thb_nl,residual2->data,0);
     
     /* Calculate the Mahalanobis Distance Phi */
     {
       double mdist = 0.0;    
       int i;
       for(i=0;i<thb_nlm;i++){
-	mdist += residual2[i]*residual2[i]/sol2.var; // Assumes a diagonal covariance matrix
+	mdist += residual2->data[i]*residual2->data[i]/sol2.var; // Assumes a diagonal covariance matrix
       }
       if( p->thb_sample_prior ){
 	sol2.mdist = 0.0;
@@ -800,8 +866,9 @@ int main(int argc, char **argv)
     free memory
     
   */
-  free(residual1);
-  free(residual2);
+  gsl_vector_free(residual1);
+  gsl_vector_free(residual2);
+  gsl_vector_free(tmp_vector);
   
   sh_free_expansion(sol_spectral,nsol);
   /* local copies of plate velocities */

@@ -89,6 +89,7 @@ void hc_init_parameters(struct hc_parameters *p)
   p->thb_no_hierarchical = FALSE;
   strncpy(p->thb_ensemble_filename,THB_ENSEMBLE_FILE,HC_CHAR_LENGTH);
   strncpy(p->thb_covmat_filename,THB_COVMAT_FILE,HC_CHAR_LENGTH);
+  p->thb_use_covmat = FALSE;
   p->thb_nl = 6;
   for(int i=0;i<6;i++)
     p->thb_ll[i] = i+2; /* ll = {2,3,4,5,6,7} */
@@ -591,6 +592,11 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
     }else if(strcmp(argv[i],"-thb_ensemble_filename")==0){
       hc_advance_argument(&i,argc,argv);
       strncpy(p->thb_ensemble_filename,argv[i],HC_CHAR_LENGTH);
+      used_parameter=TRUE;
+    }else if(strcmp(argv[i],"-thb_covmat_filename")==0){
+      hc_advance_argument(&i,argc,argv);
+      strncpy(p->thb_covmat_filename,argv[i],HC_CHAR_LENGTH);
+      p->thb_use_covmat = TRUE;
       used_parameter=TRUE;
     }else if(strcmp(argv[i],"-thb_parallel_tempering")==0){
       p->thb_parallel_tempering = TRUE;
