@@ -265,7 +265,11 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
 }
 
 /* COVARIANCE MATRIX STUFF */
-void load_inv_covariance_matrix(gsl_matrix *matrix, struct hc_parameters *p){
+gsl_matrix * load_inv_covariance_matrix(struct hc_parameters *p){
+  int rank, size;
+  MPI_Comm_size(MPI_COMM_WORLD,&size);
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  gsl_matrix *matrix;
   FILE *fh = NULL;
   int i1=0;
   if(p->verbose){
@@ -275,11 +279,12 @@ void load_inv_covariance_matrix(gsl_matrix *matrix, struct hc_parameters *p){
   double det;
   i1 += fscanf(fh,"%le\n",&det);
   int nshdeg;
+  i1 += fscanf(fh,"%d\n",&nshdeg);
   if( nshdeg != p->thb_nl || nshdeg>10 ){
-    fprintf(stderr,"Error: mismatch in number of spherical harmonic degrees!\n");
+    fprintf(stderr,"Error: mismatch in number of spherical harmonic degrees (%d vs %d)!\n",nshdeg,p->thb_nl);
     exit(-1);
   }
-  i1 += fscanf(fh,"%d\n",&nshdeg);
+
   int sh_degs[10];
   for(int i=0;i<nshdeg;i++){
     i1 += fscanf(fh,"%d\t",&sh_degs[i]);
@@ -301,9 +306,21 @@ void load_inv_covariance_matrix(gsl_matrix *matrix, struct hc_parameters *p){
   }
   fclose(fh);
   if(p->verbose){
-    fprintf(stdout,"Cdinv:\n");
-    gsl_matrix_fprintf(stdout,matrix,"%e");
+    for(int irank=0;irank<size;irank++){
+      MPI_Barrier(MPI_COMM_WORLD);
+      if(irank == rank){
+	fprintf(stdout,"[%d] Cdinv:\n",rank);
+	//gsl_matrix_fprintf(stdout,matrix,"%e");
+	for(int i=0;i<N;i++){
+	  for(int j=0;j<N;j++){
+	    fprintf(stdout,"%le,",matrix->data[i*matrix->tda+j]);
+	  }
+	  fprintf(stdout,"\n");
+	}
+      }
+    }
   }
+  return matrix;
 }
 
 
@@ -579,7 +596,8 @@ int main(int argc, char **argv)
   fprintf(stdout,"Allocated residual [%dx1]\n",thb_nlm);
   gsl_matrix *inverse_covariance_matrix;
   if( p->thb_use_covmat)
-    load_inv_covariance_matrix(inverse_covariance_matrix,p);
+    inverse_covariance_matrix = load_inv_covariance_matrix(p);
+
   
   double chain_temperature;
   int iter;
@@ -610,6 +628,7 @@ int main(int argc, char **argv)
   }  
   interpolate_viscosity(&sol1,model->rvisc,model->visc,p);
 
+  fprintf(stdout,"[%d]: made it here",rank); fflush(stdout); MPI_Barrier(MPI_COMM_WORLD);
   p->thb_save_skip = (p->thb_iter - p->thb_save_start)/p->thb_sample_target;
   FILE *thb_ensemble_file = NULL;
   
@@ -672,33 +691,29 @@ int main(int argc, char **argv)
   solved=1;
   //hc_compute_correlation(geoid,p->ref_geoid,corr,1,p->verbose);
   sol1.total_residual = sh_residual_vector(geoid,p->ref_geoid,p->thb_ll,p->thb_nl,residual1->data,0);
+  
   /* Calculate the Mahalanobis Distance Phi */
   {
     double mdist = 0.0;    
     int i;
-    if( p->thb_use_covmat ){
-      /* form r'*Cd^-1*r */
-      double rtr;
-      gsl_blas_dgemv(CblasNoTrans,1.0,inverse_covariance_matrix,residual1,0.0,tmp_vector);
-      gsl_blas_ddot(residual1,tmp_vector,&rtr);
-      mdist = rtr/sol1.var;
-    }else{
-      double rtr;
-      gsl_blas_ddot(residual1,residual1,&rtr);
-      mdist = rtr/sol1.var;
-    }
-    
-    for(i=0;i<thb_nlm;i++){
-      mdist += residual1->data[i]*residual1->data[i]/sol1.var; // Assumes a diagonal covariance matrix
-    }
     if( p->thb_sample_prior ){
       sol1.mdist = 0.0;
     }else{
-      sol1.mdist = mdist;
+      if( p->thb_use_covmat ){
+	/* form r'*Cd^-1*r */
+	double rtr;
+	gsl_blas_dgemv(CblasNoTrans,1.0,inverse_covariance_matrix,residual1,0.0,tmp_vector);
+	gsl_blas_ddot(residual1,tmp_vector,&rtr);
+	sol1.mdist = rtr/sol1.var;
+      }else{
+	double rtr;
+	gsl_blas_ddot(residual1,residual1,&rtr);
+	sol1.mdist = rtr/sol1.var;
+      }
     }
-    sol1.likeprob = -0.5 * mdist/chain_temperature;
+    sol1.likeprob = -0.5 * sol1.mdist/chain_temperature;
   }
-
+  
   /* BEGIN THB LOOP */
   while(iter < p->thb_iter){
     /* Propose Solution */
@@ -720,15 +735,22 @@ int main(int argc, char **argv)
     {
       double mdist = 0.0;    
       int i;
-      for(i=0;i<thb_nlm;i++){
-	mdist += residual2->data[i]*residual2->data[i]/sol2.var; // Assumes a diagonal covariance matrix
-      }
       if( p->thb_sample_prior ){
 	sol2.mdist = 0.0;
       }else{
-	sol2.mdist = mdist;
+	if( p->thb_use_covmat ){
+	  /* form r'*Cd^-1*r */
+	  double rtr;
+	  gsl_blas_dgemv(CblasNoTrans,1.0,inverse_covariance_matrix,residual2,0.0,tmp_vector);
+	  gsl_blas_ddot(residual2,tmp_vector,&rtr);
+	  sol2.mdist = rtr/sol2.var;
+	}else{
+	  double rtr;
+	  gsl_blas_ddot(residual2,residual2,&rtr);
+	  sol2.mdist = rtr/sol2.var;
+	}
       }
-      sol2.likeprob = -0.5*mdist/chain_temperature;
+      sol2.likeprob = -0.5 * sol2.mdist/chain_temperature;
     }
     
     /* Calculate the probablity of acceptance: */
@@ -871,6 +893,8 @@ int main(int argc, char **argv)
   gsl_vector_free(residual1);
   gsl_vector_free(residual2);
   gsl_vector_free(tmp_vector);
+  if( p->thb_use_covmat )
+    gsl_matrix_free(inverse_covariance_matrix);
   
   sh_free_expansion(sol_spectral,nsol);
   /* local copies of plate velocities */
