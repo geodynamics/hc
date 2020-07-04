@@ -101,7 +101,7 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   const double visc_min = 19.0;
   const double visc_max = 25.0;
   const double visc_range = visc_max - visc_min;
-  const double visc_change = 0.1;
+  const double visc_change = 0.5;
   
   const double rad_min = model->r_cmb;
   const double rad_max = 1.0;
