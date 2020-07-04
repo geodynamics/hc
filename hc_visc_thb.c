@@ -615,7 +615,7 @@ int main(int argc, char **argv)
       if( !rank ){
 	chain_temperature = 1.0;
       }else{      
-	chain_temperature = pow(10.0, ((double) rank)/((double) size)*(log10(10.0)-log10(1.0)) );
+	chain_temperature = pow(10.0, ((double) rank)/((double) (size-1))*(log10(10.0)-log10(1.0)) );
       }
     }else{
       chain_temperature = 1.0;
