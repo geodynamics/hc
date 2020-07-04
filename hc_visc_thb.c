@@ -751,7 +751,7 @@ int main(int argc, char **argv)
 	if( p->thb_use_covmat ){
 	  /* form r'*Cd^-1*r */
 	  double rtr;
-	  gsl_blas_dsymv(CblasNoTrans,1.0,inverse_covariance_matrix,residual2,0.0,tmp_vector);
+	  gsl_blas_dgemv(CblasNoTrans,1.0,inverse_covariance_matrix,residual2,0.0,tmp_vector);
 	  gsl_blas_ddot(residual2,tmp_vector,&rtr);
 	  sol2.mdist = rtr/sol2.var;
 	}else{
