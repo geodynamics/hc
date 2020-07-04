@@ -587,9 +587,9 @@ int main(int argc, char **argv)
   gsl_vector *residual1;
   gsl_vector *residual2;
   gsl_vector *tmp_vector;
-  residual1 = gsl_vector_alloc(thb_nlm);
-  residual2 = gsl_vector_alloc(thb_nlm);
-  tmp_vector = gsl_vector_alloc(thb_nlm);
+  residual1 = gsl_vector_calloc(thb_nlm);
+  residual2 = gsl_vector_calloc(thb_nlm);
+  tmp_vector = gsl_vector_calloc(thb_nlm);
   
   //  double *residual1 = (double *) malloc(sizeof(double)*thb_nlm);
   //double *residual2 = (double *) malloc(sizeof(double)*thb_nlm);
@@ -674,6 +674,10 @@ int main(int argc, char **argv)
     thb_ensemble_file = fopen(p->thb_ensemble_filename,"a");
     fprintf(thb_ensemble_file,"# Resumed from checkpoint\n");
   }
+
+  /* Calculate total variance at the included spherical harmonic degrees */
+  double total_variance = sh_residual_vector(geoid,p->ref_geoid,p->thb_ll,p->thb_nl,residual1->data,0);
+  if(!rank) fprintf(stdout,"Total Variance %le\n",total_variance);
   
   /* select plate velocity */
   if(!p->free_slip)
@@ -682,8 +686,8 @@ int main(int argc, char **argv)
   solved=0;
   if( !p->thb_sample_prior)
     hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
-	     (solved)?(FALSE):(TRUE), /* density changed? */
-	     (solved)?(FALSE):(TRUE), /* plate velocity changed? */
+	     (solved)?(FALSE):(TRUE),   /* density changed? */
+	     (solved)?(FALSE):(TRUE),   /* plate velocity changed? */
 	     TRUE,			/* viscosity changed */
 	     FALSE,p->compute_geoid,
 	     pvel,model->dens_anom,geoid,
@@ -716,10 +720,15 @@ int main(int argc, char **argv)
   
   /* BEGIN THB LOOP */
   while(iter < p->thb_iter){
-    /* Propose Solution */
+    /* ------------------- */
+    /* 1. Propose Solution */
+    /* ------------------- */
     propose_solution( model, &sol1, &sol2, rng, iter, p);
     interpolate_viscosity(&sol2, model->rvisc, model->visc,p);
-    /* Calculate forward model */
+
+    /* --------------------------- */
+    /* 2A. Calculate forward model */
+    /* --------------------------- */
     if(!p->thb_sample_prior)
       hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
 	       (solved)?(FALSE):(TRUE), /* density changed? */
@@ -730,8 +739,9 @@ int main(int argc, char **argv)
 	       p->verbose); 
     double varfakt = sol2.var / sol1.var;
     sol2.total_residual = sh_residual_vector(geoid,p->ref_geoid,p->thb_ll,p->thb_nl,residual2->data,0);
-    
-    /* Calculate the Mahalanobis Distance Phi */
+    /* ------------------------------------------ */
+    /* 2B. Calculate the Mahalanobis Distance Phi */
+    /* ------------------------------------------ */
     {
       double mdist = 0.0;    
       int i;
@@ -741,7 +751,7 @@ int main(int argc, char **argv)
 	if( p->thb_use_covmat ){
 	  /* form r'*Cd^-1*r */
 	  double rtr;
-	  gsl_blas_dgemv(CblasNoTrans,1.0,inverse_covariance_matrix,residual2,0.0,tmp_vector);
+	  gsl_blas_dsymv(CblasNoTrans,1.0,inverse_covariance_matrix,residual2,0.0,tmp_vector);
 	  gsl_blas_ddot(residual2,tmp_vector,&rtr);
 	  sol2.mdist = rtr/sol2.var;
 	}else{
@@ -752,8 +762,9 @@ int main(int argc, char **argv)
       }
       sol2.likeprob = -0.5 * sol2.mdist/chain_temperature;
     }
-    
-    /* Calculate the probablity of acceptance: */
+    /* ------------------------------------------ */
+    /* 3. Calculate the probablity of acceptance: */
+    /* ------------------------------------------ */
     int k2 = sol2.nlayer;
     int k1 = sol1.nlayer;
     double prefactor = -0.5 * ((double) thb_nlm)*log(varfakt);
@@ -771,10 +782,11 @@ int main(int argc, char **argv)
       }
     }
 
-    /* parallel tempering */
+    /* --------------------------------------- */
+    /* 4. Consider swap for parallel tempering */
+    /* --------------------------------------- */
+    
     if( p->thb_parallel_tempering && iter > p->thb_swap_start && !(iter % p->thb_steps_for_swap)){
-      /* propose swapping of solutions */
-      /* assign each MPI rank a 'swap partner' */
       int *ranks;
       ranks = (int *) malloc(sizeof(int)*size);
       if(!rank){
@@ -784,18 +796,16 @@ int main(int argc, char **argv)
       int *partners;
       partners = (int *) malloc(sizeof(int)*size);
       if(!rank){
-	{
-	  for(int i=0;i<size;i++) partners[i] = i;
-	  int i=0;
-	  for(int i=0;i<size-1;i+=2){
-	    int swapi = ranks[i];
-	    int swapj = ranks[i+1];	    
-	    partners[swapi] = swapj;
-	    partners[swapj] = swapi;	    
-	    if( p->verbose >= 3 )
-	      fprintf(stderr,"Propose swap %d <--> %d\n",swapi,swapj);
-	  }
-	}
+	for(int i=0;i<size;i++) partners[i] = i;
+	int i=0;
+	for(int i=0;i<size-1;i+=2){
+	  int swapi = ranks[i];
+	  int swapj = ranks[i+1];	    
+	  partners[swapi] = swapj;
+	  partners[swapj] = swapi;	    
+	  if( p->verbose >= 3 )
+	    fprintf(stderr,"Propose swap %d <--> %d\n",swapi,swapj);
+	}	
       }
       MPI_Bcast(partners,size,MPI_INT,0,MPI_COMM_WORLD);
       int swapi = rank;
@@ -838,7 +848,9 @@ int main(int argc, char **argv)
       /* update the likeprob for the accepted solution using the new chain temperature */
       sol1.likeprob = -0.5*sol1.mdist/chain_temperature;
     }
-
+    /* ------------------------------------ */
+    /* 5. Output Ensemble and Checkpointing */
+    /* ------------------------------------ */
     
     /* update progress */
     if(!rank && (!(iter%1000) || p->verbose>=2))
@@ -858,7 +870,8 @@ int main(int argc, char **argv)
 	int write_success = 0;
 	for(int irank=0;irank<size;irank++){
 	  if( all_temperatures[irank] == 1.0 ){
-	    fprintf(thb_ensemble_file,"%02d,%08d,%.6le,%le,%le,%02d",irank,iter,sqrt(all_solutions[irank].total_residual),(double) all_solutions[irank].likeprob,all_solutions[irank].var,all_solutions[irank].nlayer);
+	    double variance_reduction = 1.0 - sqrt(all_solutions[irank].total_residual/total_variance);
+	    fprintf(thb_ensemble_file,"%02d,%08d,%.6le,%.6le,%le,%le,%02d",irank,iter,sqrt(all_solutions[irank].total_residual),variance_reduction,(double) all_solutions[irank].likeprob,all_solutions[irank].var,all_solutions[irank].nlayer);
 	    for(int i=0;i<all_solutions[irank].nlayer;i++) fprintf(thb_ensemble_file,",%le",all_solutions[irank].r[i]);
 	    for(int i=0;i<all_solutions[irank].nlayer;i++) fprintf(thb_ensemble_file,",%le",all_solutions[irank].visc[i]);
 	    fprintf(thb_ensemble_file,"\n");
