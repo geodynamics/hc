@@ -615,7 +615,7 @@ int main(int argc, char **argv)
       if( !rank ){
 	chain_temperature = 1.0;
       }else{      
-	chain_temperature = pow(10.0, rank/size*(log10(10.0)-log10(1.0)) );
+	chain_temperature = pow(10.0, ((double) rank)/((double) size)*(log10(10.0)-log10(1.0)) );
       }
     }else{
       chain_temperature = 1.0;
@@ -628,7 +628,7 @@ int main(int argc, char **argv)
   }  
   interpolate_viscosity(&sol1,model->rvisc,model->visc,p);
 
-  fprintf(stdout,"[%d]: made it here",rank); fflush(stdout); MPI_Barrier(MPI_COMM_WORLD);
+  fprintf(stdout,"[%d]: made it here, temperature is %le\n",rank,chain_temperature); fflush(stdout); MPI_Barrier(MPI_COMM_WORLD);
   p->thb_save_skip = (p->thb_iter - p->thb_save_start)/p->thb_sample_target;
   FILE *thb_ensemble_file = NULL;
   
