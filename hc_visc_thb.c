@@ -870,7 +870,7 @@ int main(int argc, char **argv)
 	int write_success = 0;
 	for(int irank=0;irank<size;irank++){
 	  if( all_temperatures[irank] == 1.0 ){
-	    double variance_reduction = 1.0 - sqrt(all_solutions[irank].total_residual/total_variance);
+	    double variance_reduction = 1.0 - pow((sqrt(all_solutions[irank].total_residual)/sqrt(total_variance)),2.0);
 	    fprintf(thb_ensemble_file,"%02d,%08d,%.6le,%.6le,%le,%le,%02d",irank,iter,sqrt(all_solutions[irank].total_residual),variance_reduction,(double) all_solutions[irank].likeprob,all_solutions[irank].var,all_solutions[irank].nlayer);
 	    for(int i=0;i<all_solutions[irank].nlayer;i++) fprintf(thb_ensemble_file,",%le",all_solutions[irank].r[i]);
 	    for(int i=0;i<all_solutions[irank].nlayer;i++) fprintf(thb_ensemble_file,",%le",all_solutions[irank].visc[i]);
