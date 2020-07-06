@@ -810,7 +810,7 @@ int main(int argc, char **argv)
       MPI_Bcast(partners,size,MPI_INT,0,MPI_COMM_WORLD);
       int swapi = rank;
       int swapj = partners[rank];
-      double data[3];
+      double data[4];
 	 
       if( swapi != swapj ){
 	if( swapi < swapj ){
@@ -820,6 +820,7 @@ int main(int argc, char **argv)
 	  double varj = data[0];
 	  double vari = sol1.var;
 	  double mdistj = data[1];
+	  double mdisti = sol1.mdist;
 	  double Tj = data[2];
 	  double Ti = chain_temperature;
 	  double kj = data[3];
@@ -827,7 +828,6 @@ int main(int argc, char **argv)
 	  double VarfaktS = vari/varj;
 	  double prefactor = (p->thb_no_hierarchical) ? 0.0 : (1.0/Ti-1.0/Tj)*thb_nlm/2.0*log(VarfaktS);
 	  double probAcceptSwap = prefactor + (1.0/Ti-1.0/Tj)*(-0.5*(mdistj-mdisti) + log(ki) -log(kj));
-	  double Ti = chain_temperature;
 	  if( probAcceptSwap > 0 || probAcceptSwap > log(randDouble(rng)) ){
 	    /* accept the swap */
 	    if( p->verbose >= 3) fprintf(stderr,"Swapping %d <--> %d. mdists (%le,%le) prob=%le\n",swapi,swapj,sol1.mdist,mdistj,probAcceptSwap);
