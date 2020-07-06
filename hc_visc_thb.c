@@ -768,7 +768,7 @@ int main(int argc, char **argv)
     int k2 = sol2.nlayer;
     int k1 = sol1.nlayer;
     double prefactor = -0.5 * ((double) thb_nlm)*log(varfakt);
-    double probAccept = prefactor + sol2.likeprob - sol1.likeprob + log((double) (k1+1)) - log((double) (k2+1));
+    double probAccept = prefactor + sol2.likeprob - sol1.likeprob + log((double) (k1)) - log((double) (k2));
     if( probAccept > 0 || probAccept > log(randDouble(rng))){
       // Accept the proposed solution
       sol1 = sol2;
@@ -818,13 +818,15 @@ int main(int argc, char **argv)
 	  /* get Varj, temperaturej, mdistj */
 	  MPI_Recv(data,4,MPI_DOUBLE,swapj, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	  double varj = data[0];
+	  double vari = sol1.var;
 	  double mdistj = data[1];
 	  double Tj = data[2];
-	  double kj = data[3]-1.0;
-	  double ki = (double) sol1.nlayer-1.0;
-	  double VarfaktS = varj/sol1.var;
-	  double prefactor = (p->thb_no_hierarchical) ? 0.0 : (1.0/chain_temperature-1.0/Tj)*thb_nlm*log(VarfaktS);
-	  double probAcceptSwap = prefactor + 0.5*(1/chain_temperature-1/Tj)*(sol1.mdist-mdistj);
+	  double Ti = chain_temperature;
+	  double kj = data[3];
+	  double ki = (double) sol1.nlayer;
+	  double VarfaktS = vari/varj;
+	  double prefactor = (p->thb_no_hierarchical) ? 0.0 : (1.0/Ti-1.0/Tj)*thb_nlm/2.0*log(VarfaktS);
+	  double probAcceptSwap = prefactor + (1.0/Ti-1.0/Tj)*(-0.5*(mdistj-mdisti) + log(ki) -log(kj));
 	  double Ti = chain_temperature;
 	  if( probAcceptSwap > 0 || probAcceptSwap > log(randDouble(rng)) ){
 	    /* accept the swap */
