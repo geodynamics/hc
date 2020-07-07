@@ -274,7 +274,8 @@ hc_auto_proto.h:
 		grep -v "ggrd_gt_bcr_init_loc(" | \
 		grep -v "ggrd_grdtrack_interpolate(" | \
 		grep -v "ggrd_grdtrack_init(" | \
-	grep -v "int main(" > hc_auto_proto.h
+	grep -v "int main(" > hc_auto_proto.h && \
+		echo "#define HC_VERSION \"" `git log -1 --format=%h ` "\"" >> hc_auto_proto.h
 
 $(ODIR):
 	mkdir -p $(ODIR);

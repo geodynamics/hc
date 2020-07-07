@@ -234,3 +234,4 @@ void shana_plmbar1(double *, double *, int, int, long double, struct shana_modul
 /* spherepack_sh.c */
 /* test_fft.c */
 /* thb.c */
+#define HC_VERSION " 2612d6a "

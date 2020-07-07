@@ -636,6 +636,7 @@ int main(int argc, char **argv)
   if(!rank && !p->thb_checkpoint_resume){
     thb_ensemble_file = fopen(p->thb_ensemble_filename,"w");
     {
+      fprintf(thb_ensemble_file,"#HC version %s\n",HC_VERSION);
       fprintf(thb_ensemble_file,"#HC invoked with the following options\n#");
       for(int i=0;i<argc;i++)
 	fprintf(thb_ensemble_file,"%s ",argv[i]);
@@ -670,7 +671,7 @@ int main(int argc, char **argv)
       fflush(thb_ensemble_file);
     }   
     /* Write viscosity file header */
-    fprintf(thb_ensemble_file,"#iter\t,total_residual\t,likeprob\t,var\t,nlayer\t,rr\t,visc\n");
+    fprintf(thb_ensemble_file,"#rank\t,iter\t,iter_accepted\t,total_residual\t,variance_reduction\t,likeprob\t,var\t,nlayer\t,rr\t,visc\n");
   }else if(!rank && p->thb_checkpoint_resume){
     thb_ensemble_file = fopen(p->thb_ensemble_filename,"a");
     fprintf(thb_ensemble_file,"# Resumed from checkpoint\n");
@@ -781,7 +782,7 @@ int main(int argc, char **argv)
 	}
 	fprintf(stdout,"Residual: %le\n",(double) sqrt(sol2.total_residual));
       }
-      sol1.iter_accepted = iter_accepted;
+      sol1.iter_accepted = iter;
     }
 
     /* --------------------------------------- */
@@ -829,7 +830,7 @@ int main(int argc, char **argv)
 	  double ki = (double) sol1.nlayer;
 	  double VarfaktS = vari/varj;
 	  double prefactor = (p->thb_no_hierarchical) ? 0.0 : (1.0/Ti-1.0/Tj)*thb_nlm/2.0*log(VarfaktS);
-	  double probAcceptSwap = prefactor + (1.0/Ti-1.0/Tj)*(-0.5*(mdistj-mdisti) + log(ki) -log(kj));
+	  double probAcceptSwap = prefactor + (1.0/Ti-1.0/Tj)*(-0.5*(mdistj-mdisti) + log(ki) - log(kj));
 	  if( probAcceptSwap > 0 || probAcceptSwap > log(randDouble(rng)) ){
 	    /* accept the swap */
 	    if( p->verbose >= 3) fprintf(stderr,"Swapping %d <--> %d. mdists (%le,%le) prob=%le\n",swapi,swapj,sol1.mdist,mdistj,probAcceptSwap);
