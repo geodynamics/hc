@@ -407,7 +407,8 @@ struct thb_solution {
   double var;
   double mdist;
   HC_PREC total_residual;
-  HC_PREC likeprob;  
+  HC_PREC likeprob;
+  int iter_accepted;
 } ;
 /* 
 

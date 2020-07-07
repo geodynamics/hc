@@ -610,6 +610,7 @@ int main(int argc, char **argv)
     sol1.visc[0] = 22.0;
     sol1.visc[1] = 22.0;
     sol1.var = 1.0;
+    sol1.iter_accepted = -1;
     if(p->thb_parallel_tempering){
       /* space chain temperatures log-uniformly from 1 to 10 */
       if( !rank ){
@@ -717,7 +718,7 @@ int main(int argc, char **argv)
     }
     sol1.likeprob = -0.5 * sol1.mdist/chain_temperature;
   }
-  
+
   /* BEGIN THB LOOP */
   while(iter < p->thb_iter){
     /* ------------------- */
@@ -780,6 +781,7 @@ int main(int argc, char **argv)
 	}
 	fprintf(stdout,"Residual: %le\n",(double) sqrt(sol2.total_residual));
       }
+      sol1.iter_accepted = iter_accepted;
     }
 
     /* --------------------------------------- */
@@ -873,7 +875,7 @@ int main(int argc, char **argv)
 	for(int irank=0;irank<size;irank++){
 	  if( all_temperatures[irank] == 1.0 ){
 	    double variance_reduction = 1.0 - pow((sqrt(all_solutions[irank].total_residual)/sqrt(total_variance)),2.0);
-	    fprintf(thb_ensemble_file,"%02d,%08d,%.6le,%.6le,%le,%le,%02d",irank,iter,sqrt(all_solutions[irank].total_residual),variance_reduction,(double) all_solutions[irank].likeprob,all_solutions[irank].var,all_solutions[irank].nlayer);
+	    fprintf(thb_ensemble_file,"%02d,%08d,%08d,%.6le,%.6le,%le,%le,%02d",irank,iter,all_solutions[irank].iter_accepted,sqrt(all_solutions[irank].total_residual),variance_reduction,(double) all_solutions[irank].likeprob,all_solutions[irank].var,all_solutions[irank].nlayer);
 	    for(int i=0;i<all_solutions[irank].nlayer;i++) fprintf(thb_ensemble_file,",%le",all_solutions[irank].r[i]);
 	    for(int i=0;i<all_solutions[irank].nlayer;i++) fprintf(thb_ensemble_file,",%le",all_solutions[irank].visc[i]);
 	    fprintf(thb_ensemble_file,"\n");
