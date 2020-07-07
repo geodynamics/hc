@@ -384,9 +384,8 @@ HC_PREC sh_residual_vector(struct sh_lms *exp1, struct sh_lms *exp2, int *ll, in
     exit(-1);
   }
 
-  int il;
   int ilm=0;
-  for(il=0;il<nl;il++){
+  for(int il=0;il<nl;il++){
     int l = ll[il]; // iterate through spherical harmonic degrees in list
     for(int m=0;m<=l;m++){
       need_b = (hc_boolean) ((m == 0) ? (0) : (2));

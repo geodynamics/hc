@@ -582,7 +582,7 @@ int main(int argc, char **argv)
   /* THB residual vectors */
   int thb_nlm=0;
   for(int i=0;i<p->thb_nl;i++)
-    thb_nlm += 2*p->thb_ll[i]+1;
+    thb_nlm += 2*(p->thb_ll[i])+1;
 
   gsl_vector *residual1;
   gsl_vector *residual2;
