@@ -114,13 +114,14 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   const double var_change = 0.05;
 
   const int max_vor = thb_max_layers( iter );
+  const int min_vor = (iter > 10000) ? 3 : 2;//forbid N=2 solutions
 
   // choose one of five options at random
   int random_choice = 0;
   int success = 0;
   /* Choose the random option and use rejection sampling to restrict forbidden cases */
   while(!success){
-    if( old_solution->nlayer == 2 ){ /* change probabilities for the case where N=2 to remove biases */
+    if( old_solution->nlayer == min_vor ){ /* change probabilities for the case where N=2 to remove biases */
       double tmp = randDouble(rng);
       if( p->thb_no_hierarchical ){
 	if( tmp < 0.25 ){
