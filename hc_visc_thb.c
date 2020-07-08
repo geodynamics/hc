@@ -121,7 +121,7 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   int success = 0;
   /* Choose the random option and use rejection sampling to restrict forbidden cases */
   while(!success){
-    if( old_solution->nlayer == min_vor ){ /* change probabilities for the case where N=2 to remove biases */
+    if( old_solution->nlayer <= min_vor ){ /* change probabilities for the case where N=2 to remove biases */
       double tmp = randDouble(rng);
       if( p->thb_no_hierarchical ){
 	if( tmp < 0.25 ){
