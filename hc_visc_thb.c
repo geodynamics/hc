@@ -616,7 +616,7 @@ int main(int argc, char **argv)
       if( !rank ){
 	chain_temperature = 1.0;
       }else{      
-	chain_temperature = pow(10.0, ((double) rank)/((double) (size-1))*(log10(10.0)-log10(1.0)) );
+	chain_temperature = pow(10.0, ((double) rank)/((double) (size-1))*(log10(100.0)-log10(1.0)) );
       }
     }else{
       chain_temperature = 1.0;
@@ -739,7 +739,7 @@ int main(int argc, char **argv)
 	       FALSE,p->compute_geoid,
 	       pvel,model->dens_anom,geoid,
 	       p->verbose); 
-    double varfakt = sol2.var / sol1.var;
+
     sol2.total_residual = sh_residual_vector(geoid,p->ref_geoid,p->thb_ll,p->thb_nl,residual2->data,0);
     /* ------------------------------------------ */
     /* 2B. Calculate the Mahalanobis Distance Phi */
@@ -769,7 +769,8 @@ int main(int argc, char **argv)
     /* ------------------------------------------ */
     int k2 = sol2.nlayer;
     int k1 = sol1.nlayer;
-    double prefactor = -0.5 * ((double) thb_nlm)*log(varfakt);
+    double varfakt = sol2.var / sol1.var;
+    double prefactor = p->thb_no_hierarchical ? 0.0 : -0.5 * ((double) thb_nlm)*log(varfakt);
     double probAccept = prefactor + sol2.likeprob - sol1.likeprob + log((double) (k1)) - log((double) (k2));
     if( probAccept > 0 || probAccept > log(randDouble(rng))){
       // Accept the proposed solution

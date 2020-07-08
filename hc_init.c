@@ -731,7 +731,7 @@ void hc_assign_viscosity(struct hcs *hc,int mode,
       hc->nvis = nlayer;
       /* radii */
       hc->rvisc[0] = hc->r_cmb;
-      const double delta = (1.0 - hc->r_cmb)/((double) nlayer+1);
+      const double delta = (0.9843 - hc->r_cmb)/((double) nlayer+1);
       for(i=1;i<nlayer-1;i++){
 	hc->rvisc[i] = hc->rvisc[i-1] + delta;
       }
