@@ -107,7 +107,7 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   const double rad_max = 1.0;
   const double rad_change = 0.05;      // shape parameter for proposal distribution
   const double rad_range = rad_max-rad_min;
-  const double drmin = 7e-3;           // minimum layer thickness
+  const double drmin = 0.0157;           // minimum layer thickness
   
   const double var_min = 1e-3;
   const double var_max = 1e6;
@@ -617,7 +617,7 @@ int main(int argc, char **argv)
       if( !rank ){
 	chain_temperature = 1.0;
       }else{      
-	chain_temperature = pow(10.0, ((double) rank)/((double) (size-1))*(log10(100.0)-log10(1.0)) );
+	chain_temperature = pow(10.0, ((double) rank)/((double) (size-1))*(log10(1.0e3)-log10(1.0)) );
       }
     }else{
       chain_temperature = 1.0;
