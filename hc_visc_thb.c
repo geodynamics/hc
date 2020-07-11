@@ -162,7 +162,6 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
     }
   }else{
     /* Normal case - all options have equal probability */
-    success = 1;
     if( p->thb_no_hierarchical ){
       random_choice = randInt(rng,4);
     }else{
