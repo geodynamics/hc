@@ -118,67 +118,58 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
 
   // choose one of five options at random
   int random_choice = 0;
-  int success = 0;
+
   /* Choose the random option and use rejection sampling to restrict forbidden cases */
-  while(!success){
-    if( old_solution->nlayer <= min_vor ){ /* change probabilities for the case where N=2 to remove biases */
-      double tmp = randDouble(rng);
-      if( p->thb_no_hierarchical ){
-	if( tmp < 0.25 ){
-	  random_choice = 0;
-	}else{
-	  random_choice = 3;
-	}
-      }else{/* hierarchical case */
-	if( tmp < 0.2 ){
-	  random_choice = 0;
-	}else if(tmp<0.6){
-	  random_choice = 3;
-	}else{
-	  random_choice = 4;
-	}
-      }
-      success = 1;
-    }else if( old_solution->nlayer == max_vor ){/* special case for N=Nmax */
-      double tmp = randDouble(rng);
-      if( p->thb_no_hierarchical ){
-	if( tmp < 0.25 ){
-	  random_choice = 1;
-	}else if(tmp < 0.25 + 0.75/2.0){
-	  random_choice = 2;
-	}else{
-	  random_choice = 3;
-	}
+
+  if( old_solution->nlayer <= min_vor ){ /* change probabilities for the case where N=2 to remove biases */
+    double tmp = randDouble(rng);
+    if( p->thb_no_hierarchical ){
+      if( tmp < 0.25 ){
+	random_choice = 0;
       }else{
-	/* hierarchical case */	
-	if( tmp < 0.2 ){
-	  random_choice = 1;
-	}else if(tmp < 0.2+0.8/3.0){
-	  random_choice = 2;
-	}else if(tmp < 0.2+2.0*0.8/3.0){
-	  random_choice = 3;
-	}else{
-	  random_choice = 4;
-	}
+	random_choice = 3;
       }
-      success = 1;
+    }else{/* hierarchical case */
+      if( tmp < 0.2 ){
+	random_choice = 0;
+      }else if(tmp<0.6){
+	random_choice = 3;
+      }else{
+	random_choice = 4;
+      }
+    }    
+  }else if( old_solution->nlayer >= max_vor ){/* special case for N=Nmax */
+    double tmp = randDouble(rng);
+    if( p->thb_no_hierarchical ){
+      if( tmp < 0.25 ){
+	random_choice = 1;
+      }else if(tmp < 0.25 + 0.75/2.0){
+	random_choice = 2;
+      }else{
+	random_choice = 3;
+      }
     }else{
-      /* Normal case - all options have equal probability */
-      success = 1;
-      if( p->thb_no_hierarchical ){
-	random_choice = randInt(rng,4);
+      /* hierarchical case */	
+      if( tmp < 0.2 ){
+	random_choice = 1;
+      }else if(tmp < 0.2+0.8/3.0){
+	random_choice = 2;
+      }else if(tmp < 0.2+2.0*0.8/3.0){
+	random_choice = 3;
       }else{
-	random_choice = randInt(rng,5);
+	random_choice = 4;
       }
-      //if( old_solution->nlayer == 2 && (random_choice == 1 || random_choice == 2))
-      //success = 0;
-      //if( old_solution->nlayer == max_vor && random_choice == 0)
-      //success = 0;
+    }
+  }else{
+    /* Normal case - all options have equal probability */
+    success = 1;
+    if( p->thb_no_hierarchical ){
+      random_choice = randInt(rng,4);
+    }else{
+      random_choice = randInt(rng,5);
     }
   }
-  
-  
-  success = 0;
+  int success = 0;
   int failcount = 0;
   while(!success){
     failcount++;
@@ -248,11 +239,12 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
     int j;
     for(j=1;j<new_solution->nlayer;j++){
       double dr = new_solution->r[j]-new_solution->r[j-1];
-      if( dr < drmin )
+      if( dr < drmin ){
 	success = 0; // This ensures that the nodes remain in increasing order
+      }
     }
     if( failcount > 10000){
-      fprintf(stderr,"Fail count %d, random option %d\n",failcount,random_choice);
+      fprintf(stderr,"Error: Fail count %d, random option %d\n",failcount,random_choice);
       exit(-1);
     }
   }// End while not successful
