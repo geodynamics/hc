@@ -167,8 +167,9 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
       }else{
 	random_choice = randInt(rng,5);
       }
-    } while( !p->thb_no_hierarchical || (p->thb_no_hierarchical && random_choice == 4 ) );
-  
+    }
+  } while( !p->thb_no_hierarchical || (p->thb_no_hierarchical && random_choice == 4 ) );
+    
   int success = 0;
   int failcount = 0;
   while(!success){
