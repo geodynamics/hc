@@ -120,54 +120,55 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   int random_choice = 0;
 
   /* Choose the random option and use rejection sampling to restrict forbidden cases */
-
-  if( old_solution->nlayer <= min_vor ){ /* change probabilities for the case where N=2 to remove biases */
-    double tmp = randDouble(rng);
-    if( p->thb_no_hierarchical ){
-      if( tmp < 0.25 ){
-	random_choice = 0;
+  do{
+    if( old_solution->nlayer <= min_vor ){ /* change probabilities for the case where N=2 to remove biases */
+      double tmp = randDouble(rng);
+      if( 0 && p->thb_no_hierarchical ){
+	if( tmp < 0.25 ){
+	  random_choice = 0;
+	}else{
+	  random_choice = 3;
+	}
+      }else{/* hierarchical case */
+	if( tmp < 0.2 ){
+	  random_choice = 0;
+	}else if(tmp<0.6){
+	  random_choice = 3;
+	}else{
+	  random_choice = 4;
+	}
+      }    
+    }else if( old_solution->nlayer >= max_vor ){/* special case for N=Nmax */
+      double tmp = randDouble(rng);
+      if( 0 && p->thb_no_hierarchical ){
+	if( tmp < 0.25 ){
+	  random_choice = 1;
+	}else if(tmp < 0.25 + 0.75/2.0){
+	  random_choice = 2;
+	}else{
+	  random_choice = 3;
+	}
       }else{
-	random_choice = 3;
-      }
-    }else{/* hierarchical case */
-      if( tmp < 0.2 ){
-	random_choice = 0;
-      }else if(tmp<0.6){
-	random_choice = 3;
-      }else{
-	random_choice = 4;
-      }
-    }    
-  }else if( old_solution->nlayer >= max_vor ){/* special case for N=Nmax */
-    double tmp = randDouble(rng);
-    if( p->thb_no_hierarchical ){
-      if( tmp < 0.25 ){
-	random_choice = 1;
-      }else if(tmp < 0.25 + 0.75/2.0){
-	random_choice = 2;
-      }else{
-	random_choice = 3;
+	/* hierarchical case */	
+	if( tmp < 0.2 ){
+	  random_choice = 1;
+	}else if(tmp < 0.2+0.8/3.0){
+	  random_choice = 2;
+	}else if(tmp < 0.2+2.0*0.8/3.0){
+	  random_choice = 3;
+	}else{
+	  random_choice = 4;
+	}
       }
     }else{
-      /* hierarchical case */	
-      if( tmp < 0.2 ){
-	random_choice = 1;
-      }else if(tmp < 0.2+0.8/3.0){
-	random_choice = 2;
-      }else if(tmp < 0.2+2.0*0.8/3.0){
-	random_choice = 3;
+      /* Normal case - all options have equal probability */
+      if( 0 && p->thb_no_hierarchical ){
+	random_choice = randInt(rng,4);
       }else{
-	random_choice = 4;
+	random_choice = randInt(rng,5);
       }
-    }
-  }else{
-    /* Normal case - all options have equal probability */
-    if( p->thb_no_hierarchical ){
-      random_choice = randInt(rng,4);
-    }else{
-      random_choice = randInt(rng,5);
-    }
-  }
+    } while( !p->thb_no_hierarchical || (p->thb_no_hierarchical && random_choice == 4 ) );
+  
   int success = 0;
   int failcount = 0;
   while(!success){
