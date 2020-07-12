@@ -120,55 +120,55 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   int random_choice = 0;
 
   /* Choose the random option and use rejection sampling to restrict forbidden cases */
-  do{
-    if( old_solution->nlayer <= min_vor ){ /* change probabilities for the case where N=2 to remove biases */
-      double tmp = randDouble(rng);
-      if( 0 && p->thb_no_hierarchical ){
-	if( tmp < 0.25 ){
-	  random_choice = 0;
-	}else{
-	  random_choice = 3;
-	}
-      }else{/* hierarchical case */
-	if( tmp < 0.2 ){
-	  random_choice = 0;
-	}else if(tmp<0.6){
-	  random_choice = 3;
-	}else{
-	  random_choice = 4;
-	}
-      }    
-    }else if( old_solution->nlayer >= max_vor ){/* special case for N=Nmax */
-      double tmp = randDouble(rng);
-      if( 0 && p->thb_no_hierarchical ){
-	if( tmp < 0.25 ){
-	  random_choice = 1;
-	}else if(tmp < 0.25 + 0.75/2.0){
-	  random_choice = 2;
-	}else{
-	  random_choice = 3;
-	}
+  
+  if( old_solution->nlayer <= min_vor ){ /* change probabilities for the case where N=2 to remove biases */
+    double tmp = randDouble(rng);
+    if( p->thb_no_hierarchical ){
+      if( tmp < 0.25 ){
+	random_choice = 0;
       }else{
-	/* hierarchical case */	
-	if( tmp < 0.2 ){
-	  random_choice = 1;
-	}else if(tmp < 0.2+0.8/3.0){
-	  random_choice = 2;
-	}else if(tmp < 0.2+2.0*0.8/3.0){
-	  random_choice = 3;
-	}else{
-	  random_choice = 4;
-	}
+	random_choice = 3;
+      }
+    }else{/* hierarchical case */
+      if( tmp < 0.2 ){
+	random_choice = 0;
+      }else if(tmp<0.6){
+	random_choice = 3;
+      }else{
+	random_choice = 4;
+      }
+    }    
+  }else if( old_solution->nlayer >= max_vor ){/* special case for N=Nmax */
+    double tmp = randDouble(rng);
+    if( p->thb_no_hierarchical ){
+      if( tmp < 0.25 ){
+	random_choice = 1;
+      }else if(tmp < 0.25 + 0.75/2.0){
+	random_choice = 2;
+      }else{
+	random_choice = 3;
       }
     }else{
-      /* Normal case - all options have equal probability */
-      if( 0 && p->thb_no_hierarchical ){
-	random_choice = randInt(rng,4);
+      /* hierarchical case */	
+      if( tmp < 0.2 ){
+	random_choice = 1;
+      }else if(tmp < 0.2+0.8/3.0){
+	random_choice = 2;
+      }else if(tmp < 0.2+2.0*0.8/3.0){
+	random_choice = 3;
       }else{
-	random_choice = randInt(rng,5);
+	random_choice = 4;
       }
     }
-  } while( !p->thb_no_hierarchical || (p->thb_no_hierarchical && random_choice == 4 ) );
+  }else{
+    /* Normal case - all options have equal probability */
+    if( p->thb_no_hierarchical ){
+      random_choice = randInt(rng,4);
+    }else{
+      random_choice = randInt(rng,5);
+    }
+  }
+
     
   int success = 0;
   int failcount = 0;
@@ -180,7 +180,7 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
     if(random_choice == 0){
       // Add a control point at random
       double new_rad = rad_min + rad_range*randDouble(rng);
-      double new_visc = visc_min + visc_range*randDouble(rng);
+      //double new_visc = visc_min + visc_range*randDouble(rng);
       int i=0;
       while(new_solution->r[i] < new_rad && i < new_solution->nlayer)
 	i++;
@@ -189,6 +189,14 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
 	new_solution->r[j] = new_solution->r[j-1];
 	new_solution->visc[j] = new_solution->visc[j-1];
       }
+      if( i<1 || i>new_solution->nlayer-1 ){
+	fprintf(stderr,"Error - inserted layer index doesn't make sense.\n");
+	exit(-1);
+      }
+      double dr = new_solution->r[i+1]-new_solution->r[i-1];
+      double dvisc = new_solution->visc[i+1]-new_solution->visc[i-1];
+      double new_visc = new_solution->visc[i-1] + (new_rad - new_solution->r[i-1])*dvisc/dr + visc_change*randn(rng);
+      
       new_solution->r[i] = new_rad;
       new_solution->visc[i] = new_visc;
       new_solution->nlayer++;      
@@ -249,7 +257,7 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
       exit(-1);
     }
   }// End while not successful
-  if( p-> verbose){
+  if( p-> verbose>=3){
     fprintf(stderr,"Proposed solution:\n");
     int i;
     for(i=0;i<new_solution->nlayer;i++){
@@ -766,17 +774,10 @@ int main(int argc, char **argv)
     double varfakt = sol2.var / sol1.var;
     double prefactor = p->thb_no_hierarchical ? 0.0 : -0.5 * ((double) thb_nlm)*log(varfakt);
     double probAccept = prefactor + sol2.likeprob - sol1.likeprob + log((double) (k1)) - log((double) (k2));
+    //if(!rank) fprintf(stdout,"[%d]: Proposed solution probability contributions: %le,%Le,%Le,%le,%le prob=%le\n",rank,prefactor,sol2.likeprob,sol1.likeprob,log((double) (k1)),log((double) (k2)),probAccept);
     if( probAccept > 0 || probAccept > log(randDouble(rng))){
       // Accept the proposed solution
       sol1 = sol2;
-      if( p->verbose ){
-	fprintf(stdout,"Accepted new solution:\n");
-	int i;
-	for(i=0;i<sol2.nlayer;i++){
-	  fprintf(stdout,"%le %le\n",sol2.r[i],sol2.visc[i]);
-	}
-	fprintf(stdout,"Residual: %le\n",(double) sqrt(sol2.total_residual));
-      }
       sol1.iter_accepted = iter;
     }
 
@@ -828,7 +829,7 @@ int main(int argc, char **argv)
 	  double probAcceptSwap = prefactor + (1.0/Ti-1.0/Tj)*(-0.5*(mdistj-mdisti) + log(ki) - log(kj));
 	  if( probAcceptSwap > 0 || probAcceptSwap > log(randDouble(rng)) ){
 	    /* accept the swap */
-	    if( p->verbose >= 3) fprintf(stderr,"Swapping %d <--> %d. mdists (%le,%le) prob=%le\n",swapi,swapj,sol1.mdist,mdistj,probAcceptSwap);
+	    if( p->verbose >= 1) fprintf(stderr,"Swapping %d <--> %d. mdists (%le,%le) prob=%le\n",swapi,swapj,sol1.mdist,mdistj,probAcceptSwap);
 	    chain_temperature = Tj;
 	    Tj = Ti;
 	  }
