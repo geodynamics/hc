@@ -252,9 +252,10 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
 	success = 0; // This ensures that the nodes remain in increasing order
       }
     }
-    if( failcount > 10000){
-      fprintf(stderr,"Error: Fail count %d, random option %d\n",failcount,random_choice);
-      exit(-1);
+    if(!success && failcount > 10000){
+      fprintf(stderr,"Warning: Fail count %d, random option %d\n",failcount,random_choice);
+      new_solution[0] = old_solution[0];
+      return;
     }
   }// End while not successful
   if( p-> verbose>=3){
