@@ -335,8 +335,8 @@ int main(int argc, char **argv)
   int rank,size;
   MPI_Comm_size(MPI_COMM_WORLD,&size);
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-  if(size % 2){
-    fprintf(stderr,"Error: MPI size must be even!\n");
+  if(size != 1){
+    fprintf(stderr,"Error: The visc scan is not parallelized!\n");
     exit(-1);
   }
 
@@ -548,7 +548,7 @@ int main(int argc, char **argv)
 
   /* Sweep through viscosity structures */
   const int visc_layers = 4;
-  const int nvisc = 100;
+  const int nvisc = 10;
   const int ndepth = 25;
   double *visc_list;
   double *depth_list;
@@ -569,13 +569,13 @@ int main(int argc, char **argv)
   scan_file = fopen("scan_results.txt","w");
   fprintf(scan_file,"#Results of visc scan: %d layers\n",visc_layers);
   for(int v0=0;v0<nvisc;v0++){
-    sol1.visc[v0] = visc_list[v0];
+    sol1.visc[0] = visc_list[v0];
     for(int v1=0;v1<nvisc;v1++){
-      sol1.visc[v1] = visc_list[v1];
+      sol1.visc[1] = visc_list[v1];
       for(int v2=0;v2<nvisc;v2++){
-	sol1.visc[v2] = visc_list[v2];
+	sol1.visc[2] = visc_list[v2];
 	for(int v3=0;v3<nvisc;v3++){
-	  sol1.visc[v3] = visc_list[v3];
+	  sol1.visc[3] = visc_list[v3];
 	  /* Interpolate solution */
 	  interpolate_viscosity(&sol1, model->rvisc, model->visc,p);
 	  
