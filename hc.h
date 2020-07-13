@@ -399,7 +399,7 @@ struct hcs{
 
 /* for Bayesian viscosity inversions */
 #define THB_CHECKPOINT_INTERVAL 100000
-#define MAX_NUM_VOR 12
+#define MAX_NUM_VOR 25
 struct thb_solution {
   int nlayer;
   double r[MAX_NUM_VOR];
