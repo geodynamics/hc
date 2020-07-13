@@ -558,12 +558,12 @@ int main(int argc, char **argv)
     visc_list[i] = 19.0 + (25.0-19.0)/((double) ndepth-1)*((double) i);
   }
   for(int i=0;i<ndepth;i++){
-    depth_list[i] = model->rcmb + (1.0-model->rcmb)/((double) ndepth-1)*((double) i);
+    depth_list[i] = model->r_cmb + (1.0-model->r_cmb)/((double) ndepth-1)*((double) i);
     sol1.r[i] = depth_list[i];
   }
   /* loop over layers */
   /* loop over viscosities for first layer */
-  sol1.nlayers=visc_layers;
+  sol1.nlayer=visc_layers;
   sol1.var = 1.0;
   FILE *scan_file;
   scan_file = fopen("scan_results.txt","w");
@@ -578,7 +578,7 @@ int main(int argc, char **argv)
 	  sol1.visc[v3] = visc_list[v3];
 	  /* Interpolate solution */
 	  interpolate_viscosity(&sol1, model->rvisc, model->visc,p);
-
+	  
 	  hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
 		   (solved)?(FALSE):(TRUE), /* density changed? */
 		   (solved)?(FALSE):(TRUE), /* plate velocity changed? */
@@ -586,7 +586,7 @@ int main(int argc, char **argv)
 		   FALSE,p->compute_geoid,
 		   pvel,model->dens_anom,geoid,
 		   p->verbose); 
-
+	  
 	  sol1.total_residual = sh_residual_vector(geoid,p->ref_geoid,p->thb_ll,p->thb_nl,residual1->data,0);
 	  {
 	    double mdist = 0.0;    
@@ -602,16 +602,16 @@ int main(int argc, char **argv)
 		sol1.mdist = rtr/sol1.var;
 	      }else{
 		double rtr;
-		gsl_blas_ddot(residual1,residual2,&rtr);
+		gsl_blas_ddot(residual1,residual1,&rtr);
 		sol1.mdist = rtr/sol1.var;
 	      }
 	    }
 	    sol1.likeprob = -0.5 * sol1.mdist/chain_temperature;
 	  }
 	  /* output */
-	  for(int i=0;i<sol1.nlayers;i++)
+	  for(int i=0;i<sol1.nlayer;i++)
 	    fprintf(scan_file,"%le\t",sol1.r[i]);
-	  for(int i=0;i<sol1.nlayers;i++)
+	  for(int i=0;i<sol1.nlayer;i++)
 	    fprintf(scan_file,"%le\t",sol1.visc[i]);
 	  fprintf(scan_file,"%le\t%le\n",(double) sol1.total_residual,sol1.mdist);
 
@@ -624,10 +624,6 @@ int main(int argc, char **argv)
   free(depth_list);
   free(visc_list);
   
-  if( !rank ){
-    fflush(thb_ensemble_file);
-    fclose(thb_ensemble_file);
-  }
   /* END THB VISCOSITY LOOP */  
   /*
     
