@@ -648,6 +648,8 @@ int main(int argc, char **argv)
       fprintf(thb_ensemble_file,"#Save start %d\n#Save skip %d\n#Sample target %d\n",p->thb_save_start,p->thb_save_skip,p->thb_sample_target);
       fprintf(thb_ensemble_file,"#Number of chains: %d\n",size);
       fprintf(thb_ensemble_file,"#Parallel tmpering: %s\n",p->thb_parallel_tempering ? "True" : "False");
+      fprintf(thb_ensemble_file,"#Ockham factor: %s\n",p->thb_ockham ? "True" : "False");
+      fprintf(thb_ensemble_file,"#Hierarchical: %s\n",!(p->thb_no_hierarchical) ? "True" : "False");
       fprintf(thb_ensemble_file,"#Covariance Matrix: %s\n",p->thb_use_covmat ? p->thb_covmat_filename : "False");
       
       fprintf(thb_ensemble_file,"#Parallel tempering start %d\n",p->thb_swap_start);
@@ -773,7 +775,8 @@ int main(int argc, char **argv)
     int k1 = sol1.nlayer;
     double varfakt = sol2.var / sol1.var;
     double prefactor = p->thb_no_hierarchical ? 0.0 : -0.5 * ((double) thb_nlm)*log(varfakt);
-    double probAccept = prefactor + sol2.likeprob - sol1.likeprob + log((double) (k1)) - log((double) (k2));
+    double kfactor = p->thb_ockham ? log((double) (k1)) - log((double) (k2)) : 0;
+    double probAccept = prefactor + sol2.likeprob - sol1.likeprob + kfactor;
     //if(!rank) fprintf(stdout,"[%d]: Proposed solution probability contributions: %le,%Le,%Le,%le,%le prob=%le\n",rank,prefactor,sol2.likeprob,sol1.likeprob,log((double) (k1)),log((double) (k2)),probAccept);
     if( probAccept > 0 || probAccept > log(randDouble(rng))){
       // Accept the proposed solution
@@ -826,7 +829,8 @@ int main(int argc, char **argv)
 	  double ki = (double) sol1.nlayer;
 	  double VarfaktS = vari/varj;
 	  double prefactor = (p->thb_no_hierarchical) ? 0.0 : (1.0/Ti-1.0/Tj)*thb_nlm/2.0*log(VarfaktS);
-	  double probAcceptSwap = prefactor + (1.0/Ti-1.0/Tj)*(-0.5*(mdistj-mdisti) + log(ki) - log(kj));
+	  double kfactor = p->thb_ockham ? log(ki) - log(kj) : 0.0;
+	  double probAcceptSwap = prefactor + (1.0/Ti-1.0/Tj)*(-0.5*(mdistj-mdisti) + kfactor);
 	  if( probAcceptSwap > 0 || probAcceptSwap > log(randDouble(rng)) ){
 	    /* accept the swap */
 	    if( p->verbose >= 1) fprintf(stderr,"Swapping %d <--> %d. mdists (%le,%le) prob=%le\n",swapi,swapj,sol1.mdist,mdistj,probAcceptSwap);

@@ -87,6 +87,7 @@ void hc_init_parameters(struct hc_parameters *p)
   /* THB stuff */
   p->thb_checkpoint_resume = FALSE;
   p->thb_no_hierarchical = FALSE;
+  p->thb_ockham = TRUE;
   strncpy(p->thb_ensemble_filename,THB_ENSEMBLE_FILE,HC_CHAR_LENGTH);
   strncpy(p->thb_covmat_filename,THB_COVMAT_FILE,HC_CHAR_LENGTH);
   p->thb_use_covmat = FALSE;
@@ -585,6 +586,9 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
       used_parameter=TRUE;      
     }else if(strcmp(argv[i],"-thb_no_hierarchical")==0){
       p->thb_no_hierarchical = TRUE;
+      used_parameter=TRUE;
+    }else if(strcmp(argv[i],"-thb_no_ockham")==0){
+      p->thb_ockham = FALSE;
       used_parameter=TRUE;
     }else if(strcmp(argv[i],"-thb_sample_prior")==0){
       p->thb_sample_prior = TRUE;
