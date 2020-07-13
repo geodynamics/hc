@@ -230,7 +230,7 @@ $(BDIR)/hc_visc_thb: $(LIBS) $(INCS) $(ODIR)/hc_visc_thb.o $(PREM_OBJS)
 		 $(GGRD_LIBS_LINKLINE) -lm -lgsl -lgslcblas $(LDFLAGS)
 
 $(BDIR)/hc_visc_grid: $(LIBS) $(INCS) $(ODIR)/hc_visc_grid.o $(PREM_OBJS)
-	$(CC) $(LIB_FLAGS) $(ODIR)/hc_visc_grid.o -o $(BDIR)/hc_visc_thb \
+	$(CC) $(LIB_FLAGS) $(ODIR)/hc_visc_grid.o -o $(BDIR)/hc_visc_grid \
 		-lhc -lrick $(HEAL_LIBS_LINKLINE) $(PREM_OBJS) \
 		 $(GGRD_LIBS_LINKLINE) -lm -lgsl -lgslcblas $(LDFLAGS) 
 
