@@ -478,8 +478,12 @@ void thb_postprocess_read(struct thb_solution *sol, struct hc_parameters *p){
     }
   }
   /* sort based on residuals */
-  gsl_sort(residuals,1,iline);
-  int median_index = iline/2;
+  int *indices = (int *) malloc(iline*sizeof(int));
+  gsl_sort_index(indices, residuals, 1, iline);
+  int median_index = indices[iline/2];  
+  double median_residual = residuals[median_index];
+  free(indices);
+
   iline=0;
   fprintf(stdout,"Median index %d, median residual %le\n",median_index,residuals[median_index]);
   /* go back into the postprocessing file and find the correct line */
@@ -519,7 +523,7 @@ void thb_postprocess_read(struct thb_solution *sol, struct hc_parameters *p){
   }
   fprintf(stdout,"Restored median solution:\n");
   print_solution(stdout,sol);
-
+  free(residuals);
   fclose(fp);
 }
 
