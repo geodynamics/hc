@@ -623,11 +623,13 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
     }else if(strcmp(argv[i],"-thb_ll")==0){
       /* begin by counting the commas in this string */
       hc_advance_argument(&i,argc,argv);
+      char this_arg[HC_CHAR_LENGTH];
+      strcpy(this_arg,argv[i]);
       p->thb_nl=0;
       int j;
       const char delim[2]=",";
       char *pt;
-      pt = strtok(argv[i],delim);
+      pt = strtok(this_arg,delim);
       while( pt != NULL ){
 	int ltmp;
 	sscanf(pt,"%d",&(p->thb_ll[p->thb_nl]));
