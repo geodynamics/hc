@@ -813,6 +813,7 @@ int main(int argc, char **argv)
   }
   /* potprocess - just do the pp and exit */
   if( p->thb_postprocess ){
+    fprintf(stdout,"Total residual %le\n",(double) sqrt(sol1.total_residual));
     /* geoid filename */
     char geoid_filename[HC_CHAR_LENGTH+10];
     FILE *out;
