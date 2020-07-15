@@ -462,10 +462,12 @@ void thb_postprocess_read(struct thb_solution *sol, struct hc_parameters *p){
   /* Seek back to beginning */
   fseek(fp,0,SEEK_SET);
   double *residuals = (double *) malloc(lines*sizeof(double));
-  char line[1000];
+  int n=1000;
+  char *line = (char *) malloc(n*sizeof(char));
   int iline=0;
+
   while( !feof(fp) ){
-    fscanf(fp,"%s\n",line);
+    getline(&line,&n,fp);
     if( line[0] == '#'){
       /* comment - do nothing */
       fprintf(stderr,"%s\n",line);
@@ -499,7 +501,8 @@ void thb_postprocess_read(struct thb_solution *sol, struct hc_parameters *p){
   fseek(fp,0,SEEK_SET);
   int success=0;
   while(!feof(fp) && success==0){
-    fscanf(fp,"%s",line);
+    //fscanf(fp,"%s",line);
+    getline(&line,&n,fp);
     if(line[0]=='#'){
     }else{
       if( iline == median_index ){
@@ -530,6 +533,7 @@ void thb_postprocess_read(struct thb_solution *sol, struct hc_parameters *p){
       }
     }
   }
+  free(line);
   fprintf(stdout,"Restored median solution:\n");
   print_solution(stdout,sol);
   free(residuals);
