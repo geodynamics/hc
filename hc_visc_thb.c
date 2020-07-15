@@ -530,11 +530,6 @@ int main(int argc, char **argv)
   int rank,size;
   MPI_Comm_size(MPI_COMM_WORLD,&size);
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-  if(size % 2){
-    fprintf(stderr,"Error: MPI size must be even!\n");
-    exit(-1);
-  }
-
   
   struct hcs *model;		/* main structure, make sure to initialize with 
 				   zeroes */
@@ -609,6 +604,11 @@ int main(int argc, char **argv)
   if(p->verbose)
     fprintf(stderr,"%s: starting main program\n",argv[0]);
 #endif
+  if(!p->thb_postprocess && (size % 2)){
+    fprintf(stderr,"Error: MPI size must be even!\n");
+    exit(-1);
+  }
+
   /* 
      
      (3)
