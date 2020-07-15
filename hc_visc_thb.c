@@ -463,7 +463,8 @@ void thb_postprocess_read(struct thb_solution *sol, struct hc_parameters *p){
   fseek(fp,0,SEEK_SET);
   double *residuals = (double *) malloc(lines*sizeof(double));
   char line[1000];
-  int iline=0;  
+  int iline=0;
+  int isol=0;
   while( !feof(fp) ){
     fscanf(fp,"%s",line);
     if( line[0] == '#'){
@@ -473,9 +474,16 @@ void thb_postprocess_read(struct thb_solution *sol, struct hc_parameters *p){
       //double variance_reduction = 1.0 - pow((sqrt(all_solutions[irank].total_residual)/sqrt(total_variance)),2.0);
       int irank, iter,iter_accepted;
       double variance_reduction;
-      sscanf(line,"%02d,%08d,%08d,%le,%le",&irank,&iter,&iter_accepted,residuals+iline,&variance_reduction);	      
+      int nfound = sscanf(line,"%02d,%08d,%08d,%le,%le",&irank,&iter,&iter_accepted,residuals+iline,&variance_reduction);
+      if( nfound < 5 )
+	break;
       iline++;
+      isol++;
     }
+  }
+  if( iline == 0){
+    fprintf(stderr,"No solutions found.\n");
+    exit(-1);
   }
   /* sort based on residuals */
   size_t *indices = (size_t *) malloc(iline*sizeof(size_t));
