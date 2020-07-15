@@ -465,7 +465,7 @@ void thb_postprocess_read(struct thb_solution *sol, struct hc_parameters *p){
   char line[1000];
   int iline=0;
   while( !feof(fp) ){
-    fscanf(fp,"%s",line);
+    fscanf(fp,"%s\n",line);
     if( line[0] == '#'){
       /* comment - do nothing */
       fprintf(stderr,"%s\n",line);
