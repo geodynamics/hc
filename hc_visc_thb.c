@@ -509,7 +509,7 @@ void thb_postprocess_read(struct thb_solution *sol, struct hc_parameters *p){
 	}
 	sol->total_residual = (HC_PREC) total_residual;
 	sol->likeprob = (HC_PREC) likeprob;
-	
+	fprintf(stdout,"Residual of restored solution %le\n",total_residual);
 	success=1;
 	iline++;
       }else{
