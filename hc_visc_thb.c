@@ -464,7 +464,6 @@ void thb_postprocess_read(struct thb_solution *sol, struct hc_parameters *p){
   double *residuals = (double *) malloc(lines*sizeof(double));
   char line[1000];
   int iline=0;
-  int isol=0;
   while( !feof(fp) ){
     fscanf(fp,"%s",line);
     if( line[0] == '#'){
@@ -475,10 +474,11 @@ void thb_postprocess_read(struct thb_solution *sol, struct hc_parameters *p){
       int irank, iter,iter_accepted;
       double variance_reduction;
       int nfound = sscanf(line,"%02d,%08d,%08d,%le,%le",&irank,&iter,&iter_accepted,residuals+iline,&variance_reduction);
-      if( nfound < 5 )
+      if( nfound < 5 ){
+	fprintf(stderr,"Couldn't parse line - %d values: \n%s\n",nfound,line);	
 	break;
+      }
       iline++;
-      isol++;
     }
   }
   if( iline == 0){
