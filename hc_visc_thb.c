@@ -3,6 +3,7 @@
 #include <mpi.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_blas.h>
+#include <gsl/gsl_sort.h>
 
 /* 
    
@@ -439,6 +440,88 @@ void thb_checkpoint_resume(struct thb_solution *sol, double *chain_temperature, 
   }
 }
 
+void thb_postprocess_read(struct thb_solution *sol, struct hc_parameters *p){
+  int rank,size;
+  MPI_Comm_size(MPI_COMM_WORLD,&size);
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  if( size != 1 ){
+    fprintf(stderr,"Error: MPI size must be 1 for postprocessing\n");
+    exit(-1);
+  }
+  /* read the ensemble file */
+  FILE *fp;
+  fp = fopen(p->thb_ensemble_filename,"r");
+  /* count the lines in the file */
+  int lines=0;
+  while( !feof(fp) ){
+    char ch = fgetc(fp);
+    if(ch=='\n')
+      lines++;
+  }
+  fprintf(stderr,"found %d lines\n",lines);
+  /* Seek back to beginning */
+  fseek(fp,0,SEEK_SET);
+  double *residuals = (double *) malloc(lines*sizeof(double));
+  char line[1000];
+  int iline=0;  
+  while( !feof(fp) ){
+    fscanf(fp,"%s",line);
+    if( line[0] == '#'){
+      /* comment - do nothing */
+      fprintf(stderr,"%s\n",line);
+    }else{
+      //double variance_reduction = 1.0 - pow((sqrt(all_solutions[irank].total_residual)/sqrt(total_variance)),2.0);
+      int irank, iter,iter_accepted;
+      double variance_reduction;
+      sscanf(line,"%02d,%08d,%08d,%le,%le",&irank,&iter,&iter_accepted,residuals+iline,&variance_reduction);	      
+      iline++;
+    }
+  }
+  /* sort based on residuals */
+  gsl_sort(residuals,1,iline);
+  int median_index = iline/2;
+  iline=0;
+  fprintf(stdout,"Median index %d, median residual %le\n",median_index,residuals[median_index]);
+  /* go back into the postprocessing file and find the correct line */
+  fseek(fp,0,SEEK_SET);
+  int success=0;
+  while(!feof(fp) && success==0){
+    fscanf(fp,"%s",line);
+    if(line[0]=='#'){
+    }else{
+      if( iline == median_index ){
+	/* read this solution */
+	int irank,iter,iter_accepted,nlayer;
+	int nchar,nchar_tot;
+	double variance_reduction;
+	double total_residual;
+	double likeprob;
+	/* Note that %n returns the current number of characters consumed be sscanf*/
+	sscanf(line,"%d,%d,%d,%le,%le,%le,%le,%d%n",&irank,&iter,&iter_accepted,&total_residual,&variance_reduction,&likeprob,&(sol->var),&(sol->nlayer),&nchar);
+	nchar_tot = nchar;
+	for(int i=0;i<sol->nlayer;i++){
+	  sscanf(line+nchar_tot,",%le%n",&(sol->r[i]),&nchar);
+	  nchar_tot += nchar;
+	}
+	for(int i=0;i<sol->nlayer;i++){
+	  sscanf(line+nchar_tot,",%le%n",&(sol->visc[i]),&nchar);
+	  nchar_tot += nchar;
+	}
+	sol->total_residual = (HC_PREC) total_residual;
+	sol->likeprob = (HC_PREC) likeprob;
+	
+	success=1;
+	iline++;
+      }else{
+	iline++;
+      }
+    }
+  }
+  fprintf(stdout,"Restored median solution:\n");
+  print_solution(stdout,sol);
+
+  fclose(fp);
+}
 
 
 int main(int argc, char **argv)
@@ -605,7 +688,16 @@ int main(int argc, char **argv)
   double chain_temperature;
   int iter;
   // initialize solution
-  if( !p->thb_checkpoint_resume){
+  if( p->thb_checkpoint_resume){
+    thb_checkpoint_resume(&sol1,&chain_temperature,&iter,p);
+    if(p->verbose){
+      print_solution(stderr,&sol1);
+    }
+  }else if(p->thb_postprocess){
+    thb_postprocess_read(&sol1,p);
+    chain_temperature = 1.0;
+    iter=0;
+  }else{
     iter = 0;
     sol1.nlayer = 2;
     sol1.r[0] = model->r_cmb;
@@ -624,19 +716,14 @@ int main(int argc, char **argv)
     }else{
       chain_temperature = 1.0;
     }
-  }else{
-    thb_checkpoint_resume(&sol1,&chain_temperature,&iter,p);
-    if(p->verbose){
-      print_solution(stderr,&sol1);
-    }
-  }  
+  }
   interpolate_viscosity(&sol1,model->rvisc,model->visc,p);
 
   fprintf(stdout,"[%d]: made it here, temperature is %le\n",rank,chain_temperature); fflush(stdout); MPI_Barrier(MPI_COMM_WORLD);
   p->thb_save_skip = (p->thb_iter - p->thb_save_start)/p->thb_sample_target;
   FILE *thb_ensemble_file = NULL;
   
-  if(!rank && !p->thb_checkpoint_resume){
+  if(!rank && !p->thb_checkpoint_resume && !p->thb_postprocess){
     thb_ensemble_file = fopen(p->thb_ensemble_filename,"w");
     {
       fprintf(thb_ensemble_file,"#HC version %s\n",HC_VERSION);
@@ -723,6 +810,26 @@ int main(int argc, char **argv)
       }
     }
     sol1.likeprob = -0.5 * sol1.mdist/chain_temperature;
+  }
+  /* potprocess - just do the pp and exit */
+  if( p->thb_postprocess ){
+    /* geoid filename */
+    char geoid_filename[HC_CHAR_LENGTH+10];
+    FILE *out;
+    sprintf(geoid_filename,"%s_geoid.ab",p->thb_ensemble_filename);
+    if(p->verbose)
+      fprintf(stderr,"%s: writing geoid to %s, %s\n",
+	      argv[0],geoid_filename,(p->compute_geoid == 1)?("at surface"):("all layers"));
+    out = ggrd_open(geoid_filename,"w","main");
+    if(p->compute_geoid == 1){ /* surface layer */
+      hc_boolean geoid_binary = FALSE;
+      hc_print_sh_scalar_field(geoid,out,FALSE,geoid_binary,p->verbose);
+    }else{
+      fprintf(stderr,"Option not implemented\n");
+      exit(-1);
+    }
+    fclose(out);
+    goto exit;
   }
 
   /* BEGIN THB LOOP */
@@ -903,7 +1010,8 @@ int main(int argc, char **argv)
     fflush(thb_ensemble_file);
     fclose(thb_ensemble_file);
   }
-  /* END THB VISCOSITY LOOP */  
+  /* END THB VISCOSITY LOOP */
+ exit:
   /*
     
     free memory

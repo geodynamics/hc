@@ -335,10 +335,7 @@ int main(int argc, char **argv)
   int rank,size;
   MPI_Comm_size(MPI_COMM_WORLD,&size);
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-  if(size != 1){
-    fprintf(stderr,"Error: The visc scan is not parallelized!\n");
-    exit(-1);
-  }
+
 
   
   struct hcs *model;		/* main structure, make sure to initialize with 
@@ -489,10 +486,8 @@ int main(int argc, char **argv)
 
   
   double chain_temperature;
-  int iter;
   // initialize solution
   
-  iter = 0;
   sol1.nlayer = 2;
   sol1.r[0] = model->r_cmb;
   sol1.r[1] = 1.0;
@@ -548,79 +543,132 @@ int main(int argc, char **argv)
 
   /* Sweep through viscosity structures */
   const int visc_layers = 4;
-  const int nvisc = 10;
-  const int ndepth = 25;
+  const int nvisc = 16;
+  const int ndepth = 20;
   double *visc_list;
   double *depth_list;
   visc_list = (double *) malloc(nvisc*sizeof(double));
   depth_list = (double *) malloc(ndepth*sizeof(double));
   for(int i=0;i<nvisc;i++){
-    visc_list[i] = 19.0 + (25.0-19.0)/((double) ndepth-1)*((double) i);
+    visc_list[i] = 19.0 + (25.0-19.0)/((double) nvisc-1)*((double) i);
   }
   for(int i=0;i<ndepth;i++){
-    depth_list[i] = model->r_cmb + (1.0-model->r_cmb)/((double) ndepth-1)*((double) i);
-    sol1.r[i] = depth_list[i];
+    depth_list[i] = model->r_cmb + (1.0-model->r_cmb)/((double) ndepth+1)*((double) i+1);
   }
+  
   /* loop over layers */
   /* loop over viscosities for first layer */
   sol1.nlayer=visc_layers;
+  sol1.r[0] = model->r_cmb;
+  sol1.r[3] = 1.0;
   sol1.var = 1.0;
   FILE *scan_file;
-  scan_file = fopen("scan_results.txt","w");
-  fprintf(scan_file,"#Results of visc scan: %d layers\n",visc_layers);
+  if( !rank ){
+    scan_file = fopen("scan_results.txt","w");
+    fprintf(scan_file,"#Results of visc scan: %d layers\n",visc_layers);
+    fprintf(scan_file,"#loop order visc0,visc1,r1,visc2,r2,visc3\n");
+    fprintf(scan_file,"# %d %d %d %d %d %d\n",nvisc,nvisc,ndepth,nvisc,ndepth,nvisc);
+    fflush(scan_file);
+  }
+  unsigned long int ntotal = nvisc*nvisc*nvisc*nvisc*ndepth*ndepth;
+  unsigned long int iter=0;
   for(int v0=0;v0<nvisc;v0++){
     sol1.visc[0] = visc_list[v0];
     for(int v1=0;v1<nvisc;v1++){
       sol1.visc[1] = visc_list[v1];
-      for(int v2=0;v2<nvisc;v2++){
-	sol1.visc[2] = visc_list[v2];
-	for(int v3=0;v3<nvisc;v3++){
-	  sol1.visc[3] = visc_list[v3];
-	  /* Interpolate solution */
-	  interpolate_viscosity(&sol1, model->rvisc, model->visc,p);
-	  
-	  hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
-		   (solved)?(FALSE):(TRUE), /* density changed? */
-		   (solved)?(FALSE):(TRUE), /* plate velocity changed? */
-		   TRUE,			/* viscosity changed */
-		   FALSE,p->compute_geoid,
-		   pvel,model->dens_anom,geoid,
-		   p->verbose); 
-	  
-	  sol1.total_residual = sh_residual_vector(geoid,p->ref_geoid,p->thb_ll,p->thb_nl,residual1->data,0);
-	  {
-	    double mdist = 0.0;    
-	    int i;
-	    if( p->thb_sample_prior ){
-	      sol1.mdist = 0.0;
-	    }else{
-	      if( p->thb_use_covmat ){
-		/* form r'*Cd^-1*r */
-		double rtr;
-		gsl_blas_dgemv(CblasNoTrans,1.0,inverse_covariance_matrix,residual1,0.0,tmp_vector);
-		gsl_blas_ddot(residual1,tmp_vector,&rtr);
-		sol1.mdist = rtr/sol1.var;
-	      }else{
-		double rtr;
-		gsl_blas_ddot(residual1,residual1,&rtr);
-		sol1.mdist = rtr/sol1.var;
+      for(int r1=0;r1<ndepth;r1++){
+	sol1.r[1] = depth_list[r1];
+	for(int v2=0;v2<nvisc;v2++){
+	  sol1.visc[2] = visc_list[v2];
+	  for(int r2=0;r2<ndepth;r2++){
+	    sol1.r[2] = depth_list[r2];	   
+	    for(int v3=0;v3<nvisc;v3++){
+	      sol1.visc[3] = visc_list[v3];
+	      
+	      if( iter % size == rank ){// obtain this solution
+		struct thb_solution sol2 = sol1;
+		if( sol2.r[2] < sol2.r[1] ){
+		  double tmp = sol2.r[2];
+		  sol2.r[2] = sol2.r[1];
+		  sol2.r[1] = tmp;
+		  tmp = sol2.visc[2];
+		  sol2.visc[2] = sol2.visc[1];
+		  sol2.visc[1] = tmp;
+		}else if(sol2.r[1] == sol2.r[2]){
+		  sol2.nlayer = 3;
+		  sol2.r[2] = sol2.r[3];
+		  sol2.visc[1] = 0.5*(sol2.visc[1]+sol2.visc[2]);
+		  sol2.visc[2] = sol2.visc[3];
+		}
+		//if( sol1.r[2] <= sol1.r[1] ){
+		//  sol1.mdist = NAN;
+		//  sol1.total_residual = NAN;
+		//}else{
+		{
+		  /* Interpolate solution */
+		  interpolate_viscosity(&sol2, model->rvisc, model->visc,p);
+		  /* Solve */
+		  hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
+			   (solved)?(FALSE):(TRUE), /* density changed? */
+			   (solved)?(FALSE):(TRUE), /* plate velocity changed? */
+			   TRUE,			/* viscosity changed */
+			   FALSE,p->compute_geoid,
+			   pvel,model->dens_anom,geoid,
+			   p->verbose); 
+		  
+		  sol1.total_residual = sh_residual_vector(geoid,p->ref_geoid,p->thb_ll,p->thb_nl,residual1->data,0);
+		  {
+		    double mdist = 0.0;
+		    int i;
+		    if( p->thb_sample_prior ){
+		      sol1.mdist = 0.0;
+		    }else{
+		      if( p->thb_use_covmat ){
+			/* form r'*Cd^-1*r */
+			double rtr;
+			gsl_blas_dgemv(CblasNoTrans,1.0,inverse_covariance_matrix,residual1,0.0,tmp_vector);
+			gsl_blas_ddot(residual1,tmp_vector,&rtr);
+			sol1.mdist = rtr/sol1.var;
+		      }else{
+			double rtr;
+			gsl_blas_ddot(residual1,residual1,&rtr);
+			sol1.mdist = rtr/sol1.var;
+		      }
+		    }
+		    sol1.likeprob = -0.5 * sol1.mdist/chain_temperature;
+		  }
+		}
+		struct thb_solution *solutions = NULL;
+		if( !rank ){
+		  /* allocate space for the solutions */
+		  solutions = (struct thb_solution *) malloc(size*sizeof(struct thb_solution));
+		  MPI_Gather(&sol1,sizeof(struct thb_solution),MPI_BYTE,solutions,sizeof(struct thb_solution),MPI_BYTE,0,MPI_COMM_WORLD);
+		  for(int irank=0;irank<size;irank++){		
+		    /* output */
+		    for(int i=0;i<solutions[irank].nlayer;i++)
+		      fprintf(scan_file,"%le\t",solutions[irank].r[i]);
+		    for(int i=0;i<solutions[irank].nlayer;i++)
+		      fprintf(scan_file,"%le\t",solutions[irank].visc[i]);
+		    fprintf(scan_file,"%le\t%le\n",(double) solutions[irank].total_residual,solutions[irank].mdist);
+		  }
+		  free(solutions);
+		}else{/* send solution to rank 0*/
+		  MPI_Gather(&sol1,sizeof(struct thb_solution),MPI_BYTE,solutions,sizeof(struct thb_solution),MPI_BYTE,0,MPI_COMM_WORLD);
+		}
 	      }
+	      
+	      if(!rank && !(iter%1000) )
+		fprintf(stderr,"Finished %ld/%ld\n",iter,ntotal);
+	      
+	      iter++;
 	    }
-	    sol1.likeprob = -0.5 * sol1.mdist/chain_temperature;
 	  }
-	  /* output */
-	  for(int i=0;i<sol1.nlayer;i++)
-	    fprintf(scan_file,"%le\t",sol1.r[i]);
-	  for(int i=0;i<sol1.nlayer;i++)
-	    fprintf(scan_file,"%le\t",sol1.visc[i]);
-	  fprintf(scan_file,"%le\t%le\n",(double) sol1.total_residual,sol1.mdist);
-
-	  
 	}
       }
     }
   }
-  fclose(scan_file);
+  if( !rank )
+    fclose(scan_file);
   free(depth_list);
   free(visc_list);
   

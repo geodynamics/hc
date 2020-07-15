@@ -250,6 +250,7 @@ struct hc_parameters{
   hc_boolean thb_sample_prior;    /* sample the prior (do not compute any solutions) */
   hc_boolean thb_use_covmat; /* whether to use a covariance matrix */
   hc_boolean thb_ockham;
+  hc_boolean thb_postprocess; /* whether to run in postprocessing mode - calculate geoid, save, and exit */
   char thb_ensemble_filename[HC_CHAR_LENGTH]; /* name of output file for viscosity ensemble */
   char thb_covmat_filename[HC_CHAR_LENGTH]; /* name of file from which to read the covariance matrix */
   int thb_nl; /* number of spherical harmonic degrees at which to compute the residual */
