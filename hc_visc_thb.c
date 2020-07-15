@@ -470,7 +470,7 @@ void thb_postprocess_read(struct thb_solution *sol, struct hc_parameters *p){
     getline(&line,&n,fp);
     if( line[0] == '#'){
       /* comment - do nothing */
-      fprintf(stderr,"%s\n",line);
+      fprintf(stderr,"%s",line);
     }else{
       //double variance_reduction = 1.0 - pow((sqrt(all_solutions[irank].total_residual)/sqrt(total_variance)),2.0);
       int irank, iter,iter_accepted;
