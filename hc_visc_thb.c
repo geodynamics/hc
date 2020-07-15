@@ -479,7 +479,7 @@ void thb_postprocess_read(struct thb_solution *sol, struct hc_parameters *p){
   }
   /* sort based on residuals */
   int *indices = (int *) malloc(iline*sizeof(int));
-  for(i=0;i<iline;i++) indices[i] = i;
+  for(int i=0;i<iline;i++) indices[i] = i;
   gsl_sort_index(indices, residuals, 1, iline);
   int median_index = indices[iline/2];  
   double median_residual = residuals[median_index];
