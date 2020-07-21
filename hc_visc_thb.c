@@ -897,11 +897,11 @@ int main(int argc, char **argv)
     /* ------------------------------------------ */
     /* 3. Calculate the probablity of acceptance: */
     /* ------------------------------------------ */
-    int k2 = sol2.nlayer;
-    int k1 = sol1.nlayer;
+    double k2 = (double) sol2.nlayer;
+    double k1 = (double) sol1.nlayer;
     double varfakt = sol2.var / sol1.var;
-    double prefactor = p->thb_no_hierarchical ? 0.0 : -0.5 * ((double) thb_nlm)*log(varfakt);
-    double kfactor = p->thb_ockham ? log((double) (k1)) - log((double) (k2)) : 0;
+    double prefactor = p->thb_no_hierarchical==TRUE ? 0.0 : -0.5 * ((double) thb_nlm)*log(varfakt);
+    double kfactor = p->thb_ockham==TRUE ? log(k1) - log(k2) : 0.0;
     double probAccept = prefactor + sol2.likeprob - sol1.likeprob + kfactor;
     //if(!rank) fprintf(stdout,"[%d]: Proposed solution probability contributions: %le,%Le,%Le,%le,%le prob=%le\n",rank,prefactor,sol2.likeprob,sol1.likeprob,log((double) (k1)),log((double) (k2)),probAccept);
     if( probAccept > 0 || probAccept > log(randDouble(rng))){
@@ -955,7 +955,7 @@ int main(int argc, char **argv)
 	  double ki = (double) sol1.nlayer;
 	  double VarfaktS = vari/varj;
 	  double prefactor = (p->thb_no_hierarchical) ? 0.0 : (1.0/Ti-1.0/Tj)*thb_nlm/2.0*log(VarfaktS);
-	  double kfactor = p->thb_ockham ? log(ki) - log(kj) : 0.0;
+	  double kfactor = p->thb_ockham==TRUE ? log(ki) - log(kj) : 0.0;
 	  double probAcceptSwap = prefactor + (1.0/Ti-1.0/Tj)*(-0.5*(mdistj-mdisti) + kfactor);
 	  if( probAcceptSwap > 0 || probAcceptSwap > log(randDouble(rng)) ){
 	    /* accept the swap */
