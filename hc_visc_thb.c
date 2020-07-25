@@ -99,8 +99,8 @@ int thb_max_layers(int iter){
 }
 
 void propose_solution(struct hcs *model, struct thb_solution *old_solution, struct thb_solution *new_solution,gsl_rng *rng, int iter, struct hc_parameters *p){
-  const double visc_min = 19.0;
-  const double visc_max = 25.0;
+  const double visc_min = 18.0;
+  const double visc_max = 26.0;
   const double visc_range = visc_max - visc_min;
   const double visc_change = 0.1;
   
@@ -108,7 +108,7 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   const double rad_max = 1.0;
   const double rad_change = 0.05;      // shape parameter for proposal distribution
   const double rad_range = rad_max-rad_min;
-  const double drmin = 0.00;           // minimum layer thickness
+  const double drmin = 0.00784806;           // minimum layer thickness
   
   const double var_min = 1e-3;
   const double var_max = 1e6;
@@ -728,7 +728,7 @@ int main(int argc, char **argv)
       if( !rank ){
 	chain_temperature = 1.0;
       }else{      
-	chain_temperature = pow(10.0, ((double) rank)/((double) (size-1))*(log10(10.0)-log10(1.0)) );
+	chain_temperature = pow(10.0, ((double) rank)/((double) (size-1))*(log10(100.0)-log10(1.0)) );
       }
     }else{
       chain_temperature = 1.0;
