@@ -108,7 +108,7 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   const double rad_max = 1.0;
   const double rad_change = 0.05;      // shape parameter for proposal distribution
   const double rad_range = rad_max-rad_min;
-  const double drmin = 0.00785;           // minimum layer thickness
+  const double drmin = 0.00;           // minimum layer thickness
   
   const double var_min = 1e-3;
   const double var_max = 1e6;
