@@ -102,7 +102,7 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
   const double visc_min = 18.0;
   const double visc_max = 26.0;
   const double visc_range = visc_max - visc_min;
-  const double visc_change = 0.1;
+  const double visc_change = 0.05;
   
   const double rad_min = model->r_cmb;
   const double rad_max = 1.0;
@@ -181,7 +181,7 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
     if(random_choice == 0){
       // Add a control point at random
       double new_rad = rad_min + rad_range*randDouble(rng);
-      //double new_visc = visc_min + visc_range*randDouble(rng);
+      double new_visc = visc_min + visc_range*randDouble(rng);
       int i=0;
       while(new_solution->r[i] < new_rad && i < new_solution->nlayer)
 	i++;
@@ -194,9 +194,9 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
 	fprintf(stderr,"Error - inserted layer index doesn't make sense.\n");
 	exit(-1);
       }
-      double dr = new_solution->r[i+1]-new_solution->r[i-1];
-      double dvisc = new_solution->visc[i+1]-new_solution->visc[i-1];
-      double new_visc = new_solution->visc[i-1] + (new_rad - new_solution->r[i-1])*dvisc/dr + visc_change*randn(rng);
+      //double dr = new_solution->r[i+1]-new_solution->r[i-1];
+      //double dvisc = new_solution->visc[i+1]-new_solution->visc[i-1];
+      //double new_visc = new_solution->visc[i-1] + (new_rad - new_solution->r[i-1])*dvisc/dr + visc_change*randn(rng);
       
       new_solution->r[i] = new_rad;
       new_solution->visc[i] = new_visc;
@@ -728,7 +728,7 @@ int main(int argc, char **argv)
       if( !rank ){
 	chain_temperature = 1.0;
       }else{      
-	chain_temperature = pow(10.0, ((double) rank)/((double) (size-1))*(log10(100.0)-log10(1.0)) );
+	chain_temperature = pow(10.0, ((double) rank)/((double) (size-1))*(log10(50.0)-log10(1.0)) );
       }
     }else{
       chain_temperature = 1.0;
