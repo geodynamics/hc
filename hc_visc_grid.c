@@ -19,7 +19,10 @@
    
 */
 
-/* This version performs a grid-search to demonstrate the non-linearity of the problem */
+/* This version performs a grid-search to demonstrate the non-linearity of the inverse problem.
+   The code is setup to run a search over viscosity structures defined by four control points.
+   
+ */
 
 //helper functions
 int randInt(gsl_rng *rng,int n)//random integer in the range 0-n-1, inclusive
@@ -56,6 +59,17 @@ void print_solution(FILE *fh,struct thb_solution *sol){
 
 void interpolate_viscosity(struct thb_solution *solution,HC_PREC *rvisc,HC_PREC *visc, struct hc_parameters *p){
   const int nlayer = HC_INTERP_LAYERS;
+  {
+    int i1=0;
+    while(i1<solution->nlayer-1){
+      if(solution->r[i1] >= solution->r[i1+1]){
+	fprintf(stderr,"Layer %d cannot have r> layer %d\n",i1,i1+1);
+	exit(-10);
+      }
+      i1++;
+    }
+
+  }
   int i=0;
   int j=0;
   for(i=0;i<nlayer;i++){
@@ -611,7 +625,7 @@ int main(int argc, char **argv)
 		  hc_solve(model,p->free_slip,p->solution_mode,sol_spectral,
 			   (solved)?(FALSE):(TRUE), /* density changed? */
 			   (solved)?(FALSE):(TRUE), /* plate velocity changed? */
-			   TRUE,			/* viscosity changed */
+			   TRUE,		    /* viscosity changed */
 			   FALSE,p->compute_geoid,
 			   pvel,model->dens_anom,geoid,
 			   p->verbose); 
