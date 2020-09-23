@@ -557,8 +557,8 @@ int main(int argc, char **argv)
 
   /* Sweep through viscosity structures */
   const int visc_layers = 4;
-  const int nvisc = 16;
-  const int ndepth = 20;
+  const int nvisc = 20;
+  const int ndepth = 50;
   double *visc_list;
   double *depth_list;
   visc_list = (double *) malloc(nvisc*sizeof(double));
