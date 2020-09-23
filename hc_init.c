@@ -745,7 +745,7 @@ void hc_assign_viscosity(struct hcs *hc,int mode,
       for(i=1;i<nlayer-1;i++){
 	hc->rvisc[i] = hc->rvisc[i-1] + delta;
       }
-      hc->rvisc[nlayer-1] = 1.0;
+      hc->rvisc[nlayer-1] = 0.9843;
       /* Initialize viscosities as all zeros */
       for(i=0;i < hc->nvis;i++){
 	hc->visc[i] = 0.0;

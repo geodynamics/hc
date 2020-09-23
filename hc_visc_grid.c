@@ -63,7 +63,7 @@ void interpolate_viscosity(struct thb_solution *solution,HC_PREC *rvisc,HC_PREC 
     int i1=0;
     while(i1<solution->nlayer-1){
       if(solution->r[i1] >= solution->r[i1+1]){
-	fprintf(stderr,"Layer %d cannot have r> layer %d\n",i1,i1+1);
+	fprintf(stderr,"Layer %d cannot have r>= layer %d\n",i1,i1+1);
 	exit(-10);
       }
       i1++;
