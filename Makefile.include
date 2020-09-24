@@ -1,7 +1,7 @@
 #
 CC=mpicc
 GMTHOME=/home/rudolph/sw/gmt4
-GMTHOME=/opt/gmt4
+#GMTHOME=/opt/gmt4
 # for GMT3.4.5, use the next two lines
 #GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFHOME)/include  -DUSE_GMT3
 #GGRD_LIBS_LINKLINE = -lggrd -lgmt -lnetcdf 

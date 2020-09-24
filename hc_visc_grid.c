@@ -564,7 +564,7 @@ int main(int argc, char **argv)
   visc_list = (double *) malloc(nvisc*sizeof(double));
   depth_list = (double *) malloc(ndepth*sizeof(double));
   for(int i=0;i<nvisc;i++){
-    visc_list[i] = 19.0 + (25.0-19.0)/((double) nvisc-1)*((double) i);
+    visc_list[i] = 18.0 + (26.0-18.0)/((double) nvisc-1)*((double) i);
   }
   for(int i=0;i<ndepth;i++){
     depth_list[i] = model->r_cmb + (1.0-model->r_cmb)/((double) ndepth+1)*((double) i+1);
