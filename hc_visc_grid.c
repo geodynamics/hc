@@ -196,7 +196,7 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
     if(random_choice == 0){
       // Add a control point at random
       double new_rad = rad_min + rad_range*randDouble(rng);
-      //double new_visc = visc_min + visc_range*randDouble(rng);
+      double new_visc = visc_min + visc_range*randDouble(rng);
       int i=0;
       while(new_solution->r[i] < new_rad && i < new_solution->nlayer)
 	i++;
@@ -209,9 +209,9 @@ void propose_solution(struct hcs *model, struct thb_solution *old_solution, stru
 	fprintf(stderr,"Error - inserted layer index doesn't make sense.\n");
 	exit(-1);
       }
-      double dr = new_solution->r[i+1]-new_solution->r[i-1];
-      double dvisc = new_solution->visc[i+1]-new_solution->visc[i-1];
-      double new_visc = new_solution->visc[i-1] + (new_rad - new_solution->r[i-1])*dvisc/dr + visc_change*randn(rng);
+      //double dr = new_solution->r[i+1]-new_solution->r[i-1];
+      //double dvisc = new_solution->visc[i+1]-new_solution->visc[i-1];
+      //double new_visc = new_solution->visc[i-1] + (new_rad - new_solution->r[i-1])*dvisc/dr + visc_change*randn(rng);
       
       new_solution->r[i] = new_rad;
       new_solution->visc[i] = new_visc;
