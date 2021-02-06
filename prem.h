@@ -73,25 +73,16 @@ struct prem_model{
 functions
 
 */
-int prem_find_layer_x(double , double, double *,int ,int, double *);
-double prem_compute_pval(double  *, double *, int , double );
-double prem_compute_dpval(double *, double *, int , double );
-double prem_vs_voigt(double , double , double , double , 
-		    double);
-void prem_get_rhodrho(double *, double *,  double , struct prem_model *);
-void prem_get_rho(double *,double , struct prem_model *);
+int prem_find_layer_x(double, double, double *, int, int, double *);
+double prem_compute_pval(double *, double *, int, double);
+double prem_compute_dpval(double *, double *, int, double);
+double prem_vs_voigt(double, double, double, double, double);
+void prem_get_rhodrho(double *, double *, double, struct prem_model *);
+void prem_get_rho(double *, double, struct prem_model *);
+void prem_get_values(double *, double *, double *, double *, double *, double *, double *, double *, double *, double *, double, struct prem_model *);
+int prem_read_model(char *, struct prem_model *, unsigned short);
+int prem_read_para_set(double *, int, int, FILE *);
 
-void prem_get_values(double *, double *, double *, double *, 
-		     double *, double *, double *, double *, 
-		     double *, double *, double , 
-		     struct prem_model *);
-
-
-
-int prem_read_model(char *,struct prem_model *, 
-		     hc_boolean );
-
-int prem_read_para_set(double *, int , int ,FILE *);
 #define __READ_PREM_HEADER__
 
 #endif
