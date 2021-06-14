@@ -77,8 +77,8 @@ GGRD_OBJS = $(ODIR)/ggrd_velinterpol.o $(ODIR)/ggrd_readgrds.o \
 	$(ODIR)/ggrd_grdtrack_util.o $(ODIR)/sh_exp_ggrd.o $(PREM_OBJS)
 
 GGRD_OBJS_DBG = $(ODIR)/ggrd_velinterpol.dbg.o $(ODIR)/ggrd_readgrds.dbg.o $(ODIR)/ggrd_grdtrack_util.dbg.o 
-GGRD_DEFINES = -I$(GMTHOME)/include -I$(NETCDFHOME)/include  
-GGRD_LIB_FLAGS = -L$(GMTHOME)/lib -L$(NETCDFHOME)/lib 
+GGRD_DEFINES = -I$(GMT4HOME)/include -I$(NETCDFHOME)/include  
+GGRD_LIB_FLAGS = -L$(GMT4HOME)/lib -L$(NETCDFHOME)/lib 
 GGRD_LIBS = $(ODIR)/libggrd.a $(ODIR)/libggrd.dfast.a $(ODIR)/libggrd.dbg.a
 GGRD_LIBS_LINKLINE = $(GGRD_LIB_FLAGS) -lggrd -lpsl -lgmt -lnetcdf
 GGRD_INCS = $(PREM_INCS)  ggrd_grdtrack_util.h ggrd_base.h ggrd_struc.h hc_ggrd_auto_proto.h

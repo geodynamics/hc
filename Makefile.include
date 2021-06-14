@@ -9,9 +9,9 @@
 #ADD_FLAGS = -DHC_PRECISION=32 
 #
 # double precision
-ADD_FLAGS = 
+ADD_FLAGS = -fPIC 
 
 
-GGRD_INC_FLAGS = -I$(GMTHOME)/include -I$(NETCDFDIR)/include 
-GGRD_LIBS_LINKLINE = -lggrd -lgmt -lpsl -lnetcdf 
+GGRD_INC_FLAGS = -I$(GMT4HOME)/include -I$(NETCDFDIR)/include 
+GGRD_LIBS_LINKLINE = -lggrd -L$(GMT4HOME)/lib/ -lgmt -lpsl -lnetcdf 
 LDFLAGS = -L$(NETCDFDIR)/lib -lnetcdf

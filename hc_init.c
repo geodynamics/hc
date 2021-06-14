@@ -1382,7 +1382,7 @@ void  hc_init_single_plate_exp (filename, hc, pvel_in_binary, pvel, check_for_nr
 	check for net rotation
     */
     sh_get_coeff((pvel+1),1,0,0,TRUE,t10);
-    sh_get_coeff((pvel+1),1,0,2,TRUE,t11);
+    sh_get_coeff((pvel+1),1,1,2,TRUE,t11);
     nr_amp = fabs(t10[0])+fabs(t11[0])+fabs(t11[1]);
     if(nr_amp > 1.0e-7){
       fprintf(stderr,"\nhc_init_single_plate_exp: WARNING: toroidal NR A(1,0): %g A(1,1): %g B(1,1): %g\n\n",
@@ -1390,7 +1390,7 @@ void  hc_init_single_plate_exp (filename, hc, pvel_in_binary, pvel, check_for_nr
       if(remove_nr){		/* set NR coefficients to zero */
 	t10[0]=t10[1]=t11[0]=t11[1]=0.0;
 	sh_write_coeff((pvel+1),1,0,0,TRUE,t10);
-	sh_write_coeff((pvel+1),1,0,2,TRUE,t11);
+	sh_write_coeff((pvel+1),1,1,2,TRUE,t11);
 	fprintf(stderr,"hc_init_single_plate_exp: WARNING: setting those coefficients to zero\n");
       }
     }
