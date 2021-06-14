@@ -93,10 +93,13 @@ print a single scalar field to file
 
 */
 
-void hc_print_sh_scalar_field(struct sh_lms *sh, FILE *out, 
-			      hc_boolean short_format,
-			      hc_boolean binary, 
-			      hc_boolean verbose)
+void 
+hc_print_sh_scalar_field (sh, out, short_format, binary, verbose)
+struct sh_lms *sh;
+FILE *out;
+hc_boolean short_format;
+hc_boolean binary;
+hc_boolean verbose;
 {
   HC_CPREC fac[1] = {1.0};
   sh_print_parameters_to_stream(sh,1,0,1,0.0,out,
@@ -117,12 +120,16 @@ and pre is dat or bin, depending on ASCII or binary output.
 will also write the corresponding depth layers to dfilename
 
 */
-void hc_print_spatial_solution(struct hcs *hc, 
-			       struct sh_lms *sol,
-			       HC_PREC *sol_x, char *name, 
-			       char *dfilename, 
-			       int sol_mode, hc_boolean binary, 
-			       hc_boolean verbose)
+void 
+hc_print_spatial_solution (hc, sol, sol_x, name, dfilename, sol_mode, binary, verbose)
+struct hcs *hc;
+struct sh_lms *sol;
+HC_PREC *sol_x;
+char *name;
+char *dfilename;
+int sol_mode;
+hc_boolean binary;
+hc_boolean verbose;
 {
   int i,j,k,os[3],los,np,np2,np3;
   FILE *file_dummy=NULL,*out,*dout;
@@ -223,8 +230,11 @@ void hc_print_spatial_solution(struct hcs *hc,
 print the depth layers solution
 
 */
-void hc_print_depth_layers(struct hcs *hc, FILE *out, 
-			   hc_boolean verbose)
+void 
+hc_print_depth_layers (hc, out, verbose)
+struct hcs *hc;
+FILE *out;
+hc_boolean verbose;
 {
   int i;
   /* number of solution sets of ntype solutions */
@@ -238,7 +248,10 @@ void hc_print_depth_layers(struct hcs *hc, FILE *out,
 print a [3][3] matrix
 
 */
-void hc_print_3x3(HC_PREC a[3][3], FILE *out)
+void 
+hc_print_3x3 (a, out)
+HC_PREC a[3][3];
+FILE *out;
   {
   int i,j;
   for(i=0;i<3;i++){
@@ -252,7 +265,10 @@ void hc_print_3x3(HC_PREC a[3][3], FILE *out)
 print a [6][4] solution matrix
 
 */
-void hc_print_sm(HC_PREC a[6][4], FILE *out)
+void 
+hc_print_sm (a, out)
+HC_PREC a[6][4];
+FILE *out;
 {
   int i,j;
   for(i=0;i < 6;i++){
@@ -262,15 +278,23 @@ void hc_print_sm(HC_PREC a[6][4], FILE *out)
   }
 }
 
-void hc_print_vector(HC_PREC *a, int n,FILE *out)
+void 
+hc_print_vector (a, n, out)
+HC_PREC *a;
+int n;
+FILE *out;
 {
   int i;
   for(i=0;i<n;i++)
     fprintf(out,"%11.4e ",(double)a[i]);
   fprintf(out,"\n");
 }
-void hc_print_vector_label(HC_PREC *a, int n,FILE *out,
-			   char *label)
+void 
+hc_print_vector_label (a, n, out, label)
+HC_PREC *a;
+int n;
+FILE *out;
+char *label;
 {
   int i;
   fprintf(out,"%s: ",label);
@@ -278,8 +302,13 @@ void hc_print_vector_label(HC_PREC *a, int n,FILE *out,
     fprintf(out,"%11.4e ",(double)a[i]);
   fprintf(out,"\n");
 }
-void hc_print_matrix_label(HC_PREC *a, int m,
-			   int n,FILE *out,char *label)
+void 
+hc_print_matrix_label (a, m, n, out, label)
+HC_PREC *a;
+int m;
+int n;
+FILE *out;
+char *label;
 {
   int i,j;
   for(j=0;j<m;j++){
@@ -291,7 +320,11 @@ void hc_print_matrix_label(HC_PREC *a, int m,
 }
 
 
-void hc_print_vector_row(HC_PREC *a, int n,FILE *out)
+void 
+hc_print_vector_row (a, n, out)
+HC_PREC *a;
+int n;
+FILE *out;
 {
   int i;
   for(i=0;i<n;i++)
@@ -302,11 +335,13 @@ void hc_print_vector_row(HC_PREC *a, int n,FILE *out)
    compute the r, theta, phi fac[3] scaling factors for the solution
    output
 */
-void hc_compute_solution_scaling_factors(struct hcs *hc,
-					 int sol_mode,
-					 HC_PREC radius,
-					 HC_PREC viscosity,
-					 HC_PREC *fac)
+void 
+hc_compute_solution_scaling_factors (hc, sol_mode, radius, viscosity, fac)
+struct hcs *hc;
+int sol_mode;
+HC_PREC radius;
+HC_PREC viscosity;
+HC_PREC *fac;
 {
 
  switch(sol_mode){
@@ -331,12 +366,14 @@ void hc_compute_solution_scaling_factors(struct hcs *hc,
 output of poloidal solution up to l_max 
 
 */
-void hc_print_poloidal_solution(struct sh_lms *pol_sol,
-				struct hcs *hc,
-				int l_max, char *filename,
-				hc_boolean convert_to_dt, /* convert spherical harmonic coefficients 
-							     to Dahlen & Tromp format */
-				hc_boolean verbose)
+void 
+hc_print_poloidal_solution (pol_sol, hc, l_max, filename, convert_to_dt, verbose)
+struct sh_lms *pol_sol;
+struct hcs *hc;
+int l_max;
+char *filename;
+hc_boolean convert_to_dt;
+hc_boolean verbose;
 {
   int l,m,i,j,a_or_b,ll,nl,os,alim;
   FILE *out;
@@ -376,10 +413,14 @@ void hc_print_poloidal_solution(struct sh_lms *pol_sol,
 /* 
    print toroidal solution vector (kernel), not expansion
 */
-void hc_print_toroidal_solution(HC_PREC *tvec,int lmax,
-				struct hcs *hc,int l_max_out, 
-				char *filename,
-				hc_boolean verbose)
+void 
+hc_print_toroidal_solution (tvec, lmax, hc, l_max_out, filename, verbose)
+HC_PREC *tvec;
+int lmax;
+struct hcs *hc;
+int l_max_out;
+char *filename;
+hc_boolean verbose;
 {
   FILE *out;
   int ll,l,i,nl,lmaxp1,os,os2;
@@ -411,10 +452,18 @@ print a simple VTK file given already expanded input
 
 */
 
-void hc_print_vtk(FILE *out,HC_PREC *xloc,HC_PREC *xvec,
-		  int npoints_orig,int nlay,
-		  hc_boolean binary,int shps_d,
-		  HC_PREC *xscalar,int nlon, int nlat)
+void 
+hc_print_vtk (out, xloc, xvec, npoints_orig, nlay, binary, shps_d, xscalar, nlon, nlat)
+FILE *out;
+HC_PREC *xloc;
+HC_PREC *xvec;
+int npoints_orig;
+int nlay;
+hc_boolean binary;
+int shps_d;
+HC_PREC *xscalar;
+int nlon;
+int nlat;
 {
   int i,ilay,ndata,poff,j,ndata_d,nele_lay,nele_x,nele_y,
     npe,npe1,ncon[12],k,nleft,nlon_m1,npoints,
@@ -653,8 +702,12 @@ void hc_print_vtk(FILE *out,HC_PREC *xloc,HC_PREC *xvec,
    print big endian binary to file, no matter what hardware
    in HC_BIN_PREC precision
 */
-int hc_print_be_float(HC_PREC *x, int n, FILE *out, 
-		       hc_boolean little_endian)
+int 
+hc_print_be_float (x, n, out, little_endian)
+HC_PREC *x;
+int n;
+FILE *out;
+hc_boolean little_endian;
 {
   int i,ret;
   HC_BIN_PREC *xcopy;
@@ -677,7 +730,11 @@ int hc_print_be_float(HC_PREC *x, int n, FILE *out,
 }
 
 /* print binary to file */
-int hc_print_float(HC_PREC *x, int n, FILE *out)
+int 
+hc_print_float (x, n, out)
+HC_PREC *x;
+int n;
+FILE *out;
 {
   int i,ret;
   HC_BIN_PREC *xcopy;
@@ -690,7 +747,11 @@ int hc_print_float(HC_PREC *x, int n, FILE *out)
   return ret;
 }
 /* read binary from file */
-int hc_read_float(HC_PREC *x, int n, FILE *in)
+int 
+hc_read_float (x, n, in)
+HC_PREC *x;
+int n;
+FILE *in;
 {
   int i,ret;
   HC_BIN_PREC *xcopy;
@@ -704,8 +765,12 @@ int hc_read_float(HC_PREC *x, int n, FILE *in)
 }
 
 
-void hc_print_be_int(int *x, int n, FILE *out, 
-		     hc_boolean little_endian)
+void 
+hc_print_be_int (x, n, out, little_endian)
+int *x;
+int n;
+FILE *out;
+hc_boolean little_endian;
 {
   int i, *xcopy;
   const size_t len = sizeof(int);
@@ -725,7 +790,8 @@ void hc_print_be_int(int *x, int n, FILE *out,
 /* 
    check if we're on a little endian machine
  */
-hc_boolean hc_is_little_endian(void)
+hc_boolean 
+hc_is_little_endian ()
 {
   static const unsigned long a = 1;
   return *(const unsigned char *)&a;
@@ -763,9 +829,12 @@ void hc_flipit(void *d, void *s, size_t len)
     *dest++ = *src--;
 }
 /* print the density anomaly field interpolated to the nodal radii */
-void hc_print_dens_anom(struct hcs *hc, 
-			FILE *out, hc_boolean binary,
-			hc_boolean verbose)
+void 
+hc_print_dens_anom (hc, out, binary, verbose)
+struct hcs *hc;
+FILE *out;
+hc_boolean binary;
+hc_boolean verbose;
 {
   int i,i1,i2;
   HC_PREC f1,f2;
@@ -795,8 +864,13 @@ void hc_print_dens_anom(struct hcs *hc,
   
   sh_free_expansion(exp,3);
 }
-void hc_print_geoid_kernel(struct sh_lms *gk, HC_PREC *r,int nradp2, FILE *out,
-			   hc_boolean verbose)
+void 
+hc_print_geoid_kernel (gk, r, nradp2, out, verbose)
+struct sh_lms *gk;
+HC_PREC *r;
+int nradp2;
+FILE *out;
+hc_boolean verbose;
 {
   HC_PREC value[2];
   int i, l,lmax;

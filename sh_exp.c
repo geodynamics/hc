@@ -15,9 +15,15 @@ $Id: sh_exp.c,v 1.15 2006/03/20 05:32:48 becker Exp becker $
 allocates and initializes spherical harmonics structure
 
 */
-void sh_allocate_and_init(struct sh_lms **exp, int n,int lmax, 
-			  int type, int ivec, hc_boolean verbose,
-			  hc_boolean regular)
+void 
+sh_allocate_and_init (exp, n, lmax, type, ivec, verbose, regular)
+struct sh_lms **exp;
+int n;
+int lmax;
+int type;
+int ivec;
+hc_boolean verbose;
+hc_boolean regular;
 {
   int i;
   /* init as zeroes! (but this won't necessarily set the logic flags!) */
@@ -43,8 +49,14 @@ coefficients are initialized as zero
 if regular is set, will not use Gauss points
 
 */
-void sh_init_expansion(struct sh_lms *exp, int lmax, int type, 
-		       int ivec, hc_boolean verbose,hc_boolean regular)
+void 
+sh_init_expansion (exp, lmax, type, ivec, verbose, regular)
+struct sh_lms *exp;
+int lmax;
+int type;
+int ivec;
+hc_boolean verbose;
+hc_boolean regular;
 {
   /* 
      initialize logic flags 
@@ -164,7 +176,10 @@ void sh_init_expansion(struct sh_lms *exp, int lmax, int type,
 /* 
    free an expansion structure with n elements
 */
-void sh_free_expansion(struct sh_lms *exp, int n)
+void 
+sh_free_expansion (exp, n)
+struct sh_lms *exp;
+int n;
 {
   int i;
   for(i=0;i<n;i++){
@@ -195,7 +210,9 @@ void sh_free_expansion(struct sh_lms *exp, int n)
 /* 
    zero out all coefficients
 */
-void sh_clear_alm(struct sh_lms *exp)
+void 
+sh_clear_alm (exp)
+struct sh_lms *exp;
 {
   int i;
   switch(exp->type){
@@ -228,7 +245,9 @@ compute | \Psi | ^2 = \sum (2l+1) \sigma^2
 kindof RMS^2
 
 */
-HC_CPREC sh_total_power(struct sh_lms *exp)
+HC_CPREC 
+sh_total_power (exp)
+struct sh_lms *exp;
 {
   HC_PREC *power;
   double sum;
@@ -247,8 +266,10 @@ compute the power (sigma^2) per degree and unit area
 power[lmaxp1]
 
 */
-void sh_compute_power_per_degree(struct sh_lms *exp, 
-				 HC_PREC *power)
+void 
+sh_compute_power_per_degree (exp, power)
+struct sh_lms *exp;
+HC_PREC *power;
 {
   int l,m;
   HC_CPREC value[2];
@@ -267,13 +288,22 @@ void sh_compute_power_per_degree(struct sh_lms *exp,
   } /* end l loop */
 }
 /* compute total correlation up to llim */
-HC_PREC sh_correlation(struct sh_lms *exp1, struct sh_lms *exp2, int llim)
+HC_PREC 
+sh_correlation (exp1, exp2, llim)
+struct sh_lms *exp1;
+struct sh_lms *exp2;
+int llim;
 {
   return sh_correlation_per_degree(exp1,exp2,1,llim);
 }
 
 
-HC_PREC sh_correlation_per_degree(struct sh_lms *exp1, struct sh_lms *exp2, int lmin,int lmax)
+HC_PREC 
+sh_correlation_per_degree (exp1, exp2, lmin, lmax)
+struct sh_lms *exp1;
+struct sh_lms *exp2;
+int lmin;
+int lmax;
 {
   int l,m;
   HC_CPREC sum[3],tmp,atmp,btmp,ctmp,value1[2],value2[2];
@@ -314,8 +344,12 @@ HC_PREC sh_correlation_per_degree(struct sh_lms *exp1, struct sh_lms *exp2, int 
   tmp = sqrt(sum[1]*sum[2]);
   return sum[0]/tmp;
 }
-void sh_single_par_and_exp_to_file(struct sh_lms *exp, char *name,
-				   hc_boolean binary,hc_boolean verbose)
+void 
+sh_single_par_and_exp_to_file (exp, name, binary, verbose)
+struct sh_lms *exp;
+char *name;
+hc_boolean binary;
+hc_boolean verbose;
 {
   FILE *out;
   out = fopen(name,"w");
@@ -331,8 +365,12 @@ void sh_single_par_and_exp_to_file(struct sh_lms *exp, char *name,
 
 
 
-void sh_single_par_and_exp_to_stream(struct sh_lms *exp, FILE *out,
-				     hc_boolean binary,hc_boolean verbose)
+void 
+sh_single_par_and_exp_to_stream (exp, out, binary, verbose)
+struct sh_lms *exp;
+FILE *out;
+hc_boolean binary;
+hc_boolean verbose;
 {
   HC_PREC fac[1]={1.0};
   const hc_boolean short_format = FALSE;
@@ -359,10 +397,17 @@ if short_format is selected, will only print
 lmax
 
 */
-void sh_print_parameters_to_stream(struct sh_lms *exp, int shps,
-				   int ilayer, int nset,HC_CPREC zlabel,
-				   FILE *out, hc_boolean short_format,
-				   hc_boolean binary,hc_boolean verbose)
+void 
+sh_print_parameters_to_stream (exp, shps, ilayer, nset, zlabel, out, short_format, binary, verbose)
+struct sh_lms *exp;
+int shps;
+int ilayer;
+int nset;
+HC_CPREC zlabel;
+FILE *out;
+hc_boolean short_format;
+hc_boolean binary;
+hc_boolean verbose;
 {
   HC_PREC fz;
   /* 
@@ -441,15 +486,19 @@ void sh_print_parameters_to_stream(struct sh_lms *exp, int shps,
    
    
 */
-hc_boolean sh_read_parameters_from_stream(int *type, int *lmax, 
-					  int *shps,
-					  int *ilayer, int *nset,
-					  HC_CPREC *zlabel,
-					  int *ivec,
-					  FILE *in, 
-					  hc_boolean short_format,
-					  hc_boolean binary,
-					  hc_boolean verbose)
+hc_boolean 
+sh_read_parameters_from_stream (type, lmax, shps, ilayer, nset, zlabel, ivec, in, short_format, binary, verbose)
+int *type;
+int *lmax;
+int *shps;
+int *ilayer;
+int *nset;
+HC_CPREC *zlabel;
+int *ivec;
+FILE *in;
+hc_boolean short_format;
+hc_boolean binary;
+hc_boolean verbose;
 {
   int input1[2],input2[3];
   HC_PREC fz;
@@ -565,11 +614,14 @@ hc_boolean sh_read_parameters_from_stream(int *type, int *lmax,
    fac[3] scales the coefficients
 
 */
-void sh_print_coefficients_to_stream(struct sh_lms *exp, 
-				     int shps, FILE *out, 
-				     HC_CPREC *fac,
-				     hc_boolean binary, 
-				     hc_boolean verbose)
+void 
+sh_print_coefficients_to_stream (exp, shps, out, fac, binary, verbose)
+struct sh_lms *exp;
+int shps;
+FILE *out;
+HC_CPREC *fac;
+hc_boolean binary;
+hc_boolean verbose;
 {
   int j,l,m;
   HC_PREC value[2];
@@ -634,9 +686,15 @@ lmax: -1: use lmax from expansion
 
 
 */
-void sh_read_coefficients_from_stream(struct sh_lms *exp, int shps, int lmax,
-				      FILE *in, hc_boolean binary, HC_CPREC *fac,
-				      hc_boolean verbose)
+void 
+sh_read_coefficients_from_stream (exp, shps, lmax, in, binary, fac, verbose)
+struct sh_lms *exp;
+int shps;
+int lmax;
+FILE *in;
+hc_boolean binary;
+HC_CPREC *fac;
+hc_boolean verbose;
 {
   int j,k,l,m,lmax_loc;
   HC_CPREC value[2]={0,0};
@@ -709,7 +767,10 @@ void sh_read_coefficients_from_stream(struct sh_lms *exp, int shps, int lmax,
 }
 /* print a raw set of coefficients to out if nonzero, for
    debugging  */
-void sh_print_nonzero_coeff(struct sh_lms *exp,FILE *out)
+void 
+sh_print_nonzero_coeff (exp, out)
+struct sh_lms *exp;
+FILE *out;
 {
   int l,m;
   HC_CPREC value[2];
@@ -742,8 +803,14 @@ lon lat z data
 instead
 
 */
-void sh_read_spatial_data_from_stream(struct sh_lms *exp, FILE *in, my_boolean use_3d, int shps, HC_PREC *data, 
-				      HC_PREC *z)
+void 
+sh_read_spatial_data_from_stream (exp, in, use_3d, shps, data, z)
+struct sh_lms *exp;
+FILE *in;
+my_boolean use_3d;
+int shps;
+HC_PREC *data;
+HC_PREC *z;
 {
   sh_read_spatial_data(exp,in,use_3d,shps,data,z);
 }
@@ -752,7 +819,14 @@ void sh_read_spatial_data_from_stream(struct sh_lms *exp, FILE *in, my_boolean u
 generic function
 
 */
-void sh_read_spatial_data(struct sh_lms *exp, FILE *in,my_boolean use_3d, int shps, HC_PREC *data, HC_PREC *z)
+void 
+sh_read_spatial_data (exp, in, use_3d, shps, data, z)
+struct sh_lms *exp;
+FILE *in;
+my_boolean use_3d;
+int shps;
+HC_PREC *data;
+HC_PREC *z;
 
 {
   HC_PREC lon,lat,xp[3];
@@ -877,11 +951,15 @@ void sh_read_spatial_data(struct sh_lms *exp, FILE *in,my_boolean use_3d, int sh
    else will use x[] and store the values
 
 */
-void sh_compute_spatial_basis(struct sh_lms *exp, FILE *out, 
-			      hc_boolean use_3d,
-			      HC_PREC z, HC_PREC **x,
-			      int out_mode, /* 0: file 1: store */
-			      hc_boolean verbose)
+void 
+sh_compute_spatial_basis (exp, out, use_3d, z, x, out_mode, verbose)
+struct sh_lms *exp;
+FILE *out;
+hc_boolean use_3d;
+HC_PREC z;
+HC_PREC **x;
+int out_mode;
+hc_boolean verbose;
 {
   int j,os,inc;
   HC_PREC xp[3];
@@ -989,9 +1067,14 @@ input/output:
 	     IVEC = 1
 
 */
-void sh_compute_spectral(HC_PREC *data, int ivec,
-			 hc_boolean save_plm,SH_RICK_PREC **plm,
-			 struct sh_lms *exp, hc_boolean verbose)
+void 
+sh_compute_spectral (data, ivec, save_plm, plm, exp, verbose)
+HC_PREC *data;
+int ivec;
+hc_boolean save_plm;
+SH_RICK_PREC **plm;
+struct sh_lms *exp;
+hc_boolean verbose;
 {
   if(save_plm){
     /* 
@@ -1086,9 +1169,14 @@ input/output: data
 the DATA array has to be exp->npoints * (1 + ivec) = exp->tnpoints
 
 */
-void sh_compute_spatial(struct sh_lms *exp, int ivec,
-			hc_boolean save_plm,SH_RICK_PREC **plm,
-			HC_PREC *data, hc_boolean verbose)
+void 
+sh_compute_spatial (exp, ivec, save_plm, plm, data, verbose)
+struct sh_lms *exp;
+int ivec;
+hc_boolean save_plm;
+SH_RICK_PREC **plm;
+HC_PREC *data;
+hc_boolean verbose;
 {
   if((!exp[0].spectral_init)||(ivec && !exp[1].spectral_init)){
     fprintf(stderr,"sh_compute_spatial: coefficients set not initialized, ivec: %i\n",
@@ -1164,12 +1252,19 @@ phi arrays of npoints length
 cos(theta) and phi are cos(colatitude) and longitude in radians
 
 */
-void sh_compute_spatial_reg(struct sh_lms *exp, int ivec,
-			    hc_boolean save_plm,SH_RICK_PREC **plm,
-			    HC_PREC *theta, int ntheta, 
-			    HC_PREC *phi,int nphi,
-			    HC_PREC *data, hc_boolean verbose, 
-			    hc_boolean save_sincos_fac)
+void 
+sh_compute_spatial_reg (exp, ivec, save_plm, plm, theta, ntheta, phi, nphi, data, verbose, save_sincos_fac)
+struct sh_lms *exp;
+int ivec;
+hc_boolean save_plm;
+SH_RICK_PREC **plm;
+HC_PREC *theta;
+int ntheta;
+HC_PREC *phi;
+int nphi;
+HC_PREC *data;
+hc_boolean verbose;
+hc_boolean save_sincos_fac;
 {
   int npoints;
   npoints = nphi * ntheta;
@@ -1220,9 +1315,15 @@ void sh_compute_spatial_reg(struct sh_lms *exp, int ivec,
     break;
   }
 }
-void sh_compute_spatial_irreg(struct sh_lms *exp, int ivec,
-			      HC_PREC *theta, HC_PREC *phi,int npoints,
-			      HC_PREC *data, hc_boolean verbose)
+void 
+sh_compute_spatial_irreg (exp, ivec, theta, phi, npoints, data, verbose)
+struct sh_lms *exp;
+int ivec;
+HC_PREC *theta;
+HC_PREC *phi;
+int npoints;
+HC_PREC *data;
+hc_boolean verbose;
 {
   if((!exp[0].spectral_init)||(ivec && !exp[1].spectral_init)){
     fprintf(stderr,"sh_compute_spatial_irreg: coefficients set not initialized, ivec: %i\n",
@@ -1261,7 +1362,10 @@ print an error message and exit if a spherical harmonics type is not
 defined
 
 */
-void sh_exp_type_error(char *subroutine,struct sh_lms *exp)
+void 
+sh_exp_type_error (subroutine, exp)
+char *subroutine;
+struct sh_lms *exp;
 {
   fprintf(stderr,"%s: error: spherical harmonics type %i undefined\n",
 	  subroutine,exp->type);
@@ -1272,8 +1376,13 @@ void sh_exp_type_error(char *subroutine,struct sh_lms *exp)
 print the Plm factors
 
 */
-void sh_print_plm(SH_RICK_PREC *plm, int n_plm, int ivec, int type,
-		  FILE *out)
+void 
+sh_print_plm (plm, n_plm, ivec, type, out)
+SH_RICK_PREC *plm;
+int n_plm;
+int ivec;
+int type;
+FILE *out;
 {
   int i,j,jlim;
   switch(type){
@@ -1320,9 +1429,14 @@ else  : coordinates = lon lat
 shps is the number of scalars that are passed in the data[shps * npoints] array
 
 */
-void sh_print_spatial_data_to_stream(struct sh_lms *exp, int shps, 
-				     HC_PREC *data, hc_boolean use_3d,
-				     HC_PREC z, FILE *out)
+void 
+sh_print_spatial_data_to_stream (exp, shps, data, use_3d, z, out)
+struct sh_lms *exp;
+int shps;
+HC_PREC *data;
+hc_boolean use_3d;
+HC_PREC z;
+FILE *out;
 {
   int j,k;
   HC_PREC lon,lat;
@@ -1345,8 +1459,12 @@ void sh_print_spatial_data_to_stream(struct sh_lms *exp, int shps,
   }	/* end points in lateral space loop */
 }
 
-void sh_get_coordinates(struct sh_lms *exp,
-		       int i, HC_PREC *lon, HC_PREC *lat)
+void 
+sh_get_coordinates (exp, i, lon, lat)
+struct sh_lms *exp;
+int i;
+HC_PREC *lon;
+HC_PREC *lat;
 {
   HC_PREC xp[3];
   switch(exp->type){
@@ -1397,11 +1515,18 @@ void sh_get_coordinates(struct sh_lms *exp,
 regular grid version
 
 */
-void sh_print_reg_spatial_data_to_stream(struct sh_lms *exp, int shps, 
-					 HC_PREC *data, hc_boolean use_3d,
-					 HC_PREC z, HC_PREC *theta,int ntheta,
-					 HC_PREC *phi,int nphi,
-					 FILE *out)
+void 
+sh_print_reg_spatial_data_to_stream (exp, shps, data, use_3d, z, theta, ntheta, phi, nphi, out)
+struct sh_lms *exp;
+int shps;
+HC_PREC *data;
+hc_boolean use_3d;
+HC_PREC z;
+HC_PREC *theta;
+int ntheta;
+HC_PREC *phi;
+int nphi;
+FILE *out;
 {
   int i,j,k,l,npoints;
   HC_PREC lon,lat;
@@ -1452,10 +1577,17 @@ void sh_print_reg_spatial_data_to_stream(struct sh_lms *exp, int shps,
 irregular, arbitrary version
 
 */
-void sh_print_irreg_spatial_data_to_stream(struct sh_lms *exp, int shps, 
-					   HC_PREC *data, hc_boolean use_3d,
-					   HC_PREC z, HC_PREC *theta,HC_PREC *phi,int npoints,
-					   FILE *out)
+void 
+sh_print_irreg_spatial_data_to_stream (exp, shps, data, use_3d, z, theta, phi, npoints, out)
+struct sh_lms *exp;
+int shps;
+HC_PREC *data;
+hc_boolean use_3d;
+HC_PREC z;
+HC_PREC *theta;
+HC_PREC *phi;
+int npoints;
+FILE *out;
 {
   int i,k;
   HC_PREC lon,lat;
@@ -1510,9 +1642,12 @@ output:
 plm: will be re-allocated, has to be passed at least as NULL
 
 */
-void sh_compute_plm(struct sh_lms *exp,int ivec,
-		    SH_RICK_PREC **plm,
-		    hc_boolean verbose)
+void 
+sh_compute_plm (exp, ivec, plm, verbose)
+struct sh_lms *exp;
+int ivec;
+SH_RICK_PREC **plm;
+hc_boolean verbose;
 {
   if(!exp->plm_computed){
     if((!exp->lmax)||(!exp->n_plm)||(!exp->tn_plm)){
@@ -1603,10 +1738,14 @@ output:
 plm: will be re-allocated, has to be passed at least as NULL
 
 */
-void sh_compute_plm_reg(struct sh_lms *exp,int ivec,
-			SH_RICK_PREC **plm,
-			hc_boolean verbose, 
-			HC_PREC *theta, int npoints)
+void 
+sh_compute_plm_reg (exp, ivec, plm, verbose, theta, npoints)
+struct sh_lms *exp;
+int ivec;
+SH_RICK_PREC **plm;
+hc_boolean verbose;
+HC_PREC *theta;
+int npoints;
 {
   /*  */
   exp->tn_plm_irr = (1+ivec) * exp->lmsmall2 * npoints;
@@ -1688,8 +1827,13 @@ stored in
 for m==0, B will be returned as zero
 
 */
-void sh_get_coeff(struct sh_lms *exp,int l, int m, int use_b, 
-		  hc_boolean phys_norm, HC_CPREC *value)
+void  sh_get_coeff (exp, l, m, use_b, phys_norm, value)
+     struct sh_lms *exp;
+     int l;
+     int m;
+     int use_b;
+     hc_boolean phys_norm;
+     HC_CPREC *value;
 {
 #ifdef HC_USE_HEALPIX
   const HC_CPREC sqrt2 = SQRT_TWO;
@@ -1791,9 +1935,13 @@ if use_b = 2: write A and B coefficient from value[0] and value[1]
 
 
 */
-void sh_write_coeff(struct sh_lms *exp,int l, int m, 
-		    int use_b,hc_boolean phys_norm, 
-		    HC_CPREC *value)
+void sh_write_coeff (exp, l, m, use_b, phys_norm, value)
+     struct sh_lms *exp;
+     int l;
+     int m;
+     int use_b;
+     hc_boolean phys_norm;
+     HC_CPREC *value;
 {
 #ifdef HC_USE_HEALPIX
   const HC_CPREC sqrt2 = SQRT_TWO;
@@ -1884,9 +2032,14 @@ void sh_write_coeff(struct sh_lms *exp,int l, int m,
   }
 }
 
-void sh_add_coeff(struct sh_lms *exp,int l, int m, 
-		    int use_b,hc_boolean phys_norm, 
-		    HC_CPREC *value)
+void 
+sh_add_coeff (exp, l, m, use_b, phys_norm, value)
+struct sh_lms *exp;
+int l;
+int m;
+int use_b;
+hc_boolean phys_norm;
+HC_CPREC *value;
 {
 #ifdef HC_USE_HEALPIX
   const HC_CPREC sqrt2 = SQRT_TWO;
@@ -1965,7 +2118,10 @@ void sh_add_coeff(struct sh_lms *exp,int l, int m,
 
 
 */
-void sh_copy_lms(struct sh_lms *a, struct sh_lms *b)
+void 
+sh_copy_lms (a, b)
+struct sh_lms *a;
+struct sh_lms *b;
 {
 
   b->type = a->type;
@@ -1999,7 +2155,10 @@ void sh_copy_lms(struct sh_lms *a, struct sh_lms *b)
    a = b
 
 */
-void sh_aexp_equals_bexp_coeff(struct sh_lms *a, struct sh_lms *b)
+void 
+sh_aexp_equals_bexp_coeff (a, b)
+struct sh_lms *a;
+struct sh_lms *b;
 {
   int i;
   if(a->type != b->type){
@@ -2047,7 +2206,11 @@ void sh_aexp_equals_bexp_coeff(struct sh_lms *a, struct sh_lms *b)
 }
 /* sum two expansions, c = a + b */
 
-void sh_c_is_a_plus_b_coeff(struct sh_lms *c, struct sh_lms *a, struct sh_lms *b)
+void 
+sh_c_is_a_plus_b_coeff (c, a, b)
+struct sh_lms *c;
+struct sh_lms *a;
+struct sh_lms *b;
 {
   int i;
   if((a->type != b->type)||(b->type != c->type)){
@@ -2095,7 +2258,10 @@ which only depends on l
 
 
 */
-void sh_scale_expansion_l_factor(struct sh_lms *exp, HC_CPREC *lfac)
+void 
+sh_scale_expansion_l_factor (exp, lfac)
+struct sh_lms *exp;
+HC_CPREC *lfac;
 {
   int l,m,index;
   HC_CPREC fac;
@@ -2136,7 +2302,10 @@ void sh_scale_expansion_l_factor(struct sh_lms *exp, HC_CPREC *lfac)
 /* 
    scale all coefficients 
 */
-void sh_scale_expansion(struct sh_lms *exp, HC_CPREC fac)
+void 
+sh_scale_expansion (exp, fac)
+struct sh_lms *exp;
+HC_CPREC fac;
 {
   int l,m,index;
   switch(exp->type){

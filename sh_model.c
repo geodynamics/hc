@@ -34,9 +34,16 @@ order: sorting order of skymap
 
 
 */
-void sh_init_model(struct sh_lms_model *model,int lmax,int type,
-		   int nset, int ivec, int nside, int order, 
-		   hc_boolean verbose)
+void 
+sh_init_model (model, lmax, type, nset, ivec, nside, order, verbose)
+struct sh_lms_model *model;
+int lmax;
+int type;
+int nset;
+int ivec;
+int nside;
+int order;
+hc_boolean verbose;
 {
   int i;
   if(nset <= 0){
@@ -108,7 +115,9 @@ void sh_init_model(struct sh_lms_model *model,int lmax,int type,
 /* 
    free a model structure 
 */
-void sh_free_model(struct sh_lms_model *model)
+void 
+sh_free_model (model)
+struct sh_lms_model *model;
 {
   free(model->z);
   sh_free_expansion(model->exp,model->nexp);
@@ -153,9 +162,12 @@ depend on the type of expansion
 z_i is the label for this set
 
 */
-void sh_print_model_coefficients(struct sh_lms_model *model, 
-				 FILE *out,hc_boolean binary,
-				 hc_boolean verbose)
+void 
+sh_print_model_coefficients (model, out, binary, verbose)
+struct sh_lms_model *model;
+FILE *out;
+hc_boolean binary;
+hc_boolean verbose;
 {
   int i;
   HC_CPREC *fac;
@@ -191,9 +203,11 @@ if z has been read in, else it's zero
 
 
 */
-void sh_print_model_spatial_basis(struct sh_lms_model *model, 
-				  FILE *out, 
-				  hc_boolean verbose)
+void 
+sh_print_model_spatial_basis (model, out, verbose)
+struct sh_lms_model *model;
+FILE *out;
+hc_boolean verbose;
 {
   int i;
   HC_PREC **flt_dummy=NULL;
@@ -228,9 +242,12 @@ void sh_print_model_spatial_basis(struct sh_lms_model *model,
    data has to be initialized, eg. as NULL
    
 */
-void sh_read_model_spatial_data(struct sh_lms_model *model, 
-				HC_PREC **data,FILE *in,
-				hc_boolean verbose)
+void 
+sh_read_model_spatial_data (model, data, in, verbose)
+struct sh_lms_model *model;
+HC_PREC **data;
+FILE *in;
+hc_boolean verbose;
 {
   int i,j;
   /* 
@@ -274,9 +291,11 @@ void sh_read_model_spatial_data(struct sh_lms_model *model,
    several sets. this calls the spherical harmonics routines
    
 */
-void sh_compute_model_spectral(struct sh_lms_model *model,
-			       HC_PREC *data,
-			       hc_boolean verbose)
+void 
+sh_compute_model_spectral (model, data, verbose)
+struct sh_lms_model *model;
+HC_PREC *data;
+hc_boolean verbose;
 {
   int i;
   const int unity = 1,zero = 0;
@@ -316,8 +335,11 @@ expand the coefficients of a model into the spatial space
 pass data initialized at least at NULL
 
 */
-void sh_compute_model_spatial(struct sh_lms_model *model,
-			      HC_PREC **data,hc_boolean verbose)
+void 
+sh_compute_model_spatial (model, data, verbose)
+struct sh_lms_model *model;
+HC_PREC **data;
+hc_boolean verbose;
 {
   int i;
   const int unity = 1, zero = 0;
@@ -364,9 +386,12 @@ void sh_compute_model_spatial(struct sh_lms_model *model,
 print a whole model of spatial data with different levels
 
 */
-void sh_print_model_spatial_data(struct sh_lms_model *model,
-				 HC_PREC *data, FILE *out,
-				 hc_boolean verbose)
+void 
+sh_print_model_spatial_data (model, data, out, verbose)
+struct sh_lms_model *model;
+HC_PREC *data;
+FILE *out;
+hc_boolean verbose;
 {
   int i,j,os;
   os = 0;

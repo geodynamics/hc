@@ -137,7 +137,11 @@ void hc_evalpa(int l,HC_HIGH_PREC r1,HC_HIGH_PREC r2,HC_HIGH_PREC visc, HC_HIGH_
   p[3*4+1] *= v2;
 }
 
-void hc_evppot(int l,HC_HIGH_PREC ratio, HC_HIGH_PREC *ppot)
+void 
+hc_evppot (l, ratio, ppot)
+int l;
+HC_HIGH_PREC ratio;
+HC_HIGH_PREC *ppot;
 {
   //    ********************************************
   //    * THIS SUBROUTINE OBTAINS THE POTENTIALS   *

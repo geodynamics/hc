@@ -25,8 +25,9 @@ $Id: hc_matrix.c,v 1.10 2006/03/20 05:32:48 becker Exp $
 #define FALSE 0
 #define HC_EPS_PREC 5e-15
 void hc_ludcmp_3x3(HC_PREC [3][3],int,int *);
-void hc_lubksb_3x3(HC_PREC [3][3],int,int *,HC_PREC *);
-int main(void){
+void hc_lubksb_3x3();
+int 
+main (){
   HC_PREC amat[3][3],bvec[3];int i,j,indx[3];
   char fstring[10];
   /* read in A from stdin */
@@ -120,7 +121,12 @@ void hc_ludcmp_3x3(HC_PREC a[3][3],int n,int *indx)
 }
 
 #undef NR_TINY
-void hc_lubksb_3x3(HC_PREC a[3][3], int n,int *indx, HC_PREC *b)
+void 
+hc_lubksb_3x3 (a, n, indx, b)
+HC_PREC a[3][3];
+int n;
+int *indx;
+HC_PREC *b;
 {
   int i,ii=0,ip,j;
   HC_PREC sum;

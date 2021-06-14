@@ -10,7 +10,8 @@ extern void vshd2c(int *,double *,double *,double *,double *,int *,
 extern void gauleg(double *,double *,double*,double *,int*);
 
 
-void main(void)
+void 
+main ()
 {
   int lmax,nlat,nlon,lmsize,i,j,index;
   double *datax,*datay,*cpol,*ctor,*z,*w,unity,negunity;

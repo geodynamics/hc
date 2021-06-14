@@ -26,7 +26,13 @@ void shana_compute_allplm(int lmax,int ivec,double *plm,
 // detemine the colatidude and longitude of PIxel index
 // where index goes from 0 ... (nlon * nlat)-1
 // */
-void shana_pix2ang(int index, int lmax, double *theta,double *phi, struct shana_module *shana) {
+void 
+shana_pix2ang (index, lmax, theta, phi, shana)
+int index;
+int lmax;
+double *theta;
+double *phi;
+struct shana_module *shana; {
   int  i,j;
   if(!shana->initialized){
     fprintf(stderr,"shana_pix2ang: error: shana module not initialized\n");
@@ -44,10 +50,15 @@ void shana_pix2ang(int index, int lmax, double *theta,double *phi, struct shana_
 }
 
 
-void shana_shc2d(HC_CPREC *cslm,HC_CPREC *dslm,
-		int lmax,int ivec,
-		HC_CPREC *rdatax,HC_CPREC *rdatay,
-		struct shana_module *shana)
+void 
+shana_shc2d (cslm, dslm, lmax, ivec, rdatax, rdatay, shana)
+HC_CPREC *cslm;
+HC_CPREC *dslm;
+int lmax;
+int ivec;
+HC_CPREC *rdatax;
+HC_CPREC *rdatay;
+struct shana_module *shana;
 {
   //
   // Transforms spherical harmonic coefficients of a scalar (ivec = 0)
@@ -110,10 +121,17 @@ void shana_shc2d(HC_CPREC *cslm,HC_CPREC *dslm,
 /* //
 // the actual routine to go from spectral to spatial: added structure shana
 // */
-void shana_shc2d_pre(HC_CPREC *cslm,HC_CPREC *dslm,
-		    int lmax,double *plm, double *dplm,
-		    int ivec,float *rdatax,float *rdatay, 
-		    struct shana_module *shana)
+void 
+shana_shc2d_pre (cslm, dslm, lmax, plm, dplm, ivec, rdatax, rdatay, shana)
+HC_CPREC *cslm;
+HC_CPREC *dslm;
+int lmax;
+double *plm;
+double *dplm;
+int ivec;
+float *rdatax;
+float *rdatay;
+struct shana_module *shana;
 {
   /* //
   // Legendre functions are precomputed
@@ -254,9 +272,15 @@ void shana_shc2d_pre(HC_CPREC *cslm,HC_CPREC *dslm,
   
 }
 
-void shana_shd2c(HC_CPREC *rdatax,HC_CPREC *rdatay,
-		int lmax,int ivec,HC_CPREC *cslm,
-		HC_CPREC *dslm,struct shana_module *shana)
+void 
+shana_shd2c (rdatax, rdatay, lmax, ivec, cslm, dslm, shana)
+HC_CPREC *rdatax;
+HC_CPREC *rdatay;
+int lmax;
+int ivec;
+HC_CPREC *cslm;
+HC_CPREC *dslm;
+struct shana_module *shana;
 {
   //
   //	Calculates spherical harmonic coefficients cslm(l,m) of
@@ -332,10 +356,17 @@ void shana_shd2c(HC_CPREC *rdatax,HC_CPREC *rdatay,
 // the actual routine to go from spatial to spectral, 
 // for comments, see above
 //
-void shana_shd2c_pre(HC_CPREC *rdatax,HC_CPREC *rdatay,
-		    int lmax,double *plm,double *dplm,int ivec,
-		    HC_CPREC *cslm,HC_CPREC *dslm, 
-		    struct shana_module *shana)
+void 
+shana_shd2c_pre (rdatax, rdatay, lmax, plm, dplm, ivec, cslm, dslm, shana)
+HC_CPREC *rdatax;
+HC_CPREC *rdatay;
+int lmax;
+double *plm;
+double *dplm;
+int ivec;
+HC_CPREC *cslm;
+HC_CPREC *dslm;
+struct shana_module *shana;
 {
   // local
   HC_CPREC *valuex, *valuey;
@@ -489,8 +520,14 @@ void shana_shd2c_pre(HC_CPREC *rdatax,HC_CPREC *rdatay,
 //
 // if ivec == 1, will initialize for velocities/polarizations
 //
-void shana_init(int lmax,int ivec,int *npoints,int *nplm,
-	       int *tnplm, struct shana_module *shana)
+void 
+shana_init (lmax, ivec, npoints, nplm, tnplm, shana)
+int lmax;
+int ivec;
+int *npoints;
+int *nplm;
+int *tnplm;
+struct shana_module *shana;
 {
 
   // input: lmax,ivec			
@@ -619,7 +656,10 @@ void shana_init(int lmax,int ivec,int *npoints,int *nplm,
 //
 // free all arrays that were allocate for the module   
 //
-void shana_free_module(struct shana_module *shana, int ivec)
+void 
+shana_free_module (shana, ivec)
+struct shana_module *shana;
+int ivec;
 {
   // input: ivec
   
@@ -637,8 +677,14 @@ void shana_free_module(struct shana_module *shana, int ivec)
     free(shana->ell_factor);free(shana->sin_theta);
   }
 }
-void shana_plmbar1(double  *p,double *dp,int ivec,int lmax,
-		   HC_CPREC z, struct shana_module *shana)
+void 
+shana_plmbar1 (p, dp, ivec, lmax, z, shana)
+double *p;
+double *dp;
+int ivec;
+int lmax;
+HC_CPREC z;
+struct shana_module *shana;
 {
  
   double plm,pm1,pm2,pmm,sintsq,fnum,fden;

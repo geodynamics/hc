@@ -207,11 +207,16 @@ THESE SOLUTIONS WILL NEED TO BE SCALED WITH CONSTANTS AS GIVEN IN
 hc_compute_solution_scaling_factors
 
 */
-void hc_sum(struct hcs *hc,
-	    int nrad,struct sh_lms *pol_sol, struct sh_lms *tor_sol, 
-	    int solve_mode,hc_boolean free_slip, 
-	    struct sh_lms *sol, 
-	    hc_boolean verbose)
+void 
+hc_sum (hc, nrad, pol_sol, tor_sol, solve_mode, free_slip, sol, verbose)
+struct hcs *hc;
+int nrad;
+struct sh_lms *pol_sol;
+struct sh_lms *tor_sol;
+int solve_mode;
+hc_boolean free_slip;
+struct sh_lms *sol;
+hc_boolean verbose;
 {
   int itchoose,irchoose,ipchoose; /* indices for which solutions to use */
   int i,j,i3,i6;
@@ -292,8 +297,12 @@ sol[nradp2 * 3 ]
 
 data has to be initialized, eg. as NULL
 */
-void hc_compute_sol_spatial(struct hcs *hc, struct sh_lms *sol_w,
-			    HC_PREC **sol_x, hc_boolean verbose)
+void 
+hc_compute_sol_spatial (hc, sol_w, sol_x, verbose)
+struct hcs *hc;
+struct sh_lms *sol_w;
+HC_PREC **sol_x;
+hc_boolean verbose;
 {
   int i,i3,np,np2,np3,os;
   static int ntype = 3;
@@ -329,10 +338,13 @@ void hc_compute_sol_spatial(struct hcs *hc, struct sh_lms *sol_w,
 
 
 */
-void hc_compute_dynamic_topography(struct hcs *hc,struct sh_lms *spectral_sol,
-				   struct sh_lms **dtopo,
-				   hc_boolean scale_from_MPa_to_m,
-				   hc_boolean verbose)
+void 
+hc_compute_dynamic_topography (hc, spectral_sol, dtopo, scale_from_MPa_to_m, verbose)
+struct hcs *hc;
+struct sh_lms *spectral_sol;
+struct sh_lms **dtopo;
+hc_boolean scale_from_MPa_to_m;
+hc_boolean verbose;
 {
   HC_PREC scale;
   const int shps = 3;	   /* radial component of stress */
@@ -380,14 +392,16 @@ void hc_compute_dynamic_topography(struct hcs *hc,struct sh_lms *spectral_sol,
    corr[3],solved
 */
 
-void hc_calc_geoid_corr_four_layer(HC_PREC *log_eta,
-				   struct sh_lms *geoid,
-				   struct sh_lms *sol_spectral,
-				   struct sh_lms *pvel,
-				   struct hc_parameters *p,
-				   struct hcs *model,
-				   hc_boolean *solved,
-				   HC_PREC *corr)
+void 
+hc_calc_geoid_corr_four_layer (log_eta, geoid, sol_spectral, pvel, p, model, solved, corr)
+HC_PREC *log_eta;
+struct sh_lms *geoid;
+struct sh_lms *sol_spectral;
+struct sh_lms *pvel;
+struct hc_parameters *p;
+struct hcs *model;
+hc_boolean *solved;
+HC_PREC *corr;
 {
   /* layer viscosity structure */
   /* 

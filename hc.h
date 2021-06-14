@@ -168,6 +168,7 @@ struct hc_ps{
 			   requested  */
   int solver_kludge_l;		/* for treating higher orders
 				   differently  */
+
   /* for solve */
   hc_boolean tor_init, pol_init;
 };
@@ -202,7 +203,7 @@ struct hc_parameters{
 
   int pvel_mode;		/* plate velocity mode */
   HC_PREC pvel_time;		/* time to use */
-
+  hc_boolean remove_nr;		/* remove net rotation from plate models? */
   int solver_kludge_l;		/* for CMB BC tricks */
 
   hc_boolean solver_mode;	

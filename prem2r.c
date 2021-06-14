@@ -23,7 +23,7 @@ int main(int argc,char **argv)
 
   prem_read_model(filename,prem,TRUE);
 
-  dr=.0001;			/* in km */
+  dr=.00001;			/* in km */
   
   drh=dr/2;
 
@@ -34,13 +34,15 @@ int main(int argc,char **argv)
   gp = (double *)malloc(sizeof(double));
   
   n=0;
-  /* integrate mass and compute M(r) and g(r) */
+  /* 
+     integrate mass and compute M(r) and g(r) 
+  */
   for(r=dr;r <= HC_RE_KM;r += dr){
     z = HC_RE_KM-r;
     rnd = r/HC_RE_KM;
     mfac = fm(rnd,&rho,prem);
     m += drh * (mfac+old_mfac);
-    if(r-old_r >= .1-1e-7){
+    if(r-old_r >= .05-1e-7){
       zp[n] = z;mp[n] = m;
       gp[n] = HC_CAPITAL_G * m/(r*r*1e6); /* compute g */
       n++;
@@ -57,10 +59,12 @@ int main(int argc,char **argv)
 
   
   p = (double *)calloc(n,sizeof(double));
-  /* compute pressure from overburden */
+  /* 
+     compute pressure from overburden, mid point method
+  */
   for(i=n-2;i>=0;i--){
-    prem_get_rho(&rho,(HC_RE_KM-zp[i])/HC_RE_KM,prem);
-    prem_get_rho(&rho2,(HC_RE_KM-zp[i+1])/HC_RE_KM,prem);
+    prem_get_rho(&rho, (HC_RE_KM - zp[i]  )/HC_RE_KM,prem);
+    prem_get_rho(&rho2,(HC_RE_KM - zp[i+1])/HC_RE_KM,prem);
     p[i] = p[i+1] + (gp[i]*rho + gp[i+1]*rho2)/2.*(zp[i]-zp[i+1])*1e3;
   }
 
@@ -69,7 +73,9 @@ int main(int argc,char **argv)
     r = HC_RE_KM-zp[i];
     rnd = r/HC_RE_KM;
     prem_get_rho(&rho,rnd,prem);
-    fprintf(stdout,"%11g %11g %12.8e %12.8e %12.8e %12.8e\n",zp[i],r,rho,mp[i],gp[i],p[i]);
+    /* output is z[km] r rho mp gp p  */
+    if(fabs(zp[i]-(int)zp[i]) < 0.01)
+      fprintf(stdout,"%11g %11g %12.8e %12.8e %12.8e %12.8e\n",zp[i],r,rho,mp[i],gp[i],p[i]);
   }
   
   free(mp);free(gp);free(p);free(zp);

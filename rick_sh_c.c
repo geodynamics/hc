@@ -27,9 +27,15 @@ void rick_compute_allplm(int lmax,int ivec,SH_RICK_PREC *plm,
 // theta array their derviatives with respect to theta, if ivec is set
 // to 1 */
 
-void rick_compute_allplm_reg(int lmax,int ivec,SH_RICK_PREC *plm,
-			     SH_RICK_PREC *dplm, struct rick_module *rick, 
-			     SH_RICK_PREC *theta, int ntheta) 
+void 
+rick_compute_allplm_reg (lmax, ivec, plm, dplm, rick, theta, ntheta)
+int lmax;
+int ivec;
+SH_RICK_PREC *plm;
+SH_RICK_PREC *dplm;
+struct rick_module *rick;
+SH_RICK_PREC *theta;
+int ntheta; 
 {
   int i,os;
   
@@ -45,8 +51,13 @@ void rick_compute_allplm_reg(int lmax,int ivec,SH_RICK_PREC *plm,
 // detemine the colatidude and longitude of PIxel index
 // where index goes from 0 ... nlon * nlat-1
 // */
-void rick_pix2ang(int index, int lmax, SH_RICK_PREC *theta, 
-		  SH_RICK_PREC *phi, struct rick_module *rick) {
+void 
+rick_pix2ang (index, lmax, theta, phi, rick)
+int index;
+int lmax;
+SH_RICK_PREC *theta;
+SH_RICK_PREC *phi;
+struct rick_module *rick; {
   int  i,j;
   if(!rick->initialized){
     fprintf(stderr,"rick_pix2ang: error: rick module not initialized\n");
@@ -64,10 +75,15 @@ void rick_pix2ang(int index, int lmax, SH_RICK_PREC *theta,
 }
 
 
-void rick_shc2d(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
-		int lmax,int ivec,
-		SH_RICK_PREC *rdatax,SH_RICK_PREC *rdatay,
-		struct rick_module *rick)
+void 
+rick_shc2d (cslm, dslm, lmax, ivec, rdatax, rdatay, rick)
+SH_RICK_PREC *cslm;
+SH_RICK_PREC *dslm;
+int lmax;
+int ivec;
+SH_RICK_PREC *rdatax;
+SH_RICK_PREC *rdatay;
+struct rick_module *rick;
 {
   //
   // Transforms spherical harmonic coefficients of a scalar (ivec = 0)
@@ -129,12 +145,20 @@ void rick_shc2d(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
 converts on regular basis with locations cos(theta)[], phi[]  long
 
 */
-void rick_shc2d_reg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
-		      int lmax,int ivec,
-		      SH_RICK_PREC *rdatax,SH_RICK_PREC *rdatay,
-		      struct rick_module *rick,SH_RICK_PREC *theta, int ntheta, 
-		      SH_RICK_PREC *phi,int nphi, 
-		      hc_boolean save_sincos_fac)
+void 
+rick_shc2d_reg (cslm, dslm, lmax, ivec, rdatax, rdatay, rick, theta, ntheta, phi, nphi, save_sincos_fac)
+SH_RICK_PREC *cslm;
+SH_RICK_PREC *dslm;
+int lmax;
+int ivec;
+SH_RICK_PREC *rdatax;
+SH_RICK_PREC *rdatay;
+struct rick_module *rick;
+SH_RICK_PREC *theta;
+int ntheta;
+SH_RICK_PREC *phi;
+int nphi;
+hc_boolean save_sincos_fac;
 {
   SH_RICK_PREC *plm,*dplm;
   if(!rick->initialized){
@@ -164,10 +188,17 @@ void rick_shc2d_reg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
 /* //
 // the actual routine to go from spectral to spatial: added structure rick
 // */
-void rick_shc2d_pre(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
-		    int lmax,SH_RICK_PREC *plm, SH_RICK_PREC *dplm,
-		    int ivec,SH_RICK_PREC *rdatax,SH_RICK_PREC *rdatay, 
-		    struct rick_module *rick)
+void 
+rick_shc2d_pre (cslm, dslm, lmax, plm, dplm, ivec, rdatax, rdatay, rick)
+SH_RICK_PREC *cslm;
+SH_RICK_PREC *dslm;
+int lmax;
+SH_RICK_PREC *plm;
+SH_RICK_PREC *dplm;
+int ivec;
+SH_RICK_PREC *rdatax;
+SH_RICK_PREC *rdatay;
+struct rick_module *rick;
 {
   /* //
   // Legendre functions are precomputed
@@ -315,12 +346,22 @@ with nphi values in each column, located at phi[], and ntheta values
 in each row at theta[]
 
 */
-void rick_shc2d_pre_reg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
-			int lmax,SH_RICK_PREC *plm, SH_RICK_PREC *dplm,
-			int ivec,SH_RICK_PREC *rdatax,SH_RICK_PREC *rdatay, 
-			struct rick_module *rick, SH_RICK_PREC *theta, 
-			int ntheta,SH_RICK_PREC *phi,int nphi,
-			my_boolean save_sincos_fac)
+void 
+rick_shc2d_pre_reg (cslm, dslm, lmax, plm, dplm, ivec, rdatax, rdatay, rick, theta, ntheta, phi, nphi, save_sincos_fac)
+SH_RICK_PREC *cslm;
+SH_RICK_PREC *dslm;
+int lmax;
+SH_RICK_PREC *plm;
+SH_RICK_PREC *dplm;
+int ivec;
+SH_RICK_PREC *rdatax;
+SH_RICK_PREC *rdatay;
+struct rick_module *rick;
+SH_RICK_PREC *theta;
+int ntheta;
+SH_RICK_PREC *phi;
+int nphi;
+my_boolean save_sincos_fac;
 {
   /* //
   // Legendre functions are precomputed
@@ -455,10 +496,18 @@ void rick_shc2d_pre_reg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
   }
 }
 /* completely irregular output */
-void rick_shc2d_irreg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
-		      int lmax,int ivec,SH_RICK_PREC *rdatax,SH_RICK_PREC *rdatay, 
-		      struct rick_module *rick, SH_RICK_PREC *theta,
-		      SH_RICK_PREC *phi,int npoints)
+void 
+rick_shc2d_irreg (cslm, dslm, lmax, ivec, rdatax, rdatay, rick, theta, phi, npoints)
+SH_RICK_PREC *cslm;
+SH_RICK_PREC *dslm;
+int lmax;
+int ivec;
+SH_RICK_PREC *rdatax;
+SH_RICK_PREC *rdatay;
+struct rick_module *rick;
+SH_RICK_PREC *theta;
+SH_RICK_PREC *phi;
+int npoints;
 {
   /* //
   // Legendre functions are precomputed
@@ -567,9 +616,15 @@ void rick_shc2d_irreg(SH_RICK_PREC *cslm,SH_RICK_PREC *dslm,
   }	/* end vector part */
 }
 
-void rick_shd2c(SH_RICK_PREC *rdatax,SH_RICK_PREC *rdatay,
-		int lmax,int ivec,SH_RICK_PREC *cslm,
-		SH_RICK_PREC *dslm,struct rick_module *rick)
+void 
+rick_shd2c (rdatax, rdatay, lmax, ivec, cslm, dslm, rick)
+SH_RICK_PREC *rdatax;
+SH_RICK_PREC *rdatay;
+int lmax;
+int ivec;
+SH_RICK_PREC *cslm;
+SH_RICK_PREC *dslm;
+struct rick_module *rick;
 {
   //
   //	Calculates spherical harmonic coefficients cslm(l,m) of
@@ -645,10 +700,17 @@ void rick_shd2c(SH_RICK_PREC *rdatax,SH_RICK_PREC *rdatay,
 // the actual routine to go from spatial to spectral, 
 // for comments, see above
 //
-void rick_shd2c_pre(SH_RICK_PREC *rdatax,SH_RICK_PREC *rdatay,
-		    int lmax,SH_RICK_PREC *plm,SH_RICK_PREC *dplm,int ivec,
-		    SH_RICK_PREC *cslm,SH_RICK_PREC *dslm, 
-		    struct rick_module *rick)
+void 
+rick_shd2c_pre (rdatax, rdatay, lmax, plm, dplm, ivec, cslm, dslm, rick)
+SH_RICK_PREC *rdatax;
+SH_RICK_PREC *rdatay;
+int lmax;
+SH_RICK_PREC *plm;
+SH_RICK_PREC *dplm;
+int ivec;
+SH_RICK_PREC *cslm;
+SH_RICK_PREC *dslm;
+struct rick_module *rick;
 {
   // local
   SH_RICK_PREC *valuex, *valuey;
@@ -804,9 +866,15 @@ void rick_shd2c_pre(SH_RICK_PREC *rdatax,SH_RICK_PREC *rdatay,
 //
 /* if regular is set, will not initialize the Gauss quadrature
    points */
-void rick_init(int lmax,int ivec,int *npoints,int *nplm,
-	       int *tnplm, struct rick_module *rick,
-	       hc_boolean regular)
+void 
+rick_init (lmax, ivec, npoints, nplm, tnplm, rick, regular)
+int lmax;
+int ivec;
+int *npoints;
+int *nplm;
+int *tnplm;
+struct rick_module *rick;
+hc_boolean regular;
 {
 
   // input: lmax,ivec			
@@ -950,7 +1018,10 @@ void rick_init(int lmax,int ivec,int *npoints,int *nplm,
 //
 // free all arrays that were allocate for the module   
 //
-void rick_free_module(struct rick_module *rick, int ivec)
+void 
+rick_free_module (rick, ivec)
+struct rick_module *rick;
+int ivec;
 {
   // input: ivec
   
@@ -969,9 +1040,14 @@ void rick_free_module(struct rick_module *rick, int ivec)
   }
   
 }
-void rick_plmbar1(SH_RICK_PREC  *p,SH_RICK_PREC *dp,
-		  int ivec,int lmax,
-		  SH_RICK_PREC z, struct rick_module *rick)
+void 
+rick_plmbar1 (p, dp, ivec, lmax, z, rick)
+SH_RICK_PREC *p;
+SH_RICK_PREC *dp;
+int ivec;
+int lmax;
+SH_RICK_PREC z;
+struct rick_module *rick;
 {
   //
   //     Evaluates normalized associated Legendre function P(l,m), plm,
@@ -1205,8 +1281,13 @@ void rick_plmbar1(SH_RICK_PREC  *p,SH_RICK_PREC *dp,
 // 0..n-1
 //       
 //     
-void rick_gauleg(SH_RICK_PREC x1, SH_RICK_PREC x2, 
-		 SH_RICK_PREC *x, SH_RICK_PREC *w,int n)
+void 
+rick_gauleg (x1, x2, x, w, n)
+SH_RICK_PREC x1;
+SH_RICK_PREC x2;
+SH_RICK_PREC *x;
+SH_RICK_PREC *w;
+int n;
 {
   //
   // local variables

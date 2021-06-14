@@ -20,21 +20,33 @@ void hc_hvecalloc(HC_HIGH_PREC **x,int n,char *message)
     HC_MEMERROR(message);
 }
 /* double */
-void hc_dvecalloc(double **x,int n,char *message)
+void 
+hc_dvecalloc (x, n, message)
+double **x;
+int n;
+char *message;
 {
   *x = (double *)malloc(sizeof(double)*(size_t)n);
   if(! (*x))
     HC_MEMERROR(message);
 }
 /* single prec vector allocation */
-void hc_svecalloc(float **x,int n,char *message)
+void 
+hc_svecalloc (x, n, message)
+float **x;
+int n;
+char *message;
 {
   *x = (float *)malloc(sizeof(float)*(size_t)n);
   if(! (*x))
     HC_MEMERROR(message);
 }
 /* integer vector allocation */
-void hc_ivecalloc(int **x,int n,char *message)
+void 
+hc_ivecalloc (x, n, message)
+int **x;
+int n;
+char *message;
 {
   *x = (int *)malloc(sizeof(int)*(size_t)n);
   if(! (*x))
@@ -43,35 +55,55 @@ void hc_ivecalloc(int **x,int n,char *message)
 
 
 /* general floating point vector allocation */
-void hc_vecalloc(HC_PREC **x,int n,char *message)
+void 
+hc_vecalloc (x, n, message)
+HC_PREC **x;
+int n;
+char *message;
 {
   *x = (HC_PREC *)malloc(sizeof(HC_PREC)*(size_t)n);
   if(! (*x))
     HC_MEMERROR(message);
 }
 /* single prec complex vector allocation */
-void hc_scmplx_vecalloc(struct hc_scmplx **x,int n,char *message)
+void 
+hc_scmplx_vecalloc (x, n, message)
+struct hc_scmplx **x;
+int n;
+char *message;
 {
   *x = (struct hc_scmplx *)malloc(sizeof(struct hc_scmplx)*(size_t)n);
   if(! (*x))
     HC_MEMERROR(message);
 }
 /* single vector reallocation */
-void hc_svecrealloc(float **x,int n,char *message)
+void 
+hc_svecrealloc (x, n, message)
+float **x;
+int n;
+char *message;
 {
   *x = (float *)realloc(*x,sizeof(float)*(size_t)n);
   if(!(*x))
     HC_MEMERROR(message);
 }
 /* HC_HIGH_PREC vector reallocation */
-void hc_dvecrealloc(HC_HIGH_PREC **x,int n,char *message)
+void 
+hc_dvecrealloc (x, n, message)
+HC_HIGH_PREC **x;
+int n;
+char *message;
 {
   *x = (HC_HIGH_PREC *)realloc(*x,sizeof(HC_HIGH_PREC)*(size_t)n);
   if(!(*x))
     HC_MEMERROR(message);
 }
 /* general version */
-void hc_vecrealloc(HC_PREC **x,int n,char *message)
+void 
+hc_vecrealloc (x, n, message)
+HC_PREC **x;
+int n;
+char *message;
 {
   *x = (HC_PREC *)realloc(*x,sizeof(HC_PREC)*(size_t)n);
   if(!(*x))
@@ -80,7 +112,11 @@ void hc_vecrealloc(HC_PREC **x,int n,char *message)
 /* 
    sqrt(sum(squared diff)) between [n] vectors a and b
 */
-float hc_vec_rms_diff(HC_PREC *a,HC_PREC *b,int n)
+float 
+hc_vec_rms_diff (a, b, n)
+HC_PREC *a;
+HC_PREC *b;
+int n;
 {
   int i;
   HC_PREC sum=0.0,tmp;
@@ -90,7 +126,10 @@ float hc_vec_rms_diff(HC_PREC *a,HC_PREC *b,int n)
   }
   return sqrt(sum/n);
 }
-float hc_vec_rms(HC_PREC *a,int n)
+float 
+hc_vec_rms (a, n)
+HC_PREC *a;
+int n;
 {
   int i;
   HC_PREC sum=0.0;
@@ -100,17 +139,28 @@ float hc_vec_rms(HC_PREC *a,int n)
   return sqrt(sum/n);
 }
 /* a[n] = b[n], single precision version */
-void hc_a_equals_b_svector(float *a,float *b,int n)
+void 
+hc_a_equals_b_svector (a, b, n)
+float *a;
+float *b;
+int n;
 {
   memcpy(a,b,sizeof(float)*n);
 }
 /* general version */
-void hc_a_equals_b_vector(HC_PREC *a,HC_PREC *b,int n)
+void 
+hc_a_equals_b_vector (a, b, n)
+HC_PREC *a;
+HC_PREC *b;
+int n;
 {
   memcpy(a,b,sizeof(HC_PREC)*n);
 }
 /* compute the mean of a single precision vector */
-float hc_mean_svec(float *x,int n)
+float 
+hc_mean_svec (x, n)
+float *x;
+int n;
 {
   float sum=0.0;
   int i;
@@ -121,7 +171,10 @@ float hc_mean_svec(float *x,int n)
   return sum;
 }
 /* compute the mean of a vector */
-HC_PREC hc_mean_vec(HC_PREC *x,int n)
+HC_PREC 
+hc_mean_vec (x, n)
+HC_PREC *x;
+int n;
 {
   HC_PREC sum=0.0;
   int i;
@@ -133,14 +186,20 @@ HC_PREC hc_mean_vec(HC_PREC *x,int n)
 }
 
 /* zero a HC_HIGH_PREC precision vector */
-void hc_zero_dvector(HC_HIGH_PREC *x, int n)
+void 
+hc_zero_dvector (x, n)
+HC_HIGH_PREC *x;
+int n;
 {
   int i;
   for(i=0;i<n;i++)
     x[i] = 0.0;
 }
 /* zero a vector of type logical */
-void hc_zero_lvector(hc_boolean *x, int n)
+void 
+hc_zero_lvector (x, n)
+hc_boolean *x;
+int n;
 {
   int i;
   for(i=0;i<n;i++)
@@ -155,8 +214,11 @@ if append is TRUE, will add a format string, else will create
 anew 
 
 */
-void hc_get_flt_frmt_string(char *string, int n, 
-			    hc_boolean append)
+void 
+hc_get_flt_frmt_string (string, n, append)
+char *string;
+int n;
+hc_boolean append;
 {
   static hc_boolean init=FALSE;	/* that's OK, multiple instances calling are fine */
   static char type_s[3];
@@ -181,7 +243,9 @@ void hc_get_flt_frmt_string(char *string, int n,
 }
 //
 // deal with boolean values/switches
-char *hc_name_boolean(hc_boolean value)
+char *
+hc_name_boolean (value)
+hc_boolean value;
 {
   if(value)
     return("ON");
@@ -189,7 +253,9 @@ char *hc_name_boolean(hc_boolean value)
     return("OFF");
 }
 
-hc_boolean hc_toggle_boolean(hc_boolean *variable)
+hc_boolean 
+hc_toggle_boolean (variable)
+hc_boolean *variable;
 {
   if(*variable){
     *variable=FALSE;
@@ -203,7 +269,11 @@ hc_boolean hc_toggle_boolean(hc_boolean *variable)
 // check, if we can read a value for the option flag in a chain of command line
 // arguments
 //
-void hc_advance_argument(int *i,int argc, char **argv)
+void 
+hc_advance_argument (i, argc, argv)
+int *i;
+int argc;
+char **argv;
 {
   if(argc <= *i + 1){// no arguments left
     fprintf(stderr,"%s: input parameters: error: option \"%s\" needs a value\n",
@@ -220,8 +290,13 @@ void hc_advance_argument(int *i,int argc, char **argv)
         2 : up to 20, and between 4...9, and between 2...4
 
  */
-void hc_compute_correlation(struct sh_lms *g1,struct sh_lms *g2,
-			    HC_PREC *c,int mode,hc_boolean verbose)
+void 
+hc_compute_correlation (g1, g2, c, mode, verbose)
+struct sh_lms *g1;
+struct sh_lms *g2;
+HC_PREC *c;
+int mode;
+hc_boolean verbose;
 {
   int lmaxg;
   lmaxg = HC_MIN(g1->lmax,g1->lmax);
@@ -259,8 +334,12 @@ void hc_compute_correlation(struct sh_lms *g1,struct sh_lms *g2,
 
 */
 
-void lonlatpv2cv(HC_PREC lon, float lat, 
-		 HC_PREC *polar_vec,HC_PREC *cart_vec)
+void 
+lonlatpv2cv (lon, lat, polar_vec, cart_vec)
+HC_PREC lon;
+float lat;
+HC_PREC *polar_vec;
+HC_PREC *cart_vec;
 {
   HC_PREC theta,phi;
   theta = LAT2THETA((HC_HIGH_PREC)lat);
@@ -268,17 +347,23 @@ void lonlatpv2cv(HC_PREC lon, float lat,
   thetaphipv2cv(theta,phi,polar_vec,cart_vec);
 }
 /* theta, phi version */
-void thetaphipv2cv(HC_PREC theta, float phi, 
-		   HC_PREC *polar_vec,HC_PREC *cart_vec)
+void 
+thetaphipv2cv (theta, phi, polar_vec, cart_vec)
+HC_PREC theta;
+float phi;
+HC_PREC *polar_vec;
+HC_PREC *cart_vec;
 {
   HC_HIGH_PREC polar_base[9];
   calc_polar_base_at_theta_phi(theta,phi,polar_base);
   lonlatpv2cv_with_base(polar_vec,polar_base,cart_vec);
 }
 
-void lonlatpv2cv_with_base(HC_PREC *polar_vec,
-			   HC_HIGH_PREC *polar_base,
-			   HC_PREC *cart_vec)
+void 
+lonlatpv2cv_with_base (polar_vec, polar_base, cart_vec)
+HC_PREC *polar_vec;
+HC_HIGH_PREC *polar_base;
+HC_PREC *cart_vec;
 {
   int i;
   // convert vector
@@ -288,8 +373,11 @@ void lonlatpv2cv_with_base(HC_PREC *polar_vec,
     cart_vec[i] += polar_base[6+i] * polar_vec[2];
   }
 }
-void calc_polar_base_at_theta_phi(HC_PREC theta, HC_PREC phi, 
-				  HC_HIGH_PREC *polar_base)
+void 
+calc_polar_base_at_theta_phi (theta, phi, polar_base)
+HC_PREC theta;
+HC_PREC phi;
+HC_HIGH_PREC *polar_base;
 {
   HC_HIGH_PREC cp,sp,ct,st;
   // base vecs
@@ -315,9 +403,15 @@ void calc_polar_base_at_theta_phi(HC_PREC theta, HC_PREC phi,
    that the interpolation is at y1
 
  */
-void hc_linear_interpolate(HC_PREC *y, int n, HC_PREC y1,
-			   int *i1, int *i2,
-			   HC_PREC *f1, HC_PREC *f2)
+void 
+hc_linear_interpolate (y, n, y1, i1, i2, f1, f2)
+HC_PREC *y;
+int n;
+HC_PREC y1;
+int *i1;
+int *i2;
+HC_PREC *f1;
+HC_PREC *f2;
 {
   int n1;
   n1 = n-1;

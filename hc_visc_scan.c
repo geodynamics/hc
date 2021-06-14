@@ -275,13 +275,16 @@ int main(int argc, char **argv)
    print out a four layer viscosity structure geoid correlation suite,
    or additionally scan through the upper/lower mantle depths
  */
-void visc_scan_out(HC_PREC *v,struct sh_lms *geoid,
-		   struct sh_lms *sol_spectral,
-		   struct sh_lms *pvel,
-		   struct hc_parameters *p,
-		   struct hcs *model,
-		   hc_boolean *solved,
-		   hc_boolean vary_umlm)
+void 
+visc_scan_out (v, geoid, sol_spectral, pvel, p, model, solved, vary_umlm)
+HC_PREC *v;
+struct sh_lms *geoid;
+struct sh_lms *sol_spectral;
+struct sh_lms *pvel;
+struct hc_parameters *p;
+struct hcs *model;
+hc_boolean *solved;
+hc_boolean vary_umlm;
 {
   HC_PREC corr[3],r660=660;
   const HC_PREC rtop = 300.1, rbot = 1800+1e-5, dr = 25;

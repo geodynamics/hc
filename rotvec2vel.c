@@ -29,7 +29,10 @@ utility program, here for historical reasons
 FILE *rv_myopen(const char *,const char *);
 
 
-int main(int argc, char *argv[])
+int 
+main (argc, argv)
+int argc;
+char *argv[];
 {
   int i,j,k,nplt,nrp,fixed_plate,*stats,minplate,maxplate,normalize=0,unity_vec=0,
     *assigned,hit,*name,code,code3;
@@ -319,7 +322,10 @@ int main(int argc, char *argv[])
   fprintf(stderr,"%s: done\n",argv[0]);
   return 0;
 }
-FILE *rv_myopen(const char *name,const char *modus)
+FILE *
+rv_myopen (name, modus)
+const char *name;
+const char *modus;
 {
   FILE *tmp;
   if( (tmp = (FILE *)fopen(name,modus)) == NULL)

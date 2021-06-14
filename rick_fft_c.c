@@ -25,7 +25,10 @@ void rick_cs2ab(SH_RICK_PREC *rdata,int n)
 }
 
 
-void rick_ab2cs(SH_RICK_PREC *rdata, int n)
+void 
+rick_ab2cs (rdata, n)
+SH_RICK_PREC *rdata;
+int n;
 {
 
 //  Changes coefficients of complex spectrum of a real function
@@ -65,7 +68,11 @@ THIS ROUTINE TAKES NUMERICAL RECIPES 1...n,. SO CALL WITH (data-1)
 !
 */
 
-void rick_realft_nr(SH_RICK_PREC *rdata, int n, int isign)
+void 
+rick_realft_nr (rdata, n, isign)
+SH_RICK_PREC *rdata;
+int n;
+int isign;
 {
   SH_RICK_PREC c1,c2,h1r,h1i,h2r,h2i;
   SH_RICK_HIGH_PREC theta,wi,wpi,wpr,wr,wtemp;
@@ -133,7 +140,11 @@ C
 
 
 */
-void rick_four1_nr(SH_RICK_PREC *rdata,int nn,int isign)
+void 
+rick_four1_nr (rdata, nn, isign)
+SH_RICK_PREC *rdata;
+int nn;
+int isign;
 {
   //
   //	FFT routine from Numerical Recipes. Replaces data by

@@ -62,6 +62,8 @@ void hc_init_parameters(struct hc_parameters *p)
   p->visc_init_mode = HC_INIT_E_FROM_FILE; /* by default, read viscosity from file */
   
   p->solver_kludge_l = INT_MAX;	/* default: no solver tricks */
+
+  p->remove_nr = FALSE;		/* by default, leave NR in for plate motion models */
   /* 
      depth dependent scaling of density files?
   */
@@ -96,7 +98,9 @@ void hc_init_parameters(struct hc_parameters *p)
    first, call this routine with a blank **hc 
    
 */
-void hc_struc_init(struct hcs **hc)
+void 
+hc_struc_init (hc)
+struct hcs **hc;
 {
   /* this will take care of all flags and such */
   *hc = (struct hcs *)calloc(1,sizeof(struct hcs ));
@@ -117,7 +121,9 @@ void hc_struc_init(struct hcs **hc)
   (*hc)->prem_init = FALSE;
 }
 
-void hc_init_polsol_struct(struct hc_ps *psp)
+void 
+hc_init_polsol_struct (psp)
+struct hc_ps *psp;
 {
   psp->ncalled = 0;
    /* scaling factors will only be computed once */
@@ -143,8 +149,11 @@ INPUT: hc_parameters: holds all the settings
 
 OUTPUT: hc structure, gets modified
 */
-void hc_init_main(struct hcs *hc,int sh_type,
-		  struct hc_parameters *p)
+void 
+hc_init_main (hc, sh_type, p)
+struct hcs *hc;
+int sh_type;
+struct hc_parameters *p;
 {
   int dummy=0;
   HC_PREC dd_dummy[4]={1,1,1,1};
@@ -221,7 +230,7 @@ void hc_init_main(struct hcs *hc,int sh_type,
        assign all zeroes up to the lmax of the density expansion 
     */
     hc_assign_plate_velocities(hc,p->pvel_mode,p->pvel_filename,TRUE,hc->dens_anom[0].lmax,
-			       FALSE,p->read_short_pvel_sh,p->verbose);
+			       FALSE,p->read_short_pvel_sh,p->remove_nr,p->verbose);
   }else if(p->platebc){
     /* 
 
@@ -236,7 +245,7 @@ void hc_init_main(struct hcs *hc,int sh_type,
        read in velocities, which will determine the solution lmax 
     */
     hc_assign_plate_velocities(hc,HC_INIT_P_FROM_FILE,p->pvel_filename,FALSE,dummy,FALSE,
-			       p->read_short_pvel_sh,p->verbose);
+			       p->read_short_pvel_sh,p->remove_nr,p->verbose);
     /* then read in the density anomalies */
     hc_assign_density(hc,p->compressible,HC_INIT_D_FROM_FILE,p->dens_filename,hc->pvel.p[0].lmax,
 		      FALSE,FALSE,p->scale_dens_anom_with_prem,
@@ -285,8 +294,12 @@ void hc_init_main(struct hcs *hc,int sh_type,
    this for now for backward compatibility.
 
 */
-void hc_init_constants(struct hcs *hc, HC_PREC dens_anom_scale,
-		       char *prem_filename,hc_boolean verbose)
+void 
+hc_init_constants (hc, dens_anom_scale, prem_filename, verbose)
+struct hcs *hc;
+HC_PREC dens_anom_scale;
+char *prem_filename;
+hc_boolean verbose;
 {
   int ec;
   if(hc->const_init)
@@ -369,8 +382,12 @@ void hc_init_constants(struct hcs *hc, HC_PREC dens_anom_scale,
      visc_filename[] needs to be [HC_CHAR_LENGTH]
 
  */
-void hc_handle_command_line(int argc, char **argv,int start_from_i,
-			    struct hc_parameters *p)
+void 
+hc_handle_command_line (argc, argv, start_from_i, p)
+int argc;
+char **argv;
+int start_from_i;
+struct hc_parameters *p;
 {
   int i;
   hc_boolean used_parameter;
@@ -488,6 +505,8 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
       fprintf(stderr,"\t\tThe file (e.g. %s) is based on a DT expansion of cm/yr velocity fields.\n",HC_PVEL_FILE);
       fprintf(stderr,"-vshs\t\tuse the short format (only lmax in header) for the plate velocities (%s)\n",
 	      hc_name_boolean(p->read_short_pvel_sh));
+      fprintf(stderr,"-rnr\t\tremove any net rotation component from the plate velocities (%s)\n",
+	      hc_name_boolean(p->remove_nr));
       fprintf(stderr,"-vdir\t\tvelocities are given in files name/vel.1.ab to vel.%i.ab for different times,\n\t\t-%g to -1 Ma before present, where name is from -pvel\n",
 	      HC_PVEL_TSTEPS,(double)HC_PVEL_TSTEPS);
       fprintf(stderr,"-vtime\ttime\tuse this particular time step of the plate velocities (%g)\n\n",
@@ -576,6 +595,9 @@ void hc_handle_command_line(int argc, char **argv,int start_from_i,
       used_parameter = TRUE;
     }else if(strcmp(argv[i],"-dnp")==0){
       hc_toggle_boolean(&p->scale_dens_anom_with_prem);
+      used_parameter = TRUE;
+    }else if(strcmp(argv[i],"-rnr")==0){
+      hc_toggle_boolean(&p->remove_nr);
       used_parameter = TRUE;
     }else if(strcmp(argv[i],"-pvel")==0){ /* velocity filename, this will switch off free slip */
       hc_advance_argument(&i,argc,argv);
@@ -688,8 +710,12 @@ where r is non-dim radius and visc non-dim viscosity, r has to be
 ascending
 
 */
-void hc_assign_viscosity(struct hcs *hc,int mode,
-			 HC_PREC elayer[4],struct hc_parameters *p)
+void 
+hc_assign_viscosity (hc, mode, elayer, p)
+struct hcs *hc;
+int mode;
+HC_PREC elayer[4];
+struct hc_parameters *p;
 {
   FILE *in;
   int i;
@@ -830,18 +856,24 @@ nominal_lmax: -1: the max order of the density expansion will either
               else: will zero out all entries > nominal_lmax
 
 */
-void hc_assign_density(struct hcs *hc,
-		       hc_boolean compressible,int mode, /* compressible computation? assignment mode? */
-		       char *filename,int nominal_lmax,	 /* input density file name */
-		       hc_boolean layer_structure_changed,
-		       hc_boolean density_in_binary,
-		       hc_boolean scale_dens_anom_with_prem,
-		       hc_boolean verbose,
-		       hc_boolean use_short_format,
-		       hc_boolean dd_dens_scale, /* depth dependent or polynomial scaling ? */
-		       int ndf,HC_PREC *rdf,HC_PREC *sdf, /* depth dependent scaling factors */
-		       hc_boolean save_orig_danom, /* save the original density anomalies for later rescaling */
-		       hc_boolean print_kernerl_only)
+void 
+hc_assign_density (hc, compressible, mode, filename, nominal_lmax, layer_structure_changed, density_in_binary, scale_dens_anom_with_prem, verbose, use_short_format, dd_dens_scale, ndf, rdf, sdf, save_orig_danom, print_kernerl_only)
+struct hcs *hc;
+hc_boolean compressible;
+int mode;
+char *filename;
+int nominal_lmax;
+hc_boolean layer_structure_changed;
+hc_boolean density_in_binary;
+hc_boolean scale_dens_anom_with_prem;
+hc_boolean verbose;
+hc_boolean use_short_format;
+hc_boolean dd_dens_scale;
+int ndf;
+HC_PREC *rdf;
+HC_PREC *sdf;
+hc_boolean save_orig_danom;
+hc_boolean print_kernerl_only;
 {
   FILE *in;
   int type,lmax,shps,ilayer,nset,ivec,i,j;
@@ -1139,7 +1171,14 @@ void hc_assign_density(struct hcs *hc,
 find depth dependent scaling
 
 */
-HC_PREC hc_find_dens_scale(HC_PREC r, HC_PREC s0,hc_boolean depth_dependent, HC_PREC *rd,HC_PREC *sd,int n)
+HC_PREC 
+hc_find_dens_scale (r, s0, depth_dependent, rd, sd, n)
+HC_PREC r;
+HC_PREC s0;
+hc_boolean depth_dependent;
+HC_PREC *rd;
+HC_PREC *sd;
+int n;
 {
   int i;
   if(depth_dependent){
@@ -1165,8 +1204,11 @@ npb: number of phase boundaries
 
 
 */
-void hc_init_phase_boundaries(struct hcs *hc, int npb,
-			      hc_boolean verbose)
+void 
+hc_init_phase_boundaries (hc, npb, verbose)
+struct hcs *hc;
+int npb;
+hc_boolean verbose;
 {
 
   hc->npb = npb;		/* no phase boundaries for now */
@@ -1190,9 +1232,17 @@ we expect velocities to be in cm/yr, convert to m/yr
 
 */
 
-void hc_assign_plate_velocities(struct hcs *hc,int mode, char *filename,hc_boolean vel_bc_zero,
-				int lmax,hc_boolean pvel_in_binary,
-				hc_boolean read_short_pvel_sh,hc_boolean verbose)
+void hc_assign_plate_velocities (hc, mode, filename, vel_bc_zero, lmax, pvel_in_binary,
+				 read_short_pvel_sh, remove_nr, verbose)
+     struct hcs *hc;
+     int mode;
+     char *filename;
+     hc_boolean vel_bc_zero;
+     int lmax;
+     hc_boolean pvel_in_binary;
+     hc_boolean read_short_pvel_sh;
+     hc_boolean remove_nr;
+     hc_boolean verbose;
 {
   int i;
   char nfilename[HC_CHAR_LENGTH + 10];
@@ -1218,7 +1268,8 @@ void hc_assign_plate_velocities(struct hcs *hc,int mode, char *filename,hc_boole
       if(verbose)
 	fprintf(stderr,"hc_assign_plate_velocities: expecting [cm/yr] pol/tor from %s\n",
 		filename);
-      hc_init_single_plate_exp(filename,hc,pvel_in_binary,hc->pvel.p,TRUE,read_short_pvel_sh,verbose);
+      hc_init_single_plate_exp(filename,hc,pvel_in_binary,hc->pvel.p,TRUE,read_short_pvel_sh,
+			       remove_nr,verbose);
       if(verbose)
 	fprintf(stderr,"hc_assign_plate_velocities: read single set of surface velocities, lmax %i: |pol|: %11g |tor|: %11g\n",
 		lmax,sqrt(sh_total_power((hc->pvel.p))),sqrt(sh_total_power((hc->pvel.p+1))));
@@ -1230,7 +1281,8 @@ void hc_assign_plate_velocities(struct hcs *hc,int mode, char *filename,hc_boole
       hc->pvel.t = (HC_PREC *)realloc(hc->pvel.t,sizeof(HC_PREC)*hc->pvel.n);if(!hc->pvel.t)HC_MEMERROR("pvel");
       for(i=0;i < hc->pvel.n;i++){
 	sprintf(nfilename,"%s.%i.ab",filename,HC_PVEL_TSTEPS-i);
-	hc_init_single_plate_exp(nfilename,hc,pvel_in_binary,hc->pvel.p+i*2,TRUE,read_short_pvel_sh,verbose);
+	hc_init_single_plate_exp(nfilename,hc,pvel_in_binary,hc->pvel.p+i*2,TRUE,read_short_pvel_sh,
+				 remove_nr,verbose);
 	hc->pvel.t[i] = (HC_PREC)-(HC_PVEL_TSTEPS-i); /* time, count
 							past negative,
 							and start with
@@ -1263,15 +1315,23 @@ void hc_assign_plate_velocities(struct hcs *hc,int mode, char *filename,hc_boole
 
 /* 
 
-read in single plate velocity (i.e. poloidal/toroidal) field 
+   read in single plate velocity (i.e. poloidal/toroidal) field 
 
  */
-void hc_init_single_plate_exp(char *filename,struct hcs *hc, hc_boolean pvel_in_binary, struct sh_lms *pvel,
-			      hc_boolean check_for_nr, hc_boolean read_short_pvel_sh,hc_boolean verbose)
+void  hc_init_single_plate_exp (filename, hc, pvel_in_binary, pvel, check_for_nr,
+				read_short_pvel_sh, remove_nr,verbose)
+     char *filename;
+     struct hcs *hc;
+     hc_boolean pvel_in_binary;
+     struct sh_lms *pvel;
+     hc_boolean check_for_nr;
+     hc_boolean read_short_pvel_sh;
+     hc_boolean verbose;
+     hc_boolean remove_nr;
 {
   FILE *in;
   int type,shps,ilayer,nset,ivec,lmax;
-  HC_PREC zlabel,vfac[2],t10[2],t11[2];
+  HC_PREC zlabel,vfac[2],t10[2],t11[2],nr_amp;
   /* scale to go from cm/yr to internal scale */
   vfac[0] = vfac[1] = 1.0/hc->vel_scale;
   
@@ -1317,15 +1377,23 @@ void hc_init_single_plate_exp(char *filename,struct hcs *hc, hc_boolean pvel_in_
     hc_init_l_factors(hc,pvel[0].lmax);
   sh_scale_expansion_l_factor((pvel+0),hc->ilfac);
   sh_scale_expansion_l_factor((pvel+1),hc->ilfac);
-  if(check_for_nr){
+  if(check_for_nr || remove_nr){
     /*  
 	check for net rotation
     */
     sh_get_coeff((pvel+1),1,0,0,TRUE,t10);
     sh_get_coeff((pvel+1),1,0,2,TRUE,t11);
-    if(fabs(t10[0])+fabs(t11[0])+fabs(t11[1]) > 1.0e-7)
-      fprintf(stderr,"\nhc_init_single_plate_exp: WARNING: toroidal A(1,0): %g A(1,1): %g B(1,1): %g\n\n",
+    nr_amp = fabs(t10[0])+fabs(t11[0])+fabs(t11[1]);
+    if(nr_amp > 1.0e-7){
+      fprintf(stderr,"\nhc_init_single_plate_exp: WARNING: toroidal NR A(1,0): %g A(1,1): %g B(1,1): %g\n\n",
 	      (double)t10[0],(double)t11[0],(double)t11[1]);
+      if(remove_nr){		/* set NR coefficients to zero */
+	t10[0]=t10[1]=t11[0]=t11[1]=0.0;
+	sh_write_coeff((pvel+1),1,0,0,TRUE,t10);
+	sh_write_coeff((pvel+1),1,0,2,TRUE,t11);
+	fprintf(stderr,"hc_init_single_plate_exp: WARNING: setting those coefficients to zero\n");
+      }
+    }
   }
 }
 
@@ -1337,7 +1405,9 @@ from l=0 .. lmax+1
 pass lfac initialized (say, as NULL)
 
 */
-void hc_init_l_factors(struct hcs *hc, int lmax)
+void  hc_init_l_factors (hc, lmax)
+     struct hcs *hc;
+     int lmax;
 {
   int lmaxp1,l;
   lmaxp1 = lmax + 1;
@@ -1364,9 +1434,11 @@ nold: number of old expansions
 nnew: number of new expansions
 
 */
-void hc_get_blank_expansions(struct sh_lms **expansion,
-			     int nnew,int nold,
-			     char *calling_sub)
+void  hc_get_blank_expansions (expansion, nnew, nold, calling_sub)
+     struct sh_lms **expansion;
+     int nnew;
+     int nold;
+     char *calling_sub;
 {
   struct sh_lms *tmpzero;
   int ngrow;
@@ -1406,7 +1478,9 @@ be more careful with freeing
 
 
  */
-void hc_struc_free(struct hcs **hc)
+void 
+hc_struc_free (hc)
+struct hcs **hc;
 {
   free((*hc)->visc);
   free((*hc)->rvisc);
@@ -1422,8 +1496,12 @@ void hc_struc_free(struct hcs **hc)
 assign a depth dependent density scale, or assign four layers of scaling
 
 */
-void hc_assign_dd_scaling(int mode, HC_PREC dlayer[4],struct hc_parameters *p,
-			  HC_PREC rcmb)
+void 
+hc_assign_dd_scaling (mode, dlayer, p, rcmb)
+int mode;
+HC_PREC dlayer[4];
+struct hc_parameters *p;
+HC_PREC rcmb;
 {
   HC_PREC smean;
   HC_PREC dtmp[2];
@@ -1488,10 +1566,11 @@ void hc_assign_dd_scaling(int mode, HC_PREC dlayer[4],struct hc_parameters *p,
 }
 
 /* read in and assign reference geoid */
-void hc_read_scalar_shexp(char *filename, 
-			  struct sh_lms **sh_exp,
-			  char *name,
-			  struct hc_parameters *p)
+void  hc_read_scalar_shexp (filename, sh_exp, name, p)
+     char *filename;
+     struct sh_lms **sh_exp;
+     char *name;
+     struct hc_parameters *p;
 {
   int type,lmax,shps,ilayer,nset,ivec;
   HC_PREC zlabel;
@@ -1524,8 +1603,11 @@ void hc_read_scalar_shexp(char *filename,
   
 }
 
-void hc_select_pvel(HC_PREC time, struct pvels *pvel,
-		    struct sh_lms *p, hc_boolean verbose)
+void  hc_select_pvel (time, pvel, p, verbose)
+     HC_PREC time;
+     struct pvels *pvel;
+     struct sh_lms *p;
+hc_boolean verbose;
 {
   int i;
   hc_boolean hit;
@@ -1567,7 +1649,11 @@ void hc_select_pvel(HC_PREC time, struct pvels *pvel,
    open a file safely and give an error message if there was
    a problem
 */
-FILE *hc_fopen(char *name, char *mode, char *program)
+FILE *
+hc_fopen (name, mode, program)
+char *name;
+char *mode;
+char *program;
 {
   FILE *in;
   if((in=fopen(name,mode)) == NULL){
