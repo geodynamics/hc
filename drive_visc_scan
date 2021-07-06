@@ -3,11 +3,15 @@
 # compute viscosity scans using HC for single, or simple (2-4) layer structures
 #
 layers=${1-"-2 2 3 4"}
-smodels=${2-"smean2 lrr98d s40rts semucb-wm1 smean2_ntn st11den-1 stb00d"}
+smodels=${2-"smean2 lrr98d s40rts semucb-wm1 smean2_ntn st11den-1 stb00d tx2019slab"}
 zlm=${3-660}		# depth of the upper/lower mantle boundary
 zau=${4-410}			# depth of the asthenosphere, from 100.... zau
 
-geoid_ref=egm2008-hc-geoid.chambat.31.ab
+#dens_type="-ds 0.2"
+dens_type="-dsf $HOME/progs/src/seatree/python/data/hc/dscale/dscale_0.dat"
+hc_dir=$HOME/progs/src/cig/hc
+geoid_ref=$hc_dir/egm2008-hc-geoid.chambat.31.ab
+prem_file=$hc_dir/prem/prem.dat
 mkdir -p visc_scan_out/
 
 for lay in $layers;do
@@ -39,9 +43,11 @@ for lay in $layers;do
 	else
 	    ofile=visc_scan_out/visc_scan.$smodel.$lay.$zlm.$suf 
 	fi
+	echo $smodel $lay 
 	hc_visc_scan -dens $datadir/tomography/models/$smodel.31.m.ab -dshs \
+		     $dens_type -prem $prem_file \
 		     -vs_zlm $zlm -vs_zau $zau \
-		     -gref $geoid_ref -vs_n $lay -vs_dv $dv # gzip -c > $ofile &
+		     -gref $geoid_ref -vs_n $lay -vs_dv $dv | gzip -c > $ofile &
     done
 
 done

@@ -133,7 +133,7 @@ DEFINES = $(RICK_DEFINES) $(HEAL_DEFINES)
 LIBS = $(HC_LIBS)  $(HEAL_LIBS) $(RICK_LIB)
 
 
-all: all_no_gmt sh_tools 
+all: all_no_gmt sh_tools hc_tools
 
 all_no_gmt: $(ODIR) $(BDIR) libs hc_tools 
 
