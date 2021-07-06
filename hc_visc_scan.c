@@ -10,10 +10,11 @@
    Steinberger. this version by Thorsten Becker (twb@ig.utexas.edu) for
    additional comments, see hc.c
 
-   scan through viscosities and compute correlation with the geoid
-
+   this binary scans through viscosities and computes correlation with
+   the geoid
 
    output viscosities are log10(eta/1e21), top to bottom
+   and three correlations: r_20, r_4-9, r_2-4 
    
 */
 

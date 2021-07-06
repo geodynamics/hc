@@ -394,14 +394,14 @@ hc_boolean verbose;
 
 void 
 hc_calc_geoid_corr_four_layer (log_eta, geoid, sol_spectral, pvel, p, model, solved, corr)
-HC_PREC *log_eta;
-struct sh_lms *geoid;
-struct sh_lms *sol_spectral;
-struct sh_lms *pvel;
-struct hc_parameters *p;
-struct hcs *model;
-hc_boolean *solved;
-HC_PREC *corr;
+     HC_PREC *log_eta;
+     struct sh_lms *geoid;
+     struct sh_lms *sol_spectral;
+     struct sh_lms *pvel;
+     struct hc_parameters *p;
+     struct hcs *model;
+     hc_boolean *solved;
+     HC_PREC *corr;		/*  */
 {
   /* layer viscosity structure */
   /* 
@@ -426,7 +426,7 @@ HC_PREC *corr;
 	   p->verbose,
 	   FALSE);		/* not just kernel */
   /* only output are the geoid correlations, for now */
-  hc_compute_correlation(geoid,p->ref_geoid,corr,2,p->verbose);
+  hc_compute_correlation(geoid,p->ref_geoid,corr,2,p->verbose); /* r_20, r_4-9, r_2-4 */
   
   *solved = TRUE;
 }

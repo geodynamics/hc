@@ -384,12 +384,12 @@ hc_boolean verbose;
  */
 void 
 hc_handle_command_line (argc, argv, start_from_i, p)
-int argc;
-char **argv;
-int start_from_i;
-struct hc_parameters *p;
+     int argc;
+     char **argv;
+     int start_from_i;
+     struct hc_parameters *p;
 {
-  int i;
+  int i,itmp;
   hc_boolean used_parameter;
   HC_PREC tmp;
   
@@ -540,8 +540,12 @@ struct hc_parameters *p;
       used_parameter = TRUE;
     }else if(strcmp(argv[i],"-vs_n")==0){	
       hc_advance_argument(&i,argc,argv);
-      sscanf(argv[i],"%i",&p->vscan_n);
-      if((p->vscan_n < 2) || (p->vscan_n >  HC_VSCAN_NLAYER_MAX)){
+      sscanf(argv[i],"%i",&p->vscan_n); /* allow for negative values
+					   to scan upper/lower mantle
+					   boundary */
+      /*  */
+      itmp = abs(p->vscan_n);
+      if((itmp < 2) || (itmp >  HC_VSCAN_NLAYER_MAX)){
 	fprintf(stderr,"hc_init: error, vscan layer %i out of bounds, max is %i\n",
 		p->vscan_n,HC_VSCAN_NLAYER_MAX);
 	exit(-1);
