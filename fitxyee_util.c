@@ -1,19 +1,33 @@
 #include "fitxyee.h"
+/*
+
+  fit a line through x y data with uncertainties in both x and y
+
+  COPYRIGHT NUMERICAL RECIPES IN C, p.668, do not distribute without
+  permission
 
 
-void fit(struct dp *data,int ndata,PRECISION *a,PRECISION *b,
-	 PRECISION *siga,PRECISION *sigb,PRECISION *chi2,
-	 PRECISION *q)
+  minor modifications:
+
+  - using data structure instead of x,y,sigx,sigy
+  - removed global variables and put those into fit structure
+
+*/
+
+/* numerical recipes routines from here on */
+void nr_fit(struct nr_dp *data,int ndata,HC_PREC *a,HC_PREC *b,
+	 HC_PREC *siga,HC_PREC *sigb,HC_PREC *chi2,
+	 HC_PREC *q)
 {
   
   int i;
-  PRECISION wt,t,sxoss,sx=0.0,sy=0.0,st2=0.0,ss,sigdat;
+  HC_PREC wt,t,sxoss,sx=0.0,sy=0.0,st2=0.0,ss,sigdat;
   
   *b=0.0;
 
   ss=0.0;
   for (i=1;i<=ndata;i++) {
-    wt=1.0/SQUARE(data[i].sigy);
+    wt=1.0/NR_SQUARE(data[i].sigy);
     ss += wt;
     sx += data[i].x*wt;
     sy += data[i].y*wt;
@@ -21,7 +35,7 @@ void fit(struct dp *data,int ndata,PRECISION *a,PRECISION *b,
 
   
   sxoss=sx/ss;
-  for (i=1;i<=ndata;i++) {
+  for (i=1;i <= ndata;i++) {
     t=(data[i].x-sxoss)/data[i].sigy;
     st2 += t*t;
     *b += t*data[i].y/data[i].sigy;
@@ -32,8 +46,8 @@ void fit(struct dp *data,int ndata,PRECISION *a,PRECISION *b,
   *siga=sqrt((1.0+sx*sx/(ss*st2))/ss);
   *sigb=sqrt(1.0/st2);
   *chi2=0.0;
-  for (i=1;i<=ndata;i++)
-    *chi2 += SQUARE(data[i].y-(*a)-(*b)*data[i].x);
+  for (i=1;i <= ndata;i++)
+    *chi2 += NR_SQUARE(data[i].y-(*a)-(*b)*data[i].x);
   *q=1.0;
   sigdat=sqrt((*chi2)/(ndata-2));
   *siga *= sigdat;
@@ -43,53 +57,52 @@ void fit(struct dp *data,int ndata,PRECISION *a,PRECISION *b,
 
 #define POTN 1.571000
 #define BIG 1.0e30
-#define PI 3.141592653589793238462643383
-#define ACC NR_ACC
 
 
 
-
-void fitexy(struct dp *data,int ndat,PRECISION *a,PRECISION *b,
-	    PRECISION *siga,PRECISION *sigb,PRECISION *chi2,
-	    PRECISION *q)
+void nr_fitexy(struct nr_dp *data,int ndat,HC_PREC *a,HC_PREC *b,
+	       HC_PREC *siga,HC_PREC *sigb,HC_PREC *chi2,
+	       HC_PREC *q)
 {
   int j;
-  PRECISION swap,amx,amn,var[3],varx,vary,ang[7],ch[7],scale,
+  HC_PREC swap,amx,amn,var[3],varx,vary,ang[7],ch[7],scale,
     bmn,bmx,d1,d2,r2,avea[3],
     dum1,dum2,dum3,dum4,dum5;
-  struct fits fit[1];
-  fit->xx=vector(1,ndat);
-  fit->yy=vector(1,ndat);
-  fit->sx=vector(1,ndat);
-  fit->sy=vector(1,ndat);
-  fit->ww=vector(1,ndat);
+  struct nr_fits fit[1];
+  fit->xx=nr_vector(1,ndat);
+  fit->yy=nr_vector(1,ndat);
+  fit->sx=nr_vector(1,ndat);
+  fit->sy=nr_vector(1,ndat);
+  fit->ww=nr_vector(1,ndat);
   /* compute variance */
-  avevar(data,ndat,avea,var);
+  nr_avevar(data,ndat,avea,var);
   varx = var[1];vary = var[2];
   /* reassign and rescale */
-  scale=sqrt(varx/vary);
+  scale = sqrt(varx/vary);
   fit->nn=ndat;
-  for (j=1;j<=ndat;j++) {
+  for (j=1;j <= ndat;j++) {
     //fprintf(stderr,"%i %g %g %g %g\n",j,data[j].x,data[j].y, data[j].sigx, data[j].sigy);
     fit->xx[j]=data[j].x;
     fit->yy[j]=data[j].y*scale;
     fit->sx[j]=data[j].sigx;
     fit->sy[j]=data[j].sigy*scale;
-    fit->ww[j]=sqrt(SQUARE(fit->sx[j])+SQUARE(fit->sy[j]));
+    fit->ww[j]=sqrt(NR_SQUARE(fit->sx[j])+NR_SQUARE(fit->sy[j]));
   }
-  fitline(fit->xx,fit->yy,fit->nn,fit->ww,1,&dum1,b,&dum2,&dum3,&dum4,&dum5);
+  nr_fitline(fit->xx,fit->yy,fit->nn,fit->ww,1,&dum1,b,&dum2,&dum3,&dum4,&dum5);
   fit->offs=ang[1]=0.0;
   ang[2]=atan(*b);
   ang[4]=0.0;
   ang[5]=ang[2];
   ang[6]=POTN;
-  for (j=4;j<=6;j++) ch[j]=chixy(ang[j],fit);
-  mnbrak(&ang[1],&ang[2],&ang[3],&ch[1],&ch[2],&ch[3],(PRECISION (*)(void))chixy,fit);
-  *chi2=brent(ang[1],ang[2],ang[3],(PRECISION (*)(void))chixy,fit,ACC,b);
-  *chi2=chixy(*b,fit);
+  for (j=4;j<=6;j++)
+    ch[j]=nr_chixy(ang[j],fit);
+  nr_mnbrak(&ang[1],&ang[2],&ang[3],&ch[1],&ch[2],&ch[3],(HC_PREC (*)(void))nr_chixy,fit);
+  *chi2=nr_brent(ang[1],ang[2],ang[3],(HC_PREC (*)(void))nr_chixy,fit,NR_ACC,b);
+  *chi2=nr_chixy(*b,fit);
   *a=fit->aa;
-  *q=gammq(0.5*(fit->nn-2),*chi2*0.5);
-  for (r2=0.0,j=1;j<=fit->nn;j++) r2 += fit->ww[j];
+  *q=nr_gammq(0.5*(fit->nn-2),*chi2*0.5);
+  for (r2=0.0,j=1;j<=fit->nn;j++)
+    r2 += fit->ww[j];
   r2=1.0/r2;
   bmx=BIG;
   bmn=BIG;
@@ -97,8 +110,8 @@ void fitexy(struct dp *data,int ndat,PRECISION *a,PRECISION *b,
   for (j=1;j<=6;j++) {
     if (ch[j] > fit->offs) {
       d1=fabs(ang[j]-(*b));
-      while (d1 >= PI) d1 -= PI;
-      d2=PI-d1;
+      while (d1 >= HC_PI) d1 -= HC_PI;
+      d2=HC_PI-d1;
       if (ang[j] < *b) {
 	swap=d1;
 	d1=d2;
@@ -109,25 +122,24 @@ void fitexy(struct dp *data,int ndat,PRECISION *a,PRECISION *b,
     }
   }
   if (bmx < BIG) {
-    bmx=zbrent((PRECISION (*)(void))chixy,fit,*b,*b+bmx,ACC)-(*b);
+    bmx=nr_zbrent((HC_PREC (*)(void))nr_chixy,fit,*b,*b+bmx,NR_ACC)-(*b);
     amx=fit->aa-(*a);
-    bmn=zbrent((PRECISION (*)(void))chixy,fit,*b,*b-bmn,ACC)-(*b);
+    bmn=nr_zbrent((HC_PREC (*)(void))nr_chixy,fit,*b,*b-bmn,NR_ACC)-(*b);
     amn=fit->aa-(*a);
-    *sigb=sqrt(0.5*(bmx*bmx+bmn*bmn))/(scale*SQUARE(cos(*b)));
+    *sigb=sqrt(0.5*(bmx*bmx+bmn*bmn))/(scale*NR_SQUARE(cos(*b)));
     *siga=sqrt(0.5*(amx*amx+amn*amn)+r2)/scale;
   } else (*sigb)=(*siga)=BIG;
   *a /= scale;
   *b=tan(*b)/scale;
-  free_vector(fit->ww,1,ndat);
-  free_vector(fit->sy,1,ndat);
-  free_vector(fit->sx,1,ndat);
-  free_vector(fit->yy,1,ndat);
-  free_vector(fit->xx,1,ndat);
+  nr_free_vector(fit->ww,1,ndat);
+  nr_free_vector(fit->sy,1,ndat);
+  nr_free_vector(fit->sx,1,ndat);
+  nr_free_vector(fit->yy,1,ndat);
+  nr_free_vector(fit->xx,1,ndat);
 }
 #undef POTN
 #undef BIG
-#undef PI
-#undef ACC
+
 
 
 #define ITMAX 10000
@@ -135,13 +147,13 @@ void fitexy(struct dp *data,int ndat,PRECISION *a,PRECISION *b,
 #define ZEPS 1.0e-14
 #define SHFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
 
-PRECISION brent(ax,bx,cx,f,fit,tol,xmin)
-PRECISION (*f)(),*xmin,ax,bx,cx,tol;
-struct fits *fit;
+HC_PREC nr_brent(ax,bx,cx,f,fit,tol,xmin)
+HC_PREC (*f)(),*xmin,ax,bx,cx,tol;
+struct nr_fits *fit;
 {
 	int iter;
-	PRECISION a,b,d,etemp,fu,fv,fw,fx,p,q,r,tol1,tol2,u,v,w,x,xm;
-	PRECISION e=0.0;
+	HC_PREC a,b,d,etemp,fu,fv,fw,fx,p,q,r,tol1,tol2,u,v,w,x,xm;
+	HC_PREC e=0.0;
 
 	a=(ax < cx ? ax : cx);
 	b=(ax > cx ? ax : cx);
@@ -169,12 +181,12 @@ struct fits *fit;
 	      d=p/q;
 	      u=x+d;
 	      if (u-a < tol2 || b-u < tol2)
-		d=SIGN(tol1,xm-x);
+		d=NR_SIGN(tol1,xm-x);
 	    }
 	  } else {
 	    d=CGOLD*(e=(x >= xm ? a-x : b-x));
 	  }
-	  u=(fabs(d) >= tol1 ? x+d : x+SIGN(tol1,d));
+	  u=(fabs(d) >= tol1 ? x+d : x+NR_SIGN(tol1,d));
 	  fu=(*f)(u,fit);
 	  if (fu <= fx) {
 	    if (u >= x) a=x; else b=x;
@@ -193,7 +205,7 @@ struct fits *fit;
 		}
 	      }
 	}
-	nrerror("Too many iterations in brent");
+	nr_error("Too many iterations in brent");
 	*xmin=x;
 	return fx;
 }
@@ -206,16 +218,16 @@ struct fits *fit;
 #define BIG 1.0e30
 
 
-PRECISION chixy(bang,fit)
-PRECISION bang;
-struct fits *fit;
+HC_PREC nr_chixy(bang,fit)
+HC_PREC bang;
+struct nr_fits *fit;
 {
   int j;
-  PRECISION ans,avex=0.0,avey=0.0,sumw=0.0,b;
+  HC_PREC ans,avex=0.0,avey=0.0,sumw=0.0,b;
   
   b=tan(bang);
   for (j=1;j<=fit->nn;j++) {
-    fit->ww[j] = SQUARE(b*fit->sx[j])+SQUARE(fit->sy[j]);
+    fit->ww[j] = NR_SQUARE(b*fit->sx[j])+NR_SQUARE(fit->sy[j]);
     sumw += (fit->ww[j] = (fit->ww[j] == 0.0 ? BIG : 1.0/fit->ww[j]));
     avex += fit->ww[j]*fit->xx[j];
 		avey += fit->ww[j]*fit->yy[j];
@@ -225,40 +237,39 @@ struct fits *fit;
   avey /= sumw;
   fit->aa=avey-b*avex;
   for (ans = -(fit->offs),j=1;j<=fit->nn;j++)
-    ans += fit->ww[j]*SQUARE(fit->yy[j]-fit->aa-b*fit->xx[j]);
+    ans += fit->ww[j]*NR_SQUARE(fit->yy[j]-fit->aa-b*fit->xx[j]);
   return ans;
 }
 #undef BIG
 
-PRECISION gammq(a,x)
-PRECISION a,x;
+HC_PREC nr_gammq(a,x)
+HC_PREC a,x;
 {
-	void gcf(),gser();
-	void nrerror();
-	PRECISION gamser,gammcf,gln;
+	void nr_gcf(),nr_gser();
+	void nr_error();
+	HC_PREC gamser,gammcf,gln;
 
-	if (x < 0.0 || a <= 0.0) nrerror("Invalid arguments in routine gammq");
+	if (x < 0.0 || a <= 0.0) nr_error("Invalid arguments in routine gammq");
 	if (x < (a+1.0)) {
-		gser(&gamser,a,x,&gln);
-		return 1.0-gamser;
+	  nr_gser(&gamser,a,x,&gln);
+	  return 1.0-gamser;
 	} else {
-		gcf(&gammcf,a,x,&gln);
-		return gammcf;
+	  nr_gcf(&gammcf,a,x,&gln);
+	  return gammcf;
 	}
 }
 #define ITMAX 10000
-#define EPS NR_EPS
 #define FPMIN 1.0e-30
 
-void gcf(gammcf,a,x,gln)
-PRECISION *gammcf,*gln,a,x;
+void nr_gcf(gammcf,a,x,gln)
+HC_PREC *gammcf,*gln,a,x;
 {
-	PRECISION gammln();
-	void nrerror();
+	HC_PREC nr_gammln();
+	void nr_error();
 	int i;
-	PRECISION an,b,c,d,del,h;
+	HC_PREC an,b,c,d,del,h;
 
-	*gln=gammln(a);
+	*gln=nr_gammln(a);
 	b=x+1.0-a;
 	c=1.0/FPMIN;
 	d=1.0/b;
@@ -273,33 +284,31 @@ PRECISION *gammcf,*gln,a,x;
 		d=1.0/d;
 		del=d*c;
 		h *= del;
-		if (fabs(del-1.0) < EPS) break;
+		if (fabs(del-1.0) < NR_EPS) break;
 	}
 	if (i > ITMAX) {
 	  fprintf(stderr,"%g %g %g\n",a,x,*gln);
-	  nrerror("a too large, ITMAX too small in gcf");
+	  nr_error("a too large, ITMAX too small in gcf");
 	}
 	*gammcf=exp(-x+a*log(x)-(*gln))*h;
 }
 #undef ITMAX
-#undef EPS
 #undef FPMIN
 
 
 #define ITMAX 1000
-#define EPS 5.0e-15
 
-void gser(gamser,a,x,gln)
-PRECISION *gamser,*gln,a,x;
+void nr_gser(gamser,a,x,gln)
+HC_PREC *gamser,*gln,a,x;
 {
-	PRECISION gammln();
-	void nrerror();
+	HC_PREC nr_gammln();
+	void nr_error();
 	int n;
-	PRECISION sum,del,ap;
+	HC_PREC sum,del,ap;
 
-	*gln=gammln(a);
+	*gln=nr_gammln(a);
 	if (x <= 0.0) {
-		if (x < 0.0) nrerror("x less than 0 in routine gser");
+		if (x < 0.0) nr_error("x less than 0 in routine gser");
 		*gamser=0.0;
 		return;
 	} else {
@@ -309,17 +318,17 @@ PRECISION *gamser,*gln,a,x;
 			++ap;
 			del *= x/ap;
 			sum += del;
-			if (fabs(del) < fabs(sum)*EPS) {
+			if (fabs(del) < fabs(sum)*NR_EPS) {
 				*gamser=sum*exp(-x+a*log(x)-(*gln));
 				return;
 			}
 		}
-		nrerror("a too large, ITMAX too small in routine gser");
+		nr_error("a too large, ITMAX too small in routine gser");
 		return;
 	}
 }
 #undef ITMAX
-#undef EPS
+
 /* CAUTION: This is the traditional K&R C (only) version of the Numerical
    Recipes utility file nrutil.c.  Do not confuse this file with the
    same-named file nrutil.c that is supplied in the same subdirectory or
@@ -331,7 +340,7 @@ PRECISION *gamser,*gln,a,x;
 #define NR_END 1
 #define FREE_ARG char*
 
-void nrerror(error_text)
+void nr_error(error_text)
 char error_text[];
 /* Numerical Recipes standard error handler */
 {
@@ -343,77 +352,77 @@ char error_text[];
 	exit(1);
 }
 
-PRECISION *vector(nl,nh)
+HC_PREC *nr_vector(nl,nh)
 long nh,nl;
-/* allocate a PRECISION vector with subscript range v[nl..nh] */
+/* allocate a HC_PREC vector with subscript range v[nl..nh] */
 {
-	PRECISION *v;
+	HC_PREC *v;
 
-	v=(PRECISION *)malloc((unsigned int) ((nh-nl+1+NR_END)*sizeof(PRECISION)));
-	if (!v) nrerror("allocation failure in vector()");
+	v=(HC_PREC *)malloc((unsigned int) ((nh-nl+1+NR_END)*sizeof(HC_PREC)));
+	if (!v) nr_error("allocation failure in vector()");
 	return v-nl+NR_END;
 }
 
-int *ivector(nl,nh)
+int *nr_ivector(nl,nh)
 long nh,nl;
 /* allocate an int vector with subscript range v[nl..nh] */
 {
 	int *v;
 
 	v=(int *)malloc((unsigned int) ((nh-nl+1+NR_END)*sizeof(int)));
-	if (!v) nrerror("allocation failure in ivector()");
+	if (!v) nr_error("allocation failure in ivector()");
 	return v-nl+NR_END;
 }
 
-unsigned char *cvector(nl,nh)
+unsigned char *nr_cvector(nl,nh)
 long nh,nl;
 /* allocate an unsigned char vector with subscript range v[nl..nh] */
 {
 	unsigned char *v;
 
 	v=(unsigned char *)malloc((unsigned int) ((nh-nl+1+NR_END)*sizeof(unsigned char)));
-	if (!v) nrerror("allocation failure in cvector()");
+	if (!v) nr_error("allocation failure in cvector()");
 	return v-nl+NR_END;
 }
 
-unsigned long *lvector(nl,nh)
+unsigned long *nr_lvector(nl,nh)
 long nh,nl;
 /* allocate an unsigned long vector with subscript range v[nl..nh] */
 {
 	unsigned long *v;
 
 	v=(unsigned long *)malloc((unsigned int) ((nh-nl+1+NR_END)*sizeof(long)));
-	if (!v) nrerror("allocation failure in lvector()");
+	if (!v) nr_error("allocation failure in lvector()");
 	return v-nl+NR_END;
 }
 
-PRECISION *dvector(nl,nh)
+HC_PREC *nr_dvector(nl,nh)
 long nh,nl;
-/* allocate a PRECISION vector with subscript range v[nl..nh] */
+/* allocate a HC_PREC vector with subscript range v[nl..nh] */
 {
-	PRECISION *v;
+	HC_PREC *v;
 
-	v=(PRECISION *)malloc((unsigned int) ((nh-nl+1+NR_END)*sizeof(PRECISION)));
-	if (!v) nrerror("allocation failure in dvector()");
+	v=(HC_PREC *)malloc((unsigned int) ((nh-nl+1+NR_END)*sizeof(HC_PREC)));
+	if (!v) nr_error("allocation failure in dvector()");
 	return v-nl+NR_END;
 }
 
-PRECISION **matrix(nrl,nrh,ncl,nch)
+HC_PREC **nr_matrix(nrl,nrh,ncl,nch)
 long nch,ncl,nrh,nrl;
-/* allocate a PRECISION matrix with subscript range m[nrl..nrh][ncl..nch] */
+/* allocate a HC_PREC matrix with subscript range m[nrl..nrh][ncl..nch] */
 {
 	long i, nrow=nrh-nrl+1,ncol=nch-ncl+1;
-	PRECISION **m;
+	HC_PREC **m;
 
 	/* allocate pointers to rows */
-	m=(PRECISION **) malloc((unsigned int)((nrow+NR_END)*sizeof(PRECISION*)));
-	if (!m) nrerror("allocation failure 1 in matrix()");
+	m=(HC_PREC **) malloc((unsigned int)((nrow+NR_END)*sizeof(HC_PREC*)));
+	if (!m) nr_error("allocation failure 1 in matrix()");
 	m += NR_END;
 	m -= nrl;
 
 	/* allocate rows and set pointers to them */
-	m[nrl]=(PRECISION *) malloc((unsigned int)((nrow*ncol+NR_END)*sizeof(PRECISION)));
-	if (!m[nrl]) nrerror("allocation failure 2 in matrix()");
+	m[nrl]=(HC_PREC *) malloc((unsigned int)((nrow*ncol+NR_END)*sizeof(HC_PREC)));
+	if (!m[nrl]) nr_error("allocation failure 2 in matrix()");
 	m[nrl] += NR_END;
 	m[nrl] -= ncl;
 
@@ -423,22 +432,22 @@ long nch,ncl,nrh,nrl;
 	return m;
 }
 
-PRECISION **dmatrix(nrl,nrh,ncl,nch)
+HC_PREC **nr_dmatrix(nrl,nrh,ncl,nch)
 long nch,ncl,nrh,nrl;
-/* allocate a PRECISION matrix with subscript range m[nrl..nrh][ncl..nch] */
+/* allocate a HC_PREC matrix with subscript range m[nrl..nrh][ncl..nch] */
 {
 	long i, nrow=nrh-nrl+1,ncol=nch-ncl+1;
-	PRECISION **m;
+	HC_PREC **m;
 
 	/* allocate pointers to rows */
-	m=(PRECISION **) malloc((unsigned int)((nrow+NR_END)*sizeof(PRECISION*)));
-	if (!m) nrerror("allocation failure 1 in matrix()");
+	m=(HC_PREC **) malloc((unsigned int)((nrow+NR_END)*sizeof(HC_PREC*)));
+	if (!m) nr_error("allocation failure 1 in matrix()");
 	m += NR_END;
 	m -= nrl;
 
 	/* allocate rows and set pointers to them */
-	m[nrl]=(PRECISION *) malloc((unsigned int)((nrow*ncol+NR_END)*sizeof(PRECISION)));
-	if (!m[nrl]) nrerror("allocation failure 2 in matrix()");
+	m[nrl]=(HC_PREC *) malloc((unsigned int)((nrow*ncol+NR_END)*sizeof(HC_PREC)));
+	if (!m[nrl]) nr_error("allocation failure 2 in matrix()");
 	m[nrl] += NR_END;
 	m[nrl] -= ncl;
 
@@ -448,7 +457,7 @@ long nch,ncl,nrh,nrl;
 	return m;
 }
 
-int **imatrix(nrl,nrh,ncl,nch)
+int **nr_imatrix(nrl,nrh,ncl,nch)
 long nch,ncl,nrh,nrl;
 /* allocate a int matrix with subscript range m[nrl..nrh][ncl..nch] */
 {
@@ -457,14 +466,14 @@ long nch,ncl,nrh,nrl;
 
 	/* allocate pointers to rows */
 	m=(int **) malloc((unsigned int)((nrow+NR_END)*sizeof(int*)));
-	if (!m) nrerror("allocation failure 1 in matrix()");
+	if (!m) nr_error("allocation failure 1 in matrix()");
 	m += NR_END;
 	m -= nrl;
 
 
 	/* allocate rows and set pointers to them */
 	m[nrl]=(int *) malloc((unsigned int)((nrow*ncol+NR_END)*sizeof(int)));
-	if (!m[nrl]) nrerror("allocation failure 2 in matrix()");
+	if (!m[nrl]) nr_error("allocation failure 2 in matrix()");
 	m[nrl] += NR_END;
 	m[nrl] -= ncl;
 
@@ -474,17 +483,17 @@ long nch,ncl,nrh,nrl;
 	return m;
 }
 
-PRECISION **submatrix(a,oldrl,oldrh,oldcl,oldch,newrl,newcl)
-PRECISION **a;
+HC_PREC **nr_submatrix(a,oldrl,oldrh,oldcl,oldch,newrl,newcl)
+HC_PREC **a;
 long newcl,newrl,oldch,oldcl,oldrh,oldrl;
 /* point a submatrix [newrl..][newcl..] to a[oldrl..oldrh][oldcl..oldch] */
 {
 	long i,j,nrow=oldrh-oldrl+1,ncol=oldcl-newcl;
-	PRECISION **m;
+	HC_PREC **m;
 
 	/* allocate array of pointers to rows */
-	m=(PRECISION **) malloc((unsigned int) ((nrow+NR_END)*sizeof(PRECISION*)));
-	if (!m) nrerror("allocation failure in submatrix()");
+	m=(HC_PREC **) malloc((unsigned int) ((nrow+NR_END)*sizeof(HC_PREC*)));
+	if (!m) nr_error("allocation failure in submatrix()");
 	m += NR_END;
 	m -= newrl;
 
@@ -495,20 +504,20 @@ long newcl,newrl,oldch,oldcl,oldrh,oldrl;
 	return m;
 }
 
-PRECISION **convert_matrix(a,nrl,nrh,ncl,nch)
-PRECISION *a;
+HC_PREC **nr_convert_matrix(a,nrl,nrh,ncl,nch)
+HC_PREC *a;
 long nch,ncl,nrh,nrl;
-/* allocate a PRECISION matrix m[nrl..nrh][ncl..nch] that points to the matrix
+/* allocate a HC_PREC matrix m[nrl..nrh][ncl..nch] that points to the matrix
 declared in the standard C manner as a[nrow][ncol], where nrow=nrh-nrl+1
 and ncol=nch-ncl+1. The routine should be called with the address
 &a[0][0] as the first argument. */
 {
 	long i,j,nrow=nrh-nrl+1,ncol=nch-ncl+1;
-	PRECISION **m;
+	HC_PREC **m;
 
 	/* allocate pointers to rows */
-	m=(PRECISION **) malloc((unsigned int) ((nrow+NR_END)*sizeof(PRECISION*)));
-	if (!m) nrerror("allocation failure in convert_matrix()");
+	m=(HC_PREC **) malloc((unsigned int) ((nrow+NR_END)*sizeof(HC_PREC*)));
+	if (!m) nr_error("allocation failure in convert_matrix()");
 	m += NR_END;
 	m -= nrl;
 
@@ -519,28 +528,28 @@ and ncol=nch-ncl+1. The routine should be called with the address
 	return m;
 }
 
-PRECISION ***f3tensor(nrl,nrh,ncl,nch,ndl,ndh)
+HC_PREC ***nr_f3tensor(nrl,nrh,ncl,nch,ndl,ndh)
 long nch,ncl,ndh,ndl,nrh,nrl;
-/* allocate a PRECISION 3tensor with range t[nrl..nrh][ncl..nch][ndl..ndh] */
+/* allocate a HC_PREC 3tensor with range t[nrl..nrh][ncl..nch][ndl..ndh] */
 {
 	long i,j,nrow=nrh-nrl+1,ncol=nch-ncl+1,ndep=ndh-ndl+1;
-	PRECISION ***t;
+	HC_PREC ***t;
 
 	/* allocate pointers to pointers to rows */
-	t=(PRECISION ***) malloc((unsigned int)((nrow+NR_END)*sizeof(PRECISION**)));
-	if (!t) nrerror("allocation failure 1 in f3tensor()");
+	t=(HC_PREC ***) malloc((unsigned int)((nrow+NR_END)*sizeof(HC_PREC**)));
+	if (!t) nr_error("allocation failure 1 in f3tensor()");
 	t += NR_END;
 	t -= nrl;
 
 	/* allocate pointers to rows and set pointers to them */
-	t[nrl]=(PRECISION **) malloc((unsigned int)((nrow*ncol+NR_END)*sizeof(PRECISION*)));
-	if (!t[nrl]) nrerror("allocation failure 2 in f3tensor()");
+	t[nrl]=(HC_PREC **) malloc((unsigned int)((nrow*ncol+NR_END)*sizeof(HC_PREC*)));
+	if (!t[nrl]) nr_error("allocation failure 2 in f3tensor()");
 	t[nrl] += NR_END;
 	t[nrl] -= ncl;
 
 	/* allocate rows and set pointers to them */
-	t[nrl][ncl]=(PRECISION *) malloc((unsigned int)((nrow*ncol*ndep+NR_END)*sizeof(PRECISION)));
-	if (!t[nrl][ncl]) nrerror("allocation failure 3 in f3tensor()");
+	t[nrl][ncl]=(HC_PREC *) malloc((unsigned int)((nrow*ncol*ndep+NR_END)*sizeof(HC_PREC)));
+	if (!t[nrl][ncl]) nr_error("allocation failure 3 in f3tensor()");
 	t[nrl][ncl] += NR_END;
 	t[nrl][ncl] -= ndl;
 
@@ -555,15 +564,15 @@ long nch,ncl,ndh,ndl,nrh,nrl;
 	return t;
 }
 
-void free_vector(v,nl,nh)
-PRECISION *v;
+void nr_free_vector(v,nl,nh)
+HC_PREC *v;
 long nh,nl;
-/* free a PRECISION vector allocated with vector() */
+/* free a HC_PREC vector allocated with vector() */
 {
 	free((FREE_ARG) (v+nl-NR_END));
 }
 
-void free_ivector(v,nl,nh)
+void nr_free_ivector(v,nl,nh)
 int *v;
 long nh,nl;
 /* free an int vector allocated with ivector() */
@@ -571,7 +580,7 @@ long nh,nl;
 	free((FREE_ARG) (v+nl-NR_END));
 }
 
-void free_cvector(v,nl,nh)
+void nr_free_cvector(v,nl,nh)
 long nh,nl;
 unsigned char *v;
 /* free an unsigned char vector allocated with cvector() */
@@ -579,7 +588,7 @@ unsigned char *v;
 	free((FREE_ARG) (v+nl-NR_END));
 }
 
-void free_lvector(v,nl,nh)
+void nr_free_lvector(v,nl,nh)
 long nh,nl;
 unsigned long *v;
 /* free an unsigned long vector allocated with lvector() */
@@ -587,27 +596,27 @@ unsigned long *v;
 	free((FREE_ARG) (v+nl-NR_END));
 }
 
-void free_dvector(v,nl,nh)
-PRECISION *v;
+void nr_free_dvector(v,nl,nh)
+HC_PREC *v;
 long nh,nl;
-/* free a PRECISION vector allocated with dvector() */
+/* free a HC_PREC vector allocated with dvector() */
 {
 	free((FREE_ARG) (v+nl-NR_END));
 }
 
-void free_matrix(m,nrl,nrh,ncl,nch)
-PRECISION **m;
+void nr_free_matrix(m,nrl,nrh,ncl,nch)
+HC_PREC **m;
 long nch,ncl,nrh,nrl;
-/* free a PRECISION matrix allocated by matrix() */
+/* free a HC_PREC matrix allocated by matrix() */
 {
 	free((FREE_ARG) (m[nrl]+ncl-NR_END));
 	free((FREE_ARG) (m+nrl-NR_END));
 }
 
-void free_dmatrix(m,nrl,nrh,ncl,nch)
-PRECISION **m;
+void nr_free_dmatrix(m,nrl,nrh,ncl,nch)
+HC_PREC **m;
 long nch,ncl,nrh,nrl;
-/* free a PRECISION matrix allocated by dmatrix() */
+/* free a HC_PREC matrix allocated by dmatrix() */
 {
 	free((FREE_ARG) (m[nrl]+ncl-NR_END));
 	free((FREE_ARG) (m+nrl-NR_END));
@@ -622,36 +631,36 @@ long nch,ncl,nrh,nrl;
 	free((FREE_ARG) (m+nrl-NR_END));
 }
 
-void free_submatrix(b,nrl,nrh,ncl,nch)
-PRECISION **b;
+void nr_free_submatrix(b,nrl,nrh,ncl,nch)
+HC_PREC **b;
 long nch,ncl,nrh,nrl;
 /* free a submatrix allocated by submatrix() */
 {
 	free((FREE_ARG) (b+nrl-NR_END));
 }
 
-void free_convert_matrix(b,nrl,nrh,ncl,nch)
-PRECISION **b;
+void nr_free_convert_matrix(b,nrl,nrh,ncl,nch)
+HC_PREC **b;
 long nch,ncl,nrh,nrl;
 /* free a matrix allocated by convert_matrix() */
 {
 	free((FREE_ARG) (b+nrl-NR_END));
 }
 
-void free_f3tensor(t,nrl,nrh,ncl,nch,ndl,ndh)
-PRECISION ***t;
+void nr_free_f3tensor(t,nrl,nrh,ncl,nch,ndl,ndh)
+HC_PREC ***t;
 long nch,ncl,ndh,ndl,nrh,nrl;
-/* free a PRECISION  f3tensor allocated by f3tensor() */
+/* free a HC_PREC  f3tensor allocated by f3tensor() */
 {
 	free((FREE_ARG) (t[nrl][ncl]+ndl-NR_END));
 	free((FREE_ARG) (t[nrl]+ncl-NR_END));
 	free((FREE_ARG) (t+nrl-NR_END));
 }
-void avevar(struct dp *data,unsigned long n,
-	    PRECISION *ave,PRECISION *var)
+void nr_avevar(struct nr_dp *data,unsigned long n,
+	    HC_PREC *ave,HC_PREC *var)
 {
   unsigned long j;
-  PRECISION s[3],ep[3];
+  HC_PREC s[3],ep[3];
 
   for (ave[1]=0.0,j=1;j<=n;j++) ave[1] += data[j].x;
   for (ave[2]=0.0,j=1;j<=n;j++) ave[2] += data[j].y;
@@ -671,20 +680,20 @@ void avevar(struct dp *data,unsigned long n,
 }
 
 
-void fitline(PRECISION *x,PRECISION *y,int ndata,
-	     PRECISION *sig,int mwt,
-	     PRECISION *a,PRECISION *b,
-	     PRECISION *siga,PRECISION *sigb,
-	     PRECISION *chi2,PRECISION *q)
+void nr_fitline(HC_PREC *x,HC_PREC *y,int ndata,
+	     HC_PREC *sig,int mwt,
+	     HC_PREC *a,HC_PREC *b,
+	     HC_PREC *siga,HC_PREC *sigb,
+	     HC_PREC *chi2,HC_PREC *q)
 {
   int i;
-  PRECISION wt,t,sxoss,sx=0.0,sy=0.0,st2=0.0,ss,sigdat;
+  HC_PREC wt,t,sxoss,sx=0.0,sy=0.0,st2=0.0,ss,sigdat;
   
   *b=0.0;
   if (mwt) {
     ss=0.0;
     for (i=1;i<=ndata;i++) {
-      wt=1.0/SQUARE(sig[i]);
+      wt=1.0/NR_SQUARE(sig[i]);
       ss += wt;
       sx += x[i]*wt;
       sy += y[i]*wt;
@@ -717,15 +726,15 @@ void fitline(PRECISION *x,PRECISION *y,int ndata,
   *chi2=0.0;
   if (mwt == 0) {
     for (i=1;i<=ndata;i++)
-      *chi2 += SQUARE(y[i]-(*a)-(*b)*x[i]);
+      *chi2 += NR_SQUARE(y[i]-(*a)-(*b)*x[i]);
     *q=1.0;
     sigdat=sqrt((*chi2)/(ndata-2));
     *siga *= sigdat;
     *sigb *= sigdat;
   } else {
     for (i=1;i<=ndata;i++)
-      *chi2 += SQUARE((y[i]-(*a)-(*b)*x[i])/sig[i]);
-    *q=gammq(0.5*(ndata-2),0.5*(*chi2));
+      *chi2 += NR_SQUARE((y[i]-(*a)-(*b)*x[i])/sig[i]);
+    *q=nr_gammq(0.5*(ndata-2),0.5*(*chi2));
   }
 }
 
@@ -734,11 +743,11 @@ void fitline(PRECISION *x,PRECISION *y,int ndata,
 #define TINY 1.0e-20
 #define SHFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
 
-void mnbrak(ax,bx,cx,fa,fb,fc,func,fit)
-PRECISION (*func)(),*ax,*bx,*cx,*fa,*fb,*fc;
-struct fits *fit;
+void nr_mnbrak(ax,bx,cx,fa,fb,fc,func,fit)
+  HC_PREC (*func)(),*ax,*bx,*cx,*fa,*fb,*fc;
+struct nr_fits *fit;
 {
-  PRECISION ulim,u,r,q,fu,dum;
+  HC_PREC ulim,u,r,q,fu,dum;
   
   *fa=(*func)(*ax,fit);
   *fb=(*func)(*bx,fit);
@@ -752,7 +761,7 @@ struct fits *fit;
     r=(*bx-*ax)*(*fb-*fc);
     q=(*bx-*cx)*(*fb-*fa);
     u=(*bx)-((*bx-*cx)*q-(*bx-*ax)*r)/
-      (2.0*SIGN(FMAX(fabs(q-r),TINY),q-r));
+      (2.0*NR_SIGN(NR_FMAX(fabs(q-r),TINY),q-r));
     ulim=(*bx)+GLIMIT*(*cx-*bx);
     if ((*bx-u)*(u-*cx) > 0.0) {
       fu=(*func)(u,fit);
@@ -791,19 +800,18 @@ struct fits *fit;
 #undef TINY
 #undef SHFT
 #define ITMAX 1000
-#define EPS 5.0e-15
 
-PRECISION zbrent(func,fit,x1,x2,tol)
-PRECISION (*func)(),tol,x1,x2;
-struct fits *fit;
+HC_PREC nr_zbrent(func,fit,x1,x2,tol)
+HC_PREC (*func)(),tol,x1,x2;
+struct nr_fits *fit;
 {
   int iter;
-  PRECISION a=x1,b=x2,c=x2,d,e,min1,min2;
-  PRECISION fa=(*func)(a,fit),fb=(*func)(b,fit),
+  HC_PREC a=x1,b=x2,c=x2,d,e,min1,min2;
+  HC_PREC fa=(*func)(a,fit),fb=(*func)(b,fit),
     fc,p,q,r,s,tol1,xm;
   
   if ((fa > 0.0 && fb > 0.0) || (fa < 0.0 && fb < 0.0))
-    nrerror("Root must be bracketed in zbrent");
+    nr_error("Root must be bracketed in zbrent");
   fc=fb;
   for (iter=1;iter<=ITMAX;iter++) {
     if ((fb > 0.0 && fc > 0.0) || (fb < 0.0 && fc < 0.0)) {
@@ -819,7 +827,7 @@ struct fits *fit;
       fb=fc;
       fc=fa;
     }
-    tol1=2.0*EPS*fabs(b)+0.5*tol;
+    tol1=2.0*NR_EPS*fabs(b)+0.5*tol;
     xm=0.5*(c-b);
     if (fabs(xm) <= tol1 || fb == 0.0) return b;
     if (fabs(e) >= tol1 && fabs(fa) > fabs(fb)) {
@@ -853,16 +861,16 @@ struct fits *fit;
     if (fabs(d) > tol1)
       b += d;
     else
-      b += SIGN(tol1,xm);
+      b += NR_SIGN(tol1,xm);
     fb=(*func)(b,fit);
   }
-  nrerror("Maximum number of iterations exceeded in zbrent");
+  nr_error("Maximum number of iterations exceeded in zbrent");
   return 0.0;
 }
 #undef ITMAX
-#undef EPS
-PRECISION gammln(xx)
-PRECISION xx;
+
+HC_PREC nr_gammln(xx)
+HC_PREC xx;
 {
   double x,y,tmp,ser;
   static double cof[6]={76.18009172947146,-86.50532032941677,
@@ -878,7 +886,7 @@ PRECISION xx;
   return -tmp+log(2.5066282746310005*ser/x);
 }
 
-int comparef(struct dp *a,struct dp *b)
+int nr_comparef(struct nr_dp *a,struct nr_dp *b)
 {
   if(a->x < b->x)
     return -1;

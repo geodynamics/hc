@@ -19,12 +19,12 @@ for regional grids, this assumes 0...360 convention
 */
 #include "hc_ggrd.h"
 #include "hc.h"
-#include "fitxyee.h"
+#include "fitxyee.h"		/* part of numerical recipes */
 
-void calc_mean(struct dp *, int ,double *);
-void calc_std(struct dp *, int ,double *,double *);
+void calc_mean(struct nr_dp *, int ,double *);
+void calc_std(struct nr_dp *, int ,double *,double *);
 
-double correlation(struct dp *, double * , int );
+double correlation(struct nr_dp *, double * , int );
 void calc_azi_r_lonlat(double ,double ,double ,double ,
 		       double *,double *);
 double mod(double , double );	/*  */
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     weight_sum,weight;
   double mean[2],std[2],r,a,b,siga,sigb,chi2,q,dr,
     dphi,phi,aglobal,bglobal,cloc[2];
-  struct dp *data;
+  struct nr_dp *data;
   int lin_reg_mode = 2;		/* 1: errors in x 2: errors in x and y */
   int remove = 0;		/* match the layer correlation? */
   int pstat = 0;		/* exit after global stats */
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
   
   sprintf(out_name,"tmp.%g.%g.sample.dump",x_dump,y_dump);
   
-  data=(struct dp *)malloc(sizeof(struct dp));
+  data=(struct nr_dp *)malloc(sizeof(struct nr_dp));
 
   rad_km = 500;
   if(argc < 3){
@@ -140,7 +140,7 @@ int main(int argc, char **argv)
 	data[n].y = tmpy;
 	/* uncertainties? */
 	data[n].sigx = data[n].sigy = 1.0;
-	data=(struct dp *)realloc(data,sizeof(struct dp)*(n+2));
+	data=(struct nr_dp *)realloc(data,sizeof(struct nr_dp)*(n+2));
 	n++;
       }else{
 	nnan++;
@@ -162,11 +162,11 @@ int main(int argc, char **argv)
   switch(lin_reg_mode){			/* fit a linear relation ymod = a + b * x */
   case 1:
     /* best fit slope, only error in y */
-    fit((data-1),n,&aglobal, &bglobal,&siga,&sigb,&chi2,&q);
+    nr_fit((data-1),n,&aglobal, &bglobal,&siga,&sigb,&chi2,&q);
     break;
   case 2:
     /* best fit slope */
-    fitexy((data-1),n,&aglobal,&bglobal,&siga,&sigb,&chi2,&q);
+    nr_fitexy((data-1),n,&aglobal,&bglobal,&siga,&sigb,&chi2,&q);
     break;
   default:
     fprintf(stderr,"%s: linear regression mode %i undefined\n",argv[0],lin_reg_mode);
@@ -214,7 +214,7 @@ int main(int argc, char **argv)
       n = 0;
       mean_ratio = 0.0;
       weight_sum = 0.0;
-      data=(struct dp *)realloc(data,sizeof(struct dp));
+      data=(struct nr_dp *)realloc(data,sizeof(struct nr_dp));
       /* set up a circular sampling region around x,y */
       for(r=dr;r <= rad_km+1e-7;r += dr){
 	dphi = dr / r * GGRD_TWOPI/dri;
@@ -250,8 +250,8 @@ int main(int argc, char **argv)
 	      data[n].y -= aglobal +  data[n].x * bglobal;
 	    }
 	    /*  */
-	    data=(struct dp *)
-	      realloc(data,sizeof(struct dp)*(n+2));
+	    data=(struct nr_dp *)
+	      realloc(data,sizeof(struct nr_dp)*(n+2));
 	    //fprintf(stderr,"%11g %11g %11g %11g\n",xloc,yloc,data[n].x,data[n].y);
 	    weight_sum += weight;
 	    n++;
@@ -295,7 +295,7 @@ int main(int argc, char **argv)
 	    /* compute local correlation */
 	    corr = correlation(data,mean,n);
 	    /* best fit with errors in x and y  */
-	    fitexy((data-1),n,&a,&b,&siga,&sigb,&chi2,&q);
+	    nr_fitexy((data-1),n,&a,&b,&siga,&sigb,&chi2,&q);
 	    fprintf(stdout,"%11g %11g %11g %11g %5i %11g %11g\n",
 		    x,y,corr,b,n,(aglobal + cloc[0] * bglobal)-cloc[1],
 		    mean_ratio);
@@ -314,7 +314,7 @@ int main(int argc, char **argv)
 
 }
 /* linear correlation coefficient */
-double correlation(struct dp *data, double *mean, int n)
+double correlation(struct nr_dp *data, double *mean, int n)
 {
   int i,nuse;
   double s1,s2,s3,dx,dy;
@@ -333,7 +333,7 @@ double correlation(struct dp *data, double *mean, int n)
 }
 
 
-void calc_mean(struct dp *data, int n, double *mean)
+void calc_mean(struct nr_dp *data, int n, double *mean)
 {
   int i,nuse;
   mean[0] = mean[1] = 0.0;
@@ -351,7 +351,7 @@ void calc_mean(struct dp *data, int n, double *mean)
   }
 }
 
-void calc_std(struct dp *data, int n, double *std, double *mean)
+void calc_std(struct nr_dp *data, int n, double *std, double *mean)
 {
   int i,nuse;
   double tmp;
