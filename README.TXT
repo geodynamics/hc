@@ -1,47 +1,53 @@
 README FOR HC
 
-Version 1.0.8 - 2018
+Version 1.0.15 - 2022
 
-Thorsten Becker - twb@ig.utexas.edu
+Thorsten Becker - twbecker@post.harvard.edu
 
 
 HC is a global mantle circulation solver following Hager & O'Connell
-(1981) which can compute velocities, tractions, and geoid for simple
-density distributions and plate velocities.
+(1981) which can compute velocities, tractions, and the geoid for
+arbirtrary density distributions and radial viscosity variations. 
 
 This particular implementation illustrates one possible way to combine
-the HC solver routines.
+the HC solver routines. There is a forward tool example, as included
+in the graphical user interface SEATREE, and a parameter space
+exploration tool to scan viscosity distributions in terms of their
+predictions of the geoid.
 
-Based on code by Brad Hager, Richard O'Connell, and Bernhard
-Steinberger, this version is by Thorsten Becker and Craig O'Neill.
+This code is based on Fortran routine by Brad Hager, Richard
+O'Connell, and most recently Bernhard Steinberger, who made several
+modifications. This version is by Thorsten Becker with contributions
+to the plate velocity inversion tool by Craig O'Neill (the latter
+remains incomplete).
 
-Note also that the Solid Earth Teaching and Research Environment
-(SEATREE, http://geosys.usc.edu/projects/seatree/), as preinstalled
-with software as a VirtualBox available from the Unified Geodynamics
-Earth Science Computing Environment (UGESCE,
+The Solid Earth Teaching and Research Environment (SEATREE,
+https://github.com/thwbecker/seatree/), as preinstalled with
+software as a VirtualBox available from the Unified Geodynamics Earth
+Science Computing Environment (UGESCE,
 http://www-udc.ig.utexas.edu/external/becker/ugesce.html) provides a
-convenient user interface for HC.
+convenient graphical user interface for HC to select seismic
+tomography models, edit viscosity structures, etc.
 
 
 INSTALLATION
 
 The code should compile on any basic UNIX/Linux system with the GMT
-tools (by default, version > 4.2.1, and only version 4.X.X is
-supported!) and libraries installed. See the Makefile for comments and
+tools (BY DEFAULT, VERSION > 4.2.1, AND ONLY VERSION 4.X.X IS
+SUPPORTED!) and libraries installed. See the Makefile for comments and
 what to modify.
 
 What is described below is the hc Hager & O'Connell (1981) forward
 flow and geoid computation. For plate velocity inversions following
 the Ricard & Vigny (1989) method, see the hcplates subdirectory and
-the README there. The plate inversion code, due to Craig O'Neill isn't
-quite working yet.
+the README there. The plate inversion code is not quite working yet.
 
 The Makefile assumes that the following environment variables are
 predefined: 
 
 1) GMTHOME: needs to point to the base directory of the GMT installation,
 e.g.
-	/usr/local/src/GMTdev/GMT4.5.6/
+	/usr/local/src/GMTdev/GMT4.5.18/
 
 if you installed GMT yourself, or
 
@@ -101,7 +107,7 @@ routines, as those rely on the netcdf/grd I/O capabilities via GMT.
 HC CODE usage
 
 Described in the help page that is displayed for "hc -h" as below.
-Also see SEATREE (http://geosys.usc.edu/projects/seatree/) for a
+Also see SEATREE (https://github.com/thwbecker/seatree/) for a
 graphical user interface, and example plotting scripts as provided
 below.
 
@@ -359,7 +365,7 @@ HC is a module of the Solid Earth Teaching and Research Environment
 (SEATREE) which provides a graphical user interface to flow
 computations and plotting. 
 
-https://geosys.usc.edu/projects/seatree/wiki/ 
+https://github.com/thwbecker/seatree
      
 UGESCE
 
@@ -369,7 +375,13 @@ Linux install that includes SEATREE, HC, and a range of other Earth
 Science data and software, all in one (big) package, ready to go.
 
 
+COPYRIGHT
 
+Versions of this software might include Numerical Recipes code (HC
+does not rely on it, only some related tools do) - copyright is with
+these authors, do not distribute without permission.
 
-				   
+For all of the HC code, copyright by Thorsten Becker,
+thwbecker@post.harvard.edu, under GPL of 1991.
+
 
