@@ -1,0 +1,18 @@
+#!/bin/bash
+idir=$datadir/tomography/models/
+d=200
+extract_layer $idir/smean.31.m.ab $d | shsyn 1 0 tmp.1
+extract_layer $idir/s20rts.31.m.ab $d | shsyn 1 0 tmp.2
+
+grdgrd2correlation tmp.1.grd tmp.2.grd 1000 0 0 1 > tmp.dat
+xyz2grd tmp.dat -R0/359/-89/89 -I1 -Gtmp.r.grd
+
+makecpt -T-5/5/.5 -Croma -I > tmp.vs.cpt
+makecpt -T-1/1/.1 -Cvik > tmp.r.cpt
+grd2map tmp.1.grd tmp.vs
+grd2map tmp.2.grd tmp.vs
+grd2map tmp.r.grd tmp.r
+epsmerge -par -x 1 -y 3 tmp.1.ps tmp.2.ps tmp.r.ps > corrt.ps
+psconvert -Tf corrt.ps
+rm tmp.1.ps tmp.2.ps tmp.r.ps corrt.ps tmp*grd
+
