@@ -57,9 +57,9 @@ char *message;
 /* general floating point vector allocation */
 void 
 hc_vecalloc (x, n, message)
-HC_PREC **x;
-int n;
-char *message;
+     HC_PREC **x;
+     int n;
+     char *message;
 {
   *x = (HC_PREC *)malloc(sizeof(HC_PREC)*(size_t)n);
   if(! (*x))
@@ -68,9 +68,9 @@ char *message;
 /* single prec complex vector allocation */
 void 
 hc_scmplx_vecalloc (x, n, message)
-struct hc_scmplx **x;
-int n;
-char *message;
+     struct hc_scmplx **x;
+     int n;
+     char *message;
 {
   *x = (struct hc_scmplx *)malloc(sizeof(struct hc_scmplx)*(size_t)n);
   if(! (*x))
@@ -79,9 +79,9 @@ char *message;
 /* single vector reallocation */
 void 
 hc_svecrealloc (x, n, message)
-float **x;
-int n;
-char *message;
+     float **x;
+     int n;
+     char *message;
 {
   *x = (float *)realloc(*x,sizeof(float)*(size_t)n);
   if(!(*x))
@@ -101,9 +101,9 @@ char *message;
 /* general version */
 void 
 hc_vecrealloc (x, n, message)
-HC_PREC **x;
-int n;
-char *message;
+     HC_PREC **x;
+     int n;
+     char *message;
 {
   *x = (HC_PREC *)realloc(*x,sizeof(HC_PREC)*(size_t)n);
   if(!(*x))

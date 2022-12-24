@@ -276,18 +276,17 @@ int main(int argc, char **argv)
    print out a four layer viscosity structure geoid correlation suite,
    or additionally scan through the upper/lower mantle depths
  */
-void 
-visc_scan_out (v, geoid, sol_spectral, pvel, p, model, solved, vary_umlm)
-HC_PREC *v;
-struct sh_lms *geoid;
-struct sh_lms *sol_spectral;
-struct sh_lms *pvel;
-struct hc_parameters *p;
-struct hcs *model;
-hc_boolean *solved;
-hc_boolean vary_umlm;
+void visc_scan_out (v, geoid, sol_spectral, pvel, p, model, solved, vary_umlm)
+     HC_PREC *v;
+     struct sh_lms *geoid;
+     struct sh_lms *sol_spectral;
+     struct sh_lms *pvel;
+     struct hc_parameters *p;
+     struct hcs *model;
+     hc_boolean *solved;
+     hc_boolean vary_umlm;
 {
-  HC_PREC corr[3],r660=660;
+  HC_PREC corr[3],r660=660,rms;
   const HC_PREC rtop = 300.1, rbot = 1800+1e-5, dr = 25;
   if(p->vscan_rlv){
     if((v[0] < v[1])||(v[0] < v[2]))		/* lithosphere should be > asth or upper mantle */
@@ -305,16 +304,16 @@ hc_boolean vary_umlm;
 	 660...2871 layer in log space */ 
       fprintf(stdout,"%14.7e %14.7e %14.7e %14.7e\t",
 	      (double)v[0],(double)v[1],(double)v[2],(double)v[3]);
-      hc_calc_geoid_corr_four_layer(v,geoid,sol_spectral,pvel,p,model,solved,corr);
-      fprintf(stdout,"%10.7f %10.7f %10.7f\t%8.3f\n",(double)corr[0],(double)corr[1],
-	      (double)corr[2],(double)r660);
+      hc_calc_geoid_corr_four_layer(v,geoid,sol_spectral,pvel,p,model,solved,corr,&rms);
+      fprintf(stdout,"%10.7f %10.7f %10.7f\t%8.3f\t%.4e\n"
+	      ,(double)corr[0],(double)corr[1],(double)corr[2],(double)r660,(double)rms);
     }
   }else{
     /* no radius scan */
     fprintf(stdout,"%14.7e %14.7e %14.7e %14.7e\t",
 	    (double)v[0],(double)v[1],(double)v[2],(double)v[3]);
-    hc_calc_geoid_corr_four_layer(v,geoid,sol_spectral,pvel,p,model,solved,corr);
-    fprintf(stdout,"%10.7f %10.7f %10.7f\n",(double)corr[0],(double)corr[1],(double)corr[2]);
+    hc_calc_geoid_corr_four_layer(v,geoid,sol_spectral,pvel,p,model,solved,corr,&rms);
+    fprintf(stdout,"%10.7f %10.7f %10.7f\tNaN\t%.4e\n",(double)corr[0],(double)corr[1],(double)corr[2],(double)rms);
   }
 
 }

@@ -297,12 +297,11 @@ sol[nradp2 * 3 ]
 
 data has to be initialized, eg. as NULL
 */
-void 
-hc_compute_sol_spatial (hc, sol_w, sol_x, verbose)
-struct hcs *hc;
-struct sh_lms *sol_w;
-HC_PREC **sol_x;
-hc_boolean verbose;
+void hc_compute_sol_spatial (hc, sol_w, sol_x, verbose)
+     struct hcs *hc;
+     struct sh_lms *sol_w;
+     HC_PREC **sol_x;
+     hc_boolean verbose;
 {
   int i,i3,np,np2,np3,os;
   static int ntype = 3;
@@ -393,7 +392,7 @@ hc_boolean verbose;
 */
 
 void 
-hc_calc_geoid_corr_four_layer (log_eta, geoid, sol_spectral, pvel, p, model, solved, corr)
+hc_calc_geoid_corr_four_layer (log_eta, geoid, sol_spectral, pvel, p, model, solved, corr, rms)
      HC_PREC *log_eta;
      struct sh_lms *geoid;
      struct sh_lms *sol_spectral;
@@ -402,6 +401,7 @@ hc_calc_geoid_corr_four_layer (log_eta, geoid, sol_spectral, pvel, p, model, sol
      struct hcs *model;
      hc_boolean *solved;
      HC_PREC *corr;		/*  */
+     HC_PREC *rms;
 {
   /* layer viscosity structure */
   /* 
@@ -425,8 +425,8 @@ hc_calc_geoid_corr_four_layer (log_eta, geoid, sol_spectral, pvel, p, model, sol
 	   pvel,model->dens_anom,geoid,
 	   p->verbose,
 	   FALSE);		/* not just kernel */
-  /* only output are the geoid correlations, for now */
+  /* geoid correlations, for now */
   hc_compute_correlation(geoid,p->ref_geoid,corr,2,p->verbose); /* r_20, r_4-9, r_2-4 */
-  
+  *rms = sh_total_rms(geoid);
   *solved = TRUE;
 }
