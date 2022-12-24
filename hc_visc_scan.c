@@ -305,15 +305,16 @@ void visc_scan_out (v, geoid, sol_spectral, pvel, p, model, solved, vary_umlm)
       fprintf(stdout,"%14.7e %14.7e %14.7e %14.7e\t",
 	      (double)v[0],(double)v[1],(double)v[2],(double)v[3]);
       hc_calc_geoid_corr_four_layer(v,geoid,sol_spectral,pvel,p,model,solved,corr,&rms);
-      fprintf(stdout,"%10.7f %10.7f %10.7f\t%8.3f\t%.4e\n"
-	      ,(double)corr[0],(double)corr[1],(double)corr[2],(double)r660,(double)rms);
+      fprintf(stdout,"%10.7f %10.7f %10.7f\t%8.3f\t%.4e\n",
+	      (double)corr[0],(double)corr[1],(double)corr[2],(double)r660,(double)rms);
     }
   }else{
     /* no radius scan */
     fprintf(stdout,"%14.7e %14.7e %14.7e %14.7e\t",
 	    (double)v[0],(double)v[1],(double)v[2],(double)v[3]);
     hc_calc_geoid_corr_four_layer(v,geoid,sol_spectral,pvel,p,model,solved,corr,&rms);
-    fprintf(stdout,"%10.7f %10.7f %10.7f\tNaN\t%.4e\n",(double)corr[0],(double)corr[1],(double)corr[2],(double)rms);
+    fprintf(stdout,"%10.7f %10.7f %10.7f\tNaN\t%.4e\n",
+	    (double)corr[0],(double)corr[1],(double)corr[2],(double)rms);
   }
 
 }

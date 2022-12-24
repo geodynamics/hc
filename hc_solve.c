@@ -425,8 +425,9 @@ hc_calc_geoid_corr_four_layer (log_eta, geoid, sol_spectral, pvel, p, model, sol
 	   pvel,model->dens_anom,geoid,
 	   p->verbose,
 	   FALSE);		/* not just kernel */
-  /* geoid correlations, for now */
+  /* geoid correlations */
   hc_compute_correlation(geoid,p->ref_geoid,corr,2,p->verbose); /* r_20, r_4-9, r_2-4 */
+  /* RMS */
   *rms = sh_total_rms(geoid);
   *solved = TRUE;
 }

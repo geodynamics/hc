@@ -264,14 +264,16 @@ HC_CPREC sh_total_rms (exp)
      struct sh_lms *exp;
 {
   HC_PREC *power;
-  double sum;
+  HC_PREC sum;
   int l;
   hc_vecalloc(&power,exp->lmaxp1,"sh_total_power");
   sh_compute_power_per_degree(exp,power);
-  for(sum=0.0,l=1;l<=exp->lmax;l++)
+  for(sum=0.0,l=1;l<=exp->lmax;l++){
+    //fprintf(stderr,"%g\n",(double)power[l]);
     sum += (double)(2.0*(HC_CPREC)l+1.0) * (double)power[l];
+  }
   free(power);
-  return (HC_CPREC)sqrt(sum);
+  return sqrt(sum);
 }
 
 
