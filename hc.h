@@ -242,13 +242,13 @@ struct hc_parameters{
   hc_boolean print_kernel_only;
 
   
-  char visc_filename[HC_CHAR_LENGTH];	/* name of viscosity profile file */
-  char pvel_filename[HC_CHAR_LENGTH];	/* name of plate velocities file */
-  char dens_filename[HC_CHAR_LENGTH];	/* name of density model file */
-  char prem_model_filename[HC_CHAR_LENGTH];	/* PREM model filename */
-  char dens_scaling_filename[HC_CHAR_LENGTH];	/*  */
-  char ref_geoid_file[HC_CHAR_LENGTH]; /* reference geoid */
-  char ref_dtopo_file[HC_CHAR_LENGTH]; /* reference dynamic topography */
+  char visc_filename[HC_CHAR_LENGTH+1];	/* name of viscosity profile file */
+  char pvel_filename[HC_CHAR_LENGTH+1];	/* name of plate velocities file */
+  char dens_filename[HC_CHAR_LENGTH+1];	/* name of density model file */
+  char prem_model_filename[HC_CHAR_LENGTH+1];	/* PREM model filename */
+  char dens_scaling_filename[HC_CHAR_LENGTH+1];	/*  */
+  char ref_geoid_file[HC_CHAR_LENGTH+1]; /* reference geoid */
+  char ref_dtopo_file[HC_CHAR_LENGTH+1]; /* reference dynamic topography */
 };
 
 /* plate velocity structure */

@@ -93,7 +93,7 @@ int ggrd_read_vel_grids(struct ggrd_master *ggrd, /* ggrd master structure
 			ggrd_boolean use_nearneighbor)
 {
   FILE *in,*out;
-  int i,j,k,l,level,os,os1,ivt,*index;
+  int i,j,k,l,level,os,os1,ivt,*index,rcheck;
 
   //int dummy[4]={0,0,0,0};	/* GMT  < 4.5.1 */
   GMT_LONG dummy[4]={0,0,0,0};	/* GMT >= 4.5.1 */
@@ -258,16 +258,22 @@ int ggrd_read_vel_grids(struct ggrd_master *ggrd, /* ggrd master structure
 #endif
 	  }else{
 	    in = ggrd_open(sname,"r","ggrd_read_vel_grids");
+	    //
 	    // read header type of information
+	    //
 	    header->node_offset=FALSE;
-	    fread(&header->x_min, sizeof(double), 1, in);
-	    fread(&header->x_max, sizeof(double), 1, in);
-	    fread(&header->y_min, sizeof(double), 1, in);
-	    fread(&header->y_max, sizeof(double), 1, in);
-	    fread(&header->x_inc, sizeof(double), 1, in);
-	    fread(&header->y_inc, sizeof(double), 1, in);
-	    fread(&header->nx, sizeof(int), 1, in);
-	    fread(&header->ny, sizeof(int), 1, in);
+	    rcheck =fread(&header->x_min, sizeof(double), 1, in);
+	    rcheck+=fread(&header->x_max, sizeof(double), 1, in);
+	    rcheck+=fread(&header->y_min, sizeof(double), 1, in);
+	    rcheck+=fread(&header->y_max, sizeof(double), 1, in);
+	    rcheck+=fread(&header->x_inc, sizeof(double), 1, in);
+	    rcheck+=fread(&header->y_inc, sizeof(double), 1, in);
+	    rcheck+=fread(&header->nx, sizeof(int), 1, in);
+	    rcheck+=fread(&header->ny, sizeof(int), 1, in);
+	    if(rcheck != 8){
+	      fprintf(stderr,"ggrd_read_vel_grids: error reading header values\n");
+	      return(-4);
+	    }
 	  }
 	  if(!init){
 	    /* 
@@ -380,7 +386,11 @@ int ggrd_read_vel_grids(struct ggrd_master *ggrd, /* ggrd master structure
 			      dummy, 0);
 #endif
 	  }else{
-	    fread(dgrd,sizeof(double),header->nx*header->ny,in);
+	    rcheck=fread(dgrd,sizeof(double),header->nx*header->ny,in);
+	    if(rcheck!=header->nx*header->ny){
+	      fprintf(stderr,"ggrd_read_vel_grids: error reading data values\n");
+	      return(-5);
+	    }
 	    fclose(in);
 	  }
 	  //

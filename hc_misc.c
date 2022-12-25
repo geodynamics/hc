@@ -186,20 +186,18 @@ int n;
 }
 
 /* zero a HC_HIGH_PREC precision vector */
-void 
-hc_zero_dvector (x, n)
-HC_HIGH_PREC *x;
-int n;
+void hc_zero_dvector (x, n)
+     HC_HIGH_PREC *x;
+     int n;
 {
   int i;
   for(i=0;i<n;i++)
     x[i] = 0.0;
 }
 /* zero a vector of type logical */
-void 
-hc_zero_lvector (x, n)
-hc_boolean *x;
-int n;
+void hc_zero_lvector (x, n)
+     hc_boolean *x;
+     int n;
 {
   int i;
   for(i=0;i<n;i++)
@@ -214,11 +212,10 @@ if append is TRUE, will add a format string, else will create
 anew 
 
 */
-void 
-hc_get_flt_frmt_string (string, n, append)
-char *string;
-int n;
-hc_boolean append;
+void hc_get_flt_frmt_string (string, n, append)
+     char *string;
+     int n;
+     hc_boolean append;
 {
   static hc_boolean init=FALSE;	/* that's OK, multiple instances calling are fine */
   static char type_s[3];
@@ -243,9 +240,8 @@ hc_boolean append;
 }
 //
 // deal with boolean values/switches
-char *
-hc_name_boolean (value)
-hc_boolean value;
+char *hc_name_boolean (value)
+     hc_boolean value;
 {
   if(value)
     return("ON");
@@ -253,9 +249,8 @@ hc_boolean value;
     return("OFF");
 }
 
-hc_boolean 
-hc_toggle_boolean (variable)
-hc_boolean *variable;
+hc_boolean hc_toggle_boolean (variable)
+     hc_boolean *variable;
 {
   if(*variable){
     *variable=FALSE;

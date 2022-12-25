@@ -72,7 +72,7 @@ void hc_solve(struct hcs *, unsigned short, int, struct sh_lms *, unsigned short
 void hc_sum(struct hcs *, int, struct sh_lms *, struct sh_lms *, int, unsigned short, struct sh_lms *, unsigned short);
 void hc_compute_sol_spatial(struct hcs *, struct sh_lms *, long double **, unsigned short);
 void hc_compute_dynamic_topography(struct hcs *, struct sh_lms *, struct sh_lms **, unsigned short, unsigned short);
-void hc_calc_geoid_corr_four_layer(long double *, struct sh_lms *, struct sh_lms *, struct sh_lms *, struct hc_parameters *, struct hcs *, unsigned short *, long double *,long double *);
+void hc_calc_geoid_corr_four_layer(long double *, struct sh_lms *, struct sh_lms *, struct sh_lms *, struct hc_parameters *, struct hcs *, unsigned short *, long double *, long double *);
 /* hc_propagator.c */
 void hc_evalpa(int, long double, long double, long double, long double *);
 void hc_evppot(int, long double, long double *);
