@@ -3,16 +3,38 @@
 # compute viscosity scans using HC for single, or simple (2-4) layer structures
 #
 layers=${1-"-2 2 3 4"}
-smodels=${2-"smean2 lrr98d s40rts semucb-wm1 smean2_ntn st11den-1 stb00d tx2019slab"}
+#smodels=${2-"smean2 lrr98d s40rts semucb-wm1 smean2_ntn st11den-1 stb00d tx2019slab"}
+smodels=${2-"smean2 lrr98d stb00d st11den-1 tx2019slab tx2019nslab"}
 zlm=${3-660}		# depth of the upper/lower mantle boundary
 zau=${4-410}			# depth of the asthenosphere, from 100.... zau
+dmode=${5-1}			#
+eta_max_exp=${6-3}		# default visc range  viscosity 10^{+/- emax}
 
-#dens_type="-ds 0.2"
-dens_type="-dsf $HOME/progs/src/seatree/python/data/hc/dscale/dscale_0.dat"
+if [ $dmode -eq 1 ];then
+    odir=visc_scan_out
+    dens_type="-dsf $HOME/progs/src/seatree/python/data/hc/dscale/dscale_0.dat"
+elif [ $dmode -eq 2 ];then
+    odir=visc_scan_out_hefesto
+    dens_type="-dsf $HOME/progs/src/seatree/python/data/hc/dscale/hefesto.new_dmm.1600.200zero.dat"
+elif [ $dmode -eq 3 ];then
+    odir=visc_scan_out_nlm
+    dens_type="-dsf $HOME/progs/src/seatree/python/data/hc/dscale/dscale_0nlm.dat"
+elif [ $dmode -eq 4 ];then
+    odir=visc_scan_out_hefesto_nlm
+    dens_type="-dsf $HOME/progs/src/seatree/python/data/hc/dscale/hefesto.new_dmm.1600.200zeronlm.dat"
+else
+    echo $0: $dmode undefined
+    #dens_type="-ds 0.2"
+    exit
+fi
+
+
+
 hc_dir=$HOME/progs/src/cig/hc
 geoid_ref=$hc_dir/egm2008-hc-geoid.chambat.31.ab
 prem_file=$hc_dir/prem/prem.dat
-mkdir -p visc_scan_out/
+
+mkdir -p $odir/
 
 for lay in $layers;do
 
@@ -29,6 +51,12 @@ for lay in $layers;do
 	exit
     fi
     for smodel in $smodels;do
+	if [[ $smodel = tx2019 || $smodel =  tx2019slab ]];then
+	    slmax=63
+	else
+	    slmax=31
+	fi
+	
 	while [ `ps aux | grep  hc_visc_scan | lc ` -gt $NR_CPUS ];do
 	    echo $0: waiting for jobs to terminate
 	    sleep 30
@@ -39,15 +67,15 @@ for lay in $layers;do
 	    suf=a.$zau.dat.gz
 	fi
 	if [ $zlm = 660 ];then
-	    ofile=visc_scan_out/visc_scan.$smodel.$lay.$suf 
+	    ofile=$odir/visc_scan.$smodel.$lay.$suf 
 	else
-	    ofile=visc_scan_out/visc_scan.$smodel.$lay.$zlm.$suf 
+	    ofile=$odir/visc_scan.$smodel.$lay.$zlm.$suf 
 	fi
 	echo $smodel $lay 
-	hc_visc_scan -dens $datadir/tomography/models/$smodel.31.m.ab -dshs \
+	hc_visc_scan -dens $datadir/tomography/models/$smodel.$slmax.m.ab -dshs \
 		     $dens_type -prem $prem_file \
-		     -vs_zlm $zlm -vs_zau $zau \
-		     -gref $geoid_ref -vs_n $lay -vs_dv $dv | gzip -c > $ofile &
+		     -vs_zlm $zlm -vs_zau $zau -vs_em $eta_max_exp \
+		     -gref $geoid_ref -vs_n $lay -vs_dv $dv  | gzip -c > $ofile &
     done
 
 done
