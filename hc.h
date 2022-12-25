@@ -213,7 +213,7 @@ struct hc_parameters{
 			   something "reasonable" in
 			   terms of relative layer
 			   strength */
-
+  HC_PREC vscan_em;		/* range for scan */
   HC_PREC vscan_dv;		/* spacing for viscosity scan */
   int vscan_n;		/* how many layers to use */
 

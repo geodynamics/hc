@@ -159,13 +159,13 @@ int main(int argc, char **argv)
 
      */
     /* uniform "priors" */
-    vl[0][IVMIN]=  -HC_VSCAN_VMAX;vl[0][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[0][IDV]=dv_use; /*   0..100
+    vl[0][IVMIN]=  -p->vscan_em;vl[0][IVMAX]=p->vscan_em+1e-5;vl[0][IDV]=dv_use; /*   0..100
 											  layer
 											  log
 											  bounds
 											  and
 											  spacing */
-    vl[1][IVMIN]=  -HC_VSCAN_VMAX;vl[1][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[1][IDV]=dv_use; /* 100..410 */
+    vl[1][IVMIN]=  -p->vscan_em;vl[1][IVMAX]=p->vscan_em+1e-5;vl[1][IDV]=dv_use; /* 100..410 */
     if(p->free_slip){
       vl[2][IVMIN]=  0;vl[2][IVMAX]=0+1e-5;vl[2][IDV]=dv_use; /* for free
 								      slip, only relative
@@ -173,10 +173,10 @@ int main(int argc, char **argv)
 								      for correlation */
       fprintf(stderr,"%s: for free slip, we set upper mantle (layer 2) to unity (only relative viscosities matter)\n",argv[0]);
     }else{
-      vl[2][IVMIN]=  -HC_VSCAN_VMAX;vl[2][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[2][IDV]=dv_use; /* need to actually
+      vl[2][IVMIN]=  -p->vscan_em;vl[2][IVMAX]=p->vscan_em+1e-5;vl[2][IDV]=dv_use; /* need to actually
 											       loop 410 .660 */
     }
-    vl[3][IVMIN]=  -HC_VSCAN_VMAX;vl[3][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[3][IDV]=dv_use; /* 660 ... 2871 */
+    vl[3][IVMIN]=  -p->vscan_em;vl[3][IVMAX]=p->vscan_em+1e-5;vl[3][IDV]=dv_use; /* 660 ... 2871 */
 
     /* loop */
     for(v[0]=vl[0][IVMIN];v[0] <= vl[0][IVMAX];v[0] += vl[0][IDV])
@@ -192,7 +192,7 @@ int main(int argc, char **argv)
        three layer case
 
     */
-    vl[0][IVMIN]=  -HC_VSCAN_VMAX;vl[0][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[0][IDV]=dv_use; /*   0..100
+    vl[0][IVMIN]=  -p->vscan_em;vl[0][IVMAX]=p->vscan_em+1e-5;vl[0][IDV]=dv_use; /*   0..100
 											       layer
 											       log
 											       bounds
@@ -206,10 +206,10 @@ int main(int argc, char **argv)
 								      for correlation */
       fprintf(stderr,"%s: for free slip, we set upper mantle (layer 2) to unity (only relative viscosities matter)\n",argv[0]);
     }else{
-      vl[2][IVMIN]=  -HC_VSCAN_VMAX;vl[2][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[2][IDV]=dv_use; /* need to actually
+      vl[2][IVMIN]=  -p->vscan_em;vl[2][IVMAX]=p->vscan_em+1e-5;vl[2][IDV]=dv_use; /* need to actually
 											       loop 410 .660 */
     }
-    vl[3][IVMIN]=  -HC_VSCAN_VMAX;vl[3][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[3][IDV]=dv_use; /* 660 ... 2871 */
+    vl[3][IVMIN]=  -p->vscan_em;vl[3][IVMAX]=p->vscan_em+1e-5;vl[3][IDV]=dv_use; /* 660 ... 2871 */
     /* loop */
     for(v[0]=vl[0][IVMIN];v[0] <= vl[0][IVMAX];v[0] += vl[0][IDV])
       for(v[2]=vl[2][IVMIN];v[2] <= vl[2][IVMAX];v[2] += vl[2][IDV]){
@@ -238,10 +238,10 @@ int main(int argc, char **argv)
 								      correlation */
       fprintf(stderr,"%s: for free slip, we set upper mantle (layer 2) to unity (only relative viscosities matter)\n",argv[0]);
     }else{
-      vl[2][IVMIN]=  -HC_VSCAN_VMAX;vl[2][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[2][IDV]=dv_use; /* need to actually
+      vl[2][IVMIN]=  -p->vscan_em;vl[2][IVMAX]=p->vscan_em+1e-5;vl[2][IDV]=dv_use; /* need to actually
 											       loop 410 .660 */
     }
-    vl[3][IVMIN]=  -HC_VSCAN_VMAX;vl[3][IVMAX]=HC_VSCAN_VMAX+1e-5;vl[3][IDV]=dv_use; /* 660 ... 2871 */
+    vl[3][IVMIN]=  -p->vscan_em;vl[3][IVMAX]=p->vscan_em+1e-5;vl[3][IDV]=dv_use; /* 660 ... 2871 */
     /* loop */
     for(v[2]=vl[2][IVMIN];v[2] <= vl[2][IVMAX];v[2] += vl[2][IDV]){
       v[0] = v[1] = v[2];

@@ -80,6 +80,7 @@ void hc_init_parameters(struct hc_parameters *p)
   */
   p->vscan_n  = 2; /* between 2 and HC_VSCAN_NLAYER_MAX */
   p->vscan_dv =  HC_VSCAN_DV0;
+  p->vscan_em = HC_VSCAN_VMAX;
   p->vscan_rlv = FALSE;
   /* 
 
@@ -483,6 +484,9 @@ hc_handle_command_line (argc, argv, start_from_i, p)
 		HC_VSCAN_NLAYER_MAX,p->vscan_rlv);
 	fprintf(stderr,"-vs_dv\tval\tuse val spacing in log space for viscosity scan (%g)\n",
 		(double)p->vscan_dv);
+	fprintf(stderr,"-vs_em\tval\tuse 10^{+/-vs_em} as bounds for scan (%g)\n",
+		(double)p->vscan_em);
+	
 	fprintf(stderr,"-vs_zlm\tdepth\tuse depth[km] for the upper/lower mantle boundary (%g)\n",
 		(double)HC_Z_DEPTH(p->rlayer[0]));
 	fprintf(stderr,"-vs_zau\tdepth\tuse depth[km] for the asthenosphere/upper mantle boundary (%g)\n",
@@ -559,6 +563,10 @@ hc_handle_command_line (argc, argv, start_from_i, p)
       hc_advance_argument(&i,argc,argv);
       sscanf(argv[i],HC_FLT_FORMAT,&tmp);
       p->rlayer[0] = HC_ND_RADIUS(tmp);
+      used_parameter = TRUE;
+    }else if(strcmp(argv[i],"-vs_em")==0){	
+      hc_advance_argument(&i,argc,argv);
+      sscanf(argv[i],HC_FLT_FORMAT,&p->vscan_em);
       used_parameter = TRUE;
     }else if(strcmp(argv[i],"-vs_r")==0){	
       hc_toggle_boolean(&p->vscan_rlv);
