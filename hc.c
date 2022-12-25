@@ -60,6 +60,7 @@ int main(int argc, char **argv)
 				   e.g. velocities */
   static hc_boolean geoid_binary = FALSE;	/* type of geoid output */
   static HC_CPREC unitya[1] = {1.0};
+  strncpy(p->main_program_name,argv[0],HC_CHAR_LENGTH);
   /* 
      
   
@@ -191,7 +192,7 @@ int main(int argc, char **argv)
     if(p->verbose)
       fprintf(stderr,"%s: writing spherical harmonics solution to %s\n",
 	      argv[0],filename);
-    out = hc_fopen(filename,"w","main");
+    out = hc_fopen(filename,"w","main",p->main_program_name);
     hc_print_spectral_solution(model,sol_spectral,out,
 			       p->solution_mode,
 			       p->sol_binary_out,p->verbose);
@@ -210,7 +211,7 @@ int main(int argc, char **argv)
 	fprintf(stderr,"%s: writing scaled density anomaly field to %s\n",
 		argv[0],filename);
       
-      out = hc_fopen(filename,"w","main");
+      out = hc_fopen(filename,"w","main",p->main_program_name);
       hc_print_dens_anom(model,out,p->sol_binary_out,p->verbose);
       fclose(out);
     }
@@ -253,7 +254,7 @@ int main(int argc, char **argv)
       fprintf(stderr,"%s: writing geoid %sto %s, %s\n",argv[0],
 	      ((p->print_kernel_only)?("kernels "):("")),filename,
 	      (p->compute_geoid == 1)?("at surface"):("all layers"));
-    out = hc_fopen(filename,"w","main");	
+    out = hc_fopen(filename,"w","main",p->main_program_name);	
     if(p->print_kernel_only){
       hc_print_geoid_kernel(geoid,model->r,model->nradp2,out,p->verbose);
     }else{			/* geoid solutions */

@@ -36,6 +36,7 @@ int main(int argc, char **argv)
   hc_boolean solved = FALSE; /* init with FALSE! */
   hc_boolean vary_umlm = FALSE;
   HC_PREC dv_use,vl[HC_VSCAN_NLAYER_MAX][3],v[HC_VSCAN_NLAYER_MAX];			/*  for viscosity scans */
+  strncpy(p->main_program_name,argv[0],HC_CHAR_LENGTH);
   /* 
      
   

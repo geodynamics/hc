@@ -55,7 +55,7 @@ void hc_init_main(struct hcs *, int, struct hc_parameters *);
 void hc_init_constants(struct hcs *, long double, char *, unsigned short);
 void hc_handle_command_line(int, char **, int, struct hc_parameters *);
 void hc_assign_viscosity(struct hcs *, int, long double [4], struct hc_parameters *);
-void hc_assign_density(struct hcs *, unsigned short, int, char *, int, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, int, long double *, long double *, unsigned short, unsigned short);
+void hc_assign_density(struct hcs *, struct hc_parameters *, int, char *, int, unsigned short, unsigned short, unsigned short);
 long double hc_find_dens_scale(long double, long double, unsigned short, long double *, long double *, int);
 void hc_init_phase_boundaries(struct hcs *, int, unsigned short);
 void hc_assign_plate_velocities(struct hcs *, int, char *, unsigned short, int, unsigned short, unsigned short, unsigned short, unsigned short);
@@ -66,7 +66,7 @@ void hc_struc_free(struct hcs **);
 void hc_assign_dd_scaling(int, long double [4], struct hc_parameters *, long double);
 void hc_read_scalar_shexp(char *, struct sh_lms **, char *, struct hc_parameters *);
 void hc_select_pvel(long double, struct pvels *, struct sh_lms *, unsigned short);
-FILE *hc_fopen(char *, char *, char *);
+FILE *hc_fopen(char *, char *, char *, char *);
 /* hc_solve.c */
 void hc_solve(struct hcs *, unsigned short, int, struct sh_lms *, unsigned short, unsigned short, unsigned short, unsigned short, unsigned short, struct sh_lms *, struct sh_lms *, struct sh_lms *, unsigned short, unsigned short);
 void hc_sum(struct hcs *, int, struct sh_lms *, struct sh_lms *, int, unsigned short, struct sh_lms *, unsigned short);

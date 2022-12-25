@@ -175,11 +175,11 @@ struct hc_ps{
 /* 
 
 
-parameter structure to allow for settings that are specific to the
-implementation and higher level than the calls to the subroutines
-
-
- */
+   parameter structure to allow for settings that are specific to the
+   implementation and higher level than the calls to the subroutines
+   
+   
+*/
 struct hc_parameters{
   hc_boolean compressible;	/* compressibility following Panasyuk
 				   & Steinberger */
@@ -241,7 +241,7 @@ struct hc_parameters{
   hc_boolean print_pt_sol;	/* output of p[6] and t[2] vectors */
   hc_boolean print_kernel_only;
 
-  
+  char main_program_name[HC_CHAR_LENGTH+1];
   char visc_filename[HC_CHAR_LENGTH+1];	/* name of viscosity profile file */
   char pvel_filename[HC_CHAR_LENGTH+1];	/* name of plate velocities file */
   char dens_filename[HC_CHAR_LENGTH+1];	/* name of density model file */

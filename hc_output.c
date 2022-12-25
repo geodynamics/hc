@@ -122,14 +122,14 @@ will also write the corresponding depth layers to dfilename
 */
 void 
 hc_print_spatial_solution (hc, sol, sol_x, name, dfilename, sol_mode, binary, verbose)
-struct hcs *hc;
-struct sh_lms *sol;
-HC_PREC *sol_x;
-char *name;
-char *dfilename;
-int sol_mode;
-hc_boolean binary;
-hc_boolean verbose;
+     struct hcs *hc;
+     struct sh_lms *sol;
+     HC_PREC *sol_x;
+     char *name;
+     char *dfilename;
+     int sol_mode;
+     hc_boolean binary;
+     hc_boolean verbose;
 {
   int i,j,k,os[3],los,np,np2,np3;
   FILE *file_dummy=NULL,*out,*dout;
@@ -153,7 +153,7 @@ hc_boolean verbose;
 			   1,verbose);
 
   /* depth file */
-  dout = hc_fopen(dfilename,"w","hc_print_spatial_solution");
+  dout = hc_fopen(dfilename,"w","hc_print_spatial_solution","hc-program");
   if(verbose >= 2)
     fprintf(stderr,"hc_print_spatial_solution: writing depth levels to %s\n",
 	    dfilename);
@@ -186,7 +186,7 @@ hc_boolean verbose;
     if(binary){
       /* binary output */
       sprintf(filename,"%s.%i.bin",name,i+1);
-      out = hc_fopen(filename,"w","hc_print_spatial_solution");
+      out = hc_fopen(filename,"w","hc_print_spatial_solution","hc-program");
       for(j=los=0;j < np;j++,los+=2){ /* loop through all points in layer */
 	hc_print_float((xy+los),2,out);
 	for(k=0;k<3;k++)
@@ -198,7 +198,7 @@ hc_boolean verbose;
     }else{
       /* ASCII output */
       sprintf(filename,"%s.%i.dat",name,i+1);
-      out = hc_fopen(filename,"w","hc_print_spatial_solution");
+      out = hc_fopen(filename,"w","hc_print_spatial_solution","hc-program");
       for(j=los=0;j < np;j++,los+=2){ /* loop through all points in layer */
 	for(k=0;k<3;k++)
 	  value[k] = sol_x[os[k]] * fac[k];
@@ -368,12 +368,12 @@ output of poloidal solution up to l_max
 */
 void 
 hc_print_poloidal_solution (pol_sol, hc, l_max, filename, convert_to_dt, verbose)
-struct sh_lms *pol_sol;
-struct hcs *hc;
-int l_max;
-char *filename;
-hc_boolean convert_to_dt;
-hc_boolean verbose;
+     struct sh_lms *pol_sol;
+     struct hcs *hc;
+     int l_max;
+     char *filename;
+     hc_boolean convert_to_dt;
+     hc_boolean verbose;
 {
   int l,m,i,j,a_or_b,ll,nl,os,alim;
   FILE *out;
@@ -389,7 +389,7 @@ hc_boolean verbose;
   /* number of output layers */
   nl = hc->nrad + 2;
   
-  out = hc_fopen(filename,"w","hc_print_poloidal_solution");
+  out = hc_fopen(filename,"w","hc_print_poloidal_solution","hc-program");
   for(l=1;l <= ll;l++){
     for(m=0;m <= l;m++){
       alim = (m==0)?(1):(2);
@@ -415,12 +415,12 @@ hc_boolean verbose;
 */
 void 
 hc_print_toroidal_solution (tvec, lmax, hc, l_max_out, filename, verbose)
-HC_PREC *tvec;
-int lmax;
-struct hcs *hc;
-int l_max_out;
-char *filename;
-hc_boolean verbose;
+     HC_PREC *tvec;
+     int lmax;
+     struct hcs *hc;
+     int l_max_out;
+     char *filename;
+     hc_boolean verbose;
 {
   FILE *out;
   int ll,l,i,nl,lmaxp1,os,os2;
@@ -434,7 +434,7 @@ hc_boolean verbose;
   if(verbose)
     fprintf(stderr,"hc_print_toiroidal_solution: writing toroidal solutions 1 and 2 as f(l,r) to %s\n",
 	    filename);
-  out = hc_fopen(filename,"w","hc_toroidal_solution");
+  out = hc_fopen(filename,"w","hc_toroidal_solution","hc-program");
   for(l=1;l <= ll;l++){
     for(os=i=0;i < nl;i++,os+=lmaxp1)
       fprintf(out,"%3i %16.7e %16.7e %16.7e\n",
@@ -452,18 +452,17 @@ print a simple VTK file given already expanded input
 
 */
 
-void 
-hc_print_vtk (out, xloc, xvec, npoints_orig, nlay, binary, shps_d, xscalar, nlon, nlat)
-FILE *out;
-HC_PREC *xloc;
-HC_PREC *xvec;
-int npoints_orig;
-int nlay;
-hc_boolean binary;
-int shps_d;
-HC_PREC *xscalar;
-int nlon;
-int nlat;
+void hc_print_vtk (out, xloc, xvec, npoints_orig, nlay, binary, shps_d, xscalar, nlon, nlat)
+     FILE *out;
+     HC_PREC *xloc;
+     HC_PREC *xvec;
+     int npoints_orig;
+     int nlay;
+     hc_boolean binary;
+     int shps_d;
+     HC_PREC *xscalar;
+     int nlon;
+     int nlat;
 {
   int i,ilay,ndata,poff,j,ndata_d,nele_lay,nele_x,nele_y,
     npe,npe1,ncon[12],k,nleft,nlon_m1,npoints,

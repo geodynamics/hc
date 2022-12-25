@@ -53,7 +53,7 @@ int main(int argc, char **argv)
   /* 
      read in spherical harmonics
   */
-  in = hc_fopen(argv[1],"r","sh_extract_layer");
+  in = hc_fopen(argv[1],"r","sh_extract_layer",argv[0]);
   /* start loop */
   i = 0;
   sh_read_parameters_from_stream(&type,&lmax, &shps,&i,&nset,(zdepth+i),

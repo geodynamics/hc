@@ -219,6 +219,7 @@ void hc_get_flt_frmt_string (string, n, append)
 {
   static hc_boolean init=FALSE;	/* that's OK, multiple instances calling are fine */
   static char type_s[3];
+  char buffer[HC_CHAR_LENGTH+1];
   int i;
   if(!init){
     if(sizeof(HC_PREC) == sizeof(float)){
@@ -235,8 +236,16 @@ void hc_get_flt_frmt_string (string, n, append)
   }
   if(!append)
     sprintf(string,"%%%s",type_s);
-  for(i=1;i<n;i++)
-    sprintf(string,"%s %%%s",string,type_s);
+  for(i=1;i<n;i++){
+    if((int)strlen(string)+4 < HC_CHAR_LENGTH){
+      strncpy(buffer,string,HC_CHAR_LENGTH);
+      sprintf(string,"%s %%%s",buffer,type_s);
+    }else{
+      fprintf(stderr,"hc_get_flt_frmt_string: error: out of string length at %i\n",
+	      (int)strlen(string));
+      exit(-1);
+    }
+  }
 }
 //
 // deal with boolean values/switches
