@@ -1,0 +1,56 @@
+#set term post portrait enh color solid 18
+set term post enh color solid 'Palatino,18'
+set out 'prem2r.ps'
+#!prem2r > prem_rmgp.dat 
+
+#set y2label 'density [kg/m^3]'
+set ylabel 'depth [km]'
+set yrange [6371:0]
+set y2range [6371:0]
+
+set xtics nomirror
+set x2tics nomirror
+set key left
+#plot      'prem_rmgp.dat' using 1 : ($4/1e24) title 'mass' axes x1y1 w l lw 3,\
+#          'prem_rmgp.dat' using 1 : ($3) title 'density' axes x1y2 w l lw 3
+
+#set origin 0,0
+set multi
+
+me=5.972e24			# masss
+rhoe=5510.			# densit of earth
+ge=9.807
+
+set bmargin 1
+set tmargin 1
+
+set origin 0,0.1
+set size .55,.8
+set x2label 'density [1000 kg/m^3]'
+set xlabel 'mass below / M_E'
+set xrange [0:1]
+set key bottom
+set x2range [0.8:13.8]
+plot 'prem_rmgp.dat' using ($4/me) : 1 title 'mass' axes x1y1 w l lw 5,\
+     'prem_rmgp.dat' using ($3/1e3) : 1 title 'density' axes x2y1 w l lw 5
+
+#              'prem_rmgp.dat' using 1 : ($5) title 'gravitational acceleration' axes x1y1 w l lw 3,\              
+
+set xrange [*:*]
+set x2range [*:*]
+
+set origin 0.5,0.1
+set size .55,.8
+set xlabel 'pressure [GPa]'
+set x2label 'gravitational acceleration / g_E'
+set ylabel ''
+set noytics
+set y2tics mirror
+plot 'prem_rmgp.dat' using ($5/ge) : 1 title 'g' axes x2y1 w l lw 5,\
+     'prem_rmgp.dat' using ($6/1e9) : 1 title 'pressure' axes x1y1 w l lw 5
+#     'prem/oiso_table.dat' using ($8) : 1 title 'original pressure' axes x1y1 w p
+     
+#              'prem_rmgp.dat' using 1 : ($5) title 'gravitational acceleration' axes x1y1 w l lw 3,\              
+!modifybb prem2r.ps
+!psconvert -Tf prem2r.ps     
+     
