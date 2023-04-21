@@ -33,7 +33,8 @@ int main(int argc, char **argv)
   j = 0;			/* latitude */
   k = 0;lon = 0.;		/* longitude */
   while(fscanf(in,SH_RICK_FLT_FMT,&val)==1){
-    fprintf(stdout,"%11g %11g %11g %11g\n",lon,z[j],HC_Z_DEPTH(r),val);
+    fprintf(stdout,"%11g %11g %11g %11g\n",
+	    (double)lon,(double)z[j],HC_Z_DEPTH((double)r),(double)val);
     k++;lon+=dx;
     if(k == nlon){
       k=0;lon=0;j++;
