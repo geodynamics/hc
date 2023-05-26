@@ -94,10 +94,10 @@ int ggrd_read_vel_grids(struct ggrd_master *ggrd, /* ggrd master structure
 {
   FILE *in,*out;
   int i,j,k,l,level,os,os1,ivt,*index,rcheck;
-
   //int dummy[4]={0,0,0,0};	/* GMT  < 4.5.1 */
   GMT_LONG dummy[4]={0,0,0,0};	/* GMT >= 4.5.1 */
-
+  /* gmt  */
+  struct GRD_HEADER header[1];
   hc_boolean 
     init = FALSE,
     wraparound = FALSE,
@@ -109,15 +109,12 @@ int ggrd_read_vel_grids(struct ggrd_master *ggrd, /* ggrd master structure
   double *dgrd;
   GGRD_CPREC minphi,mintheta,omaxphi,maxtheta,std[4],rms[4],
     mean[4],ddummy,*weights,theta,tmp=0.0;
-  /* gmt  */
-  struct GRD_HEADER header[1];
-#ifndef USE_GMT3
+ 
   GMT_io_init ();/* Init the table i/o structure */
   GMT_grdio_init();
   GMT_program = "g";
   GMT_make_fnan (GMT_f_NaN);
   GMT_make_dnan (GMT_d_NaN);
-#endif
 
   in = out = NULL;
   fgrd = NULL;dgrd = NULL;
@@ -245,17 +242,12 @@ int ggrd_read_vel_grids(struct ggrd_master *ggrd, /* ggrd master structure
 	    sprintf(sname,"%s%svp.%i.%s",
 		    prefix,loc_prefix,level,suffix);
 	  if(ggrd->v.read_gmt){
-#ifdef USE_GMT3	    	/* old */
-	    if(GMT_cdf_read_grd_info (sname,header) == -1){
-	      fprintf(stderr,"ggrd_read_vel_grids: error opening GMT grd file %s\n",sname);
-	      return(-2);
-	    }
-#else  /* new */
+
 	    if(GMT_read_grd_info (sname,header) == -1){
 	      fprintf(stderr,"ggrd_read_vel_grids: error opening GMT grd file %s\n",sname);
 	      return(-2);
 	    }
-#endif
+
 	  }else{
 	    in = ggrd_open(sname,"r","ggrd_read_vel_grids");
 	    //
@@ -378,13 +370,8 @@ int ggrd_read_vel_grids(struct ggrd_master *ggrd, /* ggrd master structure
 	    }
 	  }
 	  if(ggrd->v.read_gmt){
-#ifndef USE_GMT3
 	    GMT_read_grd (sname,header,fgrd, 0.0, 0.0, 0.0, 0.0, 
 			  dummy,0);
-#else
-	    GMT_cdf_read_grd (sname,header,fgrd, 0.0, 0.0, 0.0, 0.0, 
-			      dummy, 0);
-#endif
 	  }else{
 	    rcheck=fread(dgrd,sizeof(double),header->nx*header->ny,in);
 	    if(rcheck!=header->nx*header->ny){
