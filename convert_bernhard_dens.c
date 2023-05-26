@@ -27,8 +27,8 @@ int main(int argc, char **argv)
       fprintf(stderr,"%s: error, cannot open %s\n",argv[0],argv[1]);
       exit(-1);
   }
-  fscanf(in,SH_RICK_FLT_FMT,&dx);
-  fscanf(in,"%i",&nr);
+  if(fscanf(in,SH_RICK_FLT_FMT,&dx)!=1){fprintf(stderr,"%s: read error dx\n",argv[0]);exit(-1);}
+  if(fscanf(in,"%i",&nr)!=1){fprintf(stderr,"%s: read error nr\n",argv[0]);exit(-1);}
   i = 0;r = 0.55;dr = (0.99-0.55)/(SH_RICK_PREC)(nr-1);
   j = 0;			/* latitude */
   k = 0;lon = 0.;		/* longitude */
