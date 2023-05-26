@@ -288,8 +288,10 @@ $(BDIR):
 	mkdir -p $(BDIR);
 
 clean:
-	rm -f hc_auto_proto.h hc_ggrd_auto_proto.h $(ODIR)/*.o  $(ODIR)/*.a $(BDIR)/*
+	rm -f $(ODIR)/*.o  $(ODIR)/*.a $(BDIR)/*
 
+super_clean:
+	rm -f hc_auto_proto.h hc_ggrd_auto_proto.h $(ODIR)/*.o  $(ODIR)/*.a $(BDIR)/*	
 #
 # library
 #
