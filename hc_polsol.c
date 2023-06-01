@@ -734,7 +734,7 @@ void hc_polsol(struct hcs *hc, 	/*
 	      /* end of l-dependent solver kludge branch */
 	    }else{
 	      if((verbose)&&(!kludge_warned)){
-		fprintf(stderr,"hc_polsol: applying CMB fixed kludge above %i and shifting CMB to %g km depth for l %i\n",
+		fprintf(stderr,"hc_polsol: applying CMB fixed kludge above %3i and shifting CMB to %6.1f km depth for l %3i\n",
 			hc->psp.solver_kludge_l,
 			(double)HC_Z_DEPTH(rbound_kludge),l);	      
 		kludge_warned = TRUE;
