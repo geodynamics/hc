@@ -412,8 +412,8 @@ hc_handle_command_line (argc, argv, start_from_i, p)
       fprintf(stderr,"and plate velocities using the semi-analytical approach of Hager & O'Connell (1981).\n");
       fprintf(stderr,"This particular implementation illustrates one possible way to combine the HC solver routines.\n");
       fprintf(stderr,"Based on code by Brad Hager, Richard O'Connell, and Bernhard Steinberger.\n");
-      fprintf(stderr,"This version by Thorsten Becker, with contributions by Craig O'Neill\n");
-      fprintf(stderr,"compiled with %s precision ((c) 2017, see README.TXT)\n",(HC_PRECISION==16)?("double"):((HC_PRECISION==8)?"single":"quad"));
+      fprintf(stderr,"This version by Thorsten Becker, with contributions by Craig O'Neill.\n");
+      fprintf(stderr,"compiled with %s precision ((c) 2023, see README.TXT)\n",(HC_PRECISION==16)?("double"):((HC_PRECISION==8)?"single":"quad"));
       switch(p->solver_mode){
       case HC_SOLVER_MODE_VISC_SCAN:
 	fprintf(stderr,"usage example:\n\n");

@@ -1,13 +1,14 @@
 README FOR HC
 
-Version 1.0.15 - 2022
+Version 1.1.1 - 2023
 
 Thorsten Becker - twbecker@post.harvard.edu
 
 
 HC is a global mantle circulation solver following Hager & O'Connell
 (1981) which can compute velocities, tractions, and the geoid for
-arbirtrary density distributions and radial viscosity variations. 
+arbitrary density distributions and purely radial viscosity
+variations.
 
 This particular implementation illustrates one possible way to combine
 the HC solver routines. There is a forward tool example, as included
@@ -34,8 +35,8 @@ INSTALLATION
 
 The code should compile on any basic UNIX/Linux system with the GMT
 tools (BY DEFAULT, VERSION > 4.2.1, AND ONLY VERSION 4.X.X IS
-SUPPORTED!) and libraries installed. See the Makefile for comments and
-what to modify.
+SUPPORTED! WORK IN PROGRESS) and libraries installed. See the Makefile
+for comments and what to modify.
 
 What is described below is the hc Hager & O'Connell (1981) forward
 flow and geoid computation. For plate velocity inversions following

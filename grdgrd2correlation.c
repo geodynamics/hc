@@ -103,8 +103,8 @@ int main(int argc, char **argv)
      
   */
   if(is_global){
-    ymin = -89.75;ymax = 89.75;
-    //ymin = -89.5;ymax = 89.5;
+    //ymin = -89.75;ymax = 89.75;
+    ymin = -89.5;ymax = 89.5;
     xmin = 0;  xmax = 360;
     dy = .25;
     //dy = .5;
