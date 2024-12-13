@@ -52,7 +52,8 @@ for lay in $layers;do
     fi
     for smodel in $smodels;do
 	if [[ $smodel = tx2019 || $smodel =  tx2019slab ]];then
-	    slmax=63
+	    #slmax=63
+	    slmax=31
 	else
 	    slmax=31
 	fi
@@ -73,7 +74,7 @@ for lay in $layers;do
 	fi
 	echo $smodel $lay 
 	hc_visc_scan -dens $datadir/tomography/models/$smodel.$slmax.m.ab -dshs \
-		     $dens_type -prem $prem_file \
+		     $dens_type -prem $prem_file  \
 		     -vs_zlm $zlm -vs_zau $zau -vs_em $eta_max_exp \
 		     -gref $geoid_ref -vs_n $lay -vs_dv $dv  | gzip -c > $ofile &
     done
