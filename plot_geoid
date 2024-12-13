@@ -3,35 +3,44 @@
 # simple geoid plotting tester
 #
 
-makecpt -T-120/120/10 -Croma > geoid.cpt
-inc=-I1				# default res of sh_sysn
+makecpt -T-120/120/12 -Croma -I > geoid.cpt
+dx=0.25
+inc=-I$dx				# default res of sh_sysn
 reg=-Rg
-proj=-JKf180/7			# projection
-#ann=-Ba60f30WeSn
-ann=""
 #
-# observed geoid anomalies corrected
+# observed geoid anomalies corrected for Chambat
+ogeoid=geoid/egm2008-hc-geoid.chambat.31.ab
+#
+cat $ogeoid | sh_syn 0 0 0 360 -90 90 $dx | \
+    gmt xyz2grd $reg $inc -fg -Gogeoid.grd
 
-#
-# surface geoid
-hc 
+# tomography model
+tmodel=tx2019
+# 0.18 scaling below 220
+dens="-dsf dscale/dscale_0b.dat -dens tomography/$tmodel.31.m.ab -dshs -prem prem/prem.dat"
+# best sort of three layer viscosity
+visc="-vf viscosity/bf_visc.$tmodel.3.a.220.dat"
+
+# predict geoid
+hc $dens $visc -fs -v
+
 # expand on regular grid 
-cat geoid.ab | sh_syn 0 0 0 | xyz2grd $reg $inc -Gtop1.grd
+cat geoid.ab | sh_syn 0 0 0 360 -90 90 $dx | \
+    gmt xyz2grd $reg $inc -Gcgeoid.grd -fg
 
-#
-# geoid all layers 
-#
-hc -ag 
-
-# bottom
-sh_extract_layer geoid.ab 1  | sh_syn 0 0 0 | xyz2grd $reg $inc -Gbot.grd
-# top
-sh_extract_layer geoid.ab -1 | sh_syn 0 0 0 | xyz2grd $reg $inc -Gtop2.grd
+# r_20
+rs=`cat $ogeoid geoid.ab | bin/x86_64/sh_corr 20 | gawk '{printf("%.2f",$1)}'`
 
 
-for g in top1 top2 bot ;do
-    grdimage $reg -Cgeoid.cpt $g.grd  $proj $ann -P -K > $g.ps
-    pscoast -Dc -A50000 $reg $proj -O -K -W5 >> $g.ps
-    psscale -D3.5/-.5/3/.2h -Cgeoid.cpt -B50/:"[m]": -O >> $g.ps
-    echo $0: plotted to $g.ps
-done
+proj=-JKf180/7			# projection
+
+
+ofile=gcomp.ps
+gmt grdimage $reg -Cgeoid.cpt ogeoid.grd  $proj -Bg60:."observed": -P -K -Y6 > $ofile
+gmt pscoast -Dc -A50000 $reg $proj -O -K -W1 >> $ofile
+gmt grdimage $reg -Cgeoid.cpt cgeoid.grd  $proj -Bg60:."predicted, r@-20@- = $rs": -O -K -Y-5 >> $ofile
+gmt pscoast -Dc -A50000 $reg $proj -O -K -W1 >> $ofile
+gmt psscale -D3.5/-.25/3/.15h -E -Cgeoid.cpt -B50/:"[m]": -O >> $ofile
+
+gmt psconvert -A+m0.1 -Tf $ofile; rm $ofile
+
