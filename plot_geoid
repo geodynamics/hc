@@ -3,11 +3,15 @@
 # simple geoid plotting tester
 #
 
-makecpt -T-200/200/10 -Chaxby > geoid.cpt
+makecpt -T-120/120/10 -Croma > geoid.cpt
 inc=-I1				# default res of sh_sysn
 reg=-Rg
-proj=-JQ180/7			# projection
-ann=-Ba60f30WeSn
+proj=-JKf180/7			# projection
+#ann=-Ba60f30WeSn
+ann=""
+#
+# observed geoid anomalies corrected
+
 #
 # surface geoid
 hc 

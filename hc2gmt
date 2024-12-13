@@ -14,8 +14,8 @@ while [ $i -le $n ];do
     echo $0: working on level $i
     j=3
     for t in vr vt vp;do	# convert
-	gmtconvert -bis5 $sfile.$i.bin | gawk '{print($1,$2,$j)}' j=$j | \
-	    surface $reg $inc -G$t.$i.grd -fg
+	gmt gmtconvert -bis5 $sfile.$i.bin | gawk '{print($1,$2,$j)}' j=$j | \
+	    gmt surface $reg $inc -G$t.$i.grd -fg
 	((j=j+1))
     done
     ((i=i+1))
