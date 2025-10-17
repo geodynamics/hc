@@ -1,6 +1,6 @@
 README FOR HC
 
-Version 1.1.1 - 2023
+Version 1.1.2 - 2025
 
 Thorsten Becker - twbecker@post.harvard.edu
 
@@ -35,8 +35,13 @@ INSTALLATION
 
 The code should compile on any basic UNIX/Linux system with the GMT
 tools (BY DEFAULT, VERSION > 4.2.1, AND ONLY VERSION 4.X.X IS
-SUPPORTED! WORK IN PROGRESS) and libraries installed. See the Makefile
-for comments and what to modify.
+SUPPORTED! WORK IN PROGRESS) and libraries installed.
+
+If NO_GMT is defined, will try to compile without GMT interface. In
+this case, also use "make all_no_gmt" instead of "make all" to avoid
+attempting to compile GMT based code. 
+
+See the Makefile for comments and what to modify.
 
 What is described below is the hc Hager & O'Connell (1981) forward
 flow and geoid computation. For plate velocity inversions following
@@ -56,7 +61,7 @@ if you installed GMT yourself, or
 
 if you installed GMT with a package manager.
 
-NOTE: ONLY GMT VERSION 4 IS SUPPORTED.
+NOTE: ONLY GMT VERSION 4 IS SUPPORTED. IF YOU DO NOT WANT GMT, use Makefile.include_no_gmt
 
 2) NETCDFHOME: for the netcdf libraries.  This could be e.g.
 

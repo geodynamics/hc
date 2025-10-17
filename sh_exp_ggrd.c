@@ -11,6 +11,7 @@ $Id: sh_exp.c,v 1.15 2006/03/20 05:32:48 becker Exp becker $
 
 */
 #include "hc.h"
+#ifndef NO_GMT
 #include "hc_ggrd.h"
 
 /* see sh_exp function */
@@ -88,3 +89,4 @@ void sh_read_spatial_data_from_grd(struct sh_lms *exp, struct ggrd_gt *ggrd,
 
 
   
+#endif

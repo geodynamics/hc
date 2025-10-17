@@ -1,4 +1,5 @@
 #include "hc.h"
+#ifndef NO_GMT
 #include "hc_ggrd.h"
 /*
 
@@ -616,3 +617,4 @@ void ggrd_read_depth_levels(struct ggrd_master *ggrd,
     fprintf(stderr,"ggrd_read_depth_levels: read %i levels from %s, r_min: %g r_max: %g \n",
 	    ggrd->v.n[HC_R],GGRD_DFILE,ggrd->v.rlevels[0],ggrd->v.rlevels[ggrd->v.n[HC_R]-1]);
 }
+#endif

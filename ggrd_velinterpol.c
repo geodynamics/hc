@@ -26,6 +26,7 @@
 //
 //
 #include "hc.h"
+#ifndef NO_GMT
 #include "hc_ggrd.h"
 
 int ggrd_find_vel_and_der(GGRD_CPREC *xloc,
@@ -470,3 +471,4 @@ void ggrd_weights(GGRD_CPREC xi,GGRD_CPREC *x,
   }
 }
 
+#endif

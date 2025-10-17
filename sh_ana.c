@@ -1,5 +1,7 @@
 #include "hc.h"
+#ifndef NO_GMT
 #include "hc_ggrd.h"
+#endif
 /* 
 
 read in data in lon lat z format, spaced as required by the particular
@@ -21,6 +23,7 @@ usage:
               1: expand vector field
 	      file: if filename other than 0, 1, or vec_t.grd will read from Netcdf/GMT grid file
 	      vec_t.grd: will read theta and phi components of vector field from vec_t.grd and vec_p.grd 
+	      (UNLESS NO_GMT is defined)
 
        type:  0: Rick's spherical harmonics
               1: Healpix (defunct)
@@ -56,7 +59,9 @@ int main(int argc, char **argv)
   hc_boolean verbose = TRUE, use_3d = FALSE, short_format = FALSE,read_grd =FALSE,
     binary = FALSE, print_spatial_base = FALSE;
   HC_PREC *data, zlabel = 0,*flt_dummy;
+#ifndef NO_GMT
   struct ggrd_gt ggrd[2];
+#endif
   SH_RICK_PREC *dummy;
   HC_PREC fac[3] = {1.,1.,1.};
   char cdummy;
@@ -80,20 +85,30 @@ int main(int argc, char **argv)
       sscanf(argv[2],"%i",&ivec);
     else{
       /* GMT grd file input */
+#ifdef NO_GMT
+      fprintf(stderr,"%s: no GMT functionality compiled in\n",argv[0]);
+      exit(-1);
+#else
 #ifndef USE_GMT3      
       failed = ggrd_grdtrack_init_general(FALSE,argv[2],&cdummy,"-fg",ggrd,TRUE,FALSE,FALSE);
 #else
       failed = ggrd_grdtrack_init_general(FALSE,argv[2],&cdummy,"-Lg",ggrd,TRUE,FALSE,FALSE);
+#endif
 #endif
       if(failed){
 	fprintf(stderr,"%s: error opening netcdf grd %s file\n",argv[0],argv[2]);
 	exit(-1);
       }
       if(strcmp(argv[2],"vec_t.grd")==0){ /* vectors */
+#ifdef NO_GMT
+	fprintf(stderr,"%s: no GMT functionality compiled in\n",argv[0]);
+	exit(-1);
+#else
 #ifndef USE_GMT3      
 	failed = ggrd_grdtrack_init_general(FALSE,"vec_p.grd",&cdummy,"-fg",(ggrd+1),TRUE,FALSE,FALSE);
 #else
 	failed = ggrd_grdtrack_init_general(FALSE,"vec_p.grd",&cdummy,"-Lg",(ggrd+1),TRUE,FALSE,FALSE);
+#endif
 #endif
 	if(failed){
 	  fprintf(stderr,"%s: error opening second netcdf grd file %s\n",argv[0],"vec_p.grd");
@@ -161,7 +176,12 @@ int main(int argc, char **argv)
        perform spherical harmonic analysis
     */
     if(read_grd){
+#ifdef NO_GMT
+      fprintf(stderr,"%s: no GMT functionality compiled in\n",argv[0]);
+      exit(-1);
+#else
       sh_read_spatial_data_from_grd(exp,ggrd,use_3d,shps,data,&zlabel);
+#endif
     }else{
       /* read in data from stdin */
       sh_read_spatial_data_from_stream(exp,stdin,use_3d,shps,data,&zlabel);

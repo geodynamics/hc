@@ -10,7 +10,8 @@
 #
 # EDIT HERE FOR GMT VERSION 
 #
-include Makefile.include
+#include Makefile.include
+include Makefile.include_no_gmt
 #
 #
 #
@@ -133,9 +134,9 @@ DEFINES = $(RICK_DEFINES) $(HEAL_DEFINES)
 LIBS = $(HC_LIBS)  $(HEAL_LIBS) $(RICK_LIB)
 
 
-all: all_no_gmt sh_tools hc_tools gmt_tools
+all: all_no_gmt gmt_tools
 
-all_no_gmt: $(ODIR) $(BDIR) libs hc_tools 
+all_no_gmt: $(ODIR) $(BDIR) libs hc_tools  sh_tools 
 
 sh_tools: 	$(BDIR)/sh_syn $(BDIR)/sh_corr $(BDIR)/sh_ana $(BDIR)/sh_power \
 	 $(BDIR)/sh_extract_layer $(BDIR)/gaussp
@@ -254,7 +255,7 @@ $(BDIR)/grdinttester: $(GGRD_INCS) $(LIBS) $(GGRD_LIBS) $(INCS) grdinttester.c
 		$(GGRD_LIBS_LINKLINE) -lhc -lrick -lm $(LDFLAGS) 
 
 $(BDIR)/grdgrd2correlation: $(GGRD_INCS) $(LIBS) $(GGRD_LIBS) $(INCS) grdgrd2correlation.c fitxyee_util.c
-	$(CC) $(LIB_FLAGS) grdgrd2correlation.c  fitxyee_util.c $(GGRD_DEFINES) -o $(BDIR)/grdgrd2correlation \
+	$(CC) $(LIB_FLAGS) grdgrd2correlation.c   $(INC_FLAGS) fitxyee_util.c $(GGRD_DEFINES) -o $(BDIR)/grdgrd2correlation \
 		$(GGRD_LIBS_LINKLINE) -lhc -lrick -lm $(LDFLAGS) 
 
 $(BDIR)/hc_extract_sh_layer: $(LIBS) $(INCS) $(PREM_OBJS)  $(ODIR)/hc_extract_sh_layer.o

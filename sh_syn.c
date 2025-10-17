@@ -1,5 +1,7 @@
 #include "hc.h"
+#ifndef NO_GMT
 #include "hc_ggrd.h"
+#endif
 
 
 /* 
@@ -19,7 +21,8 @@ int main(int argc, char **argv)
   /* 
      switches 
   */
-  hc_boolean verbose = TRUE, short_format = FALSE ,short_format_ivec = FALSE ,binary = FALSE;
+  hc_boolean verbose = TRUE, short_format = FALSE ,
+    short_format_ivec = FALSE ,binary = FALSE;
   int regular_basis = 0;
   HC_PREC w,e,s,n,dx,dy;
   /*  */

@@ -10,7 +10,7 @@
    original comments for grdtrack from GMT at bottom of file
  
 */
-
+#ifndef NO_GMT
 #include "hc_ggrd.h"
 
 #ifndef ONEEIGHTYOVERPI
@@ -1548,3 +1548,4 @@ float ggrd_gt_mean(float *x,int n)
  *  Modified:	10 Jul 2000 3.3.5  by PW to allow plain -L to indicate geographic coordinates
  * Version:	3.4.3
  */
+#endif

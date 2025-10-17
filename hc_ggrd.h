@@ -1,6 +1,6 @@
 #include "hc.h"
 
-
+#ifndef NO_GMT
 
 #ifndef __GMT_INCLUDED__
 #define _GMT_MATH_H		/* gmt_math.h led to clashes with some other codes */
@@ -17,3 +17,4 @@
 */
 #include "ggrd_grdtrack_util.h"
 #include "hc_ggrd_auto_proto.h"
+#endif

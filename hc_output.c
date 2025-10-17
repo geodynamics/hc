@@ -93,13 +93,12 @@ print a single scalar field to file
 
 */
 
-void 
-hc_print_sh_scalar_field (sh, out, short_format, binary, verbose)
-struct sh_lms *sh;
-FILE *out;
-hc_boolean short_format;
-hc_boolean binary;
-hc_boolean verbose;
+void hc_print_sh_scalar_field (sh, out, short_format, binary, verbose)
+     struct sh_lms *sh;
+     FILE *out;
+     hc_boolean short_format;
+     hc_boolean binary;
+     hc_boolean verbose;
 {
   HC_CPREC fac[1] = {1.0};
   sh_print_parameters_to_stream(sh,1,0,1,0.0,out,
@@ -230,11 +229,10 @@ hc_print_spatial_solution (hc, sol, sol_x, name, dfilename, sol_mode, binary, ve
 print the depth layers solution
 
 */
-void 
-hc_print_depth_layers (hc, out, verbose)
-struct hcs *hc;
-FILE *out;
-hc_boolean verbose;
+void hc_print_depth_layers (hc, out, verbose)
+     struct hcs *hc;
+     FILE *out;
+     hc_boolean verbose;
 {
   int i;
   /* number of solution sets of ntype solutions */
@@ -248,10 +246,9 @@ hc_boolean verbose;
 print a [3][3] matrix
 
 */
-void 
-hc_print_3x3 (a, out)
-HC_PREC a[3][3];
-FILE *out;
+void hc_print_3x3 (a, out)
+     HC_PREC a[3][3];
+     FILE *out;
   {
   int i,j;
   for(i=0;i<3;i++){
@@ -748,9 +745,9 @@ FILE *out;
 /* read binary from file */
 int 
 hc_read_float (x, n, in)
-HC_PREC *x;
-int n;
-FILE *in;
+     HC_PREC *x;
+     int n;
+     FILE *in;
 {
   int i,ret;
   HC_BIN_PREC *xcopy;
@@ -766,10 +763,10 @@ FILE *in;
 
 void 
 hc_print_be_int (x, n, out, little_endian)
-int *x;
-int n;
-FILE *out;
-hc_boolean little_endian;
+     int *x;
+     int n;
+     FILE *out;
+     hc_boolean little_endian;
 {
   int i, *xcopy;
   const size_t len = sizeof(int);
@@ -830,9 +827,9 @@ void hc_flipit(void *d, void *s, size_t len)
 /* print the density anomaly field interpolated to the nodal radii */
 void 
 hc_print_dens_anom (hc, out, binary, verbose)
-struct hcs *hc;
-FILE *out;
-hc_boolean binary;
+     struct hcs *hc;
+     FILE *out;
+     hc_boolean binary;
 hc_boolean verbose;
 {
   int i,i1,i2;
@@ -865,11 +862,11 @@ hc_boolean verbose;
 }
 void 
 hc_print_geoid_kernel (gk, r, nradp2, out, verbose)
-struct sh_lms *gk;
-HC_PREC *r;
-int nradp2;
-FILE *out;
-hc_boolean verbose;
+     struct sh_lms *gk;
+     HC_PREC *r;
+     int nradp2;
+     FILE *out;
+     hc_boolean verbose;
 {
   HC_PREC value[2];
   int i, l,lmax;
