@@ -61,7 +61,8 @@ if you installed GMT yourself, or
 
 if you installed GMT with a package manager.
 
-NOTE: ONLY GMT VERSION 4 IS SUPPORTED. IF YOU DO NOT WANT GMT, use Makefile.include_no_gmt
+NOTE: ONLY GMT VERSION 4 IS SUPPORTED. IF YOU DO NOT WANT GMT, use
+Makefile.include_no_gmt, or set GGRD_INC_FLAGS = -DNO_GMT
 
 2) NETCDFHOME: for the netcdf libraries.  This could be e.g.
 

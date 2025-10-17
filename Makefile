@@ -10,8 +10,8 @@
 #
 # EDIT HERE FOR GMT VERSION 
 #
-#include Makefile.include
-include Makefile.include_no_gmt
+include Makefile.include
+#include Makefile.include_no_gmt
 #
 #
 #
