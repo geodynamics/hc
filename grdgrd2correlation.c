@@ -20,15 +20,18 @@ for regional grids, this assumes 0...360 convention
 
 #include "hc.h"
 #include "fitxyee.h"		/* part of numerical recipes */
+#include "correl_nr.h"
 #ifndef NO_GMT
 #include "hc_ggrd.h"
-void calc_mean(struct nr_dp *, int ,double *);
-void calc_std(struct nr_dp *, int ,double *,double *);
+void calc_mean(struct nr_dp *, int ,HC_PREC *);
+void calc_std(struct nr_dp *, int ,HC_PREC *,HC_PREC *);
 
-double correlation(struct nr_dp *, double * , int );
-void calc_azi_r_lonlat(double ,double ,double ,double ,
-		       double *,double *);
-double mod(double , double );	/*  */
+HC_PREC loc_correlation(struct nr_dp *, HC_PREC * , int );
+void calc_azi_r_lonlat(HC_PREC ,HC_PREC ,HC_PREC ,HC_PREC ,
+		       HC_PREC *,HC_PREC *);
+HC_PREC mod(HC_PREC , HC_PREC );	/*  */
+void nr_pearson(struct nr_dp *, int , double *,double *);
+void nr_spear(struct nr_dp *, int , double *,double *);
 
 int main(int argc, char **argv)
 {
@@ -38,19 +41,20 @@ int main(int argc, char **argv)
 
   int is_global = 1;
   static int use_dist_weighting = 1;
-  double x,y,x1,y1,dx,dy,rad_km,xloc,yloc,dri,corr,mean_ratio,
-    xmin,xmax,ymin,ymax,tmpx,tmpy,dxmin,dxmax,
+  HC_PREC x,y,x1,y1,dx,dy,rad_km,xloc,yloc,dri,corr,corr2,mean_ratio,
+    xmin,xmax,ymin,ymax,tmpx,tmpy,dxmin,dxmax,prob,
     weight_sum,weight;
-  double mean[2],std[2],r,a,b,siga,sigb,chi2,q,dr,
+  HC_PREC mean[2],std[2],r,a,b,siga,sigb,chi2,q,dr,
     dphi,phi,aglobal,bglobal,cloc[2];
   struct nr_dp *data;
   int lin_reg_mode = 2;		/* 1: errors in x 2: errors in x and y */
   int remove = 0;		/* match the layer correlation? */
   int pstat = 0;		/* exit after global stats */
+  int use_pearson = 1;		/* pearson or Spearman rank */
   FILE *out;
 
-  //double x_dump = -10, y_dump = 40; /* for sample dumps, if wanted */
-  double x_dump = -999, y_dump = -999;
+  //HC_PREC x_dump = -10, y_dump = 40; /* for sample dumps, if wanted */
+  HC_PREC x_dump = -999, y_dump = -999;
   char out_name[500];
   
   sprintf(out_name,"tmp.%g.%g.sample.dump",x_dump,y_dump);
@@ -59,8 +63,8 @@ int main(int argc, char **argv)
 
   rad_km = 500;
   if(argc < 3){
-    fprintf(stderr,"%s: usage:\n\t%s file1.grd file2.grd [radius, %g km] [remove_lin, %i] [only_print_stat, %i] [is_global, %i] [lin_reg_mode, %i]\n\n",
-	    argv[0],argv[0],rad_km,remove,pstat,is_global,lin_reg_mode);
+    fprintf(stderr,"%s: usage:\n\t%s file1.grd file2.grd [radius, %g km] [remove_lin, %i] [only_print_stat, %i] [is_global, %i] [lin_reg_mode, %i] [Pearson, %i]\n\n",
+	    argv[0],argv[0],rad_km,remove,pstat,is_global,lin_reg_mode,use_pearson);
     fprintf(stderr,"%s: output:\n\tlon lat correlation slope number_of_points diff_from_global\n\n",argv[0]);
     exit(-1);
   }
@@ -74,6 +78,8 @@ int main(int argc, char **argv)
     sscanf(argv[6],"%i",&is_global);
   if(argc > 7 )
     sscanf(argv[7],"%i",&lin_reg_mode);
+  if(argc > 8 )
+    sscanf(argv[8],"%i",&use_pearson);
 
 
 
@@ -82,9 +88,9 @@ int main(int argc, char **argv)
   else
     sprintf(gmt_flags,"-f0x,1y");
   
-  fprintf(stderr,"%s: assuming grids %s and %s are %s, computing for radius %g km, remove_lin: %i, linreg mode: %i\n",
+  fprintf(stderr,"%s: assuming grids %s and %s are %s, computing for radius %g km, remove_lin: %i, linreg mode: %i, use_pearson: %i\n",
 	  argv[0],argv[1],argv[2],(is_global)?("global"):("regional"),rad_km,remove,
-	  lin_reg_mode);
+	  lin_reg_mode,use_pearson);
   
   if(ggrd_grdtrack_init_general(FALSE,argv[1],&char_dummy,
 				gmt_flags,g1,TRUE,FALSE,FALSE)){
@@ -158,8 +164,11 @@ int main(int argc, char **argv)
   */
   calc_mean(data,n,mean);
   calc_std(data,n,std,mean);
-  corr = correlation(data,mean,n);	/* compute correlation */
-  //fprintf(stderr,"%s: mean: %g %g std %g %g corr %g\n",argv[0],mean[0],mean[1],std[0],std[1],corr);
+  //corr = loc_correlation(data,mean,n);	/* compute correlation */
+  nr_pearson(data,n,&corr,&prob);	/* compute correlation, NR way */
+  nr_spear(data,n,&corr2,&prob);	/* compute correlation, NR way */
+  
+  fprintf(stderr,"%s: mean: %g %g std %g %g corr rp %g rs %g\n",argv[0],mean[0],mean[1],std[0],std[1],corr,corr2);
   switch(lin_reg_mode){			/* fit a linear relation ymod = a + b * x */
   case 1:
     /* best fit slope, only error in y */
@@ -220,7 +229,7 @@ int main(int argc, char **argv)
       for(r=dr;r <= rad_km+1e-7;r += dr){
 	dphi = dr / r * GGRD_TWOPI/dri;
 	nphi = (int)(GGRD_TWOPI/dphi);
-	dphi = GGRD_TWOPI/(double)nphi;
+	dphi = GGRD_TWOPI/(HC_PREC)nphi;
 	for(phi = 0;phi < GGRD_TWOPI;phi+=dphi){
 	  /* 
 	     compute new location 
@@ -294,7 +303,11 @@ int main(int argc, char **argv)
 	if(finite(cloc[0]) && finite(cloc[1])){
 	  if(std[0] > 1e-5 && std[1] > 1e-5){
 	    /* compute local correlation */
-	    corr = correlation(data,mean,n);
+	    //corr = loc_correlation(data,mean,n);
+	    if(use_pearson)
+	      nr_pearson(data,n,&corr,&prob);	/* compute correlation, NR way */
+	    else
+	      nr_spear(data,n,&corr,&prob);	/* compute correlation, NR way */
 	    /* best fit with errors in x and y  */
 	    nr_fitexy((data-1),n,&a,&b,&siga,&sigb,&chi2,&q);
 	    fprintf(stdout,"%11g %11g %11g %11g %5i %11g %11g\n",
@@ -314,11 +327,12 @@ int main(int argc, char **argv)
 
 
 }
-/* linear correlation coefficient */
-double correlation(struct nr_dp *data, double *mean, int n)
+/* linear, correlation coefficient, based on the data structure and
+   precomputed means */
+HC_PREC loc_correlation(struct nr_dp *data, HC_PREC *mean, int n)
 {
   int i,nuse;
-  double s1,s2,s3,dx,dy;
+  HC_PREC s1,s2,s3,dx,dy;
   s1 = s2 = s3 = 0.0;
   for(i=0;i<n;i++){
     if(finite(data[i].x) && finite(data[i].y)){
@@ -332,9 +346,43 @@ double correlation(struct nr_dp *data, double *mean, int n)
   }
   return s1/(sqrt(s2)*sqrt(s3));
 }
+/* this should return exact same as above, leave for testing */
+void nr_pearson(struct nr_dp *data, int n, HC_PREC *r,HC_PREC *prob)
+{
+  HC_PREC *x,*y,z;
+  int i;
+  x=(HC_PREC *)malloc(sizeof(HC_PREC)*n);
+  y=(HC_PREC *)malloc(sizeof(HC_PREC)*n);
+  if((!x) || (!y)){ fprintf(stderr,"allocation failure in nr_pearson\n");exit(-1);}
+  for(i=0;i<n;i++){
+    x[i] = data[i].x;
+    y[i] = data[i].y;
+  }
+  pearsn((x-1),(y-1),(unsigned long)n,r,prob,&z);
+  free(x);free(y);
+}
+
+/* spearman rank corr */
+void nr_spear(struct nr_dp *data, int n, HC_PREC *r,HC_PREC *prob)
+{
+  HC_PREC *x,*y,d,zd,probd;
+  int i;
+  x=(HC_PREC *)malloc(sizeof(HC_PREC)*n);
+  y=(HC_PREC *)malloc(sizeof(HC_PREC)*n);
+  if((!x) || (!y)){ fprintf(stderr,"allocation failure in nr_pearson\n");exit(-1);}
+  for(i=0;i<n;i++){
+    x[i] = data[i].x;
+    y[i] = data[i].y;
+  }
+  spear((x-1),(y-1),(unsigned long)n,&d,&zd,&probd,r,prob);
+  free(x);free(y);
+}
+ 
+
+ 
 
 
-void calc_mean(struct nr_dp *data, int n, double *mean)
+void calc_mean(struct nr_dp *data, int n, HC_PREC *mean)
 {
   int i,nuse;
   mean[0] = mean[1] = 0.0;
@@ -347,15 +395,15 @@ void calc_mean(struct nr_dp *data, int n, double *mean)
     }
   }
   if(nuse){
-    mean[0] /= (double)nuse;
-    mean[1] /= (double)nuse;
+    mean[0] /= (HC_PREC)nuse;
+    mean[1] /= (HC_PREC)nuse;
   }
 }
 
-void calc_std(struct nr_dp *data, int n, double *std, double *mean)
+void calc_std(struct nr_dp *data, int n, HC_PREC *std, HC_PREC *mean)
 {
   int i,nuse;
-  double tmp;
+  HC_PREC tmp;
   std[0] = std[1] = 0.0;
   for(i=nuse=0;i < n;i++){
     if(finite(data[i].x) && finite(data[i].y)){
@@ -367,8 +415,8 @@ void calc_std(struct nr_dp *data, int n, double *std, double *mean)
     }
   }
   if(nuse){
-    std[0] /= (double)nuse;
-    std[1] /= (double)nuse;
+    std[0] /= (HC_PREC)nuse;
+    std[1] /= (HC_PREC)nuse;
     std[0] = sqrt(std[0]);
     std[1] = sqrt(std[1]);
   }
@@ -380,10 +428,10 @@ compute the location (lon/lat, deg) of a point with azimuth phi and
 distance r
 
 */
-void calc_azi_r_lonlat(double x,double y,double r,double phi,
-		       double *xloc,double *yloc)
+void calc_azi_r_lonlat(HC_PREC x,HC_PREC y,HC_PREC r,HC_PREC phi,
+		       HC_PREC *xloc,HC_PREC *yloc)
 {
-  double dlon,lon1,lat1,lat,lon,d;
+  HC_PREC dlon,lon1,lat1,lat,lon,d;
   lon1 = x / GGRD_PIF;		/* lon in rad */
   lat1 = y / GGRD_PIF;		/* lat in rad */
   d = (r/6371) ;	/* distance in rad */
@@ -398,7 +446,7 @@ void calc_azi_r_lonlat(double x,double y,double r,double phi,
   *yloc = lat * GGRD_PIF;
 
 }
-double mod(double y, double x)
+HC_PREC mod(HC_PREC y, HC_PREC x)
 {
   return  y - x*floor(y/x);
 }

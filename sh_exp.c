@@ -6,7 +6,9 @@ lower level routines to handle spherical harmonics expansions
 the higher level routines that operate on single (or triple) 
 sets of expansions are in sh_model.c
 
-$Id: sh_exp.c,v 1.15 2006/03/20 05:32:48 becker Exp becker $
+
+who messed with this?
+
 
 */
 #include "hc.h"
@@ -17,13 +19,13 @@ allocates and initializes spherical harmonics structure
 */
 void 
 sh_allocate_and_init (exp, n, lmax, type, ivec, verbose, regular)
-struct sh_lms **exp;
-int n;
-int lmax;
-int type;
-int ivec;
-hc_boolean verbose;
-hc_boolean regular;
+     struct sh_lms **exp;
+     int n;
+     int lmax;
+     int type;
+     int ivec;
+     hc_boolean verbose;
+     hc_boolean regular;
 {
   int i;
   /* init as zeroes! (but this won't necessarily set the logic flags!) */
@@ -51,12 +53,12 @@ if regular is set, will not use Gauss points
 */
 void 
 sh_init_expansion (exp, lmax, type, ivec, verbose, regular)
-struct sh_lms *exp;
-int lmax;
-int type;
-int ivec;
-hc_boolean verbose;
-hc_boolean regular;
+     struct sh_lms *exp;
+     int lmax;
+     int type;
+     int ivec;
+     hc_boolean verbose;
+     hc_boolean regular;
 {
   /* 
      initialize logic flags 
@@ -286,8 +288,8 @@ power[lmaxp1]
 */
 void 
 sh_compute_power_per_degree (exp, power)
-struct sh_lms *exp;
-HC_PREC *power;
+     struct sh_lms *exp;
+     HC_PREC *power;
 {
   int l,m;
   HC_CPREC value[2];
@@ -308,20 +310,21 @@ HC_PREC *power;
 /* compute total correlation up to llim */
 HC_PREC 
 sh_correlation (exp1, exp2, llim)
-struct sh_lms *exp1;
-struct sh_lms *exp2;
-int llim;
+     struct sh_lms *exp1;
+     struct sh_lms *exp2;
+     int llim;
 {
   return sh_correlation_per_degree(exp1,exp2,1,llim);
 }
 
 
+/* compute pearson correlation per degree */
 HC_PREC 
 sh_correlation_per_degree (exp1, exp2, lmin, lmax)
-struct sh_lms *exp1;
-struct sh_lms *exp2;
-int lmin;
-int lmax;
+     struct sh_lms *exp1;
+     struct sh_lms *exp2;
+     int lmin;
+     int lmax;
 {
   int l,m;
   HC_CPREC sum[3],tmp,atmp,btmp,ctmp,value1[2],value2[2];
@@ -364,10 +367,10 @@ int lmax;
 }
 void 
 sh_single_par_and_exp_to_file (exp, name, binary, verbose)
-struct sh_lms *exp;
-char *name;
-hc_boolean binary;
-hc_boolean verbose;
+     struct sh_lms *exp;
+     char *name;
+     hc_boolean binary;
+     hc_boolean verbose;
 {
   FILE *out;
   out = fopen(name,"w");
@@ -416,16 +419,17 @@ lmax
 
 */
 void 
-sh_print_parameters_to_stream (exp, shps, ilayer, nset, zlabel, out, short_format, binary, verbose)
-struct sh_lms *exp;
-int shps;
-int ilayer;
-int nset;
-HC_CPREC zlabel;
-FILE *out;
-hc_boolean short_format;
-hc_boolean binary;
-hc_boolean verbose;
+sh_print_parameters_to_stream (exp, shps, ilayer, nset, zlabel, out,
+			       short_format, binary, verbose)
+     struct sh_lms *exp;
+     int shps;
+     int ilayer;
+     int nset;
+     HC_CPREC zlabel;
+     FILE *out;
+     hc_boolean short_format;
+     hc_boolean binary;
+     hc_boolean verbose;
 {
   HC_PREC fz;
   /* 
@@ -505,18 +509,19 @@ hc_boolean verbose;
    
 */
 hc_boolean 
-sh_read_parameters_from_stream (type, lmax, shps, ilayer, nset, zlabel, ivec, in, short_format, binary, verbose)
-int *type;
-int *lmax;
-int *shps;
-int *ilayer;
-int *nset;
-HC_CPREC *zlabel;
-int *ivec;
-FILE *in;
-hc_boolean short_format;
-hc_boolean binary;
-hc_boolean verbose;
+sh_read_parameters_from_stream (type, lmax, shps, ilayer, nset, zlabel,
+				ivec, in, short_format, binary, verbose)
+     int *type;
+     int *lmax;
+     int *shps;
+     int *ilayer;
+     int *nset;
+     HC_CPREC *zlabel;
+     int *ivec;
+     FILE *in;
+     hc_boolean short_format;
+     hc_boolean binary;
+     hc_boolean verbose;
 {
   int input1[2],input2[3];
   HC_PREC fz;
@@ -634,12 +639,12 @@ hc_boolean verbose;
 */
 void 
 sh_print_coefficients_to_stream (exp, shps, out, fac, binary, verbose)
-struct sh_lms *exp;
-int shps;
-FILE *out;
-HC_CPREC *fac;
-hc_boolean binary;
-hc_boolean verbose;
+     struct sh_lms *exp;
+     int shps;
+     FILE *out;
+     HC_CPREC *fac;
+     hc_boolean binary;
+     hc_boolean verbose;
 {
   int j,l,m;
   HC_PREC value[2];
@@ -2138,8 +2143,8 @@ HC_CPREC *value;
 */
 void 
 sh_copy_lms (a, b)
-struct sh_lms *a;
-struct sh_lms *b;
+     struct sh_lms *a;
+     struct sh_lms *b;
 {
 
   b->type = a->type;
@@ -2278,8 +2283,8 @@ which only depends on l
 */
 void 
 sh_scale_expansion_l_factor (exp, lfac)
-struct sh_lms *exp;
-HC_CPREC *lfac;
+     struct sh_lms *exp;
+     HC_CPREC *lfac;
 {
   int l,m,index;
   HC_CPREC fac;

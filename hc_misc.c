@@ -6,7 +6,9 @@ miscellaneous functions for allocating arrays, copying arrays, opening
 file streams, the like
 
 
-$Id: hc_misc.c,v 1.5  2004/12/20 05:18:12 becker Exp becker $
+
+Who messed with all the function declations??!
+
 
 */
 
@@ -128,8 +130,8 @@ int n;
 }
 float 
 hc_vec_rms (a, n)
-HC_PREC *a;
-int n;
+     HC_PREC *a;
+     int n;
 {
   int i;
   HC_PREC sum=0.0;
@@ -141,9 +143,9 @@ int n;
 /* a[n] = b[n], single precision version */
 void 
 hc_a_equals_b_svector (a, b, n)
-float *a;
-float *b;
-int n;
+     float *a;
+     float *b;
+     int n;
 {
   memcpy(a,b,sizeof(float)*n);
 }
@@ -173,8 +175,8 @@ int n;
 /* compute the mean of a vector */
 HC_PREC 
 hc_mean_vec (x, n)
-HC_PREC *x;
-int n;
+     HC_PREC *x;
+     int n;
 {
   HC_PREC sum=0.0;
   int i;
@@ -293,14 +295,14 @@ char **argv;
         1 : up to 20, and between 4...9
         2 : up to 20, and between 4...9, and between 2...4
 
+	Pearson, linear correlation
  */
-void 
-hc_compute_correlation (g1, g2, c, mode, verbose)
-struct sh_lms *g1;
-struct sh_lms *g2;
-HC_PREC *c;
-int mode;
-hc_boolean verbose;
+void hc_compute_correlation (g1, g2, c, mode, verbose)
+     struct sh_lms *g1;
+     struct sh_lms *g2;
+     HC_PREC *c;
+     int mode;
+     hc_boolean verbose;
 {
   int lmaxg;
   lmaxg = HC_MIN(g1->lmax,g1->lmax);
@@ -340,10 +342,10 @@ hc_boolean verbose;
 
 void 
 lonlatpv2cv (lon, lat, polar_vec, cart_vec)
-HC_PREC lon;
-float lat;
-HC_PREC *polar_vec;
-HC_PREC *cart_vec;
+     HC_PREC lon;
+     float lat;
+     HC_PREC *polar_vec;
+     HC_PREC *cart_vec;
 {
   HC_PREC theta,phi;
   theta = LAT2THETA((HC_HIGH_PREC)lat);
@@ -353,10 +355,10 @@ HC_PREC *cart_vec;
 /* theta, phi version */
 void 
 thetaphipv2cv (theta, phi, polar_vec, cart_vec)
-HC_PREC theta;
-float phi;
-HC_PREC *polar_vec;
-HC_PREC *cart_vec;
+     HC_PREC theta;
+     float phi;
+     HC_PREC *polar_vec;
+     HC_PREC *cart_vec;
 {
   HC_HIGH_PREC polar_base[9];
   calc_polar_base_at_theta_phi(theta,phi,polar_base);
@@ -365,9 +367,9 @@ HC_PREC *cart_vec;
 
 void 
 lonlatpv2cv_with_base (polar_vec, polar_base, cart_vec)
-HC_PREC *polar_vec;
-HC_HIGH_PREC *polar_base;
-HC_PREC *cart_vec;
+     HC_PREC *polar_vec;
+     HC_HIGH_PREC *polar_base;
+     HC_PREC *cart_vec;
 {
   int i;
   // convert vector

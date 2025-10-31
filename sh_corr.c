@@ -6,6 +6,8 @@ read in two sets of spherical harmonics coefficients (stdin) and
 compute linear correlation coefficients up to L = min(L1,L2), or
 limited by input parameter
 
+Pearson correlation
+
 USAGE:
 
 for total correlation
