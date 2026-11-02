@@ -14,5 +14,5 @@ grd2map tmp.2.grd tmp.vs
 grd2map tmp.r.grd tmp.r
 epsmerge -par -x 1 -y 3 tmp.1.ps tmp.2.ps tmp.r.ps > corrt.ps
 psconvert -Tf corrt.ps
-rm tmp.1.ps tmp.2.ps tmp.r.ps corrt.ps tmp*grd
+rm tmp.1.ps tmp.2.ps tmp.r.ps corrt.ps tmp*grd tmp.dat tmp*cpt
 
