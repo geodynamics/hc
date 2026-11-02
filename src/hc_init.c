@@ -439,7 +439,7 @@ hc_handle_command_line (argc, argv, start_from_i, p)
       fprintf(stderr,"This particular implementation illustrates one possible way to combine the HC solver routines.\n");
       fprintf(stderr,"Based on code by Brad Hager, Richard O'Connell, and Bernhard Steinberger.\n");
       fprintf(stderr,"This version by Thorsten Becker, with contributions by Craig O'Neill.\n");
-      fprintf(stderr,"compiled with double precision, see README.TXT\n");
+      fprintf(stderr,"Copyright (c) 2004-2026 Thorsten Becker, GPL, see README.md\n");
       switch(p->solver_mode){
       case HC_SOLVER_MODE_VISC_SCAN:
 	fprintf(stderr,"usage example:\n\n");
@@ -455,15 +455,16 @@ hc_handle_command_line (argc, argv, start_from_i, p)
 	fprintf(stderr,"usage example:\n\n");
 	fprintf(stderr,"bin/hc -vvv\n\n");
 	fprintf(stderr,"Compute mantle flow solution using the default input files:\n");
-	fprintf(stderr,"  viscosity profile visc.dat\n");
-	fprintf(stderr,"  density profile   dens.sh.dat\n");
+	fprintf(stderr,"  viscosity profile %s\n",HC_VISC_FILE);
+	fprintf(stderr,"  density profile   %s\n",HC_DENS_SH_FILE);
 	fprintf(stderr,"  earth model       prem/prem.dat\n");
+	fprintf(stderr,"(i.e. hc is expected to be run from the main hc directory).\n");
 	fprintf(stderr,"and provide lots of output. Default setting is quiet operation.\n\n");
 	break;
       }
-      fprintf(stderr,"See README.TXT in the installation directory for example for how to plot output, and\n");
-      fprintf(stderr,"http://http://www-udc.ig.utexas.edu/external/becker/seatree/ for a graphical user interface.\n");
-      fprintf(stderr,"https://goo.gl/D4E8oy for a VirtualBox install.\n\n");
+      fprintf(stderr,"See README.md in the installation directory for example for how to plot output, and\n");
+      fprintf(stderr,"https://github.com/thwbecker/seatree/ for a graphical user interface.\n");
+      fprintf(stderr,"https://twb.ig.utexas.edu/ugesce.html for a VirtualBox install.\n\n");
 
 
       fprintf(stderr,"density anomaly options:\n");

@@ -1,21 +1,28 @@
 #!/bin/bash
+#
+# hc installation directory and binaries: this script lives in
+# $hcdir/tools and can be run from anywhere, e.g. as tools/compute_and_extract_tractions
+# from the main hc directory, as long as the code has been compiled
+# with make (binaries in $hcdir/bin)
+#
+hcdir=`cd \`dirname $0\`/..; pwd`
+PATH=$hcdir/bin:$hcdir/tools:$PATH
 
 #
 # simple example on how to compute radial tractions and extract them from the hc solution 
 #
-# data dir
-ddir=$HOME/progs/src/seatree/py-drivers/py-hc/example_data/
+# data in the hc directory
 #
-# viscosity structure 
-vfile=$ddir/viscosity/visc.C
+# viscosity structure
+vfile=$hcdir/example_data/visc.C
 #
 # density model
-dfile=$ddir/tomography/smean.31.m.ab
+dfile=$hcdir/tomography/smean.31.m.ab
 dformat="-dshs" 		# short SH format as in Becker & Boschi
 dscale=0.25			# dln rho/dln v_S factor
 # 
 # plate velocities
-pfile=$ddir/pvelocity/nnr_nuvel1a.smoothed.sh.dat 
+pfile=$hcdir/example_data/pvel.sh.dat
 
 # verbosity 
 verbose="-vvv"
@@ -24,11 +31,11 @@ verbose="-vvv"
 opt="-rtrac -ng"
 
 # free slip 
-hc $verbose -dens $dfile $dformat -ds $dscale -vf $vfile $opt
+hc $verbose -dens $dfile $dformat -ds $dscale -vf $vfile -prem $hcdir/prem/prem.dat $opt
 mv rtrac.sol.bin trac.fs.sol	
 
 # plates 
-hc $verbose -dens $dfile $dformat -ds $dscale -vf $vfile -pvel $pfile $opt
+hc $verbose -dens $dfile $dformat -ds $dscale -vf $vfile -prem $hcdir/prem/prem.dat -pvel $pfile $opt
 mv rtrac.sol.bin trac.p.sol
 
 # extract 

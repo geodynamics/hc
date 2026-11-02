@@ -1,5 +1,22 @@
 #!/bin/bash
 #
+# hc installation directory and binaries: this script lives in
+# $hcdir/tools and can be run from anywhere, e.g. as tools/hc2gmt
+# from the main hc directory, as long as the code has been compiled
+# with make (binaries in $hcdir/bin)
+#
+hcdir=`cd \`dirname $0\`/..; pwd`
+PATH=$hcdir/bin:$hcdir/tools:$PATH
+#
+# helper functions (replacing the lc and oneline utilities)
+#
+lc(){				# number of lines in a file
+    gawk 'END{print(NR)}' $1
+}
+oneline(){			# print line $1 of file $2
+    gawk -v n=$1 'NR==n' $2
+}
+#
 # convert HC velocity output in binary format (as produced by -px) to GMT grd files for vr, vt, vp
 #
 dfile=vdepth.dat		# depth level file

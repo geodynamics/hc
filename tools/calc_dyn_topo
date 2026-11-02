@@ -1,20 +1,36 @@
 #!/bin/bash
+#
+# hc installation directory and binaries: this script lives in
+# $hcdir/tools and can be run from anywhere, e.g. as tools/calc_dyn_topo
+# from the main hc directory, as long as the code has been compiled
+# with make (binaries in $hcdir/bin)
+#
+hcdir=`cd \`dirname $0\`/..; pwd`
+PATH=$hcdir/bin:$hcdir/tools:$PATH
+#
+# helper functions (replacing the lc and oneline utilities)
+#
+lc(){				# number of lines in a file
+    gawk 'END{print(NR)}' $1
+}
+oneline(){			# print line $1 of file $2
+    gawk -v n=$1 'NR==n' $2
+}
 
 density=3377.97
 
 lmax=31
 
 
-#eo="$eo -dens $datadir/tomography/models/smean.$lmax.m.ab -dshs  " # density model
+# density model and viscosity, defaults from the hc example data
+eo="$eo -dens $hcdir/tomography/smean.$lmax.m.ab -dshs  " # density model
 #eo="$eo -dnp"
 #eo="$eo -ds 0.2" # density scaling
-
-#eo="$eo -vf visc.dat " # viscosity
-#eo="$eo -cbckl 63"		# solver trick
+eo="$eo -vf $hcdir/example_data/visc.sh08 " # viscosity
 
 rm rtrac.sol.bin geoid.ab
 
-hc  -fs  -rtrac $eo -v
+hc  -fs  -rtrac $eo -prem $hcdir/prem/prem.dat -v
 
 if [ ! -s rtrac.sol.bin ];then
     echo $0: error, no output produced 

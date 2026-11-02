@@ -1,4 +1,12 @@
 #!/bin/bash
+#
+# hc installation directory and binaries: this script lives in
+# $hcdir/tools and can be run from anywhere, e.g. as tools/plot_visc_scan
+# from the main hc directory, as long as the code has been compiled
+# with make (binaries in $hcdir/bin)
+#
+hcdir=`cd \`dirname $0\`/..; pwd`
+PATH=$hcdir/bin:$hcdir/tools:$PATH
 modes=${1-"1 2 3 4"}
 pmodels=${2-"tx2019slab lrr98d  smean2_ntn s40rts st11den-1 smean2"}
 

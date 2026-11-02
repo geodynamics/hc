@@ -1,6 +1,15 @@
 #!/bin/bash
 #
-# run simple benchmarks
+# hc installation directory and binaries: this script lives in
+# $hcdir/tools and can be run from anywhere, e.g. as tools/run_bench
+# from the main hc directory, as long as the code has been compiled
+# with make (binaries in $hcdir/bin)
+#
+hcdir=`cd \`dirname $0\`/..; pwd`
+PATH=$hcdir/bin:$hcdir/tools:$PATH
+#
+# run simple benchmarks (legacy, expects bench/*/new/ directories
+# with input files, which are not part of the repository)
 #
 tc=1
 for t in pmd pm f;do
@@ -13,8 +22,8 @@ for t in pmd pm f;do
     fi
     cd bench/$t/new/
     hc	-ds $scale $free	# run code
-    ../../../hc2gmt		# convert to GMT grd
-    ../../../calc_rms		# compute the RMS of radial and horizontal flow
+    hc2gmt			# convert to GMT grd (in $hcdir/tools)
+    calc_rms			# compute the RMS of radial and horizontal flow
 
 
     cd -

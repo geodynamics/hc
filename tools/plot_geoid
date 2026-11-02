@@ -1,5 +1,13 @@
 #!/bin/bash
 #
+# hc installation directory and binaries: this script lives in
+# $hcdir/tools and can be run from anywhere, e.g. as tools/plot_geoid
+# from the main hc directory, as long as the code has been compiled
+# with make (binaries in $hcdir/bin)
+#
+hcdir=`cd \`dirname $0\`/..; pwd`
+PATH=$hcdir/bin:$hcdir/tools:$PATH
+#
 # simple geoid plotting tester
 #
 
@@ -9,7 +17,7 @@ inc=-I$dx				# default res of sh_sysn
 reg=-Rg
 #
 # observed geoid anomalies corrected for Chambat
-ogeoid=geoid/egm2008-hc-geoid.chambat.31.ab
+ogeoid=$hcdir/geoid/egm2008-hc-geoid.chambat.31.ab
 #
 cat $ogeoid | sh_syn 0 0 0 360 -90 90 $dx | \
     gmt xyz2grd $reg $inc -fg -Gogeoid.grd
@@ -17,9 +25,9 @@ cat $ogeoid | sh_syn 0 0 0 360 -90 90 $dx | \
 # tomography model
 tmodel=tx2019
 # 0.18 scaling below 220
-dens="-dsf dscale/dscale_0b.dat -dens tomography/$tmodel.31.m.ab -dshs -prem prem/prem.dat"
+dens="-dsf $hcdir/dscale/dscale_0b.dat -dens $hcdir/tomography/$tmodel.31.m.ab -dshs -prem $hcdir/prem/prem.dat"
 # best sort of three layer viscosity
-visc="-vf viscosity/bf_visc.$tmodel.3.a.220.dat"
+visc="-vf $hcdir/viscosity/bf_visc.$tmodel.3.a.220.dat"
 
 # predict geoid
 hc $dens $visc -fs -v
@@ -29,7 +37,7 @@ cat geoid.ab | sh_syn 0 0 0 360 -90 90 $dx | \
     gmt xyz2grd $reg $inc -Gcgeoid.grd -fg
 
 # r_20
-rs=`cat $ogeoid geoid.ab | bin/x86_64/sh_corr 20 | gawk '{printf("%.2f",$1)}'`
+rs=`cat $ogeoid geoid.ab | sh_corr 20 | gawk '{printf("%.2f",$1)}'`
 
 
 proj=-JKf180/7			# projection

@@ -1,3 +1,13 @@
-icc -c simple_test.c
-ifort simple_test.o ~/plates/rick_plates/harm/objects/i686/librick_harm.a -nofor_main -o simple_test
-
+#!/bin/bash
+#
+# compile the simple_test.c example, which calls the Fortran versions
+# of the Rick O'Connell spherical harmonics routines (vshd2c, gauleg).
+# those are not built by the hc Makefile (see RICK_SRCS there), so a
+# separately compiled librick_harm.a has to be given
+#
+# usage: tools/compile_simple_test [librick_harm.a]
+#
+hcdir=`cd \`dirname $0\`/..; pwd`
+rick_lib=${1-$HOME/plates/rick_plates/harm/objects/i686/librick_harm.a}
+cc -c $hcdir/src/simple_test.c -o simple_test.o
+gfortran simple_test.o $rick_lib -o simple_test

@@ -1,5 +1,13 @@
 #!/bin/bash
 #
+# hc installation directory and binaries: this script lives in
+# $hcdir/tools and can be run from anywhere, e.g. as tools/calc_vel_and_plot
+# from the main hc directory, as long as the code has been compiled
+# with make (binaries in $hcdir/bin)
+#
+hcdir=`cd \`dirname $0\`/..; pwd`
+PATH=$hcdir/bin:$hcdir/tools:$PATH
+#
 # example script to compute and plot mantle velocities
 #
 
@@ -18,20 +26,20 @@ plots=${2-"1 2 3"}		# plot output modes
 #
 dfac=0.25			# density scaling factor, needs to be specified
 dt=-dshs			# SH type "": new -dshs: Becker & Boschi (2002)
-dm=example_data/smean.31.m.ab   # density model, needs to be specified
+dm=$hcdir/example_data/smean.31.m.ab   # density model, needs to be specified
 #
 # boundary conditions
 #
 #tbc=-fs                	# -fs: free slip
-tbc="-pvel example_data/pvel.sh.dat"         # empty: plates, or specific plate velocity file
+tbc="-pvel $hcdir/example_data/pvel.sh.dat"         # empty: plates, or specific plate velocity file
 
 #
 # viscosity file
 #
-#vf=example_data/visc.C2			# file name
-vf=example_data/visc.D			# file name
-#vf=example_data/visc.A			# file name
-#vf=example_data/visc.dat			# file name
+#vf=$hcdir/example_data/visc.C2			# file name
+vf=$hcdir/example_data/visc.D			# file name
+#vf=$hcdir/example_data/visc.A			# file name
+#vf=$hcdir/example_data/visc.dat			# file name
 
 verb=-vvv			# verbosity level
 
@@ -63,7 +71,7 @@ for plot in $plots;do
     if [ $compute -eq 1 ];then
 	rm $f.sol.bin 2> /dev/null
 	echo $0: recomputing
-	hc $verb -dens $dm $dt $hc_opt -ds $dfac $tbc -vf $vf 2> hc.log
+	hc $verb -dens $dm $dt $hc_opt -ds $dfac $tbc -vf $vf -prem $hcdir/prem/prem.dat 2> hc.log
 	if [ ! -s $f.sol.bin ];then
 	    echo $0: error, no output $f.sol.bin produced
 	    exit

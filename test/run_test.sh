@@ -156,7 +156,7 @@ fi
 # 8) viscosity scan, two layers, coarse
 #
 cd $tmp; rm -f *
-$scan -gref $here/../geoid_ref.ab -dens $data/smean.31.m.ab -dshs -prem $prem \
+$scan -gref $data/geoid_ref.ab -dens $data/smean.31.m.ab -dshs -prem $prem \
       -vs_n 2 -vs_dv 1 -vs_em 1 $extra > scan.dat 2> /dev/null
 cd ..
 check visc_scan        scan.dat     scan.dat

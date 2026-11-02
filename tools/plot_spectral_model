@@ -1,7 +1,16 @@
 #!/bin/bash
 #
+# hc installation directory and binaries: this script lives in
+# $hcdir/tools and can be run from anywhere, e.g. as tools/plot_spectral_model
+# from the main hc directory, as long as the code has been compiled
+# with make (binaries in $hcdir/bin)
+#
+hcdir=`cd \`dirname $0\`/..; pwd`
+PATH=$hcdir/bin:$hcdir/tools:$PATH
+#
 # plot an HC model run based on the spectral data in 
 # binary format sol.bin
+# (needs shsyn from the shansyn package, not part of hc)
 #
 layer=${1--1}
 ifile=${2-sol.bin}

@@ -1,5 +1,5 @@
 # generate a synthetic density anomaly model in the short SH format
-# (see README.TXT): three layers, random coefficients with power
+# (see README.md): three layers, random coefficients with power
 # decreasing with degree. used by propagator_stability.sh
 #
 # usage: gawk -v L=63 -f gen_synth_dens.awk > dens.ab

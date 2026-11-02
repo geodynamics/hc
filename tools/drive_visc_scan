@@ -1,5 +1,22 @@
 #!/bin/bash
 #
+# hc installation directory and binaries: this script lives in
+# $hcdir/tools and can be run from anywhere, e.g. as tools/drive_visc_scan
+# from the main hc directory, as long as the code has been compiled
+# with make (binaries in $hcdir/bin)
+#
+hcdir=`cd \`dirname $0\`/..; pwd`
+PATH=$hcdir/bin:$hcdir/tools:$PATH
+#
+# helper functions (replacing the lc and oneline utilities)
+#
+lc(){				# number of lines in a file
+    gawk 'END{print(NR)}' $1
+}
+oneline(){			# print line $1 of file $2
+    gawk -v n=$1 'NR==n' $2
+}
+#
 # compute viscosity scans using HC for single, or simple (2-4) layer structures
 #
 layers=${1-"-2 2 3 4"}
@@ -12,16 +29,16 @@ eta_max_exp=${6-3}		# default visc range  viscosity 10^{+/- emax}
 
 if [ $dmode -eq 1 ];then
     odir=visc_scan_out
-    dens_type="-dsf $HOME/progs/src/seatree/python/data/hc/dscale/dscale_0.dat"
+    dens_type="-dsf $hcdir/dscale/dscale_0.dat"
 elif [ $dmode -eq 2 ];then
     odir=visc_scan_out_hefesto
-    dens_type="-dsf $HOME/progs/src/seatree/python/data/hc/dscale/hefesto.new_dmm.1600.200zero.dat"
+    dens_type="-dsf $hcdir/dscale/hefesto.new_dmm.1600.200zero.dat"
 elif [ $dmode -eq 3 ];then
     odir=visc_scan_out_nlm
-    dens_type="-dsf $HOME/progs/src/seatree/python/data/hc/dscale/dscale_0nlm.dat"
+    dens_type="-dsf $hcdir/dscale/dscale_0nlm.dat"
 elif [ $dmode -eq 4 ];then
     odir=visc_scan_out_hefesto_nlm
-    dens_type="-dsf $HOME/progs/src/seatree/python/data/hc/dscale/hefesto.new_dmm.1600.200zeronlm.dat"
+    dens_type="-dsf $hcdir/dscale/hefesto.new_dmm.1600.200zeronlm.dat"
 else
     echo $0: $dmode undefined
     #dens_type="-ds 0.2"
@@ -30,9 +47,8 @@ fi
 
 
 
-hc_dir=$HOME/progs/src/cig/hc
-geoid_ref=$hc_dir/egm2008-hc-geoid.chambat.31.ab
-prem_file=$hc_dir/prem/prem.dat
+geoid_ref=$hcdir/geoid/egm2008-hc-geoid.chambat.31.ab
+prem_file=$hcdir/prem/prem.dat
 
 mkdir -p $odir/
 
@@ -73,7 +89,7 @@ for lay in $layers;do
 	    ofile=$odir/visc_scan.$smodel.$lay.$zlm.$suf 
 	fi
 	echo $smodel $lay 
-	hc_visc_scan -dens $datadir/tomography/models/$smodel.$slmax.m.ab -dshs \
+	hc_visc_scan -dens $hcdir/tomography/$smodel.$slmax.m.ab -dshs \
 		     $dens_type -prem $prem_file  \
 		     -vs_zlm $zlm -vs_zau $zau -vs_em $eta_max_exp \
 		     -gref $geoid_ref -vs_n $lay -vs_dv $dv  | gzip -c > $ofile &

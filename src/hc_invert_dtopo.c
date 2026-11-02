@@ -5,7 +5,7 @@
    circulation given internal density anomalies, only radially varying
    viscosity, and either free-slip or plate velocity boundary
    condition at surface. based on Hager & O'Connell (1981), Hager &
-   Clayton (1989), and Steinberger (2000, PEPI), see README.TXT for
+   Clayton (1989), and Steinberger (2000, PEPI), see README.md for
    the references. the original code is due to
    Brad Hager, Rick O'Connell, and was largely modified by Bernhard
    Steinberger. this version by Thorsten Becker (twb@ig.utexas.edu) for

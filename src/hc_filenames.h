@@ -1,11 +1,19 @@
-#define HC_VISC_FILE "visc.dat" /* 
+/*
+
+  default input file names. the data files were moved to
+  example_data/ in 11/2026, so the defaults assume that hc is run
+  from the main hc directory, as does the default PREM file
+  (prem/prem.dat, see hc_init.c)
+
+*/
+#define HC_VISC_FILE "example_data/visc.dat" /*
 				    viscosity structure 
 				 */
-#define HC_DENS_SH_FILE "dens.sh.dat" /* 
+#define HC_DENS_SH_FILE "example_data/dens.sh.dat" /*
 					 spherical haronics density
 					 anomalies
 				       */
-#define HC_PVEL_FILE "pvel.sh.dat" /* 
+#define HC_PVEL_FILE "example_data/pvel.sh.dat" /*
 				      plate velocities, poloidal and
 				      toroidal part
 				    
@@ -28,7 +36,7 @@
 #define HC_LAYER_OUT_FILE "vdepth.dat" /* depth [km] output */
 #define HC_GEOID_FILE "geoid.ab" /* geoid output file */
 
-#define HC_GEOID_REF_FILE "geoid_ref.ab" /* geoid reference */
+#define HC_GEOID_REF_FILE "example_data/geoid_ref.ab" /* geoid reference */
 
 #define HC_DTOPO_REF_FILE "dtopo.ab" /* dynatic topography reference */
 
