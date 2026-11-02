@@ -18,6 +18,10 @@ void hc_evalpa(int l,HC_HIGH_PREC r1,HC_HIGH_PREC r2,HC_HIGH_PREC visc, HC_HIGH_
   //    * INTERFACE WITH THE EXISTING PROGRAMS.                        *
   //    ****************************************************************
   //
+  //    the closed form of the propagator for a layer of constant
+  //    viscosity is given in Richards & Hager (1984), JGR 89, 5987
+  //
+  //
   HC_HIGH_PREC den1,den2,f[4],r,rlm1,rlp1,rmlm2,rml,v2,rs;
   long int np[4][4][4];
   long int lp1,lp2,lp3,lm1,lm2,lpp,lmm,l2p3,l2p1,l2m1,lltp1,lltp2;

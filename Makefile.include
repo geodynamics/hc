@@ -1,13 +1,12 @@
 #
-# quad precision
+# (the quad precision option, -DHC_PRECISION=32, was removed)
 #
-#ADD_FLAGS = -DHC_PRECISION=32 
-#
-# double precision
 ADD_FLAGS = 
 
 
 # GMT4 
-GGRD_INC_FLAGS = -I$(GMT4HOME)/include -I$(NETCDFDIR)/include -DUSE_GMT4
-GGRD_LIBS_LINKLINE = -lggrd -L$(GMT4HOME)/lib/ -lgmt -lpsl -lnetcdf 
-LDFLAGS = -L$(NETCDFDIR)/lib -lnetcdf
+GGRD_INC_FLAGS = -I$(GMT4HOME)/include -I$(NETCDFHOME)/include -DUSE_GMT4
+# the GMT and netcdf libraries are only linked into the GMT based
+# tools, see GGRD_LIBS_LINKLINE in the Makefile. The hc binaries do not
+# need them.
+LDFLAGS =

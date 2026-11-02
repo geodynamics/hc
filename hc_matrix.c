@@ -53,7 +53,7 @@ main (){
 #include "hc.h"
 #endif
 
-#define NR_TINY 1.0e-20;
+#define NR_TINY 1.0e-20
 /* 
 
    matrix is always 3 x 3 , solution is for full system for n == 3,
@@ -112,7 +112,7 @@ void hc_ludcmp_3x3(HC_PREC a[3][3],int n,int *indx)
     indx[j]=imax;
     if (fabs(a[j][j]) < HC_EPS_PREC) 
       a[j][j] = NR_TINY;
-    if (j != 2) {
+    if (j != n-1) {
       dum=1.0/(a[j][j]);
       for (i=j+1;i < n;i++) 
 	a[i][j] *= dum;
@@ -139,7 +139,7 @@ HC_PREC *b;
     if (ii)
       for (j=ii-1;j <= i-1;j++) 
 	sum -= a[i][j]*b[j];
-    else if (fabs(sum)>HC_EPS_PREC) 
+    else if (sum != 0.0)	/* exact test, as in NR: this only skips leading zeros */
       ii = i+1;
     b[i]=sum;
   }

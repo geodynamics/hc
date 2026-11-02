@@ -22,45 +22,30 @@ general variable type defines
 #define hc_boolean unsigned short
 #endif
 
-#ifndef HC_PRECISION			/* not defined */
+#ifndef HC_PRECISION
+#define HC_PRECISION 16
+#endif
+#if HC_PRECISION != 16
 /* 
-   default precision for most C functions
+   the float (8) and long double (32) variants were removed. the
+   prototypes in hc_auto_proto.h are generated for double, so those
+   variants did not compile, and the long double variant computed the
+   propagators in double anyway (pow, exp, log without tgmath). the
+   stability issue at high degrees is being addressed in the solver
+   instead
 */
-#define HC_PRECISION 16		/* 8,16, or 32 denoting float, double,
-				   or quad only for the purposes of
-				   switching */
+#error "HC_PRECISION: only double precision (16) is supported"
 #endif
 
 #ifndef __HC_PREC_DEFINED__
 
-#if HC_PRECISION == 32	/* quad prec */
-
-#define HC_PREC long double
-#define HC_HIGH_PREC long double
-#define HC_FLT_FORMAT "%Lf"
-#define HC_TWO_FLT_FORMAT "%Lf %Lf"
-#define HC_THREE_FLT_FORMAT "%Lf %Lf %Lf"
-#define HC_EPS_PREC 3e-25
-
-#elif HC_PRECISION == 16		/* double prec */
-
 #define HC_PREC double
-#define HC_HIGH_PREC double	/* some computations at higher prec */
+#define HC_HIGH_PREC double	/* used to be a separate type for some
+				   computations, now identical to HC_PREC */
 #define HC_FLT_FORMAT "%lf"
 #define HC_TWO_FLT_FORMAT "%lf %lf"
 #define HC_THREE_FLT_FORMAT "%lf %lf %lf"
 #define HC_EPS_PREC 3e-16
-
-#else  /* single prec */
-
-#define HC_PREC float
-#define HC_HIGH_PREC double
-#define HC_FLT_FORMAT "%f"
-#define HC_TWO_FLT_FORMAT "%f %f"
-#define HC_THREE_FLT_FORMAT "%f %f %f"
-#define HC_EPS_PREC 3e-7
-
-#endif
 
 #define HC_BIN_PREC float	/* precision for binary I/O */
 
@@ -182,7 +167,8 @@ struct hc_ps{
 */
 struct hc_parameters{
   hc_boolean compressible;	/* compressibility following Panasyuk
-				   & Steinberger */
+				   et al. (1996), as implemented by
+				   Steinberger (2000) */
   hc_boolean free_slip;		/* surface mechanical boundary condition */
   hc_boolean no_slip;		/* 
 				   zero surface velocities

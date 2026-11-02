@@ -104,7 +104,7 @@ void hc_polsol(struct hcs *hc, 	/*
   //    but the elevation above the equipotential surface, therefore
   //    u(3)new and not u(3)old matters. For the surface jump in gravity
   //    however, u(3)old matters, this is incorporated below.
-  //    See e.g. Panasyuk and Hager (1996)
+  //    See e.g. Panasyuk, Hager & Forte (1996)
   //
   //
   // this routine has been modified from the orginial version, for which 
@@ -224,9 +224,12 @@ void hc_polsol(struct hcs *hc, 	/*
   nvisp1 = hc->nvis+1;
   lmax = pol_sol[0].lmax ;
   /* 
-     max number of propagator levels, choose this generously
+     max number of propagator levels: each output radius, density
+     layer, and viscosity boundary can add one level (3*nradp2 used to
+     be used here, which is not enough if there are few density layers
+     but many viscosity layers)
   */
-  nprops_max = hc->nradp2 * 3;
+  nprops_max = hc->nradp2 + inho2 + nvisp1 + npb + 2;
   /* 
      for prop and ppot: one set of propagators for all layers, there
      lmax of those
@@ -252,12 +255,12 @@ void hc_polsol(struct hcs *hc, 	/*
     HC_MEMERROR("hc_polsol: u3");
   hc_vecalloc(&b,inho2,"hc_polsol");
   if(save_prop_mats){
-    /* 
+    /*
        propagators saved
     */
     if(!hc->psp.prop_mats_init){
-      /* 
-	 
+      /*
+
       we will be saving all propagator matrices. this makes sense if
       the density structure is the only thing that changes
       
@@ -270,7 +273,7 @@ void hc_polsol(struct hcs *hc, 	/*
       hc_hvecalloc(&hc->ppots,prop_s2 * lmax,"hc_polsol");
     }
   }else{
-    /* 
+    /*
        propagator recomputed and reallocated each time
     */
     hc_hvecalloc(&hc->props,prop_s1,"hc_polsol");
@@ -288,7 +291,7 @@ void hc_polsol(struct hcs *hc, 	/*
       fprintf(stderr,"hc_polsol: alpha: %.8f beta: %.8f\n",
 	      (double)hc->psp.alpha,(double)hc->psp.beta);
     
-    /* 
+    /*
        geoid scaling factor hc->gacc shoud be grav[nprops] for
        compressibility
     */
@@ -296,7 +299,7 @@ void hc_polsol(struct hcs *hc, 	/*
     hc->psp.abg_init = TRUE;
   }
   if((!hc->psp.prop_params_init) || (viscosity_or_layer_changed)){
-    /* 
+    /*
        
        intialize arrays that depend on viscosity and density layer spacing 
        
@@ -315,11 +318,11 @@ void hc_polsol(struct hcs *hc, 	/*
       if(verbose)
 	fprintf(stderr,"hc_polsol: initializing for %i v layers and %i dens layers\n",
 		nrad,inho);
-      /* 
+      /*
 	 this is really the first call, allocate arrays
 
 	 arrays that go with nprops
-	 
+
       */
       hc_hvecalloc(&hc->rprops,nprops_max,"hc_polsol: rprop");
       hc_hvecalloc(&hc->pvisc,nprops_max,"hc_polsol");
@@ -330,14 +333,18 @@ void hc_polsol(struct hcs *hc, 	/*
 	HC_MEMERROR("hc_polsol: qwrite");
       /* those that go with (inho=nrad)+2 */
       hc_vecrealloc(&hc->rden,inho2,"hc_polsol");
-      /* and those for nvis+1 */
-      hc_vecrealloc(&hc->rvisc,nvisp1,"hc_polsol");
-      hc_vecrealloc(&hc->visc,nvisp1,"hc_polsol");
-      /* 
+      /*
 	 save in case we want to check if parameters changed later
       */
       hc->inho2 = inho2;hc->nvisp1=nvisp1;
     }
+    /*
+       make sure there is room for the sentinel entries at [nvis],
+       the viscosity arrays might have been reassigned since the last
+       call (e.g. by hc_visc_scan)
+    */
+    hc_vecrealloc(&hc->rvisc,nvisp1,"hc_polsol");
+    hc_vecrealloc(&hc->visc,nvisp1,"hc_polsol");
     //
     //    SET RDEN(INHO+1) = 1.1 TO PREVENT TESTING OF THAT VALUE
     //    
@@ -426,7 +433,7 @@ void hc_polsol(struct hcs *hc, 	/*
     hc->den[hc->nprops] = 0.0;
     hc->pvisc[hc->nprops]  = hc->pvisc[hc->nprops-1]; /* to look nicer */
 
-    /* 
+    /*
 
        number of propagators is now nprops+1
 
@@ -444,7 +451,7 @@ void hc_polsol(struct hcs *hc, 	/*
       }
     }
     if(!hc->psp.rho_init){
-      /* 
+      /*
 	 initialize the density factors, for incompressible, those
 	 are all constant, else from PREM
       */
@@ -490,7 +497,7 @@ void hc_polsol(struct hcs *hc, 	/*
       hc->psp.rho_init = TRUE;  
     } /* end rho init */
     hc->psp.prop_params_init = TRUE;
-    /* 
+    /*
        
     end of the propagator factor section, this will only get executed
     once unless the density factors or viscosities change
@@ -523,14 +530,14 @@ void hc_polsol(struct hcs *hc, 	/*
 				  stored
 				*/
   for(l = 1;l <= pol_sol[0].lmax;l++){
-    /* 
+    /*
        
     MAIN L LOOP, start at l = 1 (only anomalies)
     
     */
     el = (HC_PREC)l;
 
-    /* 
+    /*
        this will normally be a very small number so that all
        propagators will be computed above the regular CMB 
 
@@ -559,14 +566,14 @@ void hc_polsol(struct hcs *hc, 	/*
       }	/* i checked the propagator matrices again, those are as in
 	   Bernhard's code TWB */
     }
-    /* 
+    /*
 
     begin m loop
 
     */
     mmax = (calc_kernel_only)?(0):(l);
     for(m=0;m <= mmax;m++){
-      /* 
+      /*
 
 
       START M LOOP 
@@ -857,7 +864,7 @@ void hc_polsol(struct hcs *hc, 	/*
      }while(a_or_b);
     } /* end m loop */
     if(save_prop_mats){
-      /* 
+      /*
 	 we want save the propagator matrices 
       */
       pos1 += prop_s1;
@@ -884,7 +891,7 @@ void hc_polsol(struct hcs *hc, 	/*
     if(verbose > 1)
       fprintf(stderr,"hc_polsol: evaluating geoid%s\n",
 	      (compute_geoid == 1)?(" at surface"):(", all layers"));
-    /* 
+    /*
        select geoid solution 
     */
     n6 = 4;
@@ -905,7 +912,7 @@ void hc_polsol(struct hcs *hc, 	/*
     }
 
     for(gic=0,gi=g1;gi < g2;gi++,gic++){			  /* depth loop */
-      /* 
+      /*
 	 first coefficients 
       */
       sh_write_coeff((geoid+gic),0,0,0,FALSE,clm); /* 0,0 */
@@ -939,7 +946,7 @@ void hc_polsol(struct hcs *hc, 	/*
   */
   free(b);free(u3);
   if(!save_prop_mats){		
-    /* 
+    /*
        destroy individual propagator matrices, if we don't want to
        keep them
     */

@@ -12,6 +12,7 @@
 #
 include Makefile.include
 #include Makefile.include_no_gmt
+# (or: make all_no_gmt ADD_FLAGS=-DNO_GMT)
 #
 #
 #
@@ -134,11 +135,14 @@ DEFINES = $(RICK_DEFINES) $(HEAL_DEFINES)
 LIBS = $(HC_LIBS)  $(HEAL_LIBS) $(RICK_LIB)
 
 
-all: all_no_gmt gmt_tools
+all: all_no_gmt sh_tools gmt_tools
 
-all_no_gmt: $(ODIR) $(BDIR) libs hc_tools  sh_tools 
+all_no_gmt: $(ODIR) $(BDIR) libs hc_tools  sh_tools_no_gmt
 
-sh_tools: 	$(BDIR)/sh_syn $(BDIR)/sh_corr $(BDIR)/sh_ana $(BDIR)/sh_power \
+# sh_syn and sh_ana get linked against the GMT libraries
+sh_tools: 	sh_tools_no_gmt $(BDIR)/sh_syn $(BDIR)/sh_ana
+
+sh_tools_no_gmt: 	$(BDIR)/sh_corr $(BDIR)/sh_power \
 	 $(BDIR)/sh_extract_layer $(BDIR)/gaussp
 
 hc_tools: $(BDIR)/hc  $(BDIR)/hc_visc_scan $(BDIR)/hc_invert_dtopo \
@@ -290,6 +294,13 @@ $(BDIR):
 
 clean:
 	rm -f $(ODIR)/*.o  $(ODIR)/*.a $(BDIR)/*
+
+test: all_no_gmt
+	cd test; ./run_test.sh ../bin
+
+test_asan: all_no_gmt
+	cd test; ./run_asan.sh
+
 
 super_clean:
 	rm -f hc_auto_proto.h hc_ggrd_auto_proto.h $(ODIR)/*.o  $(ODIR)/*.a $(BDIR)/*	

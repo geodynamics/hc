@@ -305,7 +305,7 @@ void hc_compute_correlation (g1, g2, c, mode, verbose)
      hc_boolean verbose;
 {
   int lmaxg;
-  lmaxg = HC_MIN(g1->lmax,g1->lmax);
+  lmaxg = HC_MIN(g1->lmax,g2->lmax);
 
   switch(mode){
   case 0:			/* 1...LMAX */

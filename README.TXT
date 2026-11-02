@@ -22,6 +22,56 @@ modifications. This version is by Thorsten Becker with contributions
 to the plate velocity inversion tool by Craig O'Neill (the latter
 remains incomplete).
 
+HOW TO CITE
+
+If you use HC, please cite the software and the papers that describe
+the method, for example as
+
+  Hager, B.H., O'Connell, R.J., Steinberger, B., and Becker, T.W. (2022),
+  HC v1.0.15 [software], Computational Infrastructure for Geodynamics,
+  https://geodynamics.org/resources/hc
+
+or, for the GitHub version,
+
+  Becker, T.W., O'Neill, C., and Steinberger, B. (2009), HC, a global
+  mantle circulation solver, available online at
+  https://github.com/geodynamics/hc
+
+together with Hager & O'Connell (1981), Hager & Clayton (1989), and
+Steinberger (2000).
+
+REFERENCES
+
+Becker, T.W., and Boschi, L. (2002), A comparison of tomographic and
+  geodynamic mantle models, Geochem. Geophys. Geosyst., 3(1), 1003,
+  doi:10.1029/2001GC000168
+Dahlen, F.A., and Tromp, J. (1998), Theoretical Global Seismology,
+  Princeton University Press
+Dziewonski, A.M., and Anderson, D.L. (1981), Preliminary reference
+  Earth model, Phys. Earth Planet. Inter., 25, 297-356
+Hager, B.H. (1984), Subducted slabs and the geoid: constraints on
+  mantle rheology and flow, J. Geophys. Res., 89, 6003-6015
+Hager, B.H., and Clayton, R.W. (1989), Constraints on the structure
+  of mantle convection using seismic observations, flow models, and
+  the geoid, in: Mantle Convection, edited by W.R. Peltier, Gordon and
+  Breach, New York, 657-763
+Hager, B.H., and O'Connell, R.J. (1981), A simple global model of
+  plate dynamics and mantle convection, J. Geophys. Res., 86,
+  4843-4867
+Panasyuk, S.V., Hager, B.H., and Forte, A.M. (1996), Understanding the
+  effects of mantle compressibility on geoid kernels, Geophys. J. Int.,
+  124, 121-133
+Ricard, Y., and Vigny, C. (1989), Mantle dynamics with induced plate
+  tectonics, J. Geophys. Res., 94, 17543-17559
+Richards, M.A., and Hager, B.H. (1984), Geoid anomalies in a dynamic
+  Earth, J. Geophys. Res., 89, 5987-6002
+Steinberger, B. (2000), Slabs in the lower mantle - results of dynamic
+  modelling compared with tomographic images and the geoid,
+  Phys. Earth Planet. Inter., 118, 241-257
+Steinberger, B., and Torsvik, T.H. (2012), A geodynamic model of plumes
+  from the margins of Large Low Shear Velocity Provinces,
+  Geochem. Geophys. Geosyst., 13, Q01W09, doi:10.1029/2011GC003808
+
 The Solid Earth Teaching and Research Environment (SEATREE,
 https://github.com/thwbecker/seatree/), as preinstalled with
 software as a VirtualBox available from the Unified Geodynamics Earth
@@ -39,7 +89,11 @@ SUPPORTED! WORK IN PROGRESS) and libraries installed.
 
 If NO_GMT is defined, will try to compile without GMT interface. In
 this case, also use "make all_no_gmt" instead of "make all" to avoid
-attempting to compile GMT based code. 
+attempting to compile GMT based code, e.g.
+
+make all_no_gmt ADD_FLAGS=-DNO_GMT
+
+or switch the include line in the Makefile to Makefile.include_no_gmt.
 
 See the Makefile for comments and what to modify.
 
@@ -199,11 +253,19 @@ hc_visc_scan	Illustrates how to do a parameter space scan for
 KNOWN LIMITATIONS
 
 The propagator matrix approach can be unstable for moderately high
-maximum degrees. This behavior can be addressed partially by compiling
-HC in quadruple precision, and kinematic boundary can be addressed
-with a kludge, see -cbckl. If you compile with this trick and
-quadruple precision (the default within SEATREE), you should be good
-to up to L=127.
+maximum degrees (roughly L > 50 to 70 in double precision, depending
+on the viscosity structure). The CMB boundary condition can be
+modified for high degrees with a kludge following Steinberger &
+Torsvik (2012), see -cbckl. Earlier versions offered a long double
+("quad precision") compile option; this was removed since it did not
+compile with the generated prototypes and only addressed part of the
+problem.
+
+TESTS
+
+make test        runs the regression tests in test/ (uses example_data/)
+make test_asan   rebuilds with address/undefined behavior sanitizers
+                 and runs the tests with those binaries
 
 
 SPHERICAL HARMONICS FORMAT

@@ -19,7 +19,8 @@ void hc_init_parameters(struct hc_parameters *p)
 
   */
   p->compressible = FALSE;		/* compressibility following Panasyuk
-				   & Steinberger */
+					   et al. (1996), as implemented by
+					   Steinberger (2000) */
   /* surface mechanical boundary condition */
   p->free_slip = TRUE;		/* free slip? */
   p->no_slip = FALSE;		/* no slip boundary condition? */
@@ -178,7 +179,7 @@ void hc_init_main (hc, sh_type, p)
   hc_assign_viscosity(hc,p->visc_init_mode,p->elayer,p);
 
   if(!p->print_kernel_only){
-    /* 
+    /*
        
        initialize possible depth dependent scaling of density model
     */
@@ -208,7 +209,7 @@ void hc_init_main (hc, sh_type, p)
   }
   
   if(p->no_slip && (!p->platebc)){
-    /* 
+    /*
 
        no slip (zero velocity) surface boundary conditions 
 
@@ -217,19 +218,19 @@ void hc_init_main (hc, sh_type, p)
       HC_ERROR("hc_init","no slip and free_slip doesn't make sense");
     if(p->verbose)
       fprintf(stderr,"hc_init: initializing for no slip\n");
-    /* 
+    /*
        read in the densities first to determine L from the density expansion
     */
     hc_assign_density(hc,p,HC_INIT_D_FROM_FILE,
 		      p->dens_filename,-1,FALSE,FALSE,
 		      (p->solver_mode == HC_SOLVER_MODE_VISC_SCAN)?(TRUE):(FALSE));
-    /* 
+    /*
        assign all zeroes up to the lmax of the density expansion 
     */
     hc_assign_plate_velocities(hc,p->pvel_mode,p->pvel_filename,TRUE,hc->dens_anom[0].lmax,
 			       FALSE,p->read_short_pvel_sh,p->remove_nr,p->verbose);
   }else if(p->platebc){
-    /* 
+    /*
 
        surface velocities 
 
@@ -238,7 +239,7 @@ void hc_init_main (hc, sh_type, p)
       HC_ERROR("hc_init","plate boundary condition and free_slip doesn't make sense");
     if(p->verbose)
       fprintf(stderr,"hc_init: initializing for surface velocities\n");
-    /* 
+    /*
        read in velocities, which will determine the solution lmax 
     */
     hc_assign_plate_velocities(hc,HC_INIT_P_FROM_FILE,p->pvel_filename,FALSE,dummy,FALSE,
@@ -248,7 +249,7 @@ void hc_init_main (hc, sh_type, p)
 		      FALSE,FALSE,
 		      (p->solver_mode == HC_SOLVER_MODE_VISC_SCAN)?(TRUE):(FALSE));
   }else if(p->free_slip){
-    /* 
+    /*
        
        free slip
 
@@ -403,7 +404,7 @@ hc_handle_command_line (argc, argv, start_from_i, p)
        (strcmp(argv[i],"--help")==0) || 
        (strcmp(argv[i],"-h")==0) || 
        (strcmp(argv[i],"-?")==0)){// help
-      /* 
+      /*
 	 help page
       */
       fprintf(stderr,"%s - perform Hager & O'Connell flow computation\n\n",
@@ -413,7 +414,7 @@ hc_handle_command_line (argc, argv, start_from_i, p)
       fprintf(stderr,"This particular implementation illustrates one possible way to combine the HC solver routines.\n");
       fprintf(stderr,"Based on code by Brad Hager, Richard O'Connell, and Bernhard Steinberger.\n");
       fprintf(stderr,"This version by Thorsten Becker, with contributions by Craig O'Neill.\n");
-      fprintf(stderr,"compiled with %s precision ((c) 2023, see README.TXT)\n",(HC_PRECISION==16)?("double"):((HC_PRECISION==8)?"single":"quad"));
+      fprintf(stderr,"compiled with double precision, see README.TXT\n");
       switch(p->solver_mode){
       case HC_SOLVER_MODE_VISC_SCAN:
 	fprintf(stderr,"usage example:\n\n");
@@ -520,6 +521,8 @@ hc_handle_command_line (argc, argv, start_from_i, p)
 		hc_name_boolean(p->print_pt_sol));
 	fprintf(stderr,"-px\t\tprint the spatial solution to file (%s)\n",
 		hc_name_boolean(p->print_spatial));
+	fprintf(stderr,"-ascii\t\twrite the spherical harmonic solution in ASCII instead of binary (%s)\n",
+		hc_name_boolean(!p->sol_binary_out));
 	fprintf(stderr,"-rtrac\t\tcompute srr,srt,srp tractions [MPa] instead of velocities [cm/yr] (default: vel)\n");
 	fprintf(stderr,"-htrac\t\tcompute stt,stp,spp tractions [MPa] instead of velocities [cm/yr] (default: vel)\n");
 	fprintf(stderr,"-pk\t\tprint kernels only, up to default L = %i\n",HC_LMAX_DEFAULT);
@@ -586,6 +589,9 @@ hc_handle_command_line (argc, argv, start_from_i, p)
     }else if(strcmp(argv[i],"-pk")==0){	
       p->print_kernel_only = TRUE;
       used_parameter = TRUE;
+    }else if(strcmp(argv[i],"-ascii")==0){ /* ASCII instead of binary solution output */
+      p->sol_binary_out = FALSE;
+      used_parameter = TRUE;
     }else if(strcmp(argv[i],"-dshs")==0){ /* use short format for densities ? */
       hc_toggle_boolean(&p->read_short_dens_sh);
       used_parameter = TRUE;
@@ -647,7 +653,7 @@ hc_handle_command_line (argc, argv, start_from_i, p)
     }			
 
     if(p->solver_mode == HC_SOLVER_MODE_DEFAULT){
-      /* 
+      /*
 	 those subsequent options only apply for default solver
 	 mode  
       */
@@ -730,8 +736,12 @@ struct hc_parameters *p;
        for 2871-660, 660-410, 410-100,100-0 should be given in units
        of visnor [1e21] as elayer[4]
      */
-    hc_vecrealloc(&hc->rvisc,4,"hc_assign_viscosity");
-    hc_vecrealloc(&hc->visc,4,"hc_assign_viscosity");
+    /*
+       one extra slot: hc_polsol and hc_torsol store a sentinel radius
+       at rvisc[nvis], and visc[nvis]
+    */
+    hc_vecrealloc(&hc->rvisc,5,"hc_assign_viscosity");
+    hc_vecrealloc(&hc->visc,5,"hc_assign_viscosity");
     /* number of layers */
     hc->nvis = 4;
     /* radii */
@@ -750,14 +760,14 @@ struct hc_parameters *p;
 	      (double)hc->visc[2],(double)hc->visc[3]);
   break;
   case HC_INIT_E_FROM_FILE:		
-    /* 
+    /*
        
        init from file part 
     
     */
     if(hc->visc_init)
       HC_ERROR("hc_assign_viscosity","viscosity already read from file, really read again?");
-    /* 
+    /*
        read viscosity structure from file 
 
        format:
@@ -900,7 +910,7 @@ void  hc_assign_density (hc, p, mode, filename,
   case HC_INIT_D_FROM_FILE:
     if(hc->dens_init)
       HC_ERROR("hc_assign_density","really read dens anomalies again from file?");
-    /* 
+    /*
        
     read in density anomalies in spherical harmonics format for
     different layers from file. 
@@ -917,7 +927,7 @@ void  hc_assign_density (hc, p, mode, filename,
     /* get one density expansion */
     hc_get_blank_expansions(&hc->dens_anom,1,0,
 			    "hc_assign_density");
-    /* 
+    /*
        read all layers as spherical harmonics assuming real Dahlen &
        Tromp (physical) normalization, short format
 
@@ -1046,7 +1056,7 @@ void  hc_assign_density (hc, p, mode, filename,
 	hc->inho++;
       }	/* end actualy read on */
     } /* end while */
-    /* 
+    /*
        assign actual top layer density 
     */
     hc->rho_top_kg = rho0 * 1000;
@@ -1059,7 +1069,7 @@ void  hc_assign_density (hc, p, mode, filename,
     break;
   }
   if(save_orig_danom && (!hc->dens_init)){
-    /* 
+    /*
        make a copy of the original density anomaly before applying
        depth dependent scaling, only done once per run 
     */
@@ -1078,7 +1088,7 @@ void  hc_assign_density (hc, p, mode, filename,
      
   */
   for(i=0;i < hc->inho;i++){
-    /* 
+    /*
        depth dependent factor? 
     */
     local_scale = hc_find_dens_scale(hc->rden[i],hc->dens_scale,p->dd_dens_scale,p->rdf,p->sdf,p->ndf);
@@ -1091,7 +1101,7 @@ void  hc_assign_density (hc, p, mode, filename,
   }
 
   if((!hc->dens_init)||(layer_structure_changed)){
-    /* 
+    /*
        
     assign the other radii, nrad + 2
     
@@ -1099,7 +1109,7 @@ void  hc_assign_density (hc, p, mode, filename,
     hc->nrad = hc->inho;
     hc->nradp2 = hc->nrad + 2;
     hc_vecrealloc(&hc->r,hc->nradp2,"hc_assign_density");
-    /* 
+    /*
        viscosity at density layers for horizontal stress
        computations */
     hc_vecrealloc(&hc->dvisc,hc->nradp2,"hc_assign_density");
@@ -1114,24 +1124,31 @@ void  hc_assign_density (hc, p, mode, filename,
     if(hc->rden[hc->nrad-1] >= 1.0)
       HC_ERROR("hc_assign_density","uppermost density layer has to be below surface");
     hc->r[hc->nrad+1] = 1.0;	/* surface */
-    /* 
+    /*
 
     assign viscosity at density layers
     
     */
     hc->dvisc[0] = hc->visc[0];
     for(i=1;i < hc->nradp2;i++){
-      for(j=hc->nvis-1;j>=0;j--)
-	if(hc->rvisc[j] < hc->r[i-1])
+      /*
+
+	 find the viscosity layer that contains r[i], i.e. the largest
+	 j with rvisc[j] <= r[i], and don't go below j=0
+
+      */
+      for(j=hc->nvis-1;j > 0;j--){
+	if(hc->rvisc[j] <= hc->r[i])
 	  break;
+      }
       hc->dvisc[i] = hc->visc[j];
     }
-    /* 
+    /*
 
     assign the density jump factors
 
     */
-    /* 
+    /*
        since we have spherical harmonics at several layers, we assign 
        the layer thickness by picking the intermediate depths
     */
@@ -1146,7 +1163,7 @@ void  hc_assign_density (hc, p, mode, filename,
     dbot[0] = 1.0 - hc->r_cmb;  // bottom boundary, ie. CMB 
     for(i=1;i < hc->nrad;i++)
       dbot[i] = dtop[i-1];
-    /* 
+    /*
        density layer thickness factors
     */
     hc_dvecrealloc(&hc->dfact,hc->nrad,"hc_assign_density");
@@ -1252,7 +1269,7 @@ void hc_assign_plate_velocities (hc, mode, filename, vel_bc_zero, lmax, pvel_in_
   hc->pvel.p = (struct sh_lms *)calloc(2,sizeof(struct sh_lms)*2);if(!hc->pvel.p)HC_MEMERROR("pvel");
   hc->pvel.t = (HC_PREC *)calloc(1,sizeof(HC_PREC));if(!hc->pvel.t)HC_MEMERROR("pvel");
   if(!vel_bc_zero){
-    /* 
+    /*
 
     velocities are NOT all zero
 
@@ -1260,7 +1277,7 @@ void hc_assign_plate_velocities (hc, mode, filename, vel_bc_zero, lmax, pvel_in_
     */
     switch(mode){
     case HC_INIT_P_FROM_FILE:
-      /* 
+      /*
 	 read velocities in pol/tor expansion format from file in
 	 units of HC_VELOCITY_FILE_FACTOR per year, short format
       */
@@ -1293,7 +1310,7 @@ void hc_assign_plate_velocities (hc, mode, filename, vel_bc_zero, lmax, pvel_in_
       HC_ERROR("hc_assign_plate_velocities","op mode undefined");
     }
   }else{
-    /* 
+    /*
        initialize with zeroes
     */
     if(hc->pvel_init){
@@ -1507,7 +1524,7 @@ HC_PREC rcmb;
   int i;
   FILE *in;
   if(p->dd_dens_scale == HC_DD_READ_FROM_FILE){
-    /* 
+    /*
        depth depending scaling
     */
     switch(mode){
@@ -1617,7 +1634,7 @@ hc_boolean verbose;
     if(verbose){
       fprintf(stderr,"hc_select_pvel: only one plate velocity loadeed, disregarding time argument\n");
     }
-    /* 
+    /*
        only one plate velocity 
        
     */
