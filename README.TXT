@@ -237,6 +237,8 @@ boundary condition options:
 -vtime	time	use this particular time step of the plate velocities (-1)
 
 solution procedure and I/O options:
+-solver	val	poloidal solver: 0: propagator matrix, 1: multiple shooting (stable for high l) (0)
+-msg	val	multiple shooting: max growth factor (r2/r1)^(2l+3) per interval (10000)
 -cbckl	val	will modify CMB boundary condition for all l > val with solver kludge (2147483647)
 -ng		do not compute and print the geoid (1)
 -ag		compute geoid at all layer depths, as opposed to the surface only
@@ -264,18 +266,34 @@ hc_visc_scan	Illustrates how to do a parameter space scan for
 
 KNOWN LIMITATIONS
 
-The propagator matrix approach can be unstable for moderately high
-maximum degrees (roughly L > 50 to 70 in double precision, depending
-on the viscosity structure). The CMB boundary condition can be
-modified for high degrees with a kludge following Steinberger &
-Torsvik (2012), see -cbckl. Earlier versions offered a long double
-("quad precision") compile option; this was removed since it did not
-compile with the generated prototypes and only addressed part of the
-problem.
+The default, propagator matrix solution of the poloidal problem
+(hc_polsol.c) becomes inaccurate for moderately high maximum degrees
+(roughly L > 50 in double precision, depending on the viscosity
+structure; at L = 127, degrees above about 80 are wrong by order
+unity). The CMB boundary condition can be modified for high degrees
+with a kludge following Steinberger & Torsvik (2012), see -cbckl.
+
+Alternatively, use the multiple shooting solver, -solver 1
+(hc_polsol_ms.c). It uses the same propagators, sources, and boundary
+conditions, but solves for the state vectors at all levels at once
+in a banded linear system, which stays accurate for arbitrary L in
+double precision. It agrees with the propagator solution to about
+1e-10 where the latter is accurate, is insensitive to the layering,
+and has been tested up to L = 255. The levels are subdivided such
+that the propagator growth per interval, (r2/r1)^(2L+3), stays below
+the -msg value (1e4 by default; results do not depend on this
+setting in practice). The -cbckl kludge is ignored by this solver. It
+is somewhat slower (about one second for L = 255 with 26 layers) and
+is intended to become the default after further testing. Earlier
+versions offered a long double ("quad precision") compile option;
+this was removed since it did not compile with the generated
+prototypes and only addressed part of the problem.
 
 TESTS
 
-make test        runs the regression tests in test/ (uses example_data/)
+make test        runs the regression tests in test/ (uses example_data/),
+                 for both the propagator matrix and the multiple shooting
+                 solver
 make test_asan   rebuilds with address/undefined behavior sanitizers
                  and runs the tests with those binaries
 

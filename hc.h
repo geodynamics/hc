@@ -1,4 +1,4 @@
-/* 
+/*
    
    header file for Hager & O'Connell experimental code
 
@@ -13,7 +13,7 @@
 
 
 
-/* 
+/*
 
 general variable type defines 
 
@@ -26,7 +26,7 @@ general variable type defines
 #define HC_PRECISION 16
 #endif
 #if HC_PRECISION != 16
-/* 
+/*
    the float (8) and long double (32) variants were removed. the
    prototypes in hc_auto_proto.h are generated for double, so those
    variants did not compile, and the long double variant computed the
@@ -87,14 +87,17 @@ struct hc_dcmplx{			/* double precision */
 #define HC_SCALAR 0
 #define HC_VECTOR 1
 
-/* 
+/* storage location of A(i,j) in a LAPACK style band matrix, see hc_matrix.c */
+#define HC_BAND_INDEX(i,j,kl,ku,ldab) (((kl)+(ku)+(i)-(j)) + (j)*(ldab))
+
+/*
 
 PREM
 
 */
 #include "prem.h"
 
-/* 
+/*
 
 Other Earth model, and modeling constants
 
@@ -120,7 +123,7 @@ spherical harmonics
 #include <limits.h>
 
 
-/* 
+/*
 
 use short format for spherical harmonic models
 
@@ -130,7 +133,7 @@ use short format for spherical harmonic models
 					      routines internally  */
 
 
-/* 
+/*
 
 for H & C solutions
 
@@ -138,7 +141,7 @@ for H & C solutions
 struct hc_sm{
   HC_PREC u[6][4];
 };
-/* 
+/*
    for polsol and solve
 */
 struct hc_ps{
@@ -157,7 +160,35 @@ struct hc_ps{
   /* for solve */
   hc_boolean tor_init, pol_init;
 };
-/* 
+/*
+   poloidal solver methods
+*/
+#define HC_POLSOL_PROPAGATOR 0	/* classic propagator matrix method */
+#define HC_POLSOL_MS 1		/* multiple shooting, see hc_polsol_ms.c */
+#define HC_POLSOL_DEFAULT HC_POLSOL_PROPAGATOR
+#define HC_MS_MAX_GROWTH_DEFAULT 1e4 /* max (r2/r1)^(2l+3) per interval */
+/*
+   level structure and work space for the multiple shooting solver
+*/
+struct hc_ms{
+  hc_boolean init;
+  int lmax;			/* lmax the levels were refined for */
+  HC_PREC max_growth;		/* refinement criterion */
+  int n,nalloc;			/* number of refined levels */
+  int nout;			/* number of output layers */
+  HC_PREC *r,*visc,*rho,*den;	/* level radii, interval viscosities,
+				   level densities and density source
+				   factors */
+  int *isrc,*ipb,*iout;		/* source, phase boundary and output
+				   indices per level, -1 if none */
+  int nsys,ldab,lfact,ncmb;	/* system size, band leading
+				   dimension, l of current
+				   factorization, number of CMB rows */
+  HC_PREC *ab,*rhs,*prop,*ppot;	/* band matrix, right hand side,
+				   propagators */
+  int *ipiv;
+};
+/*
 
 
    parameter structure to allow for settings that are specific to the
@@ -191,6 +222,8 @@ struct hc_parameters{
   HC_PREC pvel_time;		/* time to use */
   hc_boolean remove_nr;		/* remove net rotation from plate models? */
   int solver_kludge_l;		/* for CMB BC tricks */
+  int polsol_method;		/* poloidal solver, see HC_POLSOL_ */
+  HC_PREC ms_max_growth;	/* refinement criterion for multiple shooting */
 
   hc_boolean solver_mode;	
   hc_boolean visc_init_mode;
@@ -243,7 +276,7 @@ struct pvels{
   HC_PREC *t;
   struct  sh_lms *p;
 };
-/* 
+/*
 
 
 general HAGER & O'CONNELL flow code structure
@@ -316,6 +349,8 @@ struct hcs{
 			*/
 
   struct hc_ps psp;
+  int polsol_method;		/* HC_POLSOL_PROPAGATOR or HC_POLSOL_MS */
+  struct hc_ms ms;		/* multiple shooting work space */
   hc_boolean save_solution; /* memory intensive speedup in poloidal
 				solution by saving propagator matrices 
 				this will also keep the toroidal solution 
@@ -374,7 +409,7 @@ struct hcs{
 };
 
 
-/* 
+/*
 
 solution modes
 
@@ -386,7 +421,7 @@ solution modes
 				   trr trt trp  */
 #define HC_HTRACTIONS 2		/* compute tractions ttt, ttp, tpp */
 
-/* 
+/*
 
 init and assignment modes
 
@@ -401,7 +436,7 @@ init and assignment modes
 #define HC_INIT_DD_FROM_FILE 0	/* depth dependent density scaling */
 #define HC_INIT_DD_FOUR_LAYERS 1	/*  */
 
-/* 
+/*
 
 density scaling modes
 
@@ -421,7 +456,7 @@ density scaling modes
 #define HC_SOLVER_MODE_VISC_SCAN 1
 #define HC_SOLVER_MODE_DYNTOPO_INVERT 2
 
-/* 
+/*
    
 declarations
 
@@ -430,7 +465,7 @@ declarations
 /* local declarations */
 #include "hc_auto_proto.h"
 #endif
-/* 
+/*
    
 macro defintions
 
@@ -450,7 +485,7 @@ macro defintions
 #define HC_RAD 0
 #define HC_POL 1
 #define HC_TOR 2
-/* 
+/*
    boolean 
 */
 #ifndef TRUE
@@ -469,7 +504,7 @@ macro defintions
 
 #define HC_DIFFERENT(x,y) ((fabs((x)-(y)) > 1e-7)?(1):(0))
 
-/* 
+/*
    trigonometry stuff 
 */
 #ifndef SQRT_TWO 
@@ -514,15 +549,15 @@ macro defintions
 #ifndef LON2PHI
 #define LON2PHI(x) ( DEG2RAD(x) )
 #endif
-/* 
+/*
 
 
 */
-/* 
+/*
    convert depth (>0) in km to non-dimensionalizd radius
 */
 #define HC_ND_RADIUS(x) (1.0-((x)/HC_RE_KM))
-/* 
+/*
    the other way around
 */
 #define HC_Z_DEPTH(x) ((HC_RE_KM * (1.0-(x))))

@@ -203,11 +203,14 @@ void hc_polsol(struct hcs *hc, 	/*
   HC_PREC rbound_kludge;
   HC_HIGH_PREC amat[3][3],bvec[3],u[4],poten[2],
     unew[4],potnew[2],clm[2];
-  /* 
+  /*
      structures which hold u[6][4] type arrays 
   */
   struct hc_sm cmb, *u3;
   hc_boolean qvis,qinho,hit,kludge_warned;
+  HC_PREC *ms_sol = NULL;	/* output layer solution for the multiple
+				   shooting solver */
+  hc_boolean use_ms;
   /*  
       define a few offset and size pointers
   */
@@ -223,21 +226,21 @@ void hc_polsol(struct hcs *hc, 	/*
   inho2 = inho + 2;
   nvisp1 = hc->nvis+1;
   lmax = pol_sol[0].lmax ;
-  /* 
+  /*
      max number of propagator levels: each output radius, density
      layer, and viscosity boundary can add one level (3*nradp2 used to
      be used here, which is not enough if there are few density layers
      but many viscosity layers)
   */
   nprops_max = hc->nradp2 + inho2 + nvisp1 + npb + 2;
-  /* 
+  /*
      for prop and ppot: one set of propagators for all layers, there
      lmax of those
   */
   prop_s1 = nprops_max * 16;
   prop_s2 = nprops_max * 4;
 
-  /* 
+  /*
      check if still same general number of layers 
   */
   if((hc->psp.prop_params_init)&&((inho2 != hc->inho2)||
@@ -374,7 +377,7 @@ void hc_polsol(struct hcs *hc, 	/*
 	    <HC_EPS_PREC)){
 	  hit = TRUE;		/* bailout here */
 	}else{
-	  /* 
+	  /*
 	     normal operation 
 	  */
 	  hc->pvisc[hc->nprops]  = hc->visc[ivis];
@@ -459,7 +462,7 @@ void hc_polsol(struct hcs *hc, 	/*
       /* this way, rho_zero can go from -1...nnprops_max */
       hc->rho_zero = (hc->rho+1);
       if(compressible){
-	/* 
+	/*
 	   
 	for compressible computation, assign densities from PREM, but
 	only use the first 10 layers (below crust and ocean, I think)
@@ -481,7 +484,7 @@ void hc_polsol(struct hcs *hc, 	/*
 	}
 	free(xprem);
       }else{
-	/* 
+	/*
 
 	for the incompressible computation, use average values of
 	density for the mantle
@@ -506,6 +509,26 @@ void hc_polsol(struct hcs *hc, 	/*
   }
   hc->rprops[hc->nprops+1] = 1.0;
 
+  /*
+     multiple shooting solver: refined level structure, depends on
+     the levels and lmax
+  */
+  use_ms = (hc->polsol_method == HC_POLSOL_MS)?(TRUE):(FALSE);
+  if(use_ms){
+    if((!hc->ms.init) || viscosity_or_layer_changed || (hc->ms.lmax != lmax)){
+      hc_ms_init_levels(hc,lmax,npb,rpb,verbose);
+      hc->ms.lmax = lmax;
+      if(hc->ms.nout != hc->nradp2){
+	fprintf(stderr,"hc_polsol: multiple shooting output layers %i but expected %i\n",
+		hc->ms.nout,hc->nradp2);
+	exit(-1);
+      }
+    }
+    if((hc->psp.solver_kludge_l != INT_MAX) && (verbose)){
+      fprintf(stderr,"hc_polsol: WARNING: CMB solver kludge (-cbckl) is ignored by the multiple shooting solver\n");
+    }
+    hc_vecalloc(&ms_sol,hc->nradp2*6,"hc_polsol: ms_sol");
+  }
 
   if(verbose >= 3)
     for(i=0;i < hc->nprops+2;i++)
@@ -549,7 +572,13 @@ void hc_polsol(struct hcs *hc, 	/*
     rbound_kludge = (1. - (1.-hc->r_cmb)*(HC_PREC)hc->psp.solver_kludge_l/el);
     kludge_warned = FALSE;
 
-    if((!save_prop_mats) || (!hc->psp.prop_mats_init)|| (viscosity_or_layer_changed)){
+    if(use_ms){
+      /*
+	 assemble and factor the multiple shooting system for this l
+      */
+      hc_ms_factor(hc,l,free_slip);
+    }
+    if((!use_ms) && ((!save_prop_mats) || (!hc->psp.prop_mats_init)|| (viscosity_or_layer_changed))){
       //    
       // get all propagators now, as they only depend on l
       //    
@@ -598,7 +627,7 @@ void hc_polsol(struct hcs *hc, 	/*
 	    sh_get_coeff((dens_anom+i),l,m,a_or_b,FALSE,(b+i));
 	  //hc_print_vector(b,inho,stderr);
 	}else{
-	  /* 
+	  /*
 	     density is not expanded to that high an l
 	  */
 	  for(i=0;i < inho;i++) 
@@ -607,7 +636,31 @@ void hc_polsol(struct hcs *hc, 	/*
 	b[inho] = 0.0;
 	if(calc_kernel_only)
 	  b[klayer] = 1.0;
-	
+
+	if(use_ms){
+	  /*
+
+	     MULTIPLE SHOOTING SOLVER, see hc_polsol_ms.c: solve for
+	     all levels at once and write the output layers
+
+	  */
+	  if(!free_slip)
+	    sh_get_coeff(pvel_pol,l,m,a_or_b,FALSE,clm);
+	  else
+	    clm[0] = 0.0;
+	  hc_ms_solve(hc,l,b,clm[0],free_slip,npb,rpb,fpb,ms_sol);
+	  nl = hc->nradp2;
+	  for(os=ilayer=0;ilayer < nl;ilayer++,os+=6){
+	    for(i6=0;i6 < 6;i6++){
+	      sh_write_coeff((pol_sol+os+i6),l,m,a_or_b,FALSE,(ms_sol+os+i6));
+	    }
+	  }
+	}else{
+	/*
+
+	   PROPAGATOR MATRIX SOLVER (original)
+
+	*/
 	//    
 	//    U(C) = [0,VC,SC,0], U(A) = [0,0,SA,SX]
 	//    POT(A) = [U5(A),-(L+1)*U5(A)]T, POT(C) = [U5(C),L*U5(C)]T
@@ -621,7 +674,7 @@ void hc_polsol(struct hcs *hc, 	/*
 	    cmb.u[i6][ibv] = 0.0;
 
 	if(l > hc->psp.solver_kludge_l){
-	  /* 
+	  /*
 	     solver trick to ensure stabilty following Steinberger &
 	     Torsvik, doi:10.1029/2011GC003808
 
@@ -640,7 +693,7 @@ void hc_polsol(struct hcs *hc, 	/*
 	cmb.u[5][3] = el;	/* ucmb(6,3)=float(l) */
 
 	for(ibv=0;ibv < 4;ibv++){
-	  /* 
+	  /*
 
 	  IBV LOOP
 
@@ -653,7 +706,7 @@ void hc_polsol(struct hcs *hc, 	/*
 	  //    Propagate gravity across CMB. Inside the core, surfaces of
 	  //    constant pressure coincide with surfaces of constant potential.
 	  //
-	  /* 
+	  /*
 	     if we were allowing for compressibility, would multi with
 	     hc->grav[i]/hc->grav here (beta incorporates 1/grav0)
 	  */
@@ -799,20 +852,20 @@ void hc_polsol(struct hcs *hc, 	/*
 	//
 	//    u_2 = y_2 solution part
 	//
-	/* 
+	/*
 	   get one coefficient from the poloidal plate motion part
 	*/
 	if(!free_slip)
 	  sh_get_coeff(pvel_pol,l,m,a_or_b,FALSE,clm); /* use internal convention */
 	else
 	  clm[0] = 0.0;
-	/* 
+	/*
 	   B vector 
 	*/
 	bvec[0]=         u3[ilayer].u[    0][0];
 	bvec[1]=         u3[ilayer].u[nzero][0] - clm[0];
 	bvec[2]=(el+1.0)*u3[ilayer].u[    4][0] + u3[ilayer].u[5][0];
-	/* 
+	/*
 	   A matrix
 	*/
 	for(i=0,i2=1;i < 3;i++,i2++){
@@ -820,7 +873,7 @@ void hc_polsol(struct hcs *hc, 	/*
 	  amat[1][i] = u3[ilayer].u[nzero][i2];
 	  amat[2][i] = (el + 1.0) * u3[ilayer].u[4][i2] + u3[ilayer].u[5][i2];
 	}
-	/* 
+	/*
 	   solve A x = b, where b will be modified  
 	*/
 	if(l == 1){
@@ -830,7 +883,7 @@ void hc_polsol(struct hcs *hc, 	/*
 	}
 	hc_ludcmp_3x3(amat,jsol,indx);
 	hc_lubksb_3x3(amat,jsol,indx,bvec);
-	/* 
+	/*
 	   assign solution 
 	*/
 	for(os=ilayer=0;ilayer < nl;ilayer++,os+=6){
@@ -848,8 +901,9 @@ void hc_polsol(struct hcs *hc, 	/*
 			   &u3[ilayer].u[i6][0]);
 	  }
  	} /* end layer loop */
+	} /* end of propagator matrix solver branch */
 
-	/* 
+	/*
 
 	   chemical layering (e.g. phase boundaries) go here
 
@@ -941,10 +995,12 @@ void hc_polsol(struct hcs *hc, 	/*
       fprintf(stderr,"hc_polsol: assigned geoid\n");
   } /* end geoid */
   
-  /* 
+  /*
      free the local arrays 
   */
   free(b);free(u3);
+  if(use_ms)
+    free(ms_sol);
   if(!save_prop_mats){		
     /*
        destroy individual propagator matrices, if we don't want to

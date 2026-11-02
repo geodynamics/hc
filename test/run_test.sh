@@ -8,10 +8,14 @@
 #   mode:   compare (default): compare with stored reference output
 #           create: (re)write the reference output
 #   tol:    relative tolerance for the comparison (1e-6)
+#   extra:  additional options passed to hc and hc_visc_scan for all
+#           runs, e.g. "-solver 1" to test the multiple shooting
+#           solver against the propagator matrix references ("")
 #
 bindir=${1-../bin}
 mode=${2-compare}
 tol=${3-1e-6}
+extra=${4-""}
 
 # absolute paths, since the runs take place in a temporary directory
 bindir=`cd $bindir; pwd`
@@ -30,7 +34,7 @@ fi
 awkcmp="$awk -f $here/cmp_ab.awk -v tol=$tol"
 extract=$bindir/hc_extract_sh_layer
 
-common="-dens $data/smean.31.m.ab -dshs -vf $data/visc.sh08 -prem $prem"
+common="-dens $data/smean.31.m.ab -dshs -vf $data/visc.sh08 -prem $prem $extra"
 
 mkdir -p $tmp $ref
 nfail=0
@@ -131,20 +135,23 @@ $hc $common -fs -pk > /dev/null 2>&1
 cd ..
 check kernels          geoidk.dat   kernel.geoidk.dat
 #
-# 7) CMB solver kludge
+# 7) CMB solver kludge (only applies to the propagator matrix solver,
+#    the multiple shooting solver ignores -cbckl)
 #
-cd $tmp; rm -f *
-$hc $common -fs -cbckl 15 -ascii > /dev/null 2>&1
-head -1500 vel.sol.dat > vel.sol.head.dat	# first few layers only
-cd ..
-check cmb_kludge       geoid.ab     kludge.geoid.ab
-check cmb_kludge_ascii vel.sol.head.dat  kludge.vel.sol.dat
+if [ "`echo $extra | grep -c 'solver 1'`" -eq 0 ];then
+    cd $tmp; rm -f *
+    $hc $common -fs -cbckl 15 -ascii > /dev/null 2>&1
+    head -1500 vel.sol.dat > vel.sol.head.dat	# first few layers only
+    cd ..
+    check cmb_kludge       geoid.ab     kludge.geoid.ab
+    check cmb_kludge_ascii vel.sol.head.dat  kludge.vel.sol.dat
+fi
 #
 # 8) viscosity scan, two layers, coarse
 #
 cd $tmp; rm -f *
 $scan -gref $here/../geoid_ref.ab -dens $data/smean.31.m.ab -dshs -prem $prem \
-      -vs_n 2 -vs_dv 1 -vs_em 1 > scan.dat 2> /dev/null
+      -vs_n 2 -vs_dv 1 -vs_em 1 $extra > scan.dat 2> /dev/null
 cd ..
 check visc_scan        scan.dat     scan.dat
 #
@@ -153,12 +160,29 @@ check visc_scan        scan.dat     scan.dat
 #    needed)
 #
 cd $tmp; rm -f *
-gawk '{print($0);if(NR==3)print($1+0.01,$2)}' $data/visc.sh08 > visc.split
+$awk '{print($0);if(NR==3)print($1+0.01,$2)}' $data/visc.sh08 > visc.split
 $hc $common -fs > /dev/null 2>&1
 mv geoid.ab geoid.orig.ab
-$hc -dens $data/smean.31.m.ab -dshs -vf visc.split -prem $prem -fs > /dev/null 2>&1
+$hc -dens $data/smean.31.m.ab -dshs -vf visc.split -prem $prem -fs $extra > /dev/null 2>&1
 printf "%-28s %-14s " visc_layer_split geoid.ab
 if ! $awkcmp geoid.orig.ab geoid.ab;then
+    ((nfail=nfail+1))
+fi
+((ntest=ntest+1))
+cd ..
+#
+# 10) same for a synthetic lmax = 127 density model with the
+#     multiple shooting solver, which has to be stable at high degrees
+#     (the propagator solver gives order unity differences here)
+#
+cd $tmp; rm -f *
+$awk '{print($0);if(NR==3)print($1+0.01,$2)}' $data/visc.sh08 > visc.split
+$awk -v L=127 -f $here/gen_synth_dens.awk > dens.ab
+$hc -dens dens.ab -dshs -vf $data/visc.sh08 -prem $prem -fs -solver 1 > /dev/null 2>&1
+mv geoid.ab geoid.orig.ab
+$hc -dens dens.ab -dshs -vf visc.split -prem $prem -fs -solver 1 > /dev/null 2>&1
+printf "%-28s %-14s " ms_layer_split_l127 geoid.ab
+if ! $awk -f $here/cmp_ab.awk -v tol=1e-8 geoid.orig.ab geoid.ab;then
     ((nfail=nfail+1))
 fi
 ((ntest=ntest+1))

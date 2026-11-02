@@ -108,3 +108,124 @@ void hc_lubksb_3x3(HC_PREC a[3][3],int n,int *indx,HC_PREC *b)
     b[i] = sum / a[i][i];
   }
 }
+
+/*
+
+banded LU factorization with partial pivoting and the corresponding
+solve, for the multiple shooting poloidal solver (hc_polsol_ms.c)
+
+storage follows the LAPACK general band convention: the matrix A
+(n x n) with kl sub- and ku super-diagonals is kept in ab with
+leading dimension ldab = 2*kl+ku+1, column major, with
+
+   A(i,j) at ab[(kl+ku+i-j) + j*ldab]
+
+the extra kl rows at the top of ab hold the fill-in from pivoting,
+and have to be zero on input (HC_BAND_INDEX gives the storage
+location). ipiv[n] returns the row interchanges. return value is 0
+on success, j+1 if the pivot in column j is zero.
+
+*/
+int hc_band_lu_factor(int n,int kl,int ku,HC_PREC *ab,int *ipiv)
+{
+  int j,i,c,km,jp,cmax,ldab;
+  HC_PREC big,tmp,fac;
+
+  ldab = 2*kl+ku+1;
+  for(j=0;j < n;j++){
+    km = kl;
+    if(km > n-1-j){
+      km = n-1-j;
+    }
+    /*
+       pivot search in column j, rows j...j+km
+    */
+    jp = j;
+    big = fabs(ab[HC_BAND_INDEX(j,j,kl,ku,ldab)]);
+    for(i=j+1;i <= j+km;i++){
+      tmp = fabs(ab[HC_BAND_INDEX(i,j,kl,ku,ldab)]);
+      if(tmp > big){
+	big = tmp;
+	jp = i;
+      }
+    }
+    ipiv[j] = jp;
+    if(big == 0.0){
+      return j+1;
+    }
+    /*
+       the row interchange affects columns j...j+kl+ku
+    */
+    cmax = j+kl+ku;
+    if(cmax > n-1){
+      cmax = n-1;
+    }
+    if(jp != j){
+      for(c=j;c <= cmax;c++){
+	tmp = ab[HC_BAND_INDEX(j,c,kl,ku,ldab)];
+	ab[HC_BAND_INDEX(j,c,kl,ku,ldab)]  = ab[HC_BAND_INDEX(jp,c,kl,ku,ldab)];
+	ab[HC_BAND_INDEX(jp,c,kl,ku,ldab)] = tmp;
+      }
+    }
+    /*
+       multipliers
+    */
+    fac = 1.0/ab[HC_BAND_INDEX(j,j,kl,ku,ldab)];
+    for(i=j+1;i <= j+km;i++){
+      ab[HC_BAND_INDEX(i,j,kl,ku,ldab)] *= fac;
+    }
+    /*
+       rank one update of the trailing band
+    */
+    for(c=j+1;c <= cmax;c++){
+      tmp = ab[HC_BAND_INDEX(j,c,kl,ku,ldab)];
+      if(tmp != 0.0){
+	for(i=j+1;i <= j+km;i++){
+	  ab[HC_BAND_INDEX(i,c,kl,ku,ldab)] -= ab[HC_BAND_INDEX(i,j,kl,ku,ldab)] * tmp;
+	}
+      }
+    }
+  }
+  return 0;
+}
+/*
+   solve A x = b given the factorization from hc_band_lu_factor, b is
+   overwritten with x
+*/
+void hc_band_lu_solve(int n,int kl,int ku,HC_PREC *ab,int *ipiv,HC_PREC *b)
+{
+  int j,i,km,imin,ldab;
+  HC_PREC tmp;
+
+  ldab = 2*kl+ku+1;
+  /*
+     forward: apply interchanges and L
+  */
+  for(j=0;j < n;j++){
+    if(ipiv[j] != j){
+      tmp = b[j];
+      b[j] = b[ipiv[j]];
+      b[ipiv[j]] = tmp;
+    }
+    km = kl;
+    if(km > n-1-j){
+      km = n-1-j;
+    }
+    for(i=j+1;i <= j+km;i++){
+      b[i] -= ab[HC_BAND_INDEX(i,j,kl,ku,ldab)] * b[j];
+    }
+  }
+  /*
+     backward: U, which has kl+ku super diagonals after pivoting
+  */
+  for(j=n-1;j >= 0;j--){
+    b[j] /= ab[HC_BAND_INDEX(j,j,kl,ku,ldab)];
+    imin = j-kl-ku;
+    if(imin < 0){
+      imin = 0;
+    }
+    for(i=imin;i < j;i++){
+      b[i] -= ab[HC_BAND_INDEX(i,j,kl,ku,ldab)] * b[j];
+    }
+  }
+}

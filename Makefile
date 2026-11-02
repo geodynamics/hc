@@ -97,7 +97,7 @@ O_SOURCES = gaussp.c  print_gauss_lat.c rotvec2vel.c sh_corr.c simple_test.c  \
 # C sources of subroutines (not main)
 #
 HC_SOURCES = sh_exp.c sh_model.c hc_init.c hc_solve.c hc_propagator.c \
-	hc_polsol.c hc_matrix.c hc_torsol.c hc_output.c hc_input.c \
+	hc_polsol.c hc_polsol_ms.c hc_matrix.c hc_torsol.c hc_output.c hc_input.c \
 	hc_misc.c hc_extract_sh_layer.c  hc_extract_spatial.c hc_visc_scan.c
 
 # all C sources without ggrd
@@ -107,12 +107,12 @@ C_SOURCES = $(HC_SOURCES) $(RICK_SRCS) $(O_SOURCES)
 # objects for HC library
 #
 HC_OBJS = $(ODIR)/sh_exp.o $(ODIR)/sh_model.o $(ODIR)/hc_input.o \
-	$(ODIR)/hc_polsol.o $(ODIR)/hc_matrix.o $(ODIR)/hc_torsol.o \
+	$(ODIR)/hc_polsol.o $(ODIR)/hc_polsol_ms.o $(ODIR)/hc_matrix.o $(ODIR)/hc_torsol.o \
 	$(ODIR)/hc_misc.o $(ODIR)/hc_init.o $(ODIR)/hc_propagator.o \
 	$(ODIR)/hc_output.o $(ODIR)/hc_solve.o 
 
 HC_OBJS_DBG = $(ODIR)/sh_exp.dbg.o $(ODIR)/sh_model.dbg.o $(ODIR)/hc_input.dbg.o \
-	$(ODIR)/hc_polsol.dbg.o $(ODIR)/hc_matrix.dbg.o $(ODIR)/hc_torsol.dbg.o \
+	$(ODIR)/hc_polsol.dbg.o $(ODIR)/hc_polsol_ms.dbg.o $(ODIR)/hc_matrix.dbg.o $(ODIR)/hc_torsol.dbg.o \
 	$(ODIR)/hc_misc.dbg.o $(ODIR)/hc_init.dbg.o $(ODIR)/hc_propagator.dbg.o \
 	$(ODIR)/hc_output.dbg.o $(ODIR)/hc_solve.dbg.o 
 
@@ -297,6 +297,7 @@ clean:
 
 test: all_no_gmt
 	cd test; ./run_test.sh ../bin
+	cd test; ./run_test.sh ../bin compare 1e-6 "-solver 1"
 
 test_asan: all_no_gmt
 	cd test; ./run_asan.sh

@@ -63,6 +63,8 @@ void hc_init_parameters(struct hc_parameters *p)
   p->visc_init_mode = HC_INIT_E_FROM_FILE; /* by default, read viscosity from file */
   
   p->solver_kludge_l = INT_MAX;	/* default: no solver tricks */
+  p->polsol_method = HC_POLSOL_DEFAULT; /* poloidal solver */
+  p->ms_max_growth = HC_MS_MAX_GROWTH_DEFAULT;
 
   p->remove_nr = FALSE;		/* by default, leave NR in for plate motion models */
   /* 
@@ -263,6 +265,19 @@ void hc_init_main (hc, sh_type, p)
 		      (p->solver_mode == HC_SOLVER_MODE_VISC_SCAN)?(TRUE):(FALSE));
   }else{
     HC_ERROR("hc_init","boundary condition logic error");
+  }
+  /* poloidal solver selection */
+  hc->polsol_method = p->polsol_method;
+  hc->ms.init = FALSE;
+  hc->ms.nalloc = 0;
+  hc->ms.lmax = -1;
+  hc->ms.max_growth = p->ms_max_growth;
+  if(p->verbose){
+    if(hc->polsol_method == HC_POLSOL_MS)
+      fprintf(stderr,"hc_init_main: using multiple shooting poloidal solver, max growth %g\n",
+	      (double)hc->ms.max_growth);
+    else
+      fprintf(stderr,"hc_init_main: using propagator matrix poloidal solver\n");
   }
   /* solver tricks */
   hc->psp.solver_kludge_l = p->solver_kludge_l;
@@ -509,6 +524,10 @@ hc_handle_command_line (argc, argv, start_from_i, p)
 	      (double)p->pvel_time);
 
       fprintf(stderr,"solution procedure and I/O options:\n");
+      fprintf(stderr,"-solver\tval\tpoloidal solver: %i: propagator matrix, %i: multiple shooting (stable for high l) (%i)\n",
+	      HC_POLSOL_PROPAGATOR,HC_POLSOL_MS,p->polsol_method);
+      fprintf(stderr,"-msg\tval\tmultiple shooting: max growth factor (r2/r1)^(2l+3) per interval (%g)\n",
+	      (double)p->ms_max_growth);
       fprintf(stderr,"-cbckl\tval\twill modify CMB boundary condition for all l > val with solver kludge (%i)\n",
 	      p->solver_kludge_l);
       if(p->solver_mode == HC_SOLVER_MODE_DEFAULT){
@@ -571,6 +590,18 @@ hc_handle_command_line (argc, argv, start_from_i, p)
       hc_advance_argument(&i,argc,argv);
       sscanf(argv[i],HC_FLT_FORMAT,&tmp);
       p->rlayer[1] = HC_ND_RADIUS(tmp);
+      used_parameter = TRUE;
+    }else if(strcmp(argv[i],"-solver")==0){	/* poloidal solver method */
+      hc_advance_argument(&i,argc,argv);
+      sscanf(argv[i],"%i",&p->polsol_method);
+      if((p->polsol_method != HC_POLSOL_PROPAGATOR) && (p->polsol_method != HC_POLSOL_MS)){
+	fprintf(stderr,"%s: error: poloidal solver method %i undefined\n",argv[0],p->polsol_method);
+	exit(-1);
+      }
+      used_parameter = TRUE;
+    }else if(strcmp(argv[i],"-msg")==0){	/* multiple shooting refinement */
+      hc_advance_argument(&i,argc,argv);
+      sscanf(argv[i],HC_FLT_FORMAT,&p->ms_max_growth);
       used_parameter = TRUE;
     }else if(strcmp(argv[i],"-cbckl")==0){	/* solver kludge */
       hc_advance_argument(&i,argc,argv);
@@ -1501,6 +1532,7 @@ struct hcs **hc;
   free((*hc)->visc);
   free((*hc)->rvisc);
   free((*hc)->qwrite);
+  hc_ms_free(&((*hc)->ms));
 
   sh_free_expansion((*hc)->dens_anom,1);
   

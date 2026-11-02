@@ -80,6 +80,14 @@ void hc_evppot(int, double, double *);
 void hc_polsol(struct hcs *, int, double *, int, double *, unsigned short, struct sh_lms *, unsigned short, int, double *, double *, unsigned short, struct sh_lms *, struct sh_lms *, unsigned short, struct sh_lms *, unsigned short, unsigned short, unsigned short);
 /* hc_matrix.c */
 void hc_ludcmp_3x3(double [3][3], int, int *);
+int hc_band_lu_factor(int, int, int, double *, int *);
+void hc_band_lu_solve(int, int, int, double *, int *, double *);
+/* hc_polsol_ms.c */
+void hc_ms_init_levels(struct hcs *, int, int, double *, unsigned short);
+int hc_ms_nsub(double, double, int, double);
+void hc_ms_free(struct hc_ms *);
+void hc_ms_factor(struct hcs *, int, unsigned short);
+void hc_ms_solve(struct hcs *, int, double *, double, unsigned short, int, double *, double *, double *);
 void hc_lubksb_3x3(double [3][3], int, int *, double *);
 /* hc_torsol.c */
 void hc_torsol(struct hcs *, int, int, int, double *, double **, double **, struct sh_lms *, struct sh_lms *, double *, unsigned short);
