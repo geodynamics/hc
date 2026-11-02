@@ -254,8 +254,8 @@ $(BDIR)/grdinttester: $(GGRD_INCS) $(LIBS) $(GGRD_LIBS) $(INCS) grdinttester.c
 	$(CC) $(LIB_FLAGS) grdinttester.c $(GGRD_DEFINES) -o $(BDIR)/grdinttester \
 		$(GGRD_LIBS_LINKLINE) -lhc -lrick -lm $(LDFLAGS) 
 
-$(BDIR)/grdgrd2correlation: $(GGRD_INCS) $(LIBS) $(GGRD_LIBS) $(INCS) grdgrd2correlation.c fitxyee_util.c
-	$(CC) $(LIB_FLAGS) grdgrd2correlation.c   $(INC_FLAGS) fitxyee_util.c $(GGRD_DEFINES) -o $(BDIR)/grdgrd2correlation \
+$(BDIR)/grdgrd2correlation: $(GGRD_INCS) $(LIBS) $(GGRD_LIBS) $(INCS) grdgrd2correlation.c fitxyee_util.c correl_nr_util.c
+	$(CC) $(LIB_FLAGS) grdgrd2correlation.c    correl_nr_util.c $(INC_FLAGS) fitxyee_util.c $(GGRD_DEFINES) -o $(BDIR)/grdgrd2correlation \
 		$(GGRD_LIBS_LINKLINE) -lhc -lrick -lm $(LDFLAGS) 
 
 $(BDIR)/hc_extract_sh_layer: $(LIBS) $(INCS) $(PREM_OBJS)  $(ODIR)/hc_extract_sh_layer.o
