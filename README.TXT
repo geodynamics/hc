@@ -20,7 +20,26 @@ This code is based on Fortran routine by Brad Hager, Richard
 O'Connell, and most recently Bernhard Steinberger, who made several
 modifications. This version is by Thorsten Becker with contributions
 to the plate velocity inversion tool by Craig O'Neill (the latter
-remains incomplete).
+remains incomplete). The multiple shooting poloidal solver
+(src/hc_polsol_ms.c), the banded LU routines, the regression test
+suite (test/) and a number of fixes were written by Claude
+(Anthropic) in collaboration with Thorsten Becker in November 2026.
+
+DIRECTORY LAYOUT
+
+src/            C sources and headers for hc and the related tools
+test/           regression tests, see "make test" below
+example_data/   example density, viscosity and plate velocity files
+prem/           PREM model files
+tomography/     a collection of tomographic models in the hc short
+                format
+viscosity/      viscosity profiles
+hcplates/       plate velocity inversion (incomplete, separate Makefile)
+anisotropic_viscosity/  anisotropic viscosity experiments
+docker/         Dockerfile for a container with a built version
+bin/, objects/  created by make
+other files in the top directory are helper scripts and example
+output
 
 HOW TO CITE
 
@@ -237,7 +256,7 @@ boundary condition options:
 -vtime	time	use this particular time step of the plate velocities (-1)
 
 solution procedure and I/O options:
--solver	val	poloidal solver: 0: propagator matrix, 1: multiple shooting (stable for high l) (0)
+-solver	val	poloidal solver: 0: original propagator matrix (inaccurate for l > ~50), 1: multiple shooting (stable for high l) (1)
 -msg	val	multiple shooting: max growth factor (r2/r1)^(2l+3) per interval (10000)
 -cbckl	val	will modify CMB boundary condition for all l > val with solver kludge (2147483647)
 -ng		do not compute and print the geoid (1)
@@ -266,15 +285,17 @@ hc_visc_scan	Illustrates how to do a parameter space scan for
 
 KNOWN LIMITATIONS
 
-The default, propagator matrix solution of the poloidal problem
-(hc_polsol.c) becomes inaccurate for moderately high maximum degrees
-(roughly L > 50 in double precision, depending on the viscosity
-structure; at L = 127, degrees above about 80 are wrong by order
-unity). The CMB boundary condition can be modified for high degrees
-with a kludge following Steinberger & Torsvik (2012), see -cbckl.
+The original, propagator matrix solution of the poloidal problem
+(src/hc_polsol.c, -solver 0) becomes inaccurate for moderately high
+maximum degrees (roughly L > 50 in double precision, depending on
+the viscosity structure; at L = 127, degrees above about 80 are
+wrong by order unity). The CMB boundary condition can be modified
+for high degrees with a kludge following Steinberger & Torsvik
+(2012), see -cbckl, which only applies to this solver.
 
-Alternatively, use the multiple shooting solver, -solver 1
-(hc_polsol_ms.c). It uses the same propagators, sources, and boundary
+Since November 2026, the default is a multiple shooting solver,
+-solver 1 (src/hc_polsol_ms.c, written by Claude/Anthropic with
+T. Becker). It uses the same propagators, sources, and boundary
 conditions, but solves for the state vectors at all levels at once
 in a banded linear system, which stays accurate for arbitrary L in
 double precision. It agrees with the propagator solution to about
@@ -282,18 +303,21 @@ double precision. It agrees with the propagator solution to about
 and has been tested up to L = 255. The levels are subdivided such
 that the propagator growth per interval, (r2/r1)^(2L+3), stays below
 the -msg value (1e4 by default; results do not depend on this
-setting in practice). The -cbckl kludge is ignored by this solver. It
-is somewhat slower (about one second for L = 255 with 26 layers) and
-is intended to become the default after further testing. Earlier
-versions offered a long double ("quad precision") compile option;
-this was removed since it did not compile with the generated
-prototypes and only addressed part of the problem.
+setting in practice). The cost is about one second for L = 255 with
+26 layers. The header of src/hc_polsol_ms.c explains the method and
+the reasons for the instability of the propagator approach in more
+detail. Earlier versions offered a long double ("quad precision")
+compile option; this was removed since it did not compile with the
+generated prototypes and only addressed part of the problem.
 
 TESTS
 
 make test        runs the regression tests in test/ (uses example_data/),
-                 for both the propagator matrix and the multiple shooting
-                 solver
+                 for both the propagator matrix (-solver 0) and the
+                 multiple shooting (-solver 1) solver against reference
+                 output computed with the propagator solver at lmax = 31,
+                 and checks the stability of the multiple shooting solver
+                 at lmax = 127
 make test_asan   rebuilds with address/undefined behavior sanitizers
                  and runs the tests with those binaries
 

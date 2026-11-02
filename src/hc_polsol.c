@@ -10,7 +10,21 @@ this routine computes the y_i i=1,...,6 solutions for each layer and
 incorporates the poloidal part of the plate motions, which are passed
 as pvel_pol
 
+two solution methods are available, selected by hc->polsol_method:
 
+HC_POLSOL_PROPAGATOR: the original propagator matrix method, which
+  integrates three homogeneous and one inhomogeneous solution from
+  the CMB to the surface and solves a 3 x 3 system for the surface
+  boundary conditions. this becomes inaccurate for l > ~50 in double
+  precision, see hc_polsol_ms.c for why.
+
+HC_POLSOL_MS (default): multiple shooting, the state vectors at all
+  levels are solved for at once in one banded linear system, see
+  hc_polsol_ms.c. this routine still does all the setup (level
+  structure, density factors, scaling constants), and the per (l,m)
+  loop branches to hc_ms_solve. the output is written to pol_sol in
+  the same way for both methods. (Claude/Anthropic with T. Becker,
+  11/2026)
 
 */
 void hc_polsol(struct hcs *hc, 	/* 
@@ -510,8 +524,13 @@ void hc_polsol(struct hcs *hc, 	/*
   hc->rprops[hc->nprops+1] = 1.0;
 
   /*
-     multiple shooting solver: refined level structure, depends on
-     the levels and lmax
+     multiple shooting solver (hc_polsol_ms.c): set up the refined
+     level structure from the coarse levels above. this has to be
+     redone when the density layers or the viscosity structure
+     changed (e.g. during hc_visc_scan), or when lmax changed, since
+     the subdivision of the intervals depends on lmax. the refined
+     levels are only used by the multiple shooting solver, the
+     propagator solver below is untouched.
   */
   use_ms = (hc->polsol_method == HC_POLSOL_MS)?(TRUE):(FALSE);
   if(use_ms){
@@ -574,7 +593,11 @@ void hc_polsol(struct hcs *hc, 	/*
 
     if(use_ms){
       /*
-	 assemble and factor the multiple shooting system for this l
+	 assemble and factor the multiple shooting system for this l,
+	 this computes the propagators for all refined intervals and
+	 replaces the propagator setup for the original solver below.
+	 the factorization is reused for all m and A/B coefficients
+	 of this degree in hc_ms_solve.
       */
       hc_ms_factor(hc,l,free_slip);
     }
@@ -641,7 +664,15 @@ void hc_polsol(struct hcs *hc, 	/*
 	  /*
 
 	     MULTIPLE SHOOTING SOLVER, see hc_polsol_ms.c: solve for
-	     all levels at once and write the output layers
+	     all levels at once and write the output layers. b[] holds
+	     the density anomaly coefficients for this (l,m,A/B), as
+	     for the propagator solver, and clm the poloidal plate
+	     velocity coefficient for the no slip or plate velocity
+	     case. ms_sol receives the six solution components for
+	     each of the nradp2 output layers, with the surface
+	     potential term already corrected for the surface gravity
+	     jump, so that it can be written to pol_sol exactly like
+	     the u3 vectors of the propagator solver.
 
 	  */
 	  if(!free_slip)
@@ -659,6 +690,12 @@ void hc_polsol(struct hcs *hc, 	/*
 	/*
 
 	   PROPAGATOR MATRIX SOLVER (original)
+
+	   the code in this branch is unchanged from the version before
+	   the multiple shooting solver was added, apart from the
+	   indentation of this comment. it integrates ibv = 0...3
+	   solutions upward and solves for the surface conditions at the
+	   end.
 
 	*/
 	//    

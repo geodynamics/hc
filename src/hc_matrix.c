@@ -114,6 +114,14 @@ void hc_lubksb_3x3(HC_PREC a[3][3],int n,int *indx,HC_PREC *b)
 banded LU factorization with partial pivoting and the corresponding
 solve, for the multiple shooting poloidal solver (hc_polsol_ms.c)
 
+Claude (Anthropic) with Thorsten Becker, November 2026
+
+the algorithm is the unblocked LAPACK dgbtf2/dgbtrs procedure
+(column by column: pivot search within the kl subdiagonals, row
+interchange over the kl+ku columns the pivot row can touch, scaling
+of the multipliers, rank one update of the trailing band), written
+from the textbook description.
+
 storage follows the LAPACK general band convention: the matrix A
 (n x n) with kl sub- and ku super-diagonals is kept in ab with
 leading dimension ldab = 2*kl+ku+1, column major, with

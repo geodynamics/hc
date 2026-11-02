@@ -9,8 +9,14 @@
 #           create: (re)write the reference output
 #   tol:    relative tolerance for the comparison (1e-6)
 #   extra:  additional options passed to hc and hc_visc_scan for all
-#           runs, e.g. "-solver 1" to test the multiple shooting
-#           solver against the propagator matrix references ("")
+#           runs ("")
+#
+# the reference output was generated with the original propagator
+# matrix solver (-solver 0) at lmax = 31, where it is accurate. "make
+# test" runs the suite with "-solver 0" and with "-solver 1" (the
+# multiple shooting solver, default since 11/2026), the two agree to
+# ~1e-9 relative. the -cbckl kludge test is only run for -solver 0,
+# since the multiple shooting solver ignores -cbckl.
 #
 bindir=${1-../bin}
 mode=${2-compare}
@@ -138,7 +144,7 @@ check kernels          geoidk.dat   kernel.geoidk.dat
 # 7) CMB solver kludge (only applies to the propagator matrix solver,
 #    the multiple shooting solver ignores -cbckl)
 #
-if [ "`echo $extra | grep -c 'solver 1'`" -eq 0 ];then
+if [ "`echo $extra | grep -c 'solver 0'`" -eq 1 ];then
     cd $tmp; rm -f *
     $hc $common -fs -cbckl 15 -ascii > /dev/null 2>&1
     head -1500 vel.sol.dat > vel.sol.head.dat	# first few layers only

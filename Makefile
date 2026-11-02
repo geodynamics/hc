@@ -30,6 +30,13 @@ ODIR = $(prefix)objects$(suffix)
 BDIR = $(prefix)bin$(suffix)
 
 # include files
+#
+# all C sources and headers are in $(SDIR), make finds them through
+# VPATH, so the rules below can keep referring to the plain file names
+#
+SDIR = src
+VPATH = $(SDIR)
+#
 OINCS = hc.h hc_filenames.h sh.h hc_constants.h
 #
 # Healpix stuff, comment out all if not wanted
@@ -58,7 +65,7 @@ RICK_DEFINES =  -DNO_RICK_FORTRAN
 
 RICK_OBJS = $(ODIR)/rick_sh_c.o $(ODIR)/rick_fft_c.o
 RICK_OBJS_DBG = $(ODIR)/rick_sh_c.dbg.o $(ODIR)/rick_fft_c.dbg.o
-RICK_INC_FLAGS = -I. 
+RICK_INC_FLAGS = -I$(SDIR)
 RICK_INCS =  sh_rick_ftrn.h  sh_rick.h
 RICK_LIB = $(ODIR)/librick.a $(ODIR)/librick.dbg.a
 
@@ -209,21 +216,21 @@ $(BDIR)/sh_extract_layer: $(LIBS) $(INCS) $(PREM_OBJS) $(ODIR)/sh_extract_layer.
 	-lhc -lrick $(HEAL_LIBS_LINKLINE)  -lm $(LDFLAGS)
 
 $(BDIR)/print_gauss_lat: print_gauss_lat.c $(PREM_OBJS) 
-	$(CC) $(CFLAGS) $(PREM_OBJS) print_gauss_lat.c -o $(BDIR)/print_gauss_lat -lm $(INC_FLAGS) \
+	$(CC) $(CFLAGS) $(PREM_OBJS) $(SDIR)/print_gauss_lat.c -o $(BDIR)/print_gauss_lat -lm $(INC_FLAGS) \
 	$(LIB_FLAGS)   -lrick -lhc $(LDFLAGS) -lm
 
 $(BDIR)/convert_bernhard_dens: convert_bernhard_dens.c
-	$(CC) $(CFLAGS) convert_bernhard_dens.c $(PREM_OBJS) -o $(BDIR)/convert_bernhard_dens -lm $(INC_FLAGS) \
+	$(CC) $(CFLAGS) $(SDIR)/convert_bernhard_dens.c $(PREM_OBJS) -o $(BDIR)/convert_bernhard_dens -lm $(INC_FLAGS) \
 	$(LIB_FLAGS)   -lrick -lhc $(LDFLAGS)
 
 $(BDIR)/rotvec2vel: rotvec2vel.c $(PREM_OBJS) 
-	$(CC) $(CFLAGS) rotvec2vel.c $(PREM_OBJS)  -o $(BDIR)/rotvec2vel  -lm $(LDFLAGS)
+	$(CC) $(CFLAGS) $(SDIR)/rotvec2vel.c $(PREM_OBJS)  -o $(BDIR)/rotvec2vel  -lm $(LDFLAGS)
 
 $(BDIR)/prem2dsm: prem2dsm.c $(PREM_OBJS)
-	$(CC) $(PREM_DEFINES) prem2dsm.c $(PREM_OBJS) -o $(BDIR)/prem2dsm -lm  $(LDFLAGS) 
+	$(CC) $(PREM_DEFINES) $(SDIR)/prem2dsm.c $(PREM_OBJS) -o $(BDIR)/prem2dsm -lm  $(LDFLAGS)
 
 $(BDIR)/prem2r: prem2r.c $(PREM_OBJS)
-	$(CC)  $(PREM_DEFINES) prem2r.c $(PREM_OBJS) -o $(BDIR)/prem2r -lm $(LDFLAGS) 
+	$(CC)  $(PREM_DEFINES) $(SDIR)/prem2r.c $(PREM_OBJS) -o $(BDIR)/prem2r -lm $(LDFLAGS)
 
 
 $(BDIR)/hc: $(LIBS) $(INCS) $(ODIR)/hc.o $(PREM_OBJS)
@@ -251,15 +258,15 @@ $(BDIR)/test_fft: $(LIBS) $(INCS) $(ODIR)/test_fft.o
 		-lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS) 
 
 $(BDIR)/ggrd_test: $(LIBS) $(GGRD_LIBS) $(GGRD_INCS) $(INCS) ggrd_test.c
-	$(CC) $(LIB_FLAGS) ggrd_test.c -o $(BDIR)/ggrd_test $(GGRD_DEFINES) \
+	$(CC) $(LIB_FLAGS) $(SDIR)/ggrd_test.c -o $(BDIR)/ggrd_test $(GGRD_DEFINES) \
 		$(GGRD_LIBS_LINKLINE) -lhc -lrick -lm $(LDFLAGS) 
 
 $(BDIR)/grdinttester: $(GGRD_INCS) $(LIBS) $(GGRD_LIBS) $(INCS) grdinttester.c
-	$(CC) $(LIB_FLAGS) grdinttester.c $(GGRD_DEFINES) -o $(BDIR)/grdinttester \
+	$(CC) $(LIB_FLAGS) $(SDIR)/grdinttester.c $(GGRD_DEFINES) -o $(BDIR)/grdinttester \
 		$(GGRD_LIBS_LINKLINE) -lhc -lrick -lm $(LDFLAGS) 
 
 $(BDIR)/grdgrd2correlation: $(GGRD_INCS) $(LIBS) $(GGRD_LIBS) $(INCS) grdgrd2correlation.c fitxyee_util.c correl_nr_util.c
-	$(CC) $(LIB_FLAGS) grdgrd2correlation.c    correl_nr_util.c $(INC_FLAGS) fitxyee_util.c $(GGRD_DEFINES) -o $(BDIR)/grdgrd2correlation \
+	$(CC) $(LIB_FLAGS) $(SDIR)/grdgrd2correlation.c    $(SDIR)/correl_nr_util.c $(INC_FLAGS) $(SDIR)/fitxyee_util.c $(GGRD_DEFINES) -o $(BDIR)/grdgrd2correlation \
 		$(GGRD_LIBS_LINKLINE) -lhc -lrick -lm $(LDFLAGS) 
 
 $(BDIR)/hc_extract_sh_layer: $(LIBS) $(INCS) $(PREM_OBJS)  $(ODIR)/hc_extract_sh_layer.o
@@ -278,11 +285,11 @@ $(BDIR)/hc_extract_spatial: $(LIBS) $(INCS) $(PREM_OBJS)  $(ODIR)/hc_extract_spa
 # those are handled in other header
 #
 hc_auto_proto.h: 
-	cproto  $(INC_FLAGS) $(DEFINES) -DGENERATE_PROTO  -f 2 -p $(C_SOURCES)  | \
+	cd $(SDIR); cproto  $(INC_FLAGS) $(DEFINES) -DGENERATE_PROTO  -f 2 -p $(C_SOURCES)  | \
 		grep -v "void main("  | grep -v "int main(" > hc_auto_proto.h
 
 hc_ggrd_auto_proto.h: 
-	cproto  $(INC_FLAGS) $(GGRD_DEFINES) $(DEFINES) -DGENERATE_PROTO  -f 2 -p $(GGRD_SRCS)  | \
+	cd $(SDIR); cproto  $(INC_FLAGS) $(GGRD_DEFINES) $(DEFINES) -DGENERATE_PROTO  -f 2 -p $(GGRD_SRCS)  | \
 		grep -v "void main(" | grep -v "int main("   > hc_ggrd_auto_proto.h
 
 
@@ -296,7 +303,7 @@ clean:
 	rm -f $(ODIR)/*.o  $(ODIR)/*.a $(BDIR)/*
 
 test: all_no_gmt
-	cd test; ./run_test.sh ../bin
+	cd test; ./run_test.sh ../bin compare 1e-6 "-solver 0"
 	cd test; ./run_test.sh ../bin compare 1e-6 "-solver 1"
 
 test_asan: all_no_gmt
@@ -304,7 +311,7 @@ test_asan: all_no_gmt
 
 
 super_clean:
-	rm -f hc_auto_proto.h hc_ggrd_auto_proto.h $(ODIR)/*.o  $(ODIR)/*.a $(BDIR)/*	
+	rm -f $(SDIR)/hc_auto_proto.h $(SDIR)/hc_ggrd_auto_proto.h $(ODIR)/*.o  $(ODIR)/*.a $(BDIR)/*
 #
 # library
 #
@@ -345,52 +352,52 @@ $(ODIR)/libggrd.dbg.a: $(GGRD_OBJS_DBG)
 # object rules
 #
 $(ODIR)/hc_init.o: hc_init.c  $(INCS) $(PREM_INC)
-	$(CC) $(CFLAGS) $(INC_FLAGS) $(DEFINES) $(PREM_DEFINES) -c hc_init.c -o $(ODIR)/hc_init.o
+	$(CC) $(CFLAGS) $(INC_FLAGS) $(DEFINES) $(PREM_DEFINES) -c $(SDIR)/hc_init.c -o $(ODIR)/hc_init.o
 
 $(ODIR)/hc_init.dbg.o: hc_init.c  $(INCS) $(PREM_INC)
 	$(CC) $(CFLAGS_DEBUG) $(INC_FLAGS) \
-	$(DEFINES) $(PREM_DEFINES) -c hc_init.c -o $(ODIR)/hc_init.dbg.o
+	$(DEFINES) $(PREM_DEFINES) -c $(SDIR)/hc_init.c -o $(ODIR)/hc_init.dbg.o
 
 #
 # ggrd/GMT stuff
 #
 $(ODIR)/ggrd_velinterpol.o: ggrd_velinterpol.c  $(INCS) $(GGRD_INCS)
 	$(CC) $(CFLAGS) $(INC_FLAGS) $(DEFINES) $(GGRD_DEFINES) \
-	-c ggrd_velinterpol.c -o $(ODIR)/ggrd_velinterpol.o
+	-c $(SDIR)/ggrd_velinterpol.c -o $(ODIR)/ggrd_velinterpol.o
 $(ODIR)/ggrd_readgrds.o: ggrd_readgrds.c  $(INCS) $(GGRD_INCS)
 	$(CC) $(CFLAGS) $(INC_FLAGS) $(DEFINES) $(GGRD_DEFINES) \
-	-c ggrd_readgrds.c -o $(ODIR)/ggrd_readgrds.o
+	-c $(SDIR)/ggrd_readgrds.c -o $(ODIR)/ggrd_readgrds.o
 $(ODIR)/ggrd_grdtrack_util.o: ggrd_grdtrack_util.c  $(INCS) $(GGRD_INCS)
 	$(CC) $(CFLAGS) $(INC_FLAGS) $(DEFINES) $(GGRD_DEFINES) \
-	-c ggrd_grdtrack_util.c -o $(ODIR)/ggrd_grdtrack_util.o
+	-c $(SDIR)/ggrd_grdtrack_util.c -o $(ODIR)/ggrd_grdtrack_util.o
 $(ODIR)/sh_exp_ggrd.o: sh_exp_ggrd.c  $(INCS) $(GGRD_INCS)
 	$(CC) $(CFLAGS) $(INC_FLAGS) $(DEFINES) $(GGRD_DEFINES) \
-	-c sh_exp_ggrd.c -o $(ODIR)/sh_exp_ggrd.o
+	-c $(SDIR)/sh_exp_ggrd.c -o $(ODIR)/sh_exp_ggrd.o
 $(ODIR)/sh_ana.o: sh_ana.c  $(INCS) $(GGRD_INCS)
 	$(CC) $(CFLAGS) $(INC_FLAGS) $(DEFINES) $(GGRD_DEFINES) \
-	-c sh_ana.c -o $(ODIR)/sh_ana.o
+	-c $(SDIR)/sh_ana.c -o $(ODIR)/sh_ana.o
 $(ODIR)/sh_syn.o: sh_syn.c  $(INCS) $(GGRD_INCS)
 	$(CC) $(CFLAGS) $(INC_FLAGS) $(DEFINES) $(GGRD_DEFINES)  \
-	-c sh_syn.c -o $(ODIR)/sh_syn.o
+	-c $(SDIR)/sh_syn.c -o $(ODIR)/sh_syn.o
 # debug version
 $(ODIR)/ggrd_velinterpol.dbg.o: ggrd_velinterpol.c  $(INCS) $(GGRD_INCS)
 	$(CC) $(CFLAGS_DEBUG) $(INC_FLAGS) $(DEFINES) $(GGRD_DEFINES) \
-	-c ggrd_velinterpol.c -o $(ODIR)/ggrd_velinterpol.dbg.o
+	-c $(SDIR)/ggrd_velinterpol.c -o $(ODIR)/ggrd_velinterpol.dbg.o
 $(ODIR)/ggrd_readgrds.dbg.o: ggrd_readgrds.c  $(INCS) $(GGRD_INCS)
 	$(CC) $(CFLAGS_DEBUG) $(INC_FLAGS) $(DEFINES) $(GGRD_DEFINES) \
-	-c ggrd_readgrds.c -o $(ODIR)/ggrd_readgrds.dbg.o
+	-c $(SDIR)/ggrd_readgrds.c -o $(ODIR)/ggrd_readgrds.dbg.o
 $(ODIR)/ggrd_grdtrack_util.dbg.o: ggrd_grdtrack_util.c  $(INCS) $(GGRD_INCS)
 	$(CC) $(CFLAGS_DEBUG) $(INC_FLAGS) $(DEFINES) $(GGRD_DEFINES) \
-	-c ggrd_grdtrack_util.c -o $(ODIR)/ggrd_grdtrack_util.dbg.o
+	-c $(SDIR)/ggrd_grdtrack_util.c -o $(ODIR)/ggrd_grdtrack_util.dbg.o
 $(ODIR)/sh_exp_ggrd.dbg.o: sh_exp_ggrd.c  $(INCS) $(GGRD_INCS)
 	$(CC) $(CFLAGS_DEBUG) $(INC_FLAGS) $(DEFINES) $(GGRD_DEFINES) \
-	-c sh_exp_ggrd.c -o $(ODIR)/sh_exp_ggrd.dbg.o
+	-c $(SDIR)/sh_exp_ggrd.c -o $(ODIR)/sh_exp_ggrd.dbg.o
 $(ODIR)/sh_ana.dbg.o: sh_ana.c  $(INCS) $(GGRD_INCS)
 	$(CC) $(CFLAGS_DEBUG) $(INC_FLAGS) $(DEFINES) $(GGRD_DEFINES) \
-	-c sh_ana.c -o $(ODIR)/sh_ana.dbg.o
+	-c $(SDIR)/sh_ana.c -o $(ODIR)/sh_ana.dbg.o
 $(ODIR)/sh_syn.dbg.o: sh_syn.c  $(INCS) $(GGRD_INCS)
 	$(CC) $(CFLAGS_DEBUG) $(INC_FLAGS) $(DEFINES) $(GGRD_DEFINES)  \
-	-c sh_syn.c -o $(ODIR)/sh_syn.dbg.o
+	-c $(SDIR)/sh_syn.c -o $(ODIR)/sh_syn.dbg.o
 
 #
 # general rules

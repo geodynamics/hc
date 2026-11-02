@@ -1,43 +1,148 @@
 #include "hc.h"
 /*
 
-multiple shooting version of the poloidal solver
+MULTIPLE SHOOTING SOLVER FOR THE POLOIDAL PROBLEM
 
-the classic hc_polsol propagates three homogeneous and one
-inhomogeneous solution from the CMB to the surface by multiplying
-propagator matrices, and then solves a 3 x 3 system for the surface
-boundary conditions. since the propagators contain r^(l+1) and
-r^(-l-2) terms, the solution vectors lose their independence for
-large l, and the surface system becomes singular in double precision
-(roughly l > 50 for typical viscosity structures).
+This file is an alternative to the propagator matrix solution in
+hc_polsol.c and is selected with -solver 1 (the default since
+11/2026; -solver 0 gives the original method).
 
-here, the state vectors at all levels are kept as unknowns, and the
-propagation relations
+Written by Claude (Anthropic) in collaboration with Thorsten Becker,
+November 2026.
 
-   s_{k+1} = J_{k+1} D_k s_k + f_{k+1}
 
-(D: propagator across interval k, J: density jump operator at level
-k+1, f: density and phase boundary sources at level k+1) are solved
-together with the three boundary conditions at the CMB and the three
-at the surface as one banded linear system. the propagator entries
-only grow by (r_{k+1}/r_k)^(2l+3) per interval, and the intervals
-are subdivided such that this growth stays below a limit, so that
-Gaussian elimination with partial pivoting remains accurate for
-arbitrary l. the matrix depends only on l, the right hand side on
-(l,m,A/B), so the factorization is reused for all m.
+1. The problem
 
-the physics (non-dimensionalization, source terms, density jumps,
-gravity coupling, boundary conditions) is identical to hc_polsol,
-and the two solutions agree to the precision of the propagator
-method where that one is accurate. the CMB solver kludge (-cbckl)
-is not needed and not applied.
+For each spherical harmonic degree l, the poloidal flow problem in a
+radially layered, incompressible (or Panasyuk-type compressible)
+viscous shell is a linear two point boundary value problem for the
+six component state vector
 
-the state vector per level is [u1 u2 u3 u4 p1 p2] as in hc_polsol,
-with u1,u2 radial and poloidal velocity, u3,u4 radial and tangential
-stress, and p1, p2 the gravitational potential and its derivative
-term.
+   s(r) = [u1 u2 u3 u4 p1 p2]
 
-Thorsten Becker, 2026
+with u1, u2 the radial and poloidal velocity, u3, u4 the radial and
+tangential stress (u3 in the "u3new" convention of hc_polsol, i.e.
+including the rho*phi term), and p1, p2 the gravitational potential
+and its radial derivative term (see hc_evppot). Between levels where
+viscosity, density or the output requirement change, the exact
+solution is given by the analytical propagators P (4 x 4, hc_evalpa,
+Richards & Hager 1984) and Q (2 x 2, hc_evppot):
+
+   s(r_{k+1}) = D_k s(r_k),   D_k = blockdiag(P_k, Q_k)
+
+At the levels, the state jumps by the density anomaly sources
+(density anomaly times layer thickness, dfact) and, for the
+compressible case, by the reference density jumps. The boundary
+conditions are: at the CMB, no radial velocity, free slip, and a
+regular potential below the CMB with the gravity jump due to CMB
+topography; at the surface, no radial velocity, free slip or a
+prescribed poloidal velocity, and a regular potential above the
+surface with the gravity jump due to surface topography.
+
+
+2. Why the propagator method fails at high degree
+
+hc_polsol integrates from the CMB upwards: it starts three
+independent homogeneous solutions (one for each free parameter at the
+CMB) and one inhomogeneous solution with all sources, propagates
+them level by level, and then solves a 3 x 3 system for the
+coefficients that satisfy the three surface conditions. The
+propagators contain terms growing like r^(l+1) and decaying like
+r^(-l-2). Across the whole mantle, their ratio is
+(R/R_cmb)^(2l+3) ~ 1e17 at l = 31 and ~1e33 at l = 63. Any
+component along the growing modes gets amplified by this factor,
+so after propagation the three homogeneous solutions are dominated
+by the same growing mode and are numerically parallel. The 3 x 3
+surface system is then singular to within double precision round
+off, and the result is noise (in practice, degrees above ~50-80 are
+wrong, with the geoid power increasing instead of decreasing with
+l). Higher precision arithmetic only moves this limit (the old
+"quad precision" compile option), it does not remove it. The CMB
+kludge (-cbckl) changes the problem for high l to make it less
+sensitive and is a workaround, not a solution.
+
+
+3. The multiple shooting approach
+
+Instead of integrating across the whole shell, the state vectors at
+all N levels are kept as unknowns,
+
+   X = [s_0, s_1, ..., s_{N-1}]      (6 N unknowns)
+
+and the propagation relations are imposed as linear equations
+
+   s_{k+1} - J_{k+1} D_k s_k = f_{k+1},    k = 0 ... N-2
+
+where J_{k+1} is the (linear) reference density jump operator at
+level k+1 and f_{k+1} holds the density anomaly and phase boundary
+sources at that level (exactly the operations that hc_polsol applies
+to the solution vectors after each propagation step). Together with
+three boundary conditions on s_0 and three on s_{N-1} this gives a
+square, block bidiagonal system A X = F.
+
+Within one interval, the entries of D_k still contain the growth
+factor (r_{k+1}/r_k)^(2l+3), but this is a property of a single
+block, and Gaussian elimination with partial pivoting (hc_matrix.c,
+hc_band_lu_factor) is backward stable: the computed solution is the
+exact solution of a problem perturbed by round off times the local
+block norms. Since no information has to be carried across the
+shell through products of exponentially growing matrices, the
+solution is accurate as long as the boundary value problem itself is
+well posed, which it is. To keep the local growth moderate, the
+intervals are subdivided (hc_ms_init_levels) such that
+(r_{k+1}/r_k)^(2l+3) <= max_growth (-msg, 1e4 by default). Tests show
+the results are insensitive to this parameter even without any
+subdivision; it is a safety margin. The subdivided levels carry no
+sources, no density jumps and no output.
+
+The system matrix A depends on l only (through the propagators and
+the boundary conditions), the right hand side F on (l, m, A/B)
+through the density coefficients and the plate velocities. A is
+therefore assembled and factored once per l (hc_ms_factor) and
+reused for all m and A/B coefficients (hc_ms_solve). The bandwidth
+of A is 9 for the row ordering used here, so the factorization
+costs O(N) per l and the solves O(N) per right hand side, which is
+comparable to the propagator method for the degrees it can handle.
+
+The results agree with hc_polsol to ~1e-10 for l <= 31 (this is the
+round off level of the propagator method there), do not change when
+viscosity layers are split (which hc_polsol's results do at the
+1e-9 level already at l = 31), and have been tested up to l = 255
+(see test/run_test.sh and test/propagator_stability.sh).
+
+
+4. Row and column ordering of the banded system
+
+column 6 k + c       component c (0...5) of the state at level k
+rows 0 ... ncmb-1    CMB conditions (ncmb = 3, or 4 for l = 1)
+rows ncmb + 6 k + c  propagation from level k to k+1, component c
+rows ncmb + 6 (N-1) ... 6 N - 1   surface conditions (6 - ncmb rows)
+
+With this ordering, all non zero entries lie within 9 diagonals of
+the main diagonal, see HC_MS_KL and HC_MS_KU.
+
+For l = 1, hc_polsol does not impose the surface gravity condition
+(the degree one potential is special, the center of mass defines the
+reference frame) but sets the amplitude of the core potential
+solution to zero. The same is achieved here by imposing p1 = 0 at
+the CMB as a fourth CMB condition and dropping the surface gravity
+condition, which keeps the system square.
+
+
+5. Usage from hc_polsol
+
+hc_polsol sets up the coarse level structure (rprops, pvisc, den,
+qwrite, rho_zero) as before. Then, per call,
+
+   hc_ms_init_levels  builds the refined level structure when the
+                      levels, the viscosity or lmax changed
+   hc_ms_factor       per degree l: propagators, matrix, LU
+   hc_ms_solve        per (l, m, A/B): right hand side, solve,
+                      extract the state at the output layers
+
+and hc_polsol writes the output layers to the pol_sol expansions in
+the same format as for the propagator method, so that everything
+downstream (geoid, velocities, tractions, output) is unchanged.
 
 */
 

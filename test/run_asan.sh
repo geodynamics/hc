@@ -15,4 +15,6 @@ make -C .. all_no_gmt HC_HOME=$bdir ADD_FLAGS=-DNO_GMT \
     { echo "$0: build failed, see $bdir/make.log"; exit 1; }
 # leak reports at exit are not useful here
 ASAN_OPTIONS=detect_leaks=0:abort_on_error=1 UBSAN_OPTIONS=print_stacktrace=1 \
-	    ./run_test.sh $bdir/bin compare 1e-5 "$extra"
+	    ./run_test.sh $bdir/bin compare 1e-5 "-solver 0" && \
+ASAN_OPTIONS=detect_leaks=0:abort_on_error=1 UBSAN_OPTIONS=print_stacktrace=1 \
+	    ./run_test.sh $bdir/bin compare 1e-5 "-solver 1 $extra"

@@ -161,11 +161,14 @@ struct hc_ps{
   hc_boolean tor_init, pol_init;
 };
 /*
-   poloidal solver methods
+   poloidal solver methods, see hc_polsol.c and hc_polsol_ms.c
 */
 #define HC_POLSOL_PROPAGATOR 0	/* classic propagator matrix method */
 #define HC_POLSOL_MS 1		/* multiple shooting, see hc_polsol_ms.c */
-#define HC_POLSOL_DEFAULT HC_POLSOL_PROPAGATOR
+#define HC_POLSOL_DEFAULT HC_POLSOL_MS /* multiple shooting is the
+					  default since 11/2026, before,
+					  the propagator method was the only
+					  option */
 #define HC_MS_MAX_GROWTH_DEFAULT 1e4 /* max (r2/r1)^(2l+3) per interval */
 /*
    level structure and work space for the multiple shooting solver

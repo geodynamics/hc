@@ -266,7 +266,12 @@ void hc_init_main (hc, sh_type, p)
   }else{
     HC_ERROR("hc_init","boundary condition logic error");
   }
-  /* poloidal solver selection */
+  /*
+     poloidal solver selection (propagator matrix or multiple
+     shooting) and the work space for the latter, which gets
+     allocated on first use in hc_polsol (hc_ms_init_levels) and freed
+     in hc_struc_free
+  */
   hc->polsol_method = p->polsol_method;
   hc->ms.init = FALSE;
   hc->ms.nalloc = 0;
@@ -281,9 +286,14 @@ void hc_init_main (hc, sh_type, p)
   }
   /* solver tricks */
   hc->psp.solver_kludge_l = p->solver_kludge_l;
-  if(hc->psp.solver_kludge_l != INT_MAX)
-    if(p->verbose)
+  if(hc->psp.solver_kludge_l != INT_MAX){
+    if(hc->polsol_method == HC_POLSOL_MS){
+      fprintf(stderr,"hc_init_main: WARNING: the CMB kludge (-cbckl %i) only applies to the propagator solver (-solver %i), ignored\n",
+	      hc->psp.solver_kludge_l,HC_POLSOL_PROPAGATOR);
+    }else if(p->verbose){
       fprintf(stderr,"hc_init_main: WARNING: applying solver CMB kludge for l > %i\n",hc->psp.solver_kludge_l);
+    }
+  }
   
   /* 
      phase boundaries, if any 
@@ -524,7 +534,7 @@ hc_handle_command_line (argc, argv, start_from_i, p)
 	      (double)p->pvel_time);
 
       fprintf(stderr,"solution procedure and I/O options:\n");
-      fprintf(stderr,"-solver\tval\tpoloidal solver: %i: propagator matrix, %i: multiple shooting (stable for high l) (%i)\n",
+      fprintf(stderr,"-solver\tval\tpoloidal solver: %i: original propagator matrix (inaccurate for l > ~50), %i: multiple shooting (stable for high l) (%i)\n",
 	      HC_POLSOL_PROPAGATOR,HC_POLSOL_MS,p->polsol_method);
       fprintf(stderr,"-msg\tval\tmultiple shooting: max growth factor (r2/r1)^(2l+3) per interval (%g)\n",
 	      (double)p->ms_max_growth);
