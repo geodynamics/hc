@@ -72,6 +72,18 @@ Steinberger, B., and Torsvik, T.H. (2012), A geodynamic model of plumes
   from the margins of Large Low Shear Velocity Provinces,
   Geochem. Geophys. Geosyst., 13, Q01W09, doi:10.1029/2011GC003808
 
+Other tools in this distribution:
+
+Argus, D.F., Gordon, R.G., and DeMets, C. (2011), Geologically current
+  motion of 56 plates relative to the no-net-rotation reference frame,
+  Geochem. Geophys. Geosyst., 12, Q11001, doi:10.1029/2011GC003751
+  (NNR-MORVEL56 rotation vectors in rotvec2vel)
+Milner, K., Becker, T.W., Boschi, L., Sain, J., Schorlemmer, D., and
+  Waterhouse, H. (2009), The Solid Earth Research and Teaching
+  Environment: a new software framework to share research tools in
+  the classroom and across disciplines, Eos Trans. AGU, 90(12), 104
+  (SEATREE)
+
 The Solid Earth Teaching and Research Environment (SEATREE,
 https://github.com/thwbecker/seatree/), as preinstalled with
 software as a VirtualBox available from the Unified Geodynamics Earth
@@ -446,9 +458,14 @@ Science data and software, all in one (big) package, ready to go.
 
 COPYRIGHT
 
-Versions of this software might include Numerical Recipes code (HC
-does not rely on it, only some related tools do) - copyright is with
-these authors, do not distribute without permission.
+Parts of this software are derived from Numerical Recipes code:
+the Gauss-Legendre quadrature (rick_gauleg in rick_sh_c.c) and the
+FFT routines (rick_fft_c.c) used by the spherical harmonics
+transforms, and, in the related tools, fitxyee_util.c and
+correl_nr_util.c, which are copies of Numerical Recipes routines.
+Copyright for those is with the Numerical Recipes authors. (The 3 x 3
+solver in hc_matrix.c used to be adapted from Numerical Recipes as
+well, it is now an independent implementation.)
 
 For all of the HC code, copyright by Thorsten Becker,
 thwbecker@post.harvard.edu, under GPL of 1991.

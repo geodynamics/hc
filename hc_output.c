@@ -1,7 +1,7 @@
 /* 
 
 
-output routines of Hager & Connell code
+output routines of Hager & O'Connell code
 
 $Id: hc_output.c,v 1.11 2006/01/22 01:11:34 becker Exp becker $
 

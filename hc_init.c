@@ -1,6 +1,6 @@
 #include "hc.h"
 /* 
-   general routines dealing with the hager & Connell implementation
+   general routines dealing with the Hager & O'Connell implementation
 
   
    $Id: hc_init.c,v 1.14 2006/03/21 08:07:18 becker Exp becker $
@@ -37,7 +37,7 @@ void hc_init_parameters(struct hc_parameters *p)
 					  average rho value  */
   p->read_short_dens_sh = FALSE; /* read the density anomaly file in
 				    the short format of Becker &
-				    Boschi (2002)?  */
+				    Boschi (2002) */
 
   p->read_short_pvel_sh = FALSE; /* read the plate velocities in short format */
 
