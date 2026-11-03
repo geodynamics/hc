@@ -1,0 +1,5 @@
+# build products (make puts objects in objects/ and binaries in bin/)
+bin/
+objects/
+*.o
+*.a

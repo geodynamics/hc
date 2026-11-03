@@ -189,9 +189,23 @@ $(BDIR)/sh_test: $(LIBS) $(INCS) $(ODIR)/sh_test.o
 	$(CC) $(LIB_FLAGS) $(ODIR)/sh_test.o \
 		-o $(BDIR)/sh_test -lhc -lrick $(HEAL_LIBS_LINKLINE) -lm $(LDFLAGS)
 
-$(BDIR)/sh_syn: $(LIBS) $(GGRD_LIBS) $(INCS) $(GGRD_INCS) $(ODIR)/sh_syn.o
+#
+# sh_syn only needs the GMT/ggrd libraries for optional grd output. If
+# NO_GMT is set in ADD_FLAGS, it is linked without them and becomes
+# part of the all_no_gmt target (its ASCII output is what SEATREE uses)
+#
+ifneq (,$(findstring NO_GMT,$(ADD_FLAGS)))
+SH_SYN_DEPS = $(LIBS) $(INCS) $(PREM_OBJS) $(ODIR)/sh_syn.o
+SH_SYN_LIBS = $(PREM_OBJS)
+all_no_gmt: $(BDIR)/sh_syn
+else
+SH_SYN_DEPS = $(LIBS) $(GGRD_LIBS) $(INCS) $(GGRD_INCS) $(ODIR)/sh_syn.o
+SH_SYN_LIBS = $(GGRD_LIBS_LINKLINE)
+endif
+
+$(BDIR)/sh_syn: $(SH_SYN_DEPS)
 	$(CC) $(LIB_FLAGS) $(ODIR)/sh_syn.o \
-		-o $(BDIR)/sh_syn -lhc -lrick $(HEAL_LIBS_LINKLINE) $(GGRD_LIBS_LINKLINE) -lm $(LDFLAGS)
+		-o $(BDIR)/sh_syn -lhc -lrick $(HEAL_LIBS_LINKLINE) $(SH_SYN_LIBS) -lm $(LDFLAGS)
 
 $(BDIR)/sh_corr: $(LIBS) $(INCS) $(ODIR)/sh_corr.o $(PREM_OBJS) 
 	$(CC) $(LIB_FLAGS) $(ODIR)/sh_corr.o $(PREM_OBJS) \
